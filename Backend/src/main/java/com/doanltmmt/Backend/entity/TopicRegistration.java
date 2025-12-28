@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import com.doanltmmt.Backend.entity.Lecturer;
 
 @Entity
 @Table(name = "topic_registration")
@@ -41,4 +40,10 @@ public class TopicRegistration {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+
+    @Column(name = "score")
+    private Double score;
+
+    @Column(name = "feedback", columnDefinition = "TEXT")
+    private String feedback;
 }

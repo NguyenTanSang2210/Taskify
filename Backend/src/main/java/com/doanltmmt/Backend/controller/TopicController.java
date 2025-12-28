@@ -4,14 +4,16 @@ import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.TopicRegistration;
+import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.repository.LecturerRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.repository.WorkspaceRepository;
+import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.lang.NonNull;
 
 import java.util.*;
 import org.springframework.http.HttpStatus;
@@ -26,37 +28,71 @@ public class TopicController {
     private final LecturerRepository lecturerRepo;
     private final TopicRegistrationRepository regRepo;
     private final UserRepository userRepo;
+    private final WorkspaceRepository workspaceRepo;
+    private final SecurityScopeService scope;
+    private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
 
     public TopicController(TopicRepository topicRepo,
                            LecturerRepository lecturerRepo,
                            TopicRegistrationRepository regRepo,
-                           UserRepository userRepo) {
+                           UserRepository userRepo,
+                           WorkspaceRepository workspaceRepo,
+                           SecurityScopeService scope,
+                           com.doanltmmt.Backend.service.AuditLogService auditLogService) {
         this.topicRepo = topicRepo;
         this.lecturerRepo = lecturerRepo;
         this.regRepo = regRepo;
         this.userRepo = userRepo;
+        this.workspaceRepo = workspaceRepo;
+        this.scope = scope;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public Topic createTopic(@RequestParam Long lecturerId, @RequestBody Topic topic) {
+        if (scope.hasRole("LECTURER")) {
+            Long currentUserId = scope.requireCurrentUser().getId();
+            if (!Objects.equals(currentUserId, lecturerId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            }
+        }
+        if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic must be assigned to a workspace");
+        }
+        Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        requireWorkspaceAllowsTopicCreateOrEdit(w);
+
         // Ensure a Lecturer entity exists for the given user id. If missing, create it on-the-fly.
         Lecturer lecturer = lecturerRepo.findById(lecturerId).orElseGet(() -> {
             User user = userRepo.findById(lecturerId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found for lecturerId"));
             Lecturer newLecturer = new Lecturer();
             newLecturer.setUser(user);
+            newLecturer.setDepartment(user.getDepartment());
             return lecturerRepo.save(newLecturer);
         });
+        if (!scope.hasRole("ADMIN")) {
+            if (lecturer.getUser() == null || lecturer.getUser().getDepartment() == null || w.getDepartment() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing department");
+            }
+            if (!lecturer.getUser().getDepartment().getId().equals(w.getDepartment().getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecturer is not in workspace department");
+            }
+        }
 
         topic.setLecturer(lecturer);
         topic.setStatus("OPEN");
+        topic.setWorkspace(w);
 
-        return topicRepo.save(topic);
+        Topic saved = topicRepo.save(topic);
+        auditLogService.log("CREATE_TOPIC", "Topic", saved.getId().toString(), "Title: " + saved.getTitle());
+        return saved;
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
+    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public Topic updateTopic(@PathVariable Long id,
                              @RequestParam(required = false) Long lecturerId,
                              @RequestBody Topic payload) {
@@ -65,39 +101,60 @@ public class TopicController {
         if (!canModifyTopic(topic, lecturerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update topic");
         }
+        if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+        }
+        Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        requireWorkspaceAllowsTopicCreateOrEdit(w);
         if (payload.getTitle() != null) topic.setTitle(payload.getTitle());
         if (payload.getDescription() != null) topic.setDescription(payload.getDescription());
+        if (payload.getCapacity() != null) topic.setCapacity(payload.getCapacity());
         if (payload.getStatus() != null) topic.setStatus(payload.getStatus());
-        return topicRepo.save(topic);
+        Topic saved = topicRepo.save(topic);
+        auditLogService.log("UPDATE_TOPIC", "Topic", saved.getId().toString(), "Updated topic details");
+        return saved;
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public void deleteTopic(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    public void deleteTopic(@PathVariable @NonNull Long id,
                             @RequestParam(required = false) Long lecturerId) {
         Topic topic = topicRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
         if (!canModifyTopic(topic, lecturerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete topic");
         }
+        if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+        }
+        Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        requireWorkspaceAllowsTopicCreateOrEdit(w);
         topicRepo.deleteById(id);
     }
 
     @PostMapping("/{id}/open")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public Topic openTopic(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    public Topic openTopic(@PathVariable @NonNull Long id,
                            @RequestParam(required = false) Long lecturerId) {
         Topic topic = topicRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
         if (!canModifyTopic(topic, lecturerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to open topic");
         }
+        if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+        }
+        Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        requireWorkspaceAllowsTopicOpenClose(w);
         topic.setStatus("OPEN");
         return topicRepo.save(topic);
     }
 
     @PostMapping("/{id}/close")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
+    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public Topic closeTopic(@PathVariable Long id,
                             @RequestParam(required = false) Long lecturerId) {
         Topic topic = topicRepo.findById(id)
@@ -105,12 +162,18 @@ public class TopicController {
         if (!canModifyTopic(topic, lecturerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to close topic");
         }
+        if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+        }
+        Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        requireWorkspaceAllowsTopicOpenClose(w);
         topic.setStatus("CLOSED");
         return topicRepo.save(topic);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public Map<String, Object> getAll(
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false, name = "query") String queryText,
@@ -130,6 +193,20 @@ public class TopicController {
         if (queryText != null && !queryText.isBlank()) {
             String qLower = "%" + queryText.toLowerCase() + "%";
             spec = spec.and((root, q, cb) -> cb.like(cb.lower(root.get("title")), qLower));
+        }
+        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
+            Long deptId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
+            if (deptId == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("items", List.of());
+                response.put("page", page);
+                response.put("size", size);
+                response.put("totalElements", 0);
+                response.put("totalPages", 0);
+                return response;
+            }
+            Long finalDeptId = deptId;
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("workspace").get("department").get("id"), finalDeptId));
         }
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
@@ -184,19 +261,32 @@ public class TopicController {
     }
 
     private boolean canModifyTopic(Topic topic, Long lecturerId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return false;
-        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> {
-            String r = a.getAuthority();
-            return "ROLE_ADMIN".equals(r) || "ADMIN".equals(r);
-        });
-        if (isAdmin) return true;
+        if (scope.hasRole("ADMIN")) return true;
+        if (scope.hasRole("DEPARTMENT_ADMIN")) {
+            if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) return false;
+            scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
+            return true;
+        }
+        if (!scope.hasRole("LECTURER")) return false;
         if (lecturerId == null) return false;
-        boolean isLecturer = auth.getAuthorities().stream().anyMatch(a -> {
-            String r = a.getAuthority();
-            return "ROLE_LECTURER".equals(r) || "LECTURER".equals(r);
-        });
-        if (!isLecturer) return false;
+        Long currentUserId = scope.requireCurrentUser().getId();
+        if (!Objects.equals(currentUserId, lecturerId)) return false;
         return topic.getLecturer() != null && Objects.equals(topic.getLecturer().getId(), lecturerId);
+    }
+
+    private static void requireWorkspaceAllowsTopicCreateOrEdit(Workspace w) {
+        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
+        if (status.equals("OPEN")) status = "OPEN_TOPIC";
+        if (!status.equals("OPEN_TOPIC")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for topic creation");
+        }
+    }
+
+    private static void requireWorkspaceAllowsTopicOpenClose(Workspace w) {
+        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
+        if (status.equals("OPEN")) status = "OPEN_TOPIC";
+        if (!status.equals("OPEN_TOPIC") && !status.equals("OPEN_REGISTRATION")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in topic/registration phase");
+        }
     }
 }

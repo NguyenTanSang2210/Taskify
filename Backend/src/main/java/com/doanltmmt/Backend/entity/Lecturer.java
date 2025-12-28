@@ -19,4 +19,8 @@ public class Lecturer {
 
     private String degree;
     private String speciality;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "department_id")
+    private Department department;
 }

@@ -15,6 +15,9 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
     List<TopicRegistration> findByStudent_IdOrderByRegisteredAtDesc(Long studentId);
 
     boolean existsByTopic_IdAndApprovedTrue(Long topicId);
+    boolean existsByStudent_IdAndTopic_IdAndApprovedTrue(Long studentId, Long topicId);
+    boolean existsByStudent_IdAndTopic_Workspace_IdAndApprovedIsNull(Long studentId, Long workspaceId);
+    boolean existsByStudent_IdAndTopic_Workspace_IdAndApprovedTrue(Long studentId, Long workspaceId);
 
     long countByTopic_Id(Long topicId);
 

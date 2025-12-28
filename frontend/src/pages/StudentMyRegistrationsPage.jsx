@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { registrationApi } from "../api/registrationApi";
+import InlineNotice from "../components/InlineNotice";
+import { useAuth } from "../context/AuthContext";
 
 export default function StudentMyRegistrationsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const user = (() => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  })();
-  const isStudent = user?.role === "STUDENT";
+  const { user } = useAuth();
+  const roleName = typeof user?.role === "object" && user?.role ? user.role.name : user?.role;
+  const isStudent = roleName === "STUDENT";
   const studentId = isStudent ? user?.id : null;
+  const [notice, setNotice] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -45,10 +42,12 @@ export default function StudentMyRegistrationsPage() {
     try {
       await registrationApi.cancel(regId);
       await load();
-      alert("Đã hủy đăng ký.");
+      setNotice({ type: "success", message: "Đã hủy đăng ký." });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert("Không thể hủy đăng ký (có thể đã được duyệt).");
+      setNotice({ type: "danger", message: e.message || "Không thể hủy đăng ký (có thể đã được duyệt)." });
+      setTimeout(() => setNotice(null), 3000);
     }
   };
 
@@ -61,6 +60,13 @@ export default function StudentMyRegistrationsPage() {
   return (
     <div className="container py-4">
       <h3>Đăng ký của tôi</h3>
+      {notice && (
+        <InlineNotice
+          type={notice.type}
+          message={notice.message}
+          onClose={() => setNotice(null)}
+        />
+      )}
       {!user && (
         <p className="text-muted mt-2">Bạn chưa đăng nhập. Vui lòng đăng nhập bằng tài khoản Sinh viên.</p>
       )}

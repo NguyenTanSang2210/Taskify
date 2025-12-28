@@ -36,4 +36,17 @@ export const registrationApi = {
     const res = await api.post(`/registration/cancel/${regId}`);
     return res.data;
   },
+
+  grade: async (regId, score, feedback) => {
+    const res = await api.post(`/registration/grade/${regId}`, { score, feedback });
+    return res.data;
+  },
+
+  exportExcel: async (topicId) => {
+    const res = await api.get("/export/excel", {
+      params: { topicId },
+      responseType: "blob",
+    });
+    return res.data;
+  },
 };

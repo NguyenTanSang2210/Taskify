@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { registrationApi } from "../api/registrationApi";
 import RegistrationTable from "../components/RegistrationTable";
+import InlineNotice from "../components/InlineNotice";
+import { connectAndSubscribe } from "../ws/stomp";
 
 export default function LecturerRegistrationPage() {
   const location = useLocation();
@@ -15,13 +17,17 @@ export default function LecturerRegistrationPage() {
 
   // state cho modal
   const [showModal, setShowModal] = useState(false);
-  const [modalAction, setModalAction] = useState(null); // "approve" | "reject"
+  const [modalAction, setModalAction] = useState(null); // "approve" | "reject" | "grade"
   const [selectedReg, setSelectedReg] = useState(null);
+  const [notice, setNotice] = useState(null);
+  
+  const [gradeScore, setGradeScore] = useState(0);
+  const [gradeFeedback, setGradeFeedback] = useState("");
 
-  const load = async () => {
+  const load = React.useCallback(async () => {
     const result = await registrationApi.getByTopic(topicId);
     setData(result);
-  };
+  }, [topicId]);
 
   // Đọc topicId từ query string khi mở trang hoặc khi thay đổi URL
   useEffect(() => {
@@ -31,6 +37,22 @@ export default function LecturerRegistrationPage() {
       setTopicId(qId);
     }
   }, [location.search]);
+
+  useEffect(() => {
+    if (!topicId) return;
+    const client = connectAndSubscribe({
+      destination: `/topic/registration/${topicId}`,
+      onMessage: async (payload) => {
+        const type = payload?.type;
+        const reg = payload?.registration;
+        if (!type || !reg) return;
+        await load();
+        setNotice({ type: "info", message: "Có cập nhật đăng ký realtime" });
+        setTimeout(() => setNotice(null), 2000);
+      },
+    });
+    return () => client?.deactivate?.();
+  }, [topicId, load]);
 
   // mở modal duyệt
   const openApproveModal = (reg) => {
@@ -43,6 +65,15 @@ export default function LecturerRegistrationPage() {
   const openRejectModal = (reg) => {
     setSelectedReg(reg);
     setModalAction("reject");
+    setShowModal(true);
+  };
+
+  // mở modal chấm điểm
+  const openGradeModal = (reg) => {
+    setSelectedReg(reg);
+    setGradeScore(reg.score || 0);
+    setGradeFeedback(reg.feedback || "");
+    setModalAction("grade");
     setShowModal(true);
   };
 
@@ -60,14 +91,19 @@ export default function LecturerRegistrationPage() {
     try {
       if (modalAction === "approve") {
         await registrationApi.approve(selectedReg.id);
-      } else {
+      } else if (modalAction === "reject") {
         await registrationApi.reject(selectedReg.id, rejectReason);
+      } else if (modalAction === "grade") {
+        await registrationApi.grade(selectedReg.id, gradeScore, gradeFeedback);
       }
 
       await load(); // reload danh sách
+      setNotice({ type: "success", message: "Đã cập nhật thành công" });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert("Có lỗi xảy ra. Vui lòng thử lại.");
+      setNotice({ type: "danger", message: e.message || "Có lỗi xảy ra. Vui lòng thử lại." });
+      setTimeout(() => setNotice(null), 3000);
     } finally {
       setLoadingId(null);
       closeModal();
@@ -120,7 +156,7 @@ export default function LecturerRegistrationPage() {
   const exportCsv = () => {
     const rows = [
       [
-        "Reg ID",
+        "Mã đăng ký",
         "MSSV",
         "Lớp",
         "Họ tên",
@@ -128,6 +164,7 @@ export default function LecturerRegistrationPage() {
         "Người xử lý",
         "Thời gian xử lý",
         "Trạng thái",
+        "Điểm",
         "Lý do từ chối",
       ],
       ...filteredData.map((r) => {
@@ -146,6 +183,7 @@ export default function LecturerRegistrationPage() {
           reviewerName,
           reviewedStr,
           stt,
+          r.score !== null ? r.score : "",
           r.rejectReason || "",
         ];
       }),
@@ -165,9 +203,33 @@ export default function LecturerRegistrationPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportExcel = async () => {
+      try {
+          const blob = await registrationApi.exportExcel(topicId);
+          const url = window.URL.createObjectURL(new Blob([blob]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `dang-ky-de-tai-${topicId}.xlsx`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+      } catch (error) {
+          console.error("Xuất tệp thất bại", error);
+          setNotice({ type: "danger", message: "Xuất Excel thất bại" });
+          setTimeout(() => setNotice(null), 3000);
+      }
+  };
+
   return (
     <div className="container py-4">
       <h3>Giảng viên duyệt đăng ký đề tài</h3>
+      {notice && (
+        <InlineNotice
+          type={notice.type}
+          message={notice.message}
+          onClose={() => setNotice(null)}
+        />
+      )}
       <div className="mt-2">
         <strong>Đề tài:</strong> {topicTitle}
         <span className="ms-3 badge bg-dark" title="Tổng">{stats.total}</span>
@@ -176,7 +238,7 @@ export default function LecturerRegistrationPage() {
         <span className="ms-1 badge bg-danger" title="Từ chối">{stats.rejected}</span>
       </div>
 
-      <div className="row mb-3">
+      <div className="row mb-3 mt-3">
         <div className="col-md-3">
           <input
             className="form-control"
@@ -185,16 +247,21 @@ export default function LecturerRegistrationPage() {
           />
         </div>
         <div className="col-md-2">
-          <button className="btn btn-primary" onClick={load}>
+          <button className="btn btn-primary w-100" onClick={load}>
             Tải danh sách
           </button>
         </div>
         <div className="col-md-2">
-          <button className="btn btn-outline-secondary" onClick={exportCsv}>
-            Xuất CSV
+          <button className="btn btn-success w-100" onClick={handleExportExcel}>
+            <i className="bi bi-file-earmark-excel me-1"></i>Xuất Excel
           </button>
         </div>
-        <div className="col-md-4">
+        <div className="col-md-2">
+          <button className="btn btn-outline-secondary w-100" onClick={exportCsv}>
+            <i className="bi bi-filetype-csv me-1"></i>Xuất CSV
+          </button>
+        </div>
+        <div className="col-md-3">
           <input
             className="form-control"
             placeholder="Tìm theo MSSV, Họ tên, Lớp..."
@@ -202,16 +269,16 @@ export default function LecturerRegistrationPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="col-md-3">
+        <div className="col-md-2">
           <select
             className="form-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="registered_desc">Đăng ký mới nhất</option>
-            <option value="registered_asc">Đăng ký cũ nhất</option>
-            <option value="studentCode_asc">MSSV A → Z</option>
-            <option value="fullName_asc">Họ tên A → Z</option>
+            <option value="registered_desc">Mới nhất</option>
+            <option value="registered_asc">Cũ nhất</option>
+            <option value="studentCode_asc">MSSV A-Z</option>
+            <option value="fullName_asc">Tên A-Z</option>
           </select>
         </div>
       </div>
@@ -221,6 +288,7 @@ export default function LecturerRegistrationPage() {
         loadingId={loadingId}
         onApproveClick={openApproveModal}
         onRejectClick={openRejectModal}
+        onGradeClick={openGradeModal}
       />
 
       {/* Modal xác nhận đơn giản bằng React + CSS */}
@@ -228,7 +296,11 @@ export default function LecturerRegistrationPage() {
         <div className="custom-modal-backdrop">
           <div className="custom-modal">
             <h5 className="mb-3">
-              {modalAction === "approve" ? "Xác nhận duyệt" : "Xác nhận từ chối"}
+              {modalAction === "approve"
+                ? "Xác nhận duyệt"
+                : modalAction === "reject"
+                ? "Xác nhận từ chối"
+                : "Chấm điểm & Tổng kết"}
             </h5>
 
             <p className="mb-1">
@@ -237,11 +309,13 @@ export default function LecturerRegistrationPage() {
             <p className="mb-1">
               MSSV: <strong>{selectedReg.student?.studentCode}</strong>
             </p>
-            <p className="mb-3">
-              Bạn có chắc muốn{" "}
-              <strong>{modalAction === "approve" ? "DUYỆT" : "TỪ CHỐI"}</strong> đăng ký này
-              không?
-            </p>
+            
+            {modalAction !== "grade" && (
+                <p className="mb-3">
+                Bạn có chắc muốn{" "}
+                <strong>{modalAction === "approve" ? "DUYỆT" : "TỪ CHỐI"}</strong> đăng ký này không?
+                </p>
+            )}
 
             {modalAction === "reject" && (
               <div className="mb-3">
@@ -256,17 +330,63 @@ export default function LecturerRegistrationPage() {
               </div>
             )}
 
-            <div className="text-end">
-              <button className="btn btn-secondary me-2" onClick={closeModal}>
-                Hủy
+            {modalAction === "grade" && (
+              <div className="mb-3">
+                <div className="mb-2">
+                    <label className="form-label">Điểm số (0 - 10)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      className="form-control"
+                      value={gradeScore}
+                      onChange={(e) => setGradeScore(e.target.value)}
+                    />
+                </div>
+                <div className="mb-2">
+                    <label className="form-label">Nhận xét / Đánh giá</label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      value={gradeFeedback}
+                      onChange={(e) => setGradeFeedback(e.target.value)}
+                      placeholder="Nhập nhận xét..."
+                    />
+                </div>
+                <div className="alert alert-warning small">
+                    Lưu ý: Sau khi chấm điểm, trạng thái đề tài sẽ chuyển thành <strong>HOÀN THÀNH</strong>.
+                </div>
+              </div>
+            )}
+
+            <div className="d-flex justify-content-end gap-2 mt-4">
+              <button
+                className="btn btn-secondary"
+                onClick={closeModal}
+                disabled={!!loadingId}
+              >
+                Hủy bỏ
               </button>
               <button
-                className={
-                  modalAction === "approve" ? "btn btn-success" : "btn btn-danger"
-                }
+                className={`btn ${
+                  modalAction === "reject" ? "btn-danger" : "btn-primary"
+                }`}
                 onClick={handleConfirm}
+                disabled={!!loadingId}
               >
-                Xác nhận
+                {loadingId === selectedReg.id ? (
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                ) : null}
+                {modalAction === "approve"
+                  ? "Duyệt ngay"
+                  : modalAction === "reject"
+                  ? "Từ chối ngay"
+                  : "Lưu kết quả"}
               </button>
             </div>
           </div>

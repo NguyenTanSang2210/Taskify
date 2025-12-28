@@ -19,4 +19,8 @@ public class Student {
 
     private String studentCode;
     private String className;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "class_id")
+    private AcademicClass academicClass;
 }

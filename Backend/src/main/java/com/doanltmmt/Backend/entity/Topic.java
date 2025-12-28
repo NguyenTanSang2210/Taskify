@@ -24,6 +24,13 @@ public class Topic {
     @JoinColumn(name = "lecturer_id")
     private Lecturer lecturer;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "workspace_id")
+    private Workspace workspace;
+
+    @Column(name = "capacity")
+    private Integer capacity;
+
     // OPEN, REGISTERED, CLOSED
     @Column(length = 50)
     private String status;

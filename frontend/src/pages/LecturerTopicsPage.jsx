@@ -1,15 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { topicApi } from "../api/topicApi";
+import InlineNotice from "../components/InlineNotice";
+import { useAuth } from "../context/AuthContext";
 
 export default function LecturerTopicsPage() {
-  const user = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }, []);
+  const { user } = useAuth();
   const lecturerId = user?.id;
 
   const [items, setItems] = useState([]);
@@ -25,6 +20,14 @@ export default function LecturerTopicsPage() {
   const [editing, setEditing] = useState(null); // topic object or null
   const [form, setForm] = useState({ title: "", description: "" });
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [notice, setNotice] = useState(null);
+
+  const getStatusLabel = (s) => {
+    if (s === "OPEN") return "Mở";
+    if (s === "CLOSED") return "Đã đóng";
+    if (s === "REGISTERED") return "Đã đăng ký";
+    return s || "";
+  };
 
   const load = async (override = {}) => {
     setLoading(true);
@@ -73,7 +76,8 @@ export default function LecturerTopicsPage() {
 
   const handleSave = async () => {
     if (!form.title?.trim()) {
-      alert("Tiêu đề không được để trống");
+      setNotice({ type: "warning", message: "Tiêu đề không được để trống" });
+      setTimeout(() => setNotice(null), 2500);
       return;
     }
     try {
@@ -90,9 +94,12 @@ export default function LecturerTopicsPage() {
       }
       await load();
       closeModal();
+      setNotice({ type: "success", message: editing ? "Đã lưu chỉnh sửa đề tài" : "Đã tạo đề tài" });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert(e.message || "Lưu đề tài thất bại");
+      setNotice({ type: "danger", message: e.message || "Lưu đề tài thất bại" });
+      setTimeout(() => setNotice(null), 3000);
     }
   };
 
@@ -102,9 +109,12 @@ export default function LecturerTopicsPage() {
     try {
       await topicApi.remove(id, lecturerId);
       await load();
+      setNotice({ type: "success", message: "Đã xóa đề tài" });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert(e.message || "Xóa đề tài thất bại");
+      setNotice({ type: "danger", message: e.message || "Xóa đề tài thất bại" });
+      setTimeout(() => setNotice(null), 3000);
     } finally {
       setActionLoadingId(null);
     }
@@ -115,9 +125,12 @@ export default function LecturerTopicsPage() {
     try {
       await topicApi.open(id, lecturerId);
       await load();
+      setNotice({ type: "success", message: "Đã mở đăng ký đề tài" });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert(e.message || "Mở đề tài thất bại");
+      setNotice({ type: "danger", message: e.message || "Mở đề tài thất bại" });
+      setTimeout(() => setNotice(null), 3000);
     } finally {
       setActionLoadingId(null);
     }
@@ -138,9 +151,12 @@ export default function LecturerTopicsPage() {
     try {
       await topicApi.close(id, lecturerId);
       await load();
+      setNotice({ type: "success", message: "Đã đóng đề tài" });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert(e.message || "Đóng đề tài thất bại");
+      setNotice({ type: "danger", message: e.message || "Đóng đề tài thất bại" });
+      setTimeout(() => setNotice(null), 3000);
     } finally {
       setActionLoadingId(null);
     }
@@ -149,6 +165,13 @@ export default function LecturerTopicsPage() {
   return (
     <div className="container py-4">
       <h3>Quản lý đề tài của tôi</h3>
+      {notice && (
+        <InlineNotice
+          type={notice.type}
+          message={notice.message}
+          onClose={() => setNotice(null)}
+        />
+      )}
 
       <div className="d-flex justify-content-between align-items-end mt-3">
         <div className="row g-2 align-items-end flex-grow-1">
@@ -230,9 +253,9 @@ export default function LecturerTopicsPage() {
                   <td>{t.title}</td>
                   <td>{t.description}</td>
                   <td>
-                    {t.status === "OPEN" && <span className="badge bg-success">OPEN</span>}
-                    {t.status === "CLOSED" && <span className="badge bg-secondary">CLOSED</span>}
-                    {t.status === "REGISTERED" && <span className="badge bg-info">REGISTERED</span>}
+                    {t.status === "OPEN" && <span className="badge bg-success">{getStatusLabel(t.status)}</span>}
+                    {t.status === "CLOSED" && <span className="badge bg-secondary">{getStatusLabel(t.status)}</span>}
+                    {t.status === "REGISTERED" && <span className="badge bg-info">{getStatusLabel(t.status)}</span>}
                   </td>
                   <td>
                     <span className="badge bg-dark" title="Tổng số lượt đăng ký">

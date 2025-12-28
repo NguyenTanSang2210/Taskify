@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { topicApi } from "../api/topicApi";
 import { registrationApi } from "../api/registrationApi";
 import TopicCard from "../components/TopicCard";
+import InlineNotice from "../components/InlineNotice";
+import { useAuth } from "../context/AuthContext";
 
 export default function StudentTopicPage() {
+  const { user } = useAuth();
   const [topics, setTopics] = useState([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(6);
@@ -13,16 +16,10 @@ export default function StudentTopicPage() {
   const [loadingId, setLoadingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  // Đọc user một lần và giữ ổn định để tránh render loop
-  const user = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }, []);
-  const isStudent = user?.role === "STUDENT";
+  const [notice, setNotice] = useState(null);
+  
+  const roleName = typeof user?.role === "object" && user?.role ? user.role.name : user?.role;
+  const isStudent = roleName === "STUDENT";
   const studentId = isStudent ? user?.id : null;
 
   const load = async (override = {}) => {
@@ -61,7 +58,8 @@ export default function StudentTopicPage() {
 
   const handleRegister = async (topicId) => {
     if (!isStudent || !studentId) {
-      alert("Vui lòng đăng nhập bằng tài khoản Sinh viên để đăng ký.");
+      setNotice({ type: "warning", message: "Vui lòng đăng nhập bằng tài khoản Sinh viên để đăng ký." });
+      setTimeout(() => setNotice(null), 3000);
       return;
     }
     setLoadingId(topicId);
@@ -69,10 +67,12 @@ export default function StudentTopicPage() {
       await registrationApi.registerTopic(studentId, topicId);
       // Reload để cập nhật trạng thái đăng ký theo bộ lọc hiện tại
       await load();
-      alert("Đăng ký thành công!");
+      setNotice({ type: "success", message: "Đăng ký thành công!" });
+      setTimeout(() => setNotice(null), 2500);
     } catch (e) {
       console.error(e);
-      alert("Có lỗi khi đăng ký. Vui lòng thử lại.");
+      setNotice({ type: "danger", message: e.message || "Có lỗi khi đăng ký. Vui lòng thử lại." });
+      setTimeout(() => setNotice(null), 3000);
     } finally {
       setLoadingId(null);
     }
@@ -81,6 +81,13 @@ export default function StudentTopicPage() {
   return (
     <div className="container py-4">
       <h3>Danh sách đề tài</h3>
+      {notice && (
+        <InlineNotice
+          type={notice.type}
+          message={notice.message}
+          onClose={() => setNotice(null)}
+        />
+      )}
       {/* Bộ lọc và tìm kiếm */}
       <div className="row mt-3 g-2 align-items-end">
         <div className="col-md-6">

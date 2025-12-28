@@ -1,8 +1,10 @@
 package com.doanltmmt.Backend;
 
+import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.User;
+import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
@@ -16,12 +18,14 @@ public class DataSeeder {
     private final RoleRepository roleRepo;
     private final UserRepository userRepo;
     private final StudentRepository studentRepo;
+    private final DepartmentRepository departmentRepo;
     private final PasswordEncoder encoder;
 
-    public DataSeeder(RoleRepository roleRepo, UserRepository userRepo, StudentRepository studentRepo, PasswordEncoder encoder) {
+    public DataSeeder(RoleRepository roleRepo, UserRepository userRepo, StudentRepository studentRepo, DepartmentRepository departmentRepo, PasswordEncoder encoder) {
         this.roleRepo = roleRepo;
         this.userRepo = userRepo;
         this.studentRepo = studentRepo;
+        this.departmentRepo = departmentRepo;
         this.encoder = encoder;
     }
 
@@ -31,11 +35,22 @@ public class DataSeeder {
         Role adminRole = roleRepo.findByName("ADMIN")
                 .orElseGet(() -> roleRepo.save(new Role("ADMIN")));
 
-        Role lecturerRole = roleRepo.findByName("LECTURER")
+        roleRepo.findByName("LECTURER")
                 .orElseGet(() -> roleRepo.save(new Role("LECTURER")));
+
+        Role deptAdminRole = roleRepo.findByName("DEPARTMENT_ADMIN")
+                .orElseGet(() -> roleRepo.save(new Role("DEPARTMENT_ADMIN")));
 
         Role studentRole = roleRepo.findByName("STUDENT")
                 .orElseGet(() -> roleRepo.save(new Role("STUDENT")));
+
+        Department cntt = departmentRepo.findByCode("CNTT").orElseGet(() -> {
+            Department d = new Department();
+            d.setCode("CNTT");
+            d.setName("Công nghệ thông tin");
+            d.setActive(true);
+            return departmentRepo.save(d);
+        });
 
         // 2. Seed admin demo or normalize password if not encrypted
         var adminOpt = userRepo.findByUsername("admin");
@@ -55,6 +70,18 @@ public class DataSeeder {
                 userRepo.save(admin);
             }
         }
+
+        userRepo.findByUsername("deptadmin").orElseGet(() -> {
+            User u = new User();
+            u.setUsername("deptadmin");
+            u.setPassword(encoder.encode("123456"));
+            u.setFullName("Quản trị khoa CNTT");
+            u.setEmail("deptadmin@example.com");
+            u.setRole(deptAdminRole);
+            u.setDepartment(cntt);
+            u.setActive(true);
+            return userRepo.save(u);
+        });
 
         // 3. Seed student demo user
         User studentUser = userRepo.findByUsername("student").orElseGet(() -> {
@@ -80,4 +107,3 @@ public class DataSeeder {
         }
     }
 }
-
