@@ -20,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/messages")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class MessageController {
 
     private final MessageRepository repo;
@@ -58,22 +59,32 @@ public class MessageController {
         User me = userRepo.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         Long recipientId = Long.valueOf(body.get("recipientId"));
         User recipient = userRepo.findById(recipientId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
+        String topicIdRaw = body.get("topicId");
+        if (topicIdRaw == null || topicIdRaw.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId is required");
+        }
+
+        Topic topic = topicRepo.findById(Long.valueOf(topicIdRaw))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+        if (topic.getWorkspace() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+        }
+
         Message m = new Message();
         m.setSender(me);
         m.setRecipient(recipient);
         m.setContent(body.get("content"));
-        if (body.get("topicId") != null) {
-            Topic topic = topicRepo.findById(Long.valueOf(body.get("topicId")))
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-            if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-                if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
-                }
-                scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
+        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
+            if (topic.getWorkspace().getDepartment() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
             }
-            m.setTopic(topic);
+            scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
         }
+
+        m.setTopic(topic);
+        m.setWorkspace(topic.getWorkspace());
         Message saved = repo.save(m);
+        events.messageCreated(saved);
         auditLogService.log("SEND_MESSAGE", "Message", saved.getId().toString(), "To: " + recipient.getUsername());
         events.genericEvent("MESSAGE_SENT", saved.getId());
         return saved;

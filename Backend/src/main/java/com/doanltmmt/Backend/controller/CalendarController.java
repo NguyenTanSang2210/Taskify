@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.CalendarEvent;
 import com.doanltmmt.Backend.entity.Topic;
@@ -18,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/calendar")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class CalendarController {
 
     private final CalendarEventRepository repo;
@@ -73,3 +74,5 @@ public class CalendarController {
         auditLogService.log("DELETE_CAL_EVENT", "CalendarEvent", id.toString(), "Deleted event");
     }
 }
+
+

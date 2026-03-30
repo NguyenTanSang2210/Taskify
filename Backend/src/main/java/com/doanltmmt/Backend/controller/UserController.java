@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.entity.AcademicClass;
@@ -19,14 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:5173") // cho React dev sau này
+@CrossOrigin(origins = "http://localhost:5173") // for React local development
+@SuppressWarnings("null")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -61,7 +61,7 @@ public class UserController {
 
     @PutMapping("/{id}/profile")
     @PreAuthorize("isAuthenticated()")
-    public User updateProfile(@PathVariable @NonNull Long id, @RequestBody java.util.Map<String, String> body) {
+    public User updateProfile(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
@@ -118,20 +118,20 @@ public class UserController {
         return "Backend OK";
     }
 
-    // tạo nhanh 1 admin demo + role để test DB
+    // create quick admin demo + role for DB testing
     @PostMapping("/init-admin")
     @PreAuthorize("hasRole('ADMIN')")
     public User createAdminDemo() {
         Role adminRole = roleRepository.findByName("ADMIN")
                 .orElseGet(() -> {
                     Role r = new Role("ADMIN");
-                    r.setDescription("Quản trị hệ thống");
+                    r.setDescription("Quan tri he thong");
                     return roleRepository.save(r);
                 });
 
         User u = new User();
         u.setUsername("admin");
-        u.setPassword("123456"); // sau sẽ mã hoá
+        u.setPassword("123456"); // will be encoded later
         u.setFullName("Admin Demo");
         u.setEmail("admin@example.com");
         u.setRole(adminRole);
@@ -140,7 +140,7 @@ public class UserController {
         return userRepository.save(u);
     }
 
-    // tạo nhanh 1 giảng viên demo nếu chưa có
+    // create quick lecturer demo if missing
     @PostMapping("/init-lecturer")
     @PreAuthorize("hasRole('ADMIN')")
     public User createLecturerDemo() {
@@ -152,7 +152,7 @@ public class UserController {
                     User u = new User();
                     u.setUsername("lecturer");
                     u.setPassword(passwordEncoder.encode("123456"));
-                    u.setFullName("Giảng viên Demo");
+                    u.setFullName("Giang vien Demo");
                     u.setEmail("lecturer@example.com");
                     u.setRole(lecturerRole);
                     u.setActive(true);
@@ -169,7 +169,7 @@ public class UserController {
     @PostMapping({ "", "/create" })
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public User create(@RequestBody @NonNull Map<String, Object> body) {
+    public User create(@RequestBody Map<String, Object> body) {
         String username = String.valueOf(body.getOrDefault("username", "")).trim();
         String password = String.valueOf(body.getOrDefault("password", "")).trim();
         String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
@@ -313,7 +313,7 @@ public class UserController {
         return saved;
     }
 
-    // tạo nhanh 1 sinh viên demo nếu chưa có
+    // create quick student demo if missing
     @PostMapping("/init-student")
     @PreAuthorize("hasRole('ADMIN')")
     public User createStudentDemo() {
@@ -325,14 +325,14 @@ public class UserController {
                     User u = new User();
                     u.setUsername("student");
                     u.setPassword(passwordEncoder.encode("123456"));
-                    u.setFullName("Sinh viên Demo");
+                    u.setFullName("Sinh vien Demo");
                     u.setEmail("student@example.com");
                     u.setRole(studentRole);
                     u.setActive(true);
                     return userRepository.save(u);
                 });
 
-        // đảm bảo có bản ghi Student ánh xạ 1-1 với User
+        // ensure Student record exists with 1-1 mapping to User
         if (!studentRepository.existsById(user.getId())) {
             Student s = new Student();
             s.setUser(user);
@@ -344,3 +344,6 @@ public class UserController {
         return user;
     }
 }
+
+
+

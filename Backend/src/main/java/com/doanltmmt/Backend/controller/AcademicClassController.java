@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
@@ -7,7 +7,6 @@ import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,6 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/classes")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class AcademicClassController {
 
     private final AcademicClassRepository repo;
@@ -47,7 +47,7 @@ public class AcademicClassController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public AcademicClass create(@RequestBody @NonNull Map<String, Object> body) {
+    public AcademicClass create(@RequestBody Map<String, Object> body) {
         Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
         if (!scope.hasRole("ADMIN")) {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
@@ -69,7 +69,7 @@ public class AcademicClassController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public AcademicClass update(@PathVariable Long id, @RequestBody @NonNull Map<String, Object> body) {
+    public AcademicClass update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         AcademicClass c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
         scope.requireDepartmentAccess(c.getDepartment().getId());
         String code = body.get("code") != null ? String.valueOf(body.get("code")).trim() : null;
@@ -82,4 +82,7 @@ public class AcademicClassController {
         return saved;
     }
 }
+
+
+
 

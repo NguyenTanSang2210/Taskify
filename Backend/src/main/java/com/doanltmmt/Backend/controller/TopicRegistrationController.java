@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
@@ -16,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import java.util.List;
@@ -25,6 +24,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/registration")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class TopicRegistrationController {
 
     private final TopicRepository topicRepo;
@@ -64,8 +64,8 @@ public class TopicRegistrationController {
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('STUDENT')")
-    public TopicRegistration registerTopic(@RequestParam @NonNull Long studentId,
-                                           @RequestParam @NonNull Long topicId) {
+    public TopicRegistration registerTopic(@RequestParam Long studentId,
+                                           @RequestParam Long topicId) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
@@ -74,7 +74,7 @@ public class TopicRegistrationController {
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new RuntimeException("Topic not found"));
 
-        // Chỉ cho đăng ký khi đề tài đang mở
+        // Only allow registration when topic is open
         if (!"OPEN".equalsIgnoreCase(topic.getStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not open for registration");
         }
@@ -114,7 +114,7 @@ public class TopicRegistrationController {
         TopicRegistration reg = new TopicRegistration();
         reg.setTopic(topic);
         reg.setStudent(student);
-        reg.setApproved(null); // chờ duyệt
+        reg.setApproved(null); // pending approval
         reg.setRegisteredAt(LocalDateTime.now());
 
         TopicRegistration saved = regRepo.save(reg);
@@ -125,7 +125,7 @@ public class TopicRegistrationController {
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('LECTURER','DEPARTMENT_ADMIN','ADMIN')")
-    public List<TopicRegistration> getRegistrations(@PathVariable @NonNull Long topicId) {
+    public List<TopicRegistration> getRegistrations(@PathVariable Long topicId) {
         Topic topic = topicRepo.findById(topicId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
         if (scope.hasRole("ADMIN")) {
             return regRepo.findByTopic_Id(topicId);
@@ -146,7 +146,7 @@ public class TopicRegistrationController {
 
     @GetMapping("/mine")
     @PreAuthorize("hasRole('STUDENT')")
-    public List<TopicRegistration> myRegistrations(@RequestParam @NonNull Long studentId) {
+    public List<TopicRegistration> myRegistrations(@RequestParam Long studentId) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
@@ -156,7 +156,7 @@ public class TopicRegistrationController {
 
     @PostMapping("/approve/{regId}")
     @PreAuthorize("hasRole('LECTURER')")
-    public TopicRegistration approve(@PathVariable @NonNull Long regId) {
+    public TopicRegistration approve(@PathVariable Long regId) {
         TopicRegistration reg = regRepo.findById(regId)
                 .orElseThrow(() -> new RuntimeException("Registration not found"));
         Long currentUserId = scope.requireCurrentUser().getId();
@@ -164,7 +164,7 @@ public class TopicRegistrationController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
         }
 
-        // Không cho duyệt nếu đề tài đã có sinh viên được duyệt
+        // Do not approve when topic already has an approved student
         Long topicId = reg.getTopic().getId();
         if (regRepo.existsByTopic_IdAndApprovedTrue(topicId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic already has an approved registration");
@@ -185,7 +185,7 @@ public class TopicRegistrationController {
         }
 
         reg.setApproved(true);
-        // Lưu nhật ký: người duyệt và thời gian
+        // Track reviewer and review timestamp
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (auth != null) {
             String username = auth.getName();
@@ -196,7 +196,7 @@ public class TopicRegistrationController {
                 reg.setReviewedAt(java.time.LocalDateTime.now());
             }
         }
-        // Cập nhật trạng thái đề tài sang REGISTERED khi duyệt
+        // Update topic status to REGISTERED after approval
         Topic topic = reg.getTopic();
         topic.setStatus("REGISTERED");
         topicRepo.save(topic);
@@ -205,8 +205,8 @@ public class TopicRegistrationController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("Đăng ký đề tài đã được duyệt");
-        nStudent.setContent("Đề tài #" + topic.getId() + " - \"" + topic.getTitle() + "\" đã được duyệt");
+        nStudent.setTitle("Dang ky de tai da duoc duyet");
+        nStudent.setContent("De tai #" + topic.getId() + " - \"" + topic.getTitle() + "\" da duoc duyet");
         nStudent.setRefType("TOPIC_REGISTRATION");
         nStudent.setRefId(saved.getId());
         nStudent.setLinkPath("/my-registrations");
@@ -238,7 +238,7 @@ public class TopicRegistrationController {
 
         reg.setApproved(false);
         reg.setRejectReason(reason);
-        // Lưu nhật ký: người từ chối và thời gian
+        // Track reject reviewer and timestamp
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (auth != null) {
             String username = auth.getName();
@@ -253,8 +253,8 @@ public class TopicRegistrationController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("Đăng ký đề tài bị từ chối");
-        String msg = (reason != null && !reason.isBlank()) ? ("Lý do: " + reason) : "";
+        nStudent.setTitle("Dang ky de tai bi tu choi");
+        String msg = (reason != null && !reason.isBlank()) ? ("Ly do: " + reason) : "";
         nStudent.setContent(msg);
         nStudent.setRefType("TOPIC_REGISTRATION");
         nStudent.setRefId(saved.getId());
@@ -276,7 +276,7 @@ public class TopicRegistrationController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
         }
 
-        // Chỉ cho hủy khi đang chờ duyệt
+        // Only allow cancel while request is pending
         if (reg.getApproved() != null) {
             throw new RuntimeException("Cannot cancel a processed registration");
         }
@@ -322,7 +322,7 @@ public class TopicRegistrationController {
         reg.setScore(score);
         reg.setFeedback(feedback);
         
-        // Cập nhật trạng thái đề tài sang COMPLETED nếu chưa
+        // Update topic status to COMPLETED if needed
         Topic topic = reg.getTopic();
         if (!"COMPLETED".equals(topic.getStatus())) {
             topic.setStatus("COMPLETED");
@@ -334,8 +334,8 @@ public class TopicRegistrationController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("Đề tài đã có điểm tổng kết");
-        nStudent.setContent("Điểm số: " + score + ". Nhận xét: " + feedback);
+        nStudent.setTitle("De tai da co diem tong ket");
+        nStudent.setContent("Diem so: " + score + ". Nhan xet: " + feedback);
         nStudent.setRefType("TOPIC_REGISTRATION");
         nStudent.setRefId(saved.getId());
         nStudent.setLinkPath("/my-registrations");
@@ -348,3 +348,6 @@ public class TopicRegistrationController {
         return saved;
     }
 }
+
+
+

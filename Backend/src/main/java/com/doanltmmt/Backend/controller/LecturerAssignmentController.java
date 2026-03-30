@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.LecturerAssignment;
@@ -11,7 +11,6 @@ import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/assignments")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class LecturerAssignmentController {
 
     private final LecturerAssignmentRepository repo;
@@ -42,7 +42,7 @@ public class LecturerAssignmentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public List<LecturerAssignment> list(@RequestParam @NonNull Long workspaceId) {
+    public List<LecturerAssignment> list(@RequestParam Long workspaceId) {
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         return repo.findByWorkspace_IdOrderByIdDesc(workspaceId);
@@ -50,7 +50,7 @@ public class LecturerAssignmentController {
 
     @PostMapping("/assign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public LecturerAssignment assign(@RequestBody @NonNull Map<String, Object> body) {
+    public LecturerAssignment assign(@RequestBody Map<String, Object> body) {
         Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
         Long lecturerUserId = Long.valueOf(String.valueOf(body.get("lecturerId")));
         String type = String.valueOf(body.getOrDefault("type", "MAIN")).trim().toUpperCase();
@@ -92,7 +92,7 @@ public class LecturerAssignmentController {
 
     @PostMapping("/revoke")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public LecturerAssignment revoke(@RequestBody @NonNull Map<String, Object> body) {
+    public LecturerAssignment revoke(@RequestBody Map<String, Object> body) {
         Long assignmentId = Long.valueOf(String.valueOf(body.get("assignmentId")));
         String reason = body.get("reason") != null ? String.valueOf(body.get("reason")).trim() : null;
         LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
@@ -113,3 +113,4 @@ public class LecturerAssignmentController {
         }
     }
 }
+

@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Workspace;
@@ -9,7 +9,6 @@ import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/workspaces")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class WorkspaceController {
 
     private final WorkspaceRepository repo;
@@ -62,7 +62,7 @@ public class WorkspaceController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public Workspace create(@RequestBody @NonNull Map<String, Object> body) {
+    public Workspace create(@RequestBody Map<String, Object> body) {
         Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
         if (!scope.hasRole("ADMIN")) {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
@@ -87,7 +87,7 @@ public class WorkspaceController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public Workspace update(@PathVariable Long id, @RequestBody @NonNull Map<String, Object> body) {
+    public Workspace update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         if (w.getStatus() != null && !w.getStatus().equalsIgnoreCase("DRAFT")) {
@@ -111,7 +111,7 @@ public class WorkspaceController {
 
     @PostMapping("/{id}/transition")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public Workspace transition(@PathVariable Long id, @RequestParam @NonNull String to) {
+    public Workspace transition(@PathVariable Long id, @RequestParam String to) {
         Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         String current = normalizeStatus(w.getStatus());
@@ -194,3 +194,4 @@ public class WorkspaceController {
         }
     }
 }
+

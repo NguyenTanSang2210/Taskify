@@ -1,0 +1,27 @@
+{
+  "properties": [
+    {
+      "name": "app.seed.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable development seed data initialization.",
+      "defaultValue": false
+    },
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of allowed CORS origins for REST and WebSocket endpoints.",
+      "defaultValue": "http://localhost:5173"
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Base64-encoded JWT signing secret."
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT expiration duration in milliseconds.",
+      "defaultValue": 86400000
+    }
+  ]
+}

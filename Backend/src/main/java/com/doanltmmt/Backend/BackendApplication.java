@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -16,7 +17,12 @@ public class BackendApplication {
 
     // Tạo dữ liệu mẫu khi app khởi động
     @Bean
-    CommandLineRunner initData(DataSeeder seeder) {
-        return args -> seeder.seed();
+    CommandLineRunner initData(ObjectProvider<DataSeeder> seederProvider) {
+        return args -> {
+            DataSeeder seeder = seederProvider.getIfAvailable();
+            if (seeder != null) {
+                seeder.seed();
+            }
+        };
     }
 }

@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.service;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.Notification;
+import com.doanltmmt.Backend.entity.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,20 @@ public class EventPublisher {
         payload.put("notification", n);
         String dest = "/topic/notifications/" + n.getUser().getId();
         template.convertAndSend(dest, payload);
+    }
+
+    public void messageCreated(Message m) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "MESSAGE_CREATED");
+        payload.put("message", m);
+
+        String senderDest = "/topic/messages/" + m.getSender().getId();
+        String recipientDest = "/topic/messages/" + m.getRecipient().getId();
+
+        template.convertAndSend(senderDest, payload);
+        if (!m.getSender().getId().equals(m.getRecipient().getId())) {
+            template.convertAndSend(recipientDest, payload);
+        }
     }
 
     public void genericEvent(String type, Long id) {

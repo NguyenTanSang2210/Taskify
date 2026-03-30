@@ -15,7 +15,7 @@ import java.util.Map;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret:ZmFrZS1zZWNyZXQtbmVlZC1jaGFuZ2UtbWU=}")
+    @Value("${jwt.secret}")
     private String secretBase64;
 
     @Value("${jwt.expiration:86400000}") // 1 ngày

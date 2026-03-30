@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.Student;
@@ -16,7 +16,6 @@ import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.lang.NonNull;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/progress")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class ProgressController {
 
     private final ProgressReportRepository progressRepo;
@@ -61,8 +61,8 @@ public class ProgressController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('STUDENT')")
-    public ProgressReport create(@RequestParam @NonNull Long studentId,
-                                 @RequestParam @NonNull Long topicId,
+    public ProgressReport create(@RequestParam Long studentId,
+                                 @RequestParam Long topicId,
                                  @Valid @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
@@ -136,13 +136,13 @@ public class ProgressController {
             auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(), "Similarity >= 0.8 with previous submissions");
         }
         eventPublisher.progressCreated(saved);
-        // thông báo cho giảng viên nếu có
+        // notify lecturer when available
         if (saved.getTopic().getLecturer() != null && saved.getTopic().getLecturer().getUser() != null) {
             Notification nLecturer = new Notification();
             nLecturer.setUser(saved.getTopic().getLecturer().getUser());
             nLecturer.setType("INFO");
-            nLecturer.setTitle("Sinh viên gửi báo cáo #" + saved.getId());
-            nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
+            nLecturer.setTitle("Sinh vien gui bao cao #" + saved.getId());
+            nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gui \"" + saved.getTitle() + "\" cho de tai #" + saved.getTopic().getId());
             nLecturer.setRefType("PROGRESS_REPORT");
             nLecturer.setRefId(saved.getId());
             nLecturer.setLinkPath("/lecturer-progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
@@ -159,8 +159,8 @@ public class ProgressController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("Đã gửi báo cáo #" + saved.getId());
-        nStudent.setContent("Bạn đã gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
+        nStudent.setTitle("Da gui bao cao #" + saved.getId());
+        nStudent.setContent("Ban da gui \"" + saved.getTitle() + "\" cho de tai #" + saved.getTopic().getId());
         nStudent.setRefType("PROGRESS_REPORT");
         nStudent.setRefId(saved.getId());
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
@@ -267,9 +267,9 @@ public class ProgressController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("GV nhận xét báo cáo #" + saved.getId());
-        String msg = "Nhận xét: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
-        nStudent.setContent(msg.trim().isEmpty() ? "Báo cáo \"" + saved.getTitle() + "\" đã được cập nhật" : msg);
+        nStudent.setTitle("GV nhan xet bao cao #" + saved.getId());
+        String msg = "Nhan xet: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
+        nStudent.setContent(msg.trim().isEmpty() ? "Bao cao \"" + saved.getTitle() + "\" da duoc cap nhat" : msg);
         nStudent.setRefType("PROGRESS_REPORT");
         nStudent.setRefId(saved.getId());
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
@@ -279,3 +279,4 @@ public class ProgressController {
         return saved;
     }
 }
+

@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Workspace;
@@ -9,7 +9,6 @@ import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,6 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/workspace-classes")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class WorkspaceClassController {
 
     private final WorkspaceClassRepository repo;
@@ -38,7 +38,7 @@ public class WorkspaceClassController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public List<WorkspaceClass> list(@RequestParam @NonNull Long workspaceId) {
+    public List<WorkspaceClass> list(@RequestParam Long workspaceId) {
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         return repo.findByWorkspace_IdOrderByIdDesc(workspaceId);
@@ -46,7 +46,7 @@ public class WorkspaceClassController {
 
     @PostMapping("/assign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public WorkspaceClass assign(@RequestBody @NonNull Map<String, Object> body) {
+    public WorkspaceClass assign(@RequestBody Map<String, Object> body) {
         Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
         Long classId = Long.valueOf(String.valueOf(body.get("classId")));
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
@@ -71,7 +71,7 @@ public class WorkspaceClassController {
 
     @PostMapping("/unassign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public WorkspaceClass unassign(@RequestBody @NonNull Map<String, Object> body) {
+    public WorkspaceClass unassign(@RequestBody Map<String, Object> body) {
         Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
         Long classId = Long.valueOf(String.valueOf(body.get("classId")));
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
@@ -93,3 +93,6 @@ public class WorkspaceClassController {
         }
     }
 }
+
+
+

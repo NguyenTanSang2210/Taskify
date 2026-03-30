@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
@@ -15,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/discuss")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class DiscussionController {
 
     private final DiscussionThreadRepository threadRepo;
@@ -117,3 +118,5 @@ public class DiscussionController {
         return saved;
     }
 }
+
+

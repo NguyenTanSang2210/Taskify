@@ -20,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/announcements")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class AnnouncementController {
 
     private final AnnouncementRepository repo;

@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.Topic;
@@ -13,7 +13,6 @@ import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.lang.NonNull;
 
 import java.util.*;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/topics")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class TopicController {
 
     private final TopicRepository topicRepo;
@@ -118,7 +118,7 @@ public class TopicController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public void deleteTopic(@PathVariable @NonNull Long id,
+    public void deleteTopic(@PathVariable Long id,
                             @RequestParam(required = false) Long lecturerId) {
         Topic topic = topicRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
@@ -136,7 +136,7 @@ public class TopicController {
 
     @PostMapping("/{id}/open")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public Topic openTopic(@PathVariable @NonNull Long id,
+    public Topic openTopic(@PathVariable Long id,
                            @RequestParam(required = false) Long lecturerId) {
         Topic topic = topicRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
@@ -290,3 +290,4 @@ public class TopicController {
         }
     }
 }
+

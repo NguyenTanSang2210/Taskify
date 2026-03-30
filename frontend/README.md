@@ -1,16 +1,60 @@
-# React + Vite
+# Frontend - KTPM
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 1. Tong quan
+Frontend duoc xay dung bang React + Vite, cung cap giao dien theo vai tro:
+- ADMIN
+- DEPARTMENT_ADMIN
+- LECTURER
+- STUDENT
 
-Currently, two official plugins are available:
+Frontend ket noi backend qua REST API (`/api/*`) va realtime qua STOMP/SockJS (`/ws`).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 2. Cau truc module
+- `src/pages`: man hinh theo nghiep vu va role.
+- `src/components`: component dung lai (role guard, table, notice, ...).
+- `src/api`: adapter goi backend theo module.
+- `src/context`: quan ly auth state.
+- `src/ws`: ket noi realtime.
 
-## React Compiler
+## 3. Chay local
+Tu thu muc `frontend/`:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Mac dinh Vite chay tai `http://localhost:5173`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 4. Build va lint
+```powershell
+npm run lint
+npm run build
+npm run preview
+```
+
+## 5. Quan ly auth tren frontend
+- Luu `token` va `user` trong localStorage qua `AuthContext`.
+- Tu dong them header `Authorization: Bearer <token>` qua axios interceptor.
+- Tu dong chuyen ve trang login khi gap 401/403 (ngoai tru endpoint auth).
+
+## 6. Realtime
+Frontend subscribe cac kenh STOMP theo ngu canh:
+- Progress theo topic.
+- Registration theo topic.
+- Notification theo user.
+
+## 7. Luong nghiep vu chinh tren UI
+1. Dang nhap va phan nhanh vao dashboard theo role.
+2. Quan tri workspace/lop/phan cong (DEPARTMENT_ADMIN).
+3. Quan ly de tai + duyet dang ky (LECTURER).
+4. Dang ky de tai + nop bao cao tien do (STUDENT).
+
+## 8. Quy uoc phat trien
+- Dat ten API theo module nghiep vu (`topicApi`, `registrationApi`, ...).
+- Han che logic nghiep vu nang trong component, uu tien tach ra API/service layer.
+- Moi thay doi route can kiem tra role guard trong `App.jsx`.
+
+## 9. Tham khao
+- Tai lieu tong quan project: `../README.md`
+- Tai lieu ky thuat chi tiet: `../docs/TECHNICAL_REPORT.md`

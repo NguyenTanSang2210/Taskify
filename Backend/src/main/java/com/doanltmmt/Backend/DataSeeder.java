@@ -1,4 +1,4 @@
-package com.doanltmmt.Backend;
+﻿package com.doanltmmt.Backend;
 
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Role;
@@ -8,11 +8,16 @@ import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Profile("dev")
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
+@SuppressWarnings("null")
 public class DataSeeder {
 
     private final RoleRepository roleRepo;
@@ -47,7 +52,7 @@ public class DataSeeder {
         Department cntt = departmentRepo.findByCode("CNTT").orElseGet(() -> {
             Department d = new Department();
             d.setCode("CNTT");
-            d.setName("Công nghệ thông tin");
+            d.setName("Cong nghe thong tin");
             d.setActive(true);
             return departmentRepo.save(d);
         });
@@ -58,7 +63,7 @@ public class DataSeeder {
             User admin = new User();
             admin.setUsername("admin");
             admin.setPassword(encoder.encode("123456"));
-            admin.setFullName("Admin Hệ Thống");
+            admin.setFullName("Admin He Thong");
             admin.setEmail("admin@example.com");
             admin.setRole(adminRole);
             admin.setActive(true);
@@ -75,7 +80,7 @@ public class DataSeeder {
             User u = new User();
             u.setUsername("deptadmin");
             u.setPassword(encoder.encode("123456"));
-            u.setFullName("Quản trị khoa CNTT");
+            u.setFullName("Quan tri khoa CNTT");
             u.setEmail("deptadmin@example.com");
             u.setRole(deptAdminRole);
             u.setDepartment(cntt);
@@ -88,7 +93,7 @@ public class DataSeeder {
             User st = new User();
             st.setUsername("student");
             st.setPassword(encoder.encode("123456"));
-            st.setFullName("Sinh viên Demo");
+            st.setFullName("Sinh vien Demo");
             st.setEmail("student@example.com");
             st.setRole(studentRole);
             st.setActive(true);
@@ -107,3 +112,5 @@ public class DataSeeder {
         }
     }
 }
+
+

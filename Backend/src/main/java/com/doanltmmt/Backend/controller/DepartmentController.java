@@ -1,11 +1,10 @@
-package com.doanltmmt.Backend.controller;
+﻿package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/departments")
 @CrossOrigin(origins = "http://localhost:5173")
+@SuppressWarnings("null")
 public class DepartmentController {
 
     private final DepartmentRepository repo;
@@ -39,7 +39,7 @@ public class DepartmentController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Department create(@RequestBody @NonNull Map<String, Object> body) {
+    public Department create(@RequestBody Map<String, Object> body) {
         String code = String.valueOf(body.getOrDefault("code", "")).trim();
         String name = String.valueOf(body.getOrDefault("name", "")).trim();
         if (code.isBlank() || name.isBlank()) {
@@ -58,7 +58,7 @@ public class DepartmentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Department update(@PathVariable Long id, @RequestBody @NonNull Map<String, Object> body) {
+    public Department update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
         String code = body.get("code") != null ? String.valueOf(body.get("code")).trim() : null;
         String name = body.get("name") != null ? String.valueOf(body.get("name")).trim() : null;
@@ -80,4 +80,7 @@ public class DepartmentController {
         return saved;
     }
 }
+
+
+
 

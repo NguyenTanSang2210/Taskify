@@ -27,6 +27,10 @@ public class Message {
     @JoinColumn(name = "topic_id")
     private Topic topic; // optional: group context by topic
 
+    @ManyToOne
+    @JoinColumn(name = "workspace_id", nullable = false)
+    private Workspace workspace;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 

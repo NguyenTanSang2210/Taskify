@@ -1,5 +1,159 @@
 /* src/App.css */
 
+:root {
+  --academic-navy: #0f2742;
+  --academic-navy-soft: #17385e;
+  --academic-navy-deep: #0a1b30;
+  --academic-gold: #c8a858;
+  --academic-gold-soft: #e4d6b1;
+  --academic-paper: #f4f1ea;
+  --academic-ink: #1f2b3d;
+  --academic-border: #d8d1c2;
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at 15% 8%, rgba(200, 168, 88, 0.16), transparent 26%),
+    radial-gradient(circle at 80% 5%, rgba(23, 56, 94, 0.14), transparent 30%),
+    linear-gradient(180deg, #f7f3ea 0%, #f0ece2 60%, #efe9dc 100%);
+}
+
+.app-sidebar {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(200, 168, 88, 0.18), transparent 35%),
+    linear-gradient(180deg, var(--academic-navy) 0%, var(--academic-navy-soft) 62%, var(--academic-navy-deep) 100%);
+  color: #f4f4f4;
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.app-brand-wrap {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.app-brand-content {
+  min-width: 0;
+}
+
+.app-brand-content-collapsed {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.app-brand-content-collapsed .app-brand-title {
+  margin: 0;
+}
+
+.app-brand-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.app-brand-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.16);
+  padding: 2px;
+}
+
+.app-brand-subtitle {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba(244, 244, 244, 0.68);
+}
+
+.app-collapse-btn {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.app-menu-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(244, 244, 244, 0.62);
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+.app-sidebar .nav-link {
+  border-radius: 0.8rem;
+  margin-bottom: 0.2rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.app-sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.app-sidebar .nav-link.active {
+  background: linear-gradient(90deg, rgba(200, 168, 88, 0.9), rgba(200, 168, 88, 0.78));
+  color: #10253e !important;
+  font-weight: 700;
+}
+
+.app-main {
+  padding: 1rem;
+}
+
+.app-topbar {
+  border: 1px solid var(--academic-border);
+  border-radius: 16px;
+  background: linear-gradient(95deg, rgba(15, 39, 66, 0.95) 0%, rgba(27, 61, 97, 0.92) 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(15, 39, 66, 0.18);
+  margin-bottom: 1rem;
+}
+
+.app-topbar-title {
+  font-size: 1.04rem;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.app-topbar-subtitle {
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.app-topbar .btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #fff;
+}
+
+.app-topbar .btn-outline-light:hover {
+  border-color: #fff;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.app-topbar .badge.text-bg-light {
+  color: var(--academic-navy);
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+@media (max-width: 992px) {
+  .app-main {
+    padding: 0.6rem;
+  }
+
+  .app-topbar {
+    border-radius: 12px;
+  }
+
+  .app-topbar-title {
+    font-size: 0.96rem;
+  }
+
+  .app-topbar-subtitle {
+    font-size: 0.76rem;
+  }
+}
+
 .app-wrapper {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -409,5 +563,149 @@
   .login-right-panel {
     flex: 1;
     padding: 30px 20px;
+  }
+}
+
+/* --- ACADEMIC IDENTITY DETAIL PASS (non-functional visual layer) --- */
+.app-main > * {
+  animation: contentFadeIn 220ms ease;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0.6rem;
+  z-index: 9;
+}
+
+.container,
+.container-fluid {
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(216, 209, 194, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(15, 39, 66, 0.08);
+}
+
+.card {
+  border: 1px solid rgba(216, 209, 194, 0.9);
+  border-radius: 14px;
+  box-shadow: 0 6px 14px rgba(15, 39, 66, 0.06);
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(216, 209, 194, 0.9);
+  background: linear-gradient(180deg, #ffffff 0%, #f8f5ee 100%);
+}
+
+.table {
+  --bs-table-bg: transparent;
+}
+
+.table > thead {
+  background: linear-gradient(180deg, #f8f5ee 0%, #efe9dc 100%);
+}
+
+.table > :not(caption) > * > * {
+  border-bottom-color: rgba(216, 209, 194, 0.8);
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, var(--academic-navy) 0%, var(--academic-navy-soft) 100%);
+  border-color: var(--academic-navy);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: linear-gradient(90deg, #122f50 0%, #1c446f 100%);
+  border-color: #122f50;
+}
+
+.btn-outline-primary {
+  color: var(--academic-navy);
+  border-color: rgba(15, 39, 66, 0.45);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  color: #fff;
+  background: var(--academic-navy);
+  border-color: var(--academic-navy);
+}
+
+.form-control,
+.form-select {
+  border-color: #d7cfbe;
+  background-color: #fffefb;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(15, 39, 66, 0.55);
+  box-shadow: 0 0 0 0.2rem rgba(15, 39, 66, 0.12);
+}
+
+.badge.bg-info {
+  background-color: #2b6c93 !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--academic-gold-soft) !important;
+}
+
+#chat .card-header {
+  background: linear-gradient(90deg, rgba(200, 168, 88, 0.18), rgba(255, 255, 255, 0.96));
+}
+
+.login-page-container {
+  font-family: "Source Sans 3", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-left-panel {
+  background: linear-gradient(140deg, var(--academic-navy) 0%, #204a74 100%);
+}
+
+.login-title {
+  color: var(--academic-navy);
+}
+
+.form-control-lg-custom:focus {
+  border-color: rgba(15, 39, 66, 0.6);
+  box-shadow: 0 0 0 0.25rem rgba(15, 39, 66, 0.12);
+}
+
+.btn-login-custom {
+  background: linear-gradient(90deg, var(--academic-navy) 0%, #1d456f 100%);
+  border-color: var(--academic-navy);
+}
+
+.btn-login-custom:hover {
+  background: linear-gradient(90deg, #112f50 0%, #1a3e66 100%);
+  border-color: #112f50;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-main > * {
+    animation: none;
+  }
+}
+
+@media (max-width: 992px) {
+  .container,
+  .container-fluid {
+    border-radius: 12px;
+  }
+
+  .app-sidebar {
+    width: 76px !important;
   }
 }

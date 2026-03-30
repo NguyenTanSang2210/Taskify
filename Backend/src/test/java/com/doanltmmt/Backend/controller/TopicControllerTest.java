@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@SuppressWarnings({"removal", "unchecked", "null"})
 public class TopicControllerTest {
 
     @Autowired

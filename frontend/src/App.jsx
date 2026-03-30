@@ -1,6 +1,6 @@
 // src/App.jsx
 import "./App.css";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, NavLink, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import StudentTopicsPage from "./pages/StudentTopicPage";
@@ -18,6 +18,7 @@ import DepartmentAdminPage from "./pages/DepartmentAdminPage";
 import ProfilePage from "./pages/ProfilePage";
 import DashboardPage from "./pages/DashboardPage";
 import ProjectSpacePage from "./pages/ProjectSpacePage";
+import ProjectChatPage from "./pages/ProjectChatPage";
 import StudentProgressDetailPage from "./pages/StudentProgressDetailPage";
 
 export default function App() {
@@ -33,6 +34,14 @@ export default function App() {
 
   const roleName = typeof user?.role === "object" && user?.role ? user.role.name : user?.role;
   const isDepartmentAdmin = roleName === "DEPARTMENT_ADMIN";
+  const mainMarginLeft = collapsed ? 76 : 284;
+  const portalTitle = useMemo(() => {
+    if (roleName === "STUDENT") return "Cổng học tập sinh viên";
+    if (roleName === "LECTURER") return "Cổng học thuật giảng viên";
+    if (isDepartmentAdmin) return "Cổng điều phối khoa";
+    if (roleName === "ADMIN") return "Cổng quản trị hệ thống";
+    return "Cổng học thuật";
+  }, [roleName, isDepartmentAdmin]);
 
   const handleLogout = () => {
     logout();
@@ -52,31 +61,33 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="d-flex" style={{ minHeight: "100vh" }}>
+      <div className="app-shell d-flex" style={{ minHeight: "100vh" }}>
         <aside
-          className="bg-dark text-light d-flex flex-column p-3"
+          className="app-sidebar d-flex flex-column p-3"
           style={{
-            width: collapsed ? 64 : 240,
+            width: collapsed ? 76 : 284,
             position: "fixed",
             top: 0,
             bottom: 0,
             overflowY: "auto",
           }}
         >
-          <div className="d-flex align-items-center mb-3">
+          <div className="d-flex align-items-center mb-3 app-brand-wrap">
             <button
-              className="btn btn-outline-light btn-sm me-2"
+              className="btn btn-outline-light btn-sm me-2 app-collapse-btn"
               onClick={() => setCollapsed((c) => !c)}
               aria-label="Toggle sidebar"
               title="Thu gọn"
             >
               <i className="bi bi-list" />
             </button>
-            {!collapsed && (
-              <Link className="fw-bold text-decoration-none text-light" to="/">
-                Đề tài LTMMT
+            <div className={`app-brand-content ${collapsed ? "app-brand-content-collapsed" : ""}`}>
+              <Link className="fw-bold text-decoration-none text-light app-brand-title" to="/">
+                <img src="/logo2.png" alt="Taskify logo" className="app-brand-logo" />
+                {!collapsed && <span>Taskify</span>}
               </Link>
-            )}
+              {!collapsed && <div className="app-brand-subtitle">Academic Task Workspace</div>}
+            </div>
           </div>
           {/* --- COMMON --- */}
           <ul className="nav nav-pills flex-column mb-3">
@@ -96,7 +107,7 @@ export default function App() {
           {/* --- STUDENT --- */}
           {roleName === "STUDENT" && (
             <>
-              {!collapsed && <div className="small text-muted fw-bold mb-2">Sinh viên</div>}
+              {!collapsed && <div className="app-menu-label">Sinh viên</div>}
               <ul className="nav nav-pills flex-column mb-3">
                 <li className="nav-item">
                   <NavLink
@@ -131,6 +142,17 @@ export default function App() {
                     {!collapsed && <span>Không gian làm việc</span>}
                   </NavLink>
                 </li>
+                <li className="nav-item">
+                  <NavLink
+                    to="/project-chat"
+                    className={({ isActive }) =>
+                      `nav-link d-flex align-items-center ${isActive ? "active bg-secondary text-light" : "text-light"}`
+                    }
+                  >
+                    <i className="bi bi-chat-dots me-2" />
+                    {!collapsed && <span>Trao đổi học thuật</span>}
+                  </NavLink>
+                </li>
               </ul>
             </>
           )}
@@ -138,7 +160,7 @@ export default function App() {
           {/* --- LECTURER --- */}
           {roleName === "LECTURER" && (
             <>
-              {!collapsed && <div className="small text-muted fw-bold mb-2">Giảng viên</div>}
+              {!collapsed && <div className="app-menu-label">Giảng viên</div>}
               <ul className="nav nav-pills flex-column mb-3">
                 <li className="nav-item">
                   <NavLink
@@ -173,6 +195,17 @@ export default function App() {
                     {!collapsed && <span>Không gian làm việc</span>}
                   </NavLink>
                 </li>
+                <li className="nav-item">
+                  <NavLink
+                    to="/project-chat"
+                    className={({ isActive }) =>
+                      `nav-link d-flex align-items-center ${isActive ? "active bg-secondary text-light" : "text-light"}`
+                    }
+                  >
+                    <i className="bi bi-chat-dots me-2" />
+                    {!collapsed && <span>Kênh trao đổi</span>}
+                  </NavLink>
+                </li>
               </ul>
             </>
           )}
@@ -180,7 +213,7 @@ export default function App() {
           {/* --- ADMIN --- */}
           {roleName === "ADMIN" && (
             <>
-              {!collapsed && <div className="small text-muted fw-bold mb-2">Quản trị</div>}
+              {!collapsed && <div className="app-menu-label">Quản trị</div>}
               <ul className="nav nav-pills flex-column mb-3">
                 <li className="nav-item">
                   <NavLink
@@ -200,7 +233,7 @@ export default function App() {
           {/* --- DEPARTMENT ADMIN --- */}
           {isDepartmentAdmin && (
             <>
-              {!collapsed && <div className="small text-muted fw-bold mb-2">Quản trị khoa</div>}
+              {!collapsed && <div className="app-menu-label">Quản trị khoa</div>}
               <ul className="nav nav-pills flex-column mb-3">
                 <li className="nav-item">
                   <NavLink
@@ -218,7 +251,7 @@ export default function App() {
           )}
 
           <div className="mt-auto">
-             {!collapsed && <div className="small text-muted fw-bold mb-2">Cá nhân</div>}
+             {!collapsed && <div className="app-menu-label">Cá nhân</div>}
              <ul className="nav nav-pills flex-column">
                <li className="nav-item">
                   <NavLink
@@ -240,7 +273,17 @@ export default function App() {
              </ul>
           </div>
         </aside>
-        <main className="flex-grow-1" style={{ marginLeft: collapsed ? 64 : 240 }}>
+        <main className="flex-grow-1 app-main" style={{ marginLeft: mainMarginLeft }}>
+          <div className="app-topbar d-flex justify-content-between align-items-center px-3 px-md-4 py-3">
+            <div>
+              <div className="app-topbar-title">{portalTitle}</div>
+              <div className="app-topbar-subtitle">Hệ thống quản lý đề tài và công việc nhóm</div>
+            </div>
+            <div className="d-flex align-items-center gap-3">
+              <NotificationsBell />
+              <span className="badge rounded-pill text-bg-light border">{roleName}</span>
+            </div>
+          </div>
           <Routes>
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="/" element={roleName === "ADMIN" || roleName === "LECTURER" || isDepartmentAdmin ? <DashboardPage /> : <StudentTopicsPage />} />
@@ -312,8 +355,16 @@ export default function App() {
             <Route
               path="/project-space"
               element={
-                <RequireRole role={roleName || "STUDENT"}>
+                <RequireRole role={["STUDENT", "LECTURER"]}>
                   <ProjectSpacePage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/project-chat"
+              element={
+                <RequireRole role={["STUDENT", "LECTURER"]}>
+                  <ProjectChatPage />
                 </RequireRole>
               }
             />
