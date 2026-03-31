@@ -83,7 +83,7 @@ export default function App() {
             </button>
             <div className={`app-brand-content ${collapsed ? "app-brand-content-collapsed" : ""}`}>
               <Link className="fw-bold text-decoration-none text-light app-brand-title" to="/">
-                <img src="/logo2.png" alt="Taskify logo" className="app-brand-logo" />
+                <img src="/icon.png" alt="Taskify icon" className="app-brand-logo" />
                 {!collapsed && <span>Taskify</span>}
               </Link>
               {!collapsed && <div className="app-brand-subtitle">Academic Task Workspace</div>}

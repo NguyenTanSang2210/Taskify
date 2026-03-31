@@ -9,11 +9,15 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +26,8 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:5173")
 @SuppressWarnings("null")
 public class MessageController {
+
+    private static final Logger log = LoggerFactory.getLogger(MessageController.class);
 
     private final MessageRepository repo;
     private final UserRepository userRepo;
@@ -46,10 +52,33 @@ public class MessageController {
 
     @GetMapping("/inbox")
     @PreAuthorize("isAuthenticated()")
-    public List<Message> inbox() {
+    public List<Map<String, Object>> inbox() {
         String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         User me = userRepo.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        return repo.findBySender_IdOrRecipient_IdOrderByCreatedAtDesc(me.getId(), me.getId());
+        try {
+            List<MessageRepository.InboxRow> rows = repo.findInboxRowsByUserId(me.getId());
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (MessageRepository.InboxRow row : rows) {
+                Map<String, Object> sender = new HashMap<>();
+                sender.put("id", row.getSenderId());
+                sender.put("fullName", row.getSenderName());
+
+                Map<String, Object> recipient = new HashMap<>();
+                recipient.put("id", row.getRecipientId());
+
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", row.getId());
+                item.put("sender", sender);
+                item.put("recipient", recipient);
+                item.put("content", row.getContent());
+                item.put("createdAt", row.getCreatedAt());
+                result.add(item);
+            }
+            return result;
+        } catch (RuntimeException ex) {
+            log.warn("Failed to load inbox for user {}. Returning empty list. Cause: {}", me.getId(), ex.getMessage());
+            return List.of();
+        }
     }
 
     @PostMapping("/send")

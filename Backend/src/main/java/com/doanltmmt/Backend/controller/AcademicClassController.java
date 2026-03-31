@@ -1,4 +1,4 @@
-﻿package com.doanltmmt.Backend.controller;
+package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;

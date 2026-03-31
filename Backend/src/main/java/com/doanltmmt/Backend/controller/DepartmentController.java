@@ -1,4 +1,4 @@
-﻿package com.doanltmmt.Backend.controller;
+package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.repository.DepartmentRepository;

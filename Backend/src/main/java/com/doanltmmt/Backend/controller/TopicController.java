@@ -1,4 +1,4 @@
-﻿package com.doanltmmt.Backend.controller;
+package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.Topic;

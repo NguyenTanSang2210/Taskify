@@ -1,124 +1,123 @@
 # KTPM - He thong quan ly de tai va cong viec nhom
 
-## 1. Gioi thieu
-Day la he thong ho tro quan ly de tai hoc thuat va cong viec nhom theo vai tro:
+## 1. Tong quan du an
+KTPM la he thong web ho tro quan ly de tai hoc thuat va cong viec nhom theo 4 vai tro:
 - ADMIN
 - DEPARTMENT_ADMIN
 - LECTURER
 - STUDENT
 
-He thong tap trung vao 4 nhom chuc nang:
-- Quan ly workspace theo vong doi.
-- Quan ly de tai va dang ky de tai.
-- Theo doi tien do, milestone, nhan xet giang vien.
-- Cong tac nhom realtime (thong bao, thao luan, tin nhan).
+He thong gom 2 khoi chinh:
+- Backend (`Backend/`): REST API + WebSocket + xu ly nghiep vu + phan quyen.
+- Frontend (`frontend/`): giao dien nguoi dung theo role, ket noi API realtime.
 
-## 2. Kien truc tong quan
-- Backend: Spring Boot 3.4.12, Java 21, Spring Security + JWT, Spring Data JPA, WebSocket STOMP/SockJS, MySQL.
-- Frontend: React 19 + Vite, React Router, Axios, Bootstrap.
+Tai lieu module chi tiet:
+- Backend: `Backend/README.md`
+- Frontend: `frontend/README.md`
 
-So do luong co ban:
-1. Frontend gui request den backend qua REST API /api/*.
-2. Backend xac thuc bang JWT va phan quyen theo role.
-3. Cac su kien nghiep vu duoc day realtime qua STOMP endpoint /ws.
+## 2. Cach he thong hoat dong
+Luong tong quat:
+1. Nguoi dung dang nhap tren frontend.
+2. Frontend goi `POST /api/auth/login`, nhan JWT.
+3. Frontend gan JWT vao header `Authorization: Bearer <token>` cho cac request tiep theo.
+4. Backend xac thuc JWT va phan quyen theo role.
+5. Du lieu nghiep vu duoc luu trong MySQL.
+6. Su kien thong bao/tien do/thao luan duoc day realtime qua endpoint `/ws`.
 
 ## 3. Cau truc thu muc
-```
+```text
 KTPM/
-  Backend/        # Spring Boot API + WebSocket
-  frontend/       # React Vite UI
-  docs/           # Tai lieu ky thuat phuc vu bao cao
+  Backend/                 # Spring Boot API + WebSocket
+  frontend/                # React + Vite UI
+  docs/                    # Tai lieu ky thuat
+  scripts/                 # Script chay nhanh
+  docker-compose.yml       # Chay full stack bang Docker
+  .env.docker.example      # Mau bien moi truong cho Docker
 ```
 
-## 4. Chuc nang chinh theo vai tro
-### ADMIN
-- Quan tri nguoi dung, role, trang thai tai khoan.
-- Quan sat dashboard tong quan.
-
-### DEPARTMENT_ADMIN
-- Tao workspace, chuyen trang thai workspace.
-- Quan ly lop hoc thuat, gan lop vao workspace.
-- Phan cong giang vien vao workspace.
-
-### LECTURER
-- Tao/cap nhat/trang thai de tai.
-- Duyet, tu choi, cham diem dang ky de tai.
-- Nhan xet tien do sinh vien.
-
-### STUDENT
-- Dang ky de tai.
-- Nop bao cao tien do theo de tai/milestone.
-- Nhan thong bao va cap nhat realtime.
-
-## 5. Chuan bao mat cau hinh
-Backend da duoc tach profile va cau hinh theo bien moi truong:
-- `application.properties`: cau hinh chung.
-- `application-dev.properties`: profile local development.
-- `application-prod.properties`: profile production.
-- `Backend/.env.example`: mau bien moi truong.
-
-Luu y:
-- Khong commit file `.env` that.
-- Khong hardcode secret DB/JWT/mail trong source.
-- Seed du lieu demo chi chay khi profile `dev` va bat co `APP_SEED_ENABLED=true`.
-
-## 6. Huong dan cai dat va chay
-### 6.1. Yeu cau
+## 4. Yeu cau moi truong (chay local khong Docker)
 - Java 21
-- Maven Wrapper (da co trong repo)
-- Node.js 20+ (khuyen nghi LTS)
+- Node.js 20+
 - MySQL 8+
 
-### 6.2. Backend
-Tu thu muc `Backend/`:
+Luu y dong bo giua cac may:
+- Dung `mvnw`/`mvnw.cmd` (Maven Wrapper), khong phu thuoc Maven global.
+- Dung `npm ci` de cai dung version theo `package-lock.json`.
+- Khong commit `.env` that, chi commit file mau `.env.example`.
 
-1. Tao bien moi truong theo mau trong `Backend/.env.example`.
-2. Chay:
+## 5. Chay du an
+
+### Cach 1: Docker Compose (khuyen nghi)
+Tu thu muc goc `KTPM/`:
+
 ```powershell
+# Tao file bien moi truong tu file mau
+Copy-Item .env.docker.example .env
+
+# Build va chay toan bo stack
+docker compose up --build -d
+```
+
+Mac dinh theo file mau:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8081/api`
+- MySQL: `localhost:3307`
+
+Neu trung cong, sua cac bien trong `.env`:
+- `FRONTEND_HOST_PORT`
+- `BACKEND_HOST_PORT`
+- `MYSQL_HOST_PORT`
+
+Lenh quan ly:
+```powershell
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f db
+docker compose down
+docker compose down -v
+```
+
+### Cach 2: Chay local tung phan
+
+Backend:
+```powershell
+cd Backend
 .\mvnw.cmd spring-boot:run
+```
+
+Frontend:
+```powershell
+cd frontend
+npm ci
+npm run dev
 ```
 
 Kiem tra nhanh:
 ```powershell
+cd Backend
 .\mvnw.cmd -q -DskipTests test-compile
 .\mvnw.cmd -q test
+
+cd ..\frontend
+npm run build
 ```
 
-### 6.3. Frontend
-Tu thu muc `frontend/`:
-
-```powershell
-npm install
-npm run dev
-```
-
-Mac dinh frontend chay tai `http://localhost:5173`.
-
-### 6.4. Script nhanh cho demo
+### Script nhanh co san
 Tu thu muc goc `KTPM/`:
-
 ```powershell
-# Kiem tra toan bo backend + frontend truoc demo
 .\scripts\pre-demo-check.ps1
-
-# Chay backend
 .\scripts\run-backend.ps1
-
-# Chay frontend
 .\scripts\run-frontend.ps1
 ```
 
-## 7. Tai lieu ky thuat
-- Tai lieu bao cao chi tiet: `docs/TECHNICAL_REPORT.md`.
-- Huong dan frontend module: `frontend/README.md`.
+## 6. Chuc nang nghiep vu chinh
+- Quan ly workspace theo vong doi hoc ky.
+- Quan ly de tai va dang ky de tai.
+- Theo doi milestone, bao cao tien do.
+- Thao luan nhom, tin nhan va thong bao realtime.
 
-## 8. Kiem thu nhanh truoc demo
-1. Backend compile + test pass.
-2. Frontend build pass (`npm run build`).
-3. Login theo cac vai tro hoat dong.
-4. Dang ky de tai, cap nhat tien do, thong bao realtime hoat dong.
-
-## 9. Gioi han hien tai
-- Chua co pipeline CI/CD day du.
-- Chua tich hop bo do bao phu test (coverage gate) vao quy trinh release.
-- README hien mo ta local deployment, chua mo ta cloud deployment chi tiet.
+## 7. Tham khao
+- `Backend/README.md`
+- `frontend/README.md`
+- `docs/TECHNICAL_REPORT.md`

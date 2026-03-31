@@ -1,4 +1,4 @@
-﻿package com.doanltmmt.Backend;
+package com.doanltmmt.Backend;
 
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Role;

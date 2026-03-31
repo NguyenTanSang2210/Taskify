@@ -118,33 +118,24 @@ export default function LoginPage() {
     }
   };
 
-  const renderLeftPanel = () => (
-    <div className="login-left-panel">
-      <div className="brand-logo">
-        <i className="bi bi-mortarboard-fill" style={{ fontSize: '2.5rem', color: '#ffcc00' }}></i>
-        <span>HUTECH eLearning</span>
-      </div>
-      <div className="brand-slogan">
-        Bắt đầu học<br />
-        với HUTECH<br />
-        eLearning
-      </div>
-     
-    </div>
-  );
-
   const renderLoginForm = () => (
     <div className="login-form-wrapper">
+      <div className="login-brand-inline">
+        <img src="/icon.png" alt="Taskify icon" className="login-brand-inline-icon" />
+        <div>
+          <div className="login-brand-inline-title">Taskify</div>
+        </div>
+      </div>
       <h3 className="login-title">Đăng nhập</h3>
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
       {error && <div className="alert alert-danger">{error}</div>}
       
-      <form onSubmit={otpRequired ? handleVerifyOtp : handleLoginSubmit}>
+      <form className="login-uiv-form" onSubmit={otpRequired ? handleVerifyOtp : handleLoginSubmit}>
         {!otpRequired ? (
           <>
             <div className="form-floating-custom">
               <input
-                className="form-control form-control-lg-custom"
+                className="form-control form-control-lg-custom login-uiv-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Tên đăng nhập hoặc Email"
@@ -154,19 +145,19 @@ export default function LoginPage() {
             <div className="form-floating-custom">
               <input
                 type="password"
-                className="form-control form-control-lg-custom"
+                className="form-control form-control-lg-custom login-uiv-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mật khẩu"
               />
             </div>
             
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-4 login-meta-row">
                <div className="form-check">
                   <input className="form-check-input" type="checkbox" id="rememberMe" />
                   <label className="form-check-label text-muted" htmlFor="rememberMe">Ghi nhớ đăng nhập</label>
                </div>
-               <a href="#" className="text-decoration-none" style={{ color: '#d32f2f' }}>Quên mật khẩu?</a>
+              <button type="button" className="btn btn-link p-0 text-decoration-none login-link-btn">Quên mật khẩu?</button>
             </div>
 
             <button className="btn btn-login-custom mb-3" disabled={loading} type="submit">
@@ -177,24 +168,22 @@ export default function LoginPage() {
               <span>Hoặc đăng nhập với</span>
             </div>
 
-            <div className="row g-2">
-               <div className="col-6">
-                 <button type="button" className="social-login-btn social-login-apple">
-                   <i className="bi bi-apple"></i> Apple
-                 </button>
-               </div>
-               <div className="col-6">
-                 <button type="button" className="social-login-btn" style={{ color: '#ea4335', borderColor: '#ddd' }}>
-                   <i className="bi bi-google"></i> Google
-                 </button>
-               </div>
+            <div className="social-account-container">
+              <span className="social-title">Đăng nhập nhanh</span>
+              <div className="social-accounts">
+                <button type="button" className="social-circle-btn social-login-apple" aria-label="Login with Apple">
+                  <i className="bi bi-apple"></i>
+                </button>
+                <button type="button" className="social-circle-btn social-login-google" aria-label="Login with Google">
+                  <i className="bi bi-google"></i>
+                </button>
+              </div>
             </div>
 
             <div className="text-center mt-4">
                <span className="text-muted">Chưa có tài khoản? </span>
                <button 
-                  className="btn btn-link p-0 text-decoration-none fw-bold" 
-                  style={{ color: '#003366' }}
+                  className="btn btn-link p-0 text-decoration-none fw-bold login-switch-link"
                   type="button" 
                   onClick={() => setIsRegistering(true)}
                 >
@@ -229,13 +218,20 @@ export default function LoginPage() {
 
   const renderRegisterForm = () => (
     <div className="login-form-wrapper">
+      <div className="login-brand-inline">
+        <img src="/icon.png" alt="Taskify icon" className="login-brand-inline-icon" />
+        <div>
+          <div className="login-brand-inline-title">Taskify</div>
+          <div className="login-brand-inline-subtitle">Academic Task Workspace</div>
+        </div>
+      </div>
       <h3 className="login-title">Đăng ký sinh viên</h3>
       {error && <div className="alert alert-danger">{error}</div>}
       
-      <form onSubmit={handleRegisterSubmit}>
+      <form className="login-uiv-form" onSubmit={handleRegisterSubmit}>
         <div className="form-floating-custom">
           <input
-            className="form-control form-control-lg-custom"
+            className="form-control form-control-lg-custom login-uiv-input"
             value={regFullName}
             onChange={(e) => setRegFullName(e.target.value)}
             placeholder="Họ và tên"
@@ -245,7 +241,7 @@ export default function LoginPage() {
 
         <div className="form-floating-custom">
           <input
-            className="form-control form-control-lg-custom"
+            className="form-control form-control-lg-custom login-uiv-input"
             value={regUsername}
             onChange={(e) => setRegUsername(e.target.value)}
             placeholder="Tên đăng nhập / MSSV"
@@ -256,7 +252,7 @@ export default function LoginPage() {
         <div className="form-floating-custom">
           <input
             type="password"
-            className="form-control form-control-lg-custom"
+            className="form-control form-control-lg-custom login-uiv-input"
             value={regPassword}
             onChange={(e) => setRegPassword(e.target.value)}
             placeholder="Mật khẩu"
@@ -267,7 +263,7 @@ export default function LoginPage() {
         <div className="form-floating-custom">
           <input
             type="password"
-            className="form-control form-control-lg-custom"
+            className="form-control form-control-lg-custom login-uiv-input"
             value={regConfirmPassword}
             onChange={(e) => setRegConfirmPassword(e.target.value)}
             placeholder="Xác nhận mật khẩu"
@@ -282,8 +278,7 @@ export default function LoginPage() {
         <div className="text-center mt-3">
            <span className="text-muted">Đã có tài khoản? </span>
            <button 
-              className="btn btn-link p-0 text-decoration-none fw-bold" 
-              style={{ color: '#003366' }}
+              className="btn btn-link p-0 text-decoration-none fw-bold login-switch-link"
               type="button" 
               onClick={() => setIsRegistering(false)}
             >
@@ -296,7 +291,6 @@ export default function LoginPage() {
 
   return (
     <div className="login-page-container">
-      {renderLeftPanel()}
       <div className="login-right-panel">
          {isRegistering ? renderRegisterForm() : renderLoginForm()}
       </div>
