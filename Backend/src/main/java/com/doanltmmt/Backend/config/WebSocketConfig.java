@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final String[] allowedOrigins;
 
     public WebSocketConfig(WebSocketAuthChannelInterceptor wsAuthInterceptor,
-                           @Value("${app.cors.allowed-origins:http://localhost:5173}") String allowedOrigins) {
+                           @Value("${app.cors.allowed-origins:http://localhost:5175}") String allowedOrigins) {
         this.wsAuthInterceptor = wsAuthInterceptor;
         this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)

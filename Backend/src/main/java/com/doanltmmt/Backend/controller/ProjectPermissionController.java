@@ -16,7 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/permissions")
-@CrossOrigin(origins = "http://localhost:5173")
+
 @SuppressWarnings("null")
 public class ProjectPermissionController {
 

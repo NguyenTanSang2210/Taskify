@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bảng điều khiển Admin | EduProject Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "inverse-primary": "#b3cdfd",
+                "surface": "#f7fafc",
+                "on-secondary-fixed": "#354052",
+                "error-dim": "#4e0309",
+                "surface-bright": "#f7fafc",
+                "surface-container": "#e7eff3",
+                "on-primary": "#f6f7ff",
+                "primary-fixed-dim": "#bfd5ff",
+                "secondary": "#546073",
+                "on-tertiary-fixed-variant": "#54546f",
+                "on-background": "#283439",
+                "inverse-surface": "#0b0f10",
+                "tertiary-dim": "#51516c",
+                "on-error": "#fff7f6",
+                "outline-variant": "#a7b4ba",
+                "tertiary-container": "#d9d7f8",
+                "background": "#f7fafc",
+                "on-tertiary-container": "#4a4a65",
+                "surface-variant": "#d7e5eb",
+                "on-error-container": "#752121",
+                "surface-container-lowest": "#ffffff",
+                "on-secondary-container": "#475265",
+                "outline": "#707d82",
+                "on-secondary": "#f8f8ff",
+                "error-container": "#fe8983",
+                "on-primary-container": "#38527b",
+                "surface-dim": "#ccdde4",
+                "secondary-fixed-dim": "#cad5ec",
+                "surface-tint": "#455f88",
+                "secondary-dim": "#495467",
+                "on-primary-fixed-variant": "#425c85",
+                "error": "#9f403d",
+                "on-surface": "#283439",
+                "inverse-on-surface": "#9a9d9f",
+                "tertiary": "#5d5d78",
+                "on-tertiary": "#fbf7ff",
+                "on-surface-variant": "#546166",
+                "secondary-fixed": "#d8e3fa",
+                "tertiary-fixed": "#d9d7f8",
+                "primary": "#455f88",
+                "tertiary-fixed-dim": "#cbc9e9",
+                "primary-fixed": "#d6e3ff",
+                "secondary-container": "#d8e3fa",
+                "primary-container": "#d6e3ff",
+                "surface-container-highest": "#d7e5eb",
+                "on-tertiary-fixed": "#373851",
+                "on-secondary-fixed-variant": "#515c6f",
+                "surface-container-low": "#eff4f7",
+                "on-primary-fixed": "#254067",
+                "surface-container-high": "#dfeaef"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.5rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "fontFamily": {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d7e5eb; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #707d82; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#eff4f7] flex flex-col p-4 gap-2 z-50">
+<div class="mb-8 px-4 py-2">
+<h1 class="text-xl font-black text-[#455f88]">EduProject Pro</h1>
+<p class="text-[10px] uppercase tracking-widest text-[#5d5d78] font-bold opacity-70">Kiến trúc học thuật</p>
+</div>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] opacity-80 hover:bg-white/50 hover:text-[#455f88] transition-transform translate-x-1 rounded-lg font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Bảng điều khiển</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] opacity-80 hover:bg-white/50 hover:text-[#455f88] transition-transform translate-x-1 rounded-lg font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span>Đề tài</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] opacity-80 hover:bg-white/50 hover:text-[#455f88] transition-transform translate-x-1 rounded-lg font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined">architecture</span>
+<span>Không gian làm việc</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white text-[#455f88] rounded-lg shadow-sm font-bold font-['Inter'] text-sm" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Quản trị</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant/10">
+<div class="flex items-center gap-3 px-2">
+<img alt="Giảng viên" class="w-10 h-10 rounded-full bg-surface-container" data-alt="close-up portrait of a professional male professor in academic attire with soft lighting in an office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmORXc7MQv-5MPzBE9MS-RbzDSaw8DNFiJPr9IgzitrYoALCZjrssEWU556KK5rt8TfgFcO3YmSoqSAbKAy8LC_YBYST62v9MsxJHe4X0TrRag8ov4hVfoSJKuKAs7AquyrHddzF3iCqT356QA0rL3hp5SoCTAUwTL_h97NBlFlqh4wlSwxWIPa-8vDmTbMhBK1epALrR0CM6UZL4bjqB_8yn45T9RW8JjZL8xtAOGLLpTpGJSKw1Gu96coKPqSjA5gMU7GgxMfS_-"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">TS. Alexander Thorne</p>
+<p class="text-[10px] text-outline truncate">Giảng viên cao cấp</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-64 right-0 z-40 bg-[#f7fafc] text-[#283439] flex justify-between items-center px-6 py-3 border-b border-surface-container-low">
+<div class="flex items-center gap-6">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg py-1.5 pl-10 pr-4 text-xs focus:ring-2 focus:ring-primary/20" placeholder="Tìm kiếm dự án..." type="text"/>
+</div>
+<nav class="hidden md:flex gap-6 text-sm font-semibold font-['Inter']">
+<a class="text-[#455f88] border-b-2 border-[#455f88] pb-1" href="#">Tổng quan</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-colors pb-1" href="#">Đề tài của tôi</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-colors pb-1" href="#">Phê duyệt</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-colors pb-1" href="#">Theo dõi tiến độ</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-colors pb-1" href="#">Thống kê điểm</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-outline hover:bg-[#e7eff3] rounded-lg transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Dashboard Content -->
+<section class="mt-16 p-8 flex flex-col gap-8">
+<!-- Bento Grid Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.04)] flex flex-col gap-1 border-l-4 border-primary">
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline">Đề tài đã duyệt</span>
+<div class="flex items-end justify-between">
+<span class="text-3xl font-extrabold text-on-surface">142</span>
+<span class="text-xs font-bold text-primary bg-primary-container/30 px-2 py-0.5 rounded-full">+12%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.04)] flex flex-col gap-1 border-l-4 border-tertiary">
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline">Đăng ký đang chờ</span>
+<div class="flex items-end justify-between">
+<span class="text-3xl font-extrabold text-on-surface">28</span>
+<span class="material-symbols-outlined text-tertiary">hourglass_empty</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.04)] flex flex-col gap-1 border-l-4 border-error">
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline">Bài nộp mới</span>
+<div class="flex items-end justify-between">
+<span class="text-3xl font-extrabold text-on-surface">09</span>
+<div class="flex -space-x-2">
+<img alt="sinh viên 1" class="w-6 h-6 rounded-full border-2 border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuJNcnKwd5xBKsZsgnoC9D_HONuIix_XbVcFKsiNh-hnNtM5_JpBHWhTxlTUcg5qJxjwvwCD23F3Qdm5xXcFgpyGDBGXB0It3uiIQ_T31wpvuSpRe7qd57a5_Y6zGT_S0lPjKLh0XAOYcq8SFbI4T1YdaHvWah26sPedfBlwh0aaAv-1cQ1qqHmCyaOGwF2yc25LAUNGteKZz1yR1R4X93MhpJCheVZQoygE6JUkOXEGA1Dl5uaGa64NBwKXzvmOFYViRbZiGso-ia"/>
+<img alt="sinh viên 2" class="w-6 h-6 rounded-full border-2 border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkcvBh1VisO_HpaSUuTEUj8yyGfOAtirZ44MNT0GJadmmGa8Z9HC0aczz5KGI-JGaYuQ7c1AH9NsMNqgyEOIvYwz_wQBOfzzJYbzdlvMev9DR07Zay53ZpgL7lq3M_kQEILH14ZpW0HR3lgziuk5cAGoLSUWGobuTe4CUdrnHcWGWfkU6banG6p7JMcqffZvuyrmyoy6DELbSRd3aVwnHe-rbVN2-tLmx5Uo_pL4wzCa4pP1waW9k__xBKZMRLXYuo5G-RmoR_PkqC"/>
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[8px] font-bold">+7</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.04)] flex flex-col gap-1 border-l-4 border-outline">
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline">Tỷ lệ hoàn thành</span>
+<div class="flex items-end justify-between">
+<span class="text-3xl font-extrabold text-on-surface">84%</span>
+<div class="w-16 h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 84%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Overview: Project Completion Chart -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 bg-surface-container-low p-8 rounded-xl relative overflow-hidden">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Tỷ lệ hoàn thành dự án</h2>
+<p class="text-sm text-outline">So sánh giữa các khoa - Năm học 2023/24</p>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center gap-2 text-[10px] font-bold uppercase text-primary">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Khoa CNTT
+                        </span>
+<span class="inline-flex items-center gap-2 text-[10px] font-bold uppercase text-tertiary">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Khoa Kỹ thuật
+                        </span>
+</div>
+</div>
+<!-- Chart Mockup -->
+<div class="h-64 flex items-end gap-6 px-4">
+<div class="flex-1 flex flex-col gap-2 items-center group">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-48 group-hover:bg-primary/40 transition-colors">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg" style="height: 70%"></div>
+</div>
+<span class="text-[10px] font-bold text-outline">Tuần 1</span>
+</div>
+<div class="flex-1 flex flex-col gap-2 items-center group">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-48 group-hover:bg-primary/40 transition-colors">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg" style="height: 55%"></div>
+</div>
+<span class="text-[10px] font-bold text-outline">Tuần 2</span>
+</div>
+<div class="flex-1 flex flex-col gap-2 items-center group">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-48 group-hover:bg-primary/40 transition-colors">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg" style="height: 90%"></div>
+</div>
+<span class="text-[10px] font-bold text-outline">Tuần 3</span>
+</div>
+<div class="flex-1 flex flex-col gap-2 items-center group">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-48 group-hover:bg-primary/40 transition-colors">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg" style="height: 75%"></div>
+</div>
+<span class="text-[10px] font-bold text-outline">Tuần 4</span>
+</div>
+<div class="flex-1 flex flex-col gap-2 items-center group">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-48 group-hover:bg-primary/40 transition-colors">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg" style="height: 60%"></div>
+</div>
+<span class="text-[10px] font-bold text-outline">Tuần 5</span>
+</div>
+<div class="flex-1 flex flex-col gap-2 items-center group">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-48 group-hover:bg-primary/40 transition-colors">
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg" style="height: 85%"></div>
+</div>
+<span class="text-[10px] font-bold text-outline">Tuần 6</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col gap-6">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Trạng thái hệ thống</h2>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-xs font-semibold">Thời gian hoạt động máy chủ</span>
+<span class="text-xs font-bold text-primary">99.9%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 99%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-xs font-semibold">Dung lượng lưu trữ</span>
+<span class="text-xs font-bold text-tertiary">64.2 GB / 100 GB</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 64%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="text-xs font-semibold">Độ trễ API</span>
+<span class="text-xs font-bold text-on-surface">12ms</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-on-surface/20" style="width: 12%"></div>
+</div>
+</div>
+</div>
+<div class="mt-auto bg-primary-container/40 p-4 rounded-lg border border-primary/10">
+<p class="text-[10px] font-bold text-primary-dim uppercase mb-1">Cảnh báo</p>
+<p class="text-xs leading-relaxed text-on-primary-container">Bảo trì hệ thống định kỳ vào 02:00 sáng mai (UTC). Chức năng nộp đề tài sẽ tạm khóa.</p>
+</div>
+</div>
+</div>
+<!-- Management Table: Topic List -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.06)] overflow-hidden">
+<div class="px-8 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Quản lý đề tài</h2>
+<p class="text-sm text-outline">14 đề tài nghiên cứu đang hoạt động dưới sự giám sát của bạn</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-[#455f88] text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Xuất Excel (Export)
+                    </button>
+<button class="px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-[#455f88] text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">history</span>
+                        Nhật ký hệ thống (Audit Log)
+                    </button>
+<button class="px-4 py-2 bg-primary hover:bg-primary-dim text-on-primary text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                        Tạo mới
+                    </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-outline">Mã Đề Tài</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-outline">Tên Đề Tài</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-outline">Sinh Viên</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-outline">Trạng Thái</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-outline">Hạn Chót</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-outline text-right">Thao Tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="hover:bg-primary-container/10 transition-colors group">
+<td class="px-8 py-4 text-sm font-mono text-outline">EDU-2024-001</td>
+<td class="px-8 py-4">
+<p class="text-sm font-bold text-on-surface">Architectural Patterns in Micro-services</p>
+<p class="text-[10px] text-outline">Khoa CNTT</p>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-tertiary-container flex items-center justify-center text-[10px] font-bold text-tertiary">JD</div>
+<span class="text-sm font-medium">Jordan Davis</span>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container text-[10px] font-bold uppercase rounded-full">Đang thực hiện</span>
+</td>
+<td class="px-8 py-4 text-sm text-outline">12/12/2024</td>
+<td class="px-8 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg text-outline">edit</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg text-error">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary-container/10 transition-colors group">
+<td class="px-8 py-4 text-sm font-mono text-outline">EDU-2024-042</td>
+<td class="px-8 py-4">
+<p class="text-sm font-bold text-on-surface">Machine Learning in Urban Planning</p>
+<p class="text-[10px] text-outline">Khoa AI</p>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-secondary">MS</div>
+<span class="text-sm font-medium">Maria Santos</span>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase rounded-full">Đã duyệt</span>
+</td>
+<td class="px-8 py-4 text-sm text-outline">05/01/2025</td>
+<td class="px-8 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg text-outline">edit</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg text-error">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary-container/10 transition-colors group">
+<td class="px-8 py-4 text-sm font-mono text-outline">EDU-2024-015</td>
+<td class="px-8 py-4">
+<p class="text-sm font-bold text-on-surface">Quantum Cryptography Standards</p>
+<p class="text-[10px] text-outline">Khoa CNTT</p>
+</td>
+<td class="px-8 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-outline-variant flex items-center justify-center text-[10px] font-bold text-white">KL</div>
+<span class="text-sm font-medium">Kevin Lee</span>
+</div>
+</td>
+<td class="px-8 py-4">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-[10px] font-bold uppercase rounded-full">Đang chờ</span>
+</td>
+<td class="px-8 py-4 text-sm text-outline">28/11/2024</td>
+<td class="px-8 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg text-outline">edit</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg text-error">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-4 border-t border-surface-container flex items-center justify-between">
+<span class="text-xs text-outline font-medium">Hiển thị 1-10 trên 14 đề tài</span>
+<div class="flex gap-1">
+<button class="p-2 hover:bg-surface-container rounded-lg transition-colors"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="px-3 py-1 bg-primary text-on-primary text-xs font-bold rounded-lg">1</button>
+<button class="px-3 py-1 hover:bg-surface-container text-xs font-bold rounded-lg transition-colors">2</button>
+<button class="p-2 hover:bg-surface-container rounded-lg transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full mt-auto py-8 bg-[#f7fafc] border-t border-[#eff4f7] flex flex-col items-center justify-center gap-4 px-8">
+<div class="flex gap-8">
+<a class="text-[#5d5d78] hover:text-[#455f88] font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold transition-opacity opacity-100" href="#">Liên hệ khoa</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold transition-opacity opacity-100" href="#">Hướng dẫn sử dụng</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold transition-opacity opacity-100" href="#">Hỗ trợ</a>
+</div>
+<p class="text-[#5d5d78] font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold opacity-60">© 2024 EduProject Pro. Bảo lưu mọi quyền.</p>
+</footer>
+</main>
+</body></html>

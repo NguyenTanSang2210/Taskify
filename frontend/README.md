@@ -44,7 +44,7 @@ npm ci
 npm run dev
 ```
 
-Mac dinh chay tai: `http://localhost:5173`
+Mac dinh chay tai: `http://localhost:5175`
 
 ## 6. Build, lint, preview
 ```powershell

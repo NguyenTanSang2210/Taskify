@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Đăng nhập | Taskify - Academic Task Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#dfe3e7",
+                    "surface-container-high": "#e4e9ed",
+                    "on-secondary-fixed-variant": "#2e4962",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#eaeef2",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#dfe3e7",
+                    "secondary": "#46617b",
+                    "on-tertiary-container": "#ad8a5a",
+                    "tertiary-container": "#3b2400",
+                    "inverse-surface": "#2c3134",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#7a92b0",
+                    "tertiary-fixed-dim": "#e8c08c",
+                    "background": "#f6fafe",
+                    "surface-tint": "#49607c",
+                    "surface-container-low": "#f0f4f8",
+                    "on-secondary-container": "#48637d",
+                    "on-tertiary-fixed": "#291800",
+                    "on-primary-fixed-variant": "#314863",
+                    "surface": "#f6fafe",
+                    "on-tertiary-fixed-variant": "#5d4119",
+                    "inverse-on-surface": "#edf1f5",
+                    "outline": "#74777e",
+                    "surface-bright": "#f6fafe",
+                    "primary-fixed-dim": "#b0c9e8",
+                    "error": "#ba1a1a",
+                    "primary-container": "#102a43",
+                    "on-surface": "#171c1f",
+                    "on-secondary-fixed": "#001d32",
+                    "inverse-primary": "#b0c9e8",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#ffddb4",
+                    "outline-variant": "#c3c6ce",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#c4e0fe",
+                    "tertiary": "#201100",
+                    "primary-fixed": "#d1e4ff",
+                    "surface-dim": "#d6dade",
+                    "on-background": "#171c1f",
+                    "secondary-fixed": "#cee5ff",
+                    "secondary-fixed-dim": "#aec9e7",
+                    "primary": "#00152a",
+                    "on-surface-variant": "#43474d",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#011d35"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f6fafe]/80 dark:bg-slate-950/80 backdrop-blur-2xl shadow-[0_12px_32px_-4px_rgba(0,21,42,0.08)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<a class="text-2xl font-black font-manrope text-[#00152a] dark:text-blue-400" href="#">Taskify</a>
+<nav class="hidden md:flex items-center gap-6">
+<span class="font-manrope font-bold tracking-tight text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] dark:hover:text-blue-300 transition-colors duration-300">Workspace</span>
+<span class="font-manrope font-bold tracking-tight text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] dark:hover:text-blue-300 transition-colors duration-300">Resources</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-5 py-2 text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] transition-all active:scale-95">Login</button>
+<button class="px-5 py-2 bg-primary text-on-primary rounded-lg font-semibold active:scale-95 transition-all">Register</button>
+</div>
+</div>
+</header>
+<!-- Main Content: Login Screen -->
+<main class="flex-grow flex items-center justify-center pt-24 pb-12 px-4 bg-gradient-to-br from-surface to-surface-container-low relative overflow-hidden">
+<!-- Abstract Academic Background Elements -->
+<div class="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
+<!-- Login Card -->
+<div class="w-full max-w-md z-10">
+<div class="bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-[0_12px_32px_-4px_rgba(0,21,42,0.08)] border border-outline-variant/15">
+<!-- Brand & Header -->
+<div class="text-center mb-8">
+<div class="inline-flex items-center justify-center w-12 h-12 bg-primary rounded-lg mb-4">
+<span class="material-symbols-outlined text-on-primary text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<h1 class="text-3xl font-extrabold font-headline tracking-tight text-primary mb-1">Đăng nhập</h1>
+<p class="text-on-surface-variant text-sm font-medium">Truy cập vào không gian làm việc học thuật của bạn</p>
+</div>
+<form class="space-y-5">
+<!-- Username/Email Field -->
+<div class="space-y-1.5">
+<label class="block text-xs font-bold tracking-widest text-on-surface-variant uppercase ml-1" for="username">Tên đăng nhập hoặc Email</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">mail</span>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant/30 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-outline/50" id="username" name="username" placeholder="name@university.edu" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-1.5">
+<label class="block text-xs font-bold tracking-widest text-on-surface-variant uppercase ml-1" for="password">Mật khẩu</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">lock</span>
+<input class="w-full pl-10 pr-12 py-3 bg-surface-container-lowest border border-outline-variant/30 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-outline/50" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center justify-between text-sm">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 cursor-pointer" type="checkbox"/>
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">Ghi nhớ đăng nhập</span>
+</label>
+<a class="text-primary font-semibold hover:underline decoration-primary/30 underline-offset-4" href="#">Quên mật khẩu?</a>
+</div>
+<!-- Primary Submit -->
+<button class="w-full py-3.5 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-lg font-bold text-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-200" type="submit">
+                        Đăng nhập
+                    </button>
+</form>
+<!-- Divider -->
+<div class="relative my-8">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/20"></div>
+</div>
+<div class="relative flex justify-center text-xs font-bold tracking-widest uppercase">
+<span class="bg-surface-container-lowest px-4 text-outline">Hoặc đăng nhập với</span>
+</div>
+</div>
+<!-- Social Logins -->
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-2 py-2.5 bg-surface-container border border-outline-variant/30 rounded-lg hover:bg-surface-container-high transition-colors active:scale-95">
+<img alt="Google Logo" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0QgxB147b8XbVFe4ey84f8b7Zad5QBYqyAXMXIobwM5NxR5rFzvC-ycpB1Q1fpzO5MnKFsGboUOxrEQkEaTg4zRiXjk89BBWUnHw_tkZRIMmQO8t6mj9NmiXAuF0IohoYpSNTjFSG7JeKpVKiPiHxABBmHYbnJSWQOfGEYh51ycAGrJ-NEJMqm0fzFCku314ue9At3epsySfykVGN7_o7E34GAJn7hMCv8lvrMWVLTSuAKic1v2BowwGwbWNaEdNAZoRurUN5egG8"/>
+<span class="text-sm font-semibold text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-2.5 bg-surface-container border border-outline-variant/30 rounded-lg hover:bg-surface-container-high transition-colors active:scale-95">
+<img alt="Apple Logo" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCud1QnMSITQCaNfsOXPi3Nb_fCLPcQUtuAmC2hrEObjNd9PNX6TGZy7tWLEH5O0LDp8Z24_rdQIKEuHZVMYUnBqK-1Fy2MW07sw85Xoy6u_HQXk6el79VUjfF9jWhmXlb0zFKRz_Ky6u7-RU8Iz43UxlRednWhUQ3vxyl9E9nXWp3mwPsKzlprzAjcC6bYaM8dX_Lx04Ya9wivTzkICI7PiQ3aOfEc_OzZtzWJ1-dGiCupUIQJCAWppgYq7isqt1KgnTHzUSvhwSNT"/>
+<span class="text-sm font-semibold text-on-surface">Apple</span>
+</button>
+</div>
+<!-- Registration Prompt -->
+<div class="mt-8 text-center">
+<p class="text-on-surface-variant text-sm">
+                        Chưa có tài khoản? 
+                        <a class="text-primary font-bold hover:underline decoration-primary/30 underline-offset-4 ml-1" href="#">Đăng ký ngay</a>
+</p>
+</div>
+</div>
+<!-- Contextual Illustration -->
+<div class="mt-8 hidden lg:block opacity-40">
+<div class="flex items-center justify-center gap-8 grayscale">
+<img class="h-6" data-alt="minimalist logo for university A in navy blue tone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDScibOdjFZHaaY24eZQsFiYS95GeSq-wAUB7EDhNlV-NGkPaf6YKsY_-qeOe32KMG53PmVIiLqm3IueYh7jqf4wFhv5MPDnTL_u-j1_nbTaC-jR5-vBC9M8Vio0Dc3RNvkoD-gtAYVaOw5tTA-moUjUf0FyfIuwcIHkodwkGgd158t4DBnyPXN-LM4RuwGyuifpRozA5dX-SYk8NP-zllLhjV6rpZWRNjgUVh3h7efOhqrCQs8_DZZzALTW_fjTXVgOK_m_yg28Nco"/>
+<img class="h-6" data-alt="minimalist logo for research lab in navy blue tone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEzDVS980hhqRLWy6PAmKBusw1DKWs7ZH7Jv2Ox55Os7qYFkWBcEv8XPBqJ7SKt_OoohnWlJ74FZB2CJMPQQQWrvLFMHRUy5xHKawSrjGc8bp3588UaZE-U0hWR_V0YhjXqoCI36SqBS09dqkhJL2ai0t9AkuZtoB52Ip5lU3Lly7J59d_F60kXVRvDNcThZPRDeqU0PBZasiSsO09OBnXD1-6e2eecKVNRWWG6MnTKO5ugCCO8yltDpF6aIp1PQDMrScey9BJWQot"/>
+<img class="h-6" data-alt="minimalist logo for academic institution in navy blue tone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsD5gBczR8mfLrCbKQoI55Co9HAq8rLMBg2M8bWDGHorvOvnwnijwTRODVGouz7U_0V1M7SBIoBKJ8GAa981fUn95voZ0WwnzSdpJ7NpfLDXxrH13ZmYkks3W3E13lXDoiBln5fVz1cHC6qW_zN2PM6mElwvzEUTgBa1qz4WbCu0XXN-7ArmQnt7OXjvoMy6WfYlo2PneiWHoG3DqGfTEds3KJOhUfZ8hJ_H0eaKwHGV3_mvl4gxDRGN2D0n2a6Q6KOlO9Tp154qS9"/>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 mt-auto bg-[#f0f4f8] dark:bg-slate-900">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 gap-4 max-w-7xl mx-auto">
+<div class="font-inter text-sm tracking-wide text-slate-600 dark:text-slate-400">
+                © 2024 Taskify: Academic Task Workspace
+            </div>
+<div class="flex gap-8">
+<a class="font-inter text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:underline hover:text-[#00152a] dark:hover:text-white transition-all opacity-80 hover:opacity-100" href="#">Support</a>
+<a class="font-inter text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:underline hover:text-[#00152a] dark:hover:text-white transition-all opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-inter text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:underline hover:text-[#00152a] dark:hover:text-white transition-all opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</body></html>

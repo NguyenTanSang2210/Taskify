@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/milestones")
-@CrossOrigin(origins = "http://localhost:5173")
+
 @SuppressWarnings("null")
 public class MilestoneController {
 

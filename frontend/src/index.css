@@ -1,46 +1,132 @@
-/* src/index.css */
+@import "tailwindcss";
 
 :root {
-  --bs-primary: #0f2742;
-  --bs-secondary: #6f7f93;
-  --bs-success: #2f6f54;
-  --bs-info: #2b6c93;
-  --bs-warning: #c8a858;
-  --bs-danger: #9d2f3f;
-  --bs-light: #f8f5ee;
-  --bs-dark: #1f2b3d;
-  --bs-border-color: #d8d1c2;
+  --color-primary: #00152a;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #102a43;
+  --color-on-primary-container: #7a92b0;
+  
+  --color-secondary: #46617b;
+  --color-on-secondary: #ffffff;
+  
+  --color-background: #f6fafe;
+  --color-on-background: #171c1f;
+  
+  --color-surface: #f6fafe;
+  --color-on-surface: #171c1f;
+  --color-surface-variant: #dfe3e7;
+  --color-on-surface-variant: #43474d;
+  
+  --color-surface-container: #eaeef2;
+  --color-surface-container-low: #f0f4f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e4e9ed;
+  --color-surface-container-highest: #dfe3e7;
+
+  --color-outline: #475569; /* Darker Slate for better light mode contrast */
+  --color-outline-variant: #94a3b8;
 }
 
-/* Reset nhẹ */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #8ab4f8; /* Brighter Blue */
+    --color-on-primary: #00152a;
+    --color-primary-container: #1e293b;
+    --color-on-primary-container: #d1e4ff;
+
+    --color-secondary: #aec9e7;
+    --color-on-secondary: #001d32;
+
+    --color-background: #0b0f14; /* Deepest blue/black */
+    --color-on-background: #f8fafc;
+
+    --color-surface: #0f172a; /* Back to Slate 900 for a deeper, more premium feel */
+    --color-on-surface: #f8fafc;
+    --color-surface-variant: #1e293b;
+    --color-on-surface-variant: #e2e8f0; /* Lightened to Slate 200 for subtitle clarity */
+    
+    --color-surface-container: #1e293b;
+    --color-surface-container-low: #0f172a;
+    --color-surface-container-lowest: #0b0f14;
+    --color-surface-container-high: #334155;
+    --color-surface-container-highest: #475569;
+
+    --color-outline: #f1f5f9; /* Near white for maximum dark mode label visibility */
+    --color-outline-variant: #94a3b8; /* Slate 400 */
+  }
 }
 
-body {
-  margin: 0;
-  font-family: "Merriweather", "Palatino Linotype", "Times New Roman", serif;
-  background-color: #f3efe6;
-  color: #1f2b3d;
+@theme {
+  /* Mapping CSS variables to Tailwind tokens */
+  --color-primary: var(--color-primary);
+  --color-on-primary: var(--color-on-primary);
+  --color-primary-container: var(--color-primary-container);
+  --color-on-primary-container: var(--color-on-primary-container);
+
+  --color-secondary: var(--color-secondary);
+  --color-on-secondary: var(--color-on-secondary);
+
+  --color-background: var(--color-background);
+  --color-on-background: var(--color-on-background);
+  
+  --color-surface: var(--color-surface);
+  --color-on-surface: var(--color-on-surface);
+  --color-surface-variant: var(--color-surface-variant);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container-lowest: var(--color-surface-container-lowest);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
+
+  /* Typography & Effects */
+  --font-headline: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --animate-in: in 500ms ease;
+
+  @keyframes in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.btn,
-.form-control,
-.form-select,
-.nav-link,
-.badge,
-.card-header {
-  font-family: "Source Sans 3", "Segoe UI", Tahoma, sans-serif;
+@layer base {
+  body {
+    @apply bg-surface text-on-surface min-h-screen font-body transition-colors duration-300;
+  }
+  
+  h1, h2, h3, h4, h5, h6, .font-headline {
+    @apply font-headline;
+  }
+  
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Global Placeholder Clarity */
+  ::placeholder {
+    color: var(--color-outline);
+    opacity: 0.75;
+  }
 }
 
-#root {
-  min-height: 100vh;
+@layer components {
+  .glass-nav {
+    @apply backdrop-blur-2xl bg-surface/80;
+  }
+  
+  .tab-active {
+    @apply text-primary border-b-2 border-primary font-bold;
+  }
+  
+  .tab-inactive {
+    @apply text-on-surface-variant hover:text-on-surface transition-colors;
+  }
 }

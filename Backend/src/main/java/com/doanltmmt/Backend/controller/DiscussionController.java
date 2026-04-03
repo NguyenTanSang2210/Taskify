@@ -14,7 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/discuss")
-@CrossOrigin(origins = "http://localhost:5173")
+
 @SuppressWarnings("null")
 public class DiscussionController {
 

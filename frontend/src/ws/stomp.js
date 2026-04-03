@@ -5,7 +5,7 @@ const IS_BROWSER = typeof window !== "undefined";
 const IS_LOCALHOST = IS_BROWSER
   ? window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   : false;
-const IS_FRONTEND_DEV_PORT = IS_BROWSER && window.location.port === "5173";
+const IS_FRONTEND_DEV_PORT = IS_BROWSER && window.location.port === "5175";
 const WS_ENDPOINT = IS_LOCALHOST && IS_FRONTEND_DEV_PORT ? "http://localhost:8080/ws" : "/ws";
 
 export function createStompClient() {

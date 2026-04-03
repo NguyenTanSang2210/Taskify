@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-primary": "#b3cdfd",
+            "surface": "#f7fafc",
+            "on-secondary-fixed": "#354052",
+            "error-dim": "#4e0309",
+            "surface-bright": "#f7fafc",
+            "surface-container": "#e7eff3",
+            "on-primary": "#f6f7ff",
+            "primary-fixed-dim": "#bfd5ff",
+            "secondary": "#546073",
+            "on-tertiary-fixed-variant": "#54546f",
+            "on-background": "#283439",
+            "inverse-surface": "#0b0f10",
+            "tertiary-dim": "#51516c",
+            "on-error": "#fff7f6",
+            "outline-variant": "#a7b4ba",
+            "tertiary-container": "#d9d7f8",
+            "background": "#f7fafc",
+            "on-tertiary-container": "#4a4a65",
+            "surface-variant": "#d7e5eb",
+            "on-error-container": "#752121",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-container": "#475265",
+            "outline": "#707d82",
+            "on-secondary": "#f8f8ff",
+            "error-container": "#fe8983",
+            "on-primary-container": "#38527b",
+            "surface-dim": "#ccdde4",
+            "secondary-fixed-dim": "#cad5ec",
+            "surface-tint": "#455f88",
+            "secondary-dim": "#495467",
+            "on-primary-fixed-variant": "#425c85",
+            "error": "#9f403d",
+            "on-surface": "#283439",
+            "inverse-on-surface": "#9a9d9f",
+            "tertiary": "#5d5d78",
+            "on-tertiary": "#fbf7ff",
+            "on-surface-variant": "#546166",
+            "secondary-fixed": "#d8e3fa",
+            "tertiary-fixed": "#d9d7f8",
+            "primary": "#455f88",
+            "tertiary-fixed-dim": "#cbc9e9",
+            "primary-fixed": "#d6e3ff",
+            "secondary-container": "#d8e3fa",
+            "primary-container": "#d6e3ff",
+            "surface-container-highest": "#d7e5eb",
+            "on-tertiary-fixed": "#373851",
+            "on-secondary-fixed-variant": "#515c6f",
+            "surface-container-low": "#eff4f7",
+            "on-primary-fixed": "#254067",
+            "surface-container-high": "#dfeaef"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline": ["Inter"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-effect {
+      background: rgba(247, 250, 252, 0.8);
+      backdrop-filter: blur(16px);
+    }
+    .signature-gradient {
+      background: linear-gradient(to right, #455f88, #39537c);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#eff4f7] dark:bg-slate-800 flex flex-col p-4 gap-2 z-50">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="architecture">architecture</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-[#455f88] dark:text-blue-400 tracking-tight">EduProject Pro</h1>
+<p class="text-[10px] font-bold uppercase tracking-widest text-secondary opacity-70">Kiến trúc Học thuật</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] dark:text-slate-400 opacity-80 font-medium text-sm hover:bg-white/50 transition-transform translate-x-0 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+        Bảng điều khiển
+      </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-700 text-[#455f88] dark:text-blue-300 rounded-lg shadow-sm font-bold text-sm transition-transform translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+        Đề tài
+      </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] dark:text-slate-400 opacity-80 font-medium text-sm hover:bg-white/50 transition-transform translate-x-0 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="architecture">architecture</span>
+        Không gian làm việc
+      </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] dark:text-slate-400 opacity-80 font-medium text-sm hover:bg-white/50 transition-transform translate-x-0 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+        Quản trị
+      </a>
+</nav>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-[#f7fafc] dark:bg-slate-900 flex justify-between items-center px-6 py-3 pl-72">
+<div class="flex items-center bg-[#eff4f7] dark:bg-slate-800/50 rounded-lg px-3 py-1.5 w-96">
+<span class="material-symbols-outlined text-outline mr-2 text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-outline" placeholder="Tìm kiếm đề tài, giảng viên..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#5d5d78] hover:bg-[#e7eff3] rounded-full transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-surface-variant">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-on-surface">Alex Nguyen</p>
+<p class="text-[10px] text-secondary">Sinh viên năm cuối</p>
+</div>
+<img alt="Ảnh đại diện sinh viên" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-container" data-alt="portrait of a young adult male student with a neutral expression in a clean academic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjC6i7UClXeFsJEcOZUX182kX7mHoBq-egdVQYUo29g_AeHP30oR1YZFdseAUNt3e27901eaRvQQt7-Z1cM8Gqe5TcXtBxXT7_p3wbB7gOd8NcRqq9gAWiMX3GuVqJAQUh3xdyQWtkDREQUzxhb2cI9jpFc0AGNtPJptzKfQpz3519HbhNuyTOg2-aeMCZSfqEI5Db8-M-v3YOCpaznOTKlRPd-BONCQdNeXaQvzKsheabtwXK6d6ga8JNV3U3q6JB2Io2wmf0pcUr"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="max-w-7xl mx-auto p-8 space-y-8">
+<!-- Top Content: Hero Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+<div class="lg:col-span-2 space-y-6">
+<div class="space-y-2">
+<span class="inline-block px-3 py-1 rounded-full bg-primary-container text-on-primary-container text-[10px] font-bold uppercase tracking-widest">Kỹ thuật Web Nâng cao</span>
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight leading-tight">
+              Phát triển Hệ thống Quản lý Đào tạo dựa trên Kiến trúc Microservices
+            </h2>
+</div>
+<div class="prose prose-slate max-w-none">
+<p class="text-lg text-on-surface-variant leading-relaxed">
+              Dự án này tập trung vào việc thiết kế và triển khai một nền tảng quản lý đào tạo hiện đại, có khả năng mở rộng cao. Sinh viên sẽ nghiên cứu cách chia tách các khối chức năng như Đăng ký học phần, Quản lý điểm, và Lịch học thành các dịch vụ độc lập giao tiếp qua REST API và Message Broker.
+            </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+<div class="bg-surface-container-low p-6 rounded-lg space-y-3">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" data-icon="target">track_changes</span>
+<h3 class="font-bold text-sm uppercase tracking-wider">Mục tiêu</h3>
+</div>
+<ul class="space-y-2 text-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="text-primary mt-0.5">•</span>
+                  Xây dựng hệ thống phân tán với Spring Cloud và Netflix OSS.
+                </li>
+<li class="flex items-start gap-2">
+<span class="text-primary mt-0.5">•</span>
+                  Triển khai cơ chế xác thực tập trung OAuth2/OIDC.
+                </li>
+<li class="flex items-start gap-2">
+<span class="text-primary mt-0.5">•</span>
+                  Tối ưu hóa hiệu năng truy vấn với Redis Caching.
+                </li>
+</ul>
+</div>
+<div class="bg-surface-container-low p-6 rounded-lg space-y-3">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<h3 class="font-bold text-sm uppercase tracking-wider">Sản phẩm bàn giao</h3>
+</div>
+<ul class="space-y-2 text-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="text-primary mt-0.5">•</span>
+                  Mã nguồn hoàn chỉnh trên GitHub/GitLab.
+                </li>
+<li class="flex items-start gap-2">
+<span class="text-primary mt-0.5">•</span>
+                  Tài liệu kiến trúc và đặc tả API (Swagger).
+                </li>
+<li class="flex items-start gap-2">
+<span class="text-primary mt-0.5">•</span>
+                  Báo cáo phân tích hiệu năng hệ thống.
+                </li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Lecturer Card & Registration -->
+<div class="space-y-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.06)] space-y-6 sticky top-24">
+<div class="flex items-center gap-4">
+<img alt="Ảnh đại diện giảng viên" class="w-16 h-16 rounded-xl object-cover ring-4 ring-surface-container" data-alt="middle-aged male professor with glasses smiling in a professional office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3tMhC_29Goc-6incTNtL8i5hc2unOPyujutTSYptovtRzeXo0Wi4EBCczITLuep1opfhOOBohn_nxy2CCjUf1DZu2wJFX48K4-tABzdyuhHHomZ_eQqu0k7h3SjuyJfhrIrsBHJmq5dBpI1ovya7Kb00uqrUzyjHAcZeFJukRVc1MJJDwoiMiGApM7LuTMzCTpn96AFPHpq_QaCbAGAHlCUC_7wmQ571B1rMQJQVGCngKFWDbGWGKbCooIJr0g37k_XyDsoQg0MD2"/>
+<div>
+<h4 class="font-bold text-on-surface">TS. Phạm Minh Quân</h4>
+<p class="text-xs text-secondary font-medium">Khoa Công nghệ Phần mềm</p>
+<div class="flex items-center gap-1 mt-1 text-primary">
+<span class="material-symbols-outlined text-xs" data-icon="mail">mail</span>
+<span class="text-[10px] font-medium">quan.pm@eduproject.pro</span>
+</div>
+</div>
+</div>
+<div class="pt-4 border-t border-surface-variant/30 space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="text-secondary">Trạng thái:</span>
+<span class="px-2 py-0.5 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded">ĐANG NHẬN ĐĂNG KÝ</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-secondary">Giới hạn:</span>
+<span class="font-bold text-on-surface">02 / 05 Nhóm</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-secondary">Hạn cuối:</span>
+<span class="font-bold text-error">25/12/2024</span>
+</div>
+</div>
+<button class="w-full signature-gradient text-on-primary py-3.5 rounded-lg font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+              Gửi yêu cầu đăng ký
+            </button>
+<p class="text-[10px] text-center text-outline leading-tight">Bằng cách đăng ký, bạn đồng ý với các điều khoản tham gia dự án nghiên cứu khoa học.</p>
+</div>
+</div>
+</section>
+<!-- Specs Table & Requirements -->
+<section class="bg-surface-container rounded-xl p-1 overflow-hidden">
+<div class="bg-surface-container-lowest rounded-lg p-8">
+<h3 class="text-xl font-bold text-on-surface mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="settings">settings</span>
+            Thông số kỹ thuật
+          </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-surface-container">
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Ngôn ngữ</p>
+<p class="font-semibold text-on-surface">Java 17+</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Backend Framework</p>
+<p class="font-semibold text-on-surface">Spring Boot 3.2</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Cơ sở dữ liệu</p>
+<p class="font-semibold text-on-surface">MySQL 8.0 &amp; MongoDB</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Hạ tầng</p>
+<p class="font-semibold text-on-surface">Docker &amp; Kubernetes</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Frontend</p>
+<p class="font-semibold text-on-surface">React + Tailwind CSS</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Nhắn tin</p>
+<p class="font-semibold text-on-surface">RabbitMQ / Kafka</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Giám sát</p>
+<p class="font-semibold text-on-surface">Prometheus &amp; Grafana</p>
+</div>
+<div class="bg-surface-container-lowest p-5">
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Tài liệu</p>
+<p class="font-semibold text-on-surface">OpenAPI 3.0</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Content: Registered Students -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-bold text-on-surface">Sinh viên đang quan tâm</h3>
+<button class="text-sm font-bold text-primary hover:underline transition-all">Xem tất cả</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Student Card 1 -->
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center gap-4 border-l-4 border-primary">
+<img alt="Ảnh sinh viên" class="w-12 h-12 rounded-full object-cover" data-alt="headshot of a young male student in casual attire with a professional smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYaD2jH_DkNNIGj2_BWnpcVjVeBo-BmHiShZr73ZDGlE18RXdhOceR820S8KUGQIxC12RNm3SdnmGV1X0h41ARhspsdF_QcZcFpt8-TGZIDoHPlLGOOaRyK92mmasXuXU-pf89wb-3BVK3veTkYoukwOlxz2rtSzzfw5bA7uPwC4uUWTT5geDrH77RdzFDCr7WG5VaxVgSGSqo9TkrReJbybwWTP91TGj8Pde5EaOhXVdkig03HBWNcRp5JcvC3qBKo6vurOSqWZ55"/>
+<div class="flex-1">
+<h5 class="font-bold text-sm text-on-surface">Lê Hoàng Nam</h5>
+<p class="text-[10px] text-secondary">MSSV: 20110342</p>
+<div class="flex gap-1 mt-1">
+<span class="px-1.5 py-0.5 bg-primary-container text-on-primary-container text-[8px] font-bold rounded uppercase">Backend</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-bold rounded uppercase">Java</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors" data-icon="person_add">person_add</span>
+</div>
+<!-- Student Card 2 -->
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center gap-4">
+<img alt="Ảnh sinh viên" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a young female student with long hair smiling confidently" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBExQRZHDvqJ2krq_aBENcZt46LAJY9UHYeZj1kYFT6zm51wbExGnA0pAhEWRxm5oaA3RhyhwCGPLBiZFrhql2SsDpAwGkxWhXxONwi-7XU_Ch6Enza8S-O1XdUtrLyPL635D8KFnOxkTIWVKNKBFDjUelAZf0fohwGpsGeRxyjwqQCv6yN9bwzUBOsZ60Hb1M_MQocgIlbJsu8N3PmSV99VTqW1X_RvLyEV2jGvA-9WIT-KzqjoWkYbki-O_H6lntYcpzlJ-lKY7Sf"/>
+<div class="flex-1">
+<h5 class="font-bold text-sm text-on-surface">Nguyễn Thu Thảo</h5>
+<p class="text-[10px] text-secondary">MSSV: 20110511</p>
+<div class="flex gap-1 mt-1">
+<span class="px-1.5 py-0.5 bg-tertiary-container text-on-tertiary-container text-[8px] font-bold rounded uppercase">Frontend</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-bold rounded uppercase">React</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors" data-icon="person_add">person_add</span>
+</div>
+<!-- Student Card 3 -->
+<div class="bg-surface-container-low p-4 rounded-xl flex items-center gap-4">
+<img alt="Ảnh sinh viên" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a male student with short hair looking friendly and professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTrCfDh_0t376t1i7xQKEbA1Zm_mAwDit6ZV8vZ4RqO9iO20mePtBJVr9JEK6ffCKp3FtvsqR0v7QdOw8eryDuivaZ5HZEkz6r-qsj93OmOu_QqMr39tVXWyEh03rIHPKK12AG5sVjvv51UEgtqApriYNvD_Kzx21CMUycwTbeBvIN3w4jY9RqafiyZw5WER5J6Ze2Wr3PwX6M1K6M5_apO1G1v9u2_-34qbBMUEiVJtBz69vzv_duLRbatlfb_2y9J9rHjxxW_BRZ"/>
+<div class="flex-1">
+<h5 class="font-bold text-sm text-on-surface">Trần Minh Đức</h5>
+<p class="text-[10px] text-secondary">MSSV: 20110129</p>
+<div class="flex gap-1 mt-1">
+<span class="px-1.5 py-0.5 bg-primary-container text-on-primary-container text-[8px] font-bold rounded uppercase">DevOps</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-bold rounded uppercase">Docker</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors" data-icon="person_add">person_add</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="w-full mt-auto py-12 bg-[#f7fafc] dark:bg-slate-900 border-t border-[#eff4f7] dark:border-slate-800 flex flex-col items-center justify-center gap-4 px-8">
+<div class="flex gap-8">
+<a class="font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold text-[#5d5d78] hover:text-[#455f88] transition-opacity opacity-100" href="#">Liên hệ khoa</a>
+<a class="font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold text-[#5d5d78] hover:text-[#455f88] transition-opacity opacity-100" href="#">Hướng dẫn sử dụng</a>
+<a class="font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold text-[#5d5d78] hover:text-[#455f88] transition-opacity opacity-100" href="#">Hỗ trợ</a>
+</div>
+<p class="font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold text-[#5d5d78] opacity-60">
+        © 2024 EduProject Pro. Bảo lưu mọi quyền.
+      </p>
+</footer>
+</main>
+</body></html>

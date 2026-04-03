@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduProject Pro - Bảng điều khiển Sinh viên</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#b3cdfd",
+                    "surface": "#f7fafc",
+                    "on-secondary-fixed": "#354052",
+                    "error-dim": "#4e0309",
+                    "surface-bright": "#f7fafc",
+                    "surface-container": "#e7eff3",
+                    "on-primary": "#f6f7ff",
+                    "primary-fixed-dim": "#bfd5ff",
+                    "secondary": "#546073",
+                    "on-tertiary-fixed-variant": "#54546f",
+                    "on-background": "#283439",
+                    "inverse-surface": "#0b0f10",
+                    "tertiary-dim": "#51516c",
+                    "on-error": "#fff7f6",
+                    "outline-variant": "#a7b4ba",
+                    "tertiary-container": "#d9d7f8",
+                    "background": "#f7fafc",
+                    "on-tertiary-container": "#4a4a65",
+                    "surface-variant": "#d7e5eb",
+                    "on-error-container": "#752121",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#475265",
+                    "outline": "#707d82",
+                    "on-secondary": "#f8f8ff",
+                    "error-container": "#fe8983",
+                    "on-primary-container": "#38527b",
+                    "surface-dim": "#ccdde4",
+                    "secondary-fixed-dim": "#cad5ec",
+                    "surface-tint": "#455f88",
+                    "secondary-dim": "#495467",
+                    "on-primary-fixed-variant": "#425c85",
+                    "error": "#9f403d",
+                    "on-surface": "#283439",
+                    "inverse-on-surface": "#9a9d9f",
+                    "tertiary": "#5d5d78",
+                    "on-tertiary": "#fbf7ff",
+                    "on-surface-variant": "#546166",
+                    "secondary-fixed": "#d8e3fa",
+                    "tertiary-fixed": "#d9d7f8",
+                    "primary": "#455f88",
+                    "tertiary-fixed-dim": "#cbc9e9",
+                    "primary-fixed": "#d6e3ff",
+                    "secondary-container": "#d8e3fa",
+                    "primary-container": "#d6e3ff",
+                    "surface-container-highest": "#d7e5eb",
+                    "on-tertiary-fixed": "#373851",
+                    "on-secondary-fixed-variant": "#515c6f",
+                    "surface-container-low": "#eff4f7",
+                    "on-primary-fixed": "#254067",
+                    "surface-container-high": "#dfeaef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.5rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-line-boundary { border: none !important; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-[#f7fafc] dark:bg-slate-900 flex justify-between items-center px-6 py-3 w-full no-line-boundary">
+<div class="flex items-center gap-8">
+<span class="text-lg font-bold text-[#455f88] dark:text-blue-300 tracking-tight">EduProject Pro</span>
+<div class="hidden md:flex items-center bg-surface-container rounded-lg px-3 py-1.5 w-64 group focus-within:ring-2 ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-outline text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-outline-variant ml-2" placeholder="Tìm kiếm đề tài..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-[#e7eff3] transition-colors relative">
+<span class="material-symbols-outlined text-[#455f88]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant/20">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-semibold text-[#283439]">Alex Rivera</p>
+<p class="text-[0.6875rem] uppercase tracking-wider font-semibold text-outline">Mã SV: 20240912</p>
+</div>
+<img alt="Ảnh đại diện sinh viên" class="w-10 h-10 rounded-full object-cover ring-2 ring-surface-container-high" data-alt="portrait of a young adult male student with a friendly expression in a brightly lit academic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDga40SmExHcdN-k5s-9ZvGr7UkqneUxZIML4qf9OroSwCVejflsV19uIJTGbsWuKKXyuO9lsWWIJY16Z3UvWzKIs299lPqzdM0QeykJzl_Gw7EKSQDFAQABLNyUmfsvD5yOoUPnNWmZwjylez-5nIXDrxJDqnu0FLjziYLez1SxekobKOPo67T-koMyrVRXdIapMUnaUmeAa4MstSTHErsBMhooLxhKnoRX45dI5f0OKnWQ1Adj4-AEAn5CSK1lWD5OBlAzvxS0k_k"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#eff4f7] dark:bg-slate-800 flex flex-col p-4 gap-2 z-50 pt-16">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<h2 class="text-xl font-black text-[#455f88] dark:text-blue-400 leading-tight">EduProject Pro</h2>
+<p class="text-[0.6875rem] font-medium text-tertiary uppercase tracking-widest">Kiến trúc Học thuật</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-700 text-[#455f88] dark:text-blue-300 rounded-lg shadow-sm font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-sm tracking-normal">Bảng điều khiển</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] dark:text-slate-400 opacity-80 hover:bg-white/50 dark:hover:bg-slate-700/50 hover:text-[#455f88] transition-all" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-['Inter'] text-sm tracking-normal">Đề tài nghiên cứu</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] dark:text-slate-400 opacity-80 hover:bg-white/50 dark:hover:bg-slate-700/50 hover:text-[#455f88] transition-all" href="#">
+<span class="material-symbols-outlined">architecture</span>
+<span class="font-['Inter'] text-sm tracking-normal">Không gian làm việc</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] dark:text-slate-400 opacity-80 hover:bg-white/50 dark:hover:bg-slate-700/50 hover:text-[#455f88] transition-all" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-['Inter'] text-sm tracking-normal">Quản trị</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-primary-container/30 rounded-xl">
+<p class="text-xs font-bold text-on-primary-container mb-1">Tiến độ học kỳ</p>
+<div class="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+<p class="text-[10px] text-on-primary-container/70 mt-2">Tuần 12 trên 18</p>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-20 px-8 pb-12 min-h-screen flex flex-col">
+<!-- Hero Section: Registration Status -->
+<section class="mb-10">
+<div class="relative overflow-hidden rounded-xl bg-primary-dim p-8 md:p-12 flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+<div class="bg-gradient-to-br from-white/40 to-transparent w-full h-full transform skew-x-12"></div>
+</div>
+<div class="relative z-10 space-y-4 max-w-2xl">
+<span class="inline-block px-3 py-1 rounded-full bg-primary-container/20 text-on-primary text-[0.6875rem] uppercase tracking-widest font-semibold border border-white/10">Lộ trình đồ án</span>
+<h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Đồ án đang thực hiện: Hệ thống Quản lý Đề tài Sinh viên</h1>
+<p class="text-primary-fixed/80 text-lg">Hành trình học thuật của bạn đã hoàn thành 45%. Cột mốc tiếp theo: Đánh giá giữa kỳ (15/12).</p>
+<div class="flex gap-4 pt-2">
+<button class="bg-white text-primary font-semibold px-6 py-2.5 rounded-lg hover:scale-95 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+                        Tiếp tục làm việc
+                    </button>
+<button class="bg-transparent border border-white/30 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-white/10 transition-colors">
+                        Xem đề cương
+                    </button>
+</div>
+</div>
+<div class="relative z-10 w-full md:w-auto">
+<div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl">
+<div class="flex items-center gap-4 mb-4">
+<div class="p-2 bg-white/20 rounded-lg text-white">
+<span class="material-symbols-outlined">person_outline</span>
+</div>
+<div>
+<p class="text-[0.6875rem] uppercase tracking-widest text-white/60 font-bold">Giảng viên hướng dẫn</p>
+<p class="text-white font-medium">TS. Nguyễn Văn A</p>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-sm text-white/80">
+<span>Giai đoạn 1: Nghiên cứu</span>
+<span>Hoàn thành</span>
+</div>
+<div class="flex justify-between text-sm text-white">
+<span>Giai đoạn 2: Xây dựng mẫu</span>
+<span class="text-primary-fixed-dim">Đang thực hiện</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Topic Grid Header -->
+<div class="flex items-end justify-between mb-6">
+<div>
+<h2 class="text-2xl font-bold text-on-surface tracking-tight">Đề tài nghiên cứu hiện có</h2>
+<p class="text-sm text-outline">Khám phá các cơ hội mới cho đồ án tốt nghiệp của bạn.</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+</div>
+</div>
+<!-- Topic Grid (Asymmetric Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Featured Topic Card -->
+<div class="md:col-span-8 group relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-8 flex flex-col md:flex-row gap-8">
+<div class="w-full md:w-1/3 aspect-[4/3] rounded-lg overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="futuristic circuit board pattern with blue neon light paths glowing in a dark high-tech environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMKzQHWt034VKyL4eVGR2pBqQa-J8tkMpUBhG7AYMFDCs1v8vTZdlRGy3dB37mhsx1dDqyB3QF_P-kvfGUVbcbpPCuqi8gkf_JQsMeeDBXCmv_FmYVvvAhbEt7yaXVWJPo25AjcBwFzkeqmt7qn-NhULITPa3MlONS3Say7vJ1RFfGqwDfOitFjtoaWCfqVg6EKOpvJQv9hCVhquFLg1evGLWetADHNK6op_SguOPT491zk2dMiyKkInsbH6fcUCSnK_SwOWey_FIX"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
+</div>
+<div class="flex-1 flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-tertiary-container text-on-tertiary-container text-[0.6875rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest">Nghiên cứu</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">group</span>
+<span class="text-xs font-semibold">2/4 Sinh viên</span>
+</div>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-2">Ứng dụng Blockchain trong Quản lý Chuỗi cung ứng Nông sản</h3>
+<p class="text-sm text-outline line-clamp-2 mb-6">Nghiên cứu và phát triển giải pháp truy xuất nguồn gốc nông sản sử dụng nền tảng Hyperledger Fabric nhằm tăng tính minh bạch...</p>
+<div class="mt-auto flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full bg-surface-variant" data-alt="portrait of a middle-aged academic professor with glasses and a professional suit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBW23z-YCcjJK8spSYf36RElOC0yCxaB6308Bc2ttJWkZMfoR1nAJd3djXz5cJVYfbXhFvW0fLwZYe8G-Wi0ugCLn7lXL0xUZAiHiPWASdcYGsUkX13IAJLm3A1y8kdjRWGJuExT3KxOZQHwjA0K0G4feu6-UIPAvZTQLFq3yNyPXd1zriP6RgqpXHJIQyut_8-VHZR2vX1Rcx31iBhxZbYwVY5vgFA8-hTguVT4F1WXflybkTB7e9HCLEcfVD2XIDsLHb0rr3Y-t3"/>
+<span class="text-sm font-medium text-on-surface-variant">ThS. Lê Hoàng Nam</span>
+</div>
+<button class="bg-primary text-on-primary font-bold px-5 py-2 rounded-lg hover:bg-primary-dim transition-colors text-sm">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Side Card 1 -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex flex-col">
+<span class="bg-primary-container text-on-primary-container text-[0.6875rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest self-start mb-4">AI &amp; ML</span>
+<h3 class="text-lg font-bold text-on-surface mb-2">Nhận diện khuôn mặt với Mask R-CNN</h3>
+<p class="text-sm text-outline mb-6">Xây dựng hệ thống điểm danh tự động cho lớp học thông minh sử dụng thị giác máy tính.</p>
+<div class="mt-auto">
+<div class="flex justify-between items-center mb-4 text-xs font-medium text-on-surface-variant">
+<span>Giảng viên: TS. Trần Thị B</span>
+<span>1/2 Sinh viên</span>
+</div>
+<button class="w-full bg-surface-container-high text-on-surface-variant font-bold px-4 py-2.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-all text-sm">Xem chi tiết</button>
+</div>
+</div>
+<!-- Grid Card 2 -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex flex-col border-none">
+<span class="bg-tertiary-container text-on-tertiary-container text-[0.6875rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest self-start mb-4">Web Apps</span>
+<h3 class="text-lg font-bold text-on-surface mb-2">PWA cho Hệ thống Thư viện số</h3>
+<p class="text-sm text-outline mb-6">Tối ưu hóa trải nghiệm mượn trả sách offline cho thiết bị di động.</p>
+<div class="mt-auto">
+<div class="flex justify-between items-center mb-4 text-xs font-medium text-on-surface-variant">
+<span>Giảng viên: ThS. Minh Khoa</span>
+<span>0/3 Sinh viên</span>
+</div>
+<button class="w-full bg-surface-container-high text-on-surface-variant font-bold px-4 py-2.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-all text-sm">Xem chi tiết</button>
+</div>
+</div>
+<!-- Grid Card 3 -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex flex-col">
+<span class="bg-primary-container text-on-primary-container text-[0.6875rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest self-start mb-4">Bảo mật</span>
+<h3 class="text-lg font-bold text-on-surface mb-2">Phát hiện DDoS với công nghệ SDN</h3>
+<p class="text-sm text-outline mb-6">Phân tích lưu lượng mạng thời gian thực để ngăn chặn tấn công từ chối dịch vụ.</p>
+<div class="mt-auto">
+<div class="flex justify-between items-center mb-4 text-xs font-medium text-on-surface-variant">
+<span>Giảng viên: TS. Phạm Quý</span>
+<span>2/2 Sinh viên</span>
+</div>
+<button class="w-full cursor-not-allowed opacity-50 bg-surface-variant text-outline font-bold px-4 py-2.5 rounded-lg text-sm">Đã đủ số lượng</button>
+</div>
+</div>
+<!-- Grid Card 4 -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex flex-col">
+<span class="bg-tertiary-container text-on-tertiary-container text-[0.6875rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest self-start mb-4">IoT</span>
+<h3 class="text-lg font-bold text-on-surface mb-2">Giám sát nhà kính thông minh</h3>
+<p class="text-sm text-outline mb-6">Sử dụng cảm biến ESP32 để theo dõi và điều chỉnh vi khí hậu nhà kính tự động.</p>
+<div class="mt-auto">
+<div class="flex justify-between items-center mb-4 text-xs font-medium text-on-surface-variant">
+<span>Giảng viên: ThS. Anh Tuấn</span>
+<span>0/2 Sinh viên</span>
+</div>
+<button class="w-full bg-surface-container-high text-on-surface-variant font-bold px-4 py-2.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-all text-sm">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full mt-auto py-8 bg-[#f7fafc] dark:bg-slate-900 border-t border-[#eff4f7] dark:border-slate-800 flex flex-col items-center justify-center gap-4 px-8">
+<div class="flex flex-wrap justify-center gap-8 text-[#5d5d78] dark:text-slate-500 font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold">
+<a class="hover:text-[#455f88] dark:hover:text-blue-300 transition-opacity opacity-100" href="#">Liên hệ Khoa</a>
+<a class="hover:text-[#455f88] dark:hover:text-blue-300 transition-opacity opacity-100" href="#">Hướng dẫn sử dụng</a>
+<a class="hover:text-[#455f88] dark:hover:text-blue-300 transition-opacity opacity-100 underline font-bold" href="#">Hỗ trợ</a>
+</div>
+<div class="text-[#5d5d78] dark:text-slate-500 font-['Inter'] text-[0.6875rem] uppercase tracking-wider font-semibold opacity-60">
+            © 2024 EduProject Pro. Bảo lưu mọi quyền.
+        </div>
+</footer>
+</main>
+<!-- Floating Action Button (FAB) - Contextual for Home/Topics -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="group bg-primary text-on-primary w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">add</span>
+<span class="absolute right-full mr-4 bg-on-surface text-surface text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Đề xuất đề tài</span>
+</button>
+</div>
+</body></html>

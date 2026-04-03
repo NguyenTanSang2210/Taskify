@@ -1,5 +1,4 @@
-// src/pages/LecturerRegistrationsPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { registrationApi } from "../api/registrationApi";
 import RegistrationTable from "../components/RegistrationTable";
@@ -15,7 +14,7 @@ export default function LecturerRegistrationPage() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("registered_desc");
 
-  // state cho modal
+  // Status for modal
   const [showModal, setShowModal] = useState(false);
   const [modalAction, setModalAction] = useState(null); // "approve" | "reject" | "grade"
   const [selectedReg, setSelectedReg] = useState(null);
@@ -24,12 +23,15 @@ export default function LecturerRegistrationPage() {
   const [gradeScore, setGradeScore] = useState(0);
   const [gradeFeedback, setGradeFeedback] = useState("");
 
-  const load = React.useCallback(async () => {
-    const result = await registrationApi.getByTopic(topicId);
-    setData(result);
+  const load = useCallback(async () => {
+    try {
+      const result = await registrationApi.getByTopic(topicId);
+      setData(result || []);
+    } catch {
+      setNotice({ type: "danger", message: "Không thể tải danh sách đăng ký." });
+    }
   }, [topicId]);
 
-  // Đọc topicId từ query string khi mở trang hoặc khi thay đổi URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const qId = params.get("topicId");
@@ -47,28 +49,24 @@ export default function LecturerRegistrationPage() {
         const reg = payload?.registration;
         if (!type || !reg) return;
         await load();
-        setNotice({ type: "info", message: "Có cập nhật đăng ký realtime" });
-        setTimeout(() => setNotice(null), 2000);
+        setNotice({ type: "warning", message: "Có cập nhật đăng ký mới (Realtime)" });
       },
     });
     return () => client?.deactivate?.();
   }, [topicId, load]);
 
-  // mở modal duyệt
   const openApproveModal = (reg) => {
     setSelectedReg(reg);
     setModalAction("approve");
     setShowModal(true);
   };
 
-  // mở modal từ chối
   const openRejectModal = (reg) => {
     setSelectedReg(reg);
     setModalAction("reject");
     setShowModal(true);
   };
 
-  // mở modal chấm điểm
   const openGradeModal = (reg) => {
     setSelectedReg(reg);
     setGradeScore(reg.score || 0);
@@ -81,6 +79,7 @@ export default function LecturerRegistrationPage() {
     setShowModal(false);
     setSelectedReg(null);
     setModalAction(null);
+    setRejectReason("");
   };
 
   const handleConfirm = async () => {
@@ -97,21 +96,17 @@ export default function LecturerRegistrationPage() {
         await registrationApi.grade(selectedReg.id, gradeScore, gradeFeedback);
       }
 
-      await load(); // reload danh sách
-      setNotice({ type: "success", message: "Đã cập nhật thành công" });
-      setTimeout(() => setNotice(null), 2500);
+      await load();
+      setNotice({ type: "success", message: "Cập nhật dữ liệu thành công!" });
     } catch (e) {
-      console.error(e);
-      setNotice({ type: "danger", message: e.message || "Có lỗi xảy ra. Vui lòng thử lại." });
-      setTimeout(() => setNotice(null), 3000);
+      setNotice({ type: "danger", message: e.message || "Thao tác thất bại." });
     } finally {
       setLoadingId(null);
       closeModal();
     }
   };
 
-  // Dữ liệu sau khi lọc và sắp xếp
-  const filteredData = React.useMemo(() => {
+  const filteredData = useMemo(() => {
     const q = search.trim().toLowerCase();
     let arr = data || [];
     if (q) {
@@ -137,12 +132,12 @@ export default function LecturerRegistrationPage() {
     return [...arr].sort(sorter);
   }, [data, search, sortBy]);
 
-  // Tiêu đề đề tài và thống kê nhanh
-  const topicTitle = React.useMemo(() => {
+  const topicTitle = useMemo(() => {
     const t = data?.[0]?.topic;
     return t?.title ? t.title : `Đề tài #${topicId}`;
   }, [data, topicId]);
-  const stats = React.useMemo(() => {
+
+  const stats = useMemo(() => {
     const total = data.length;
     let pending = 0, approved = 0, rejected = 0;
     data.forEach((r) => {
@@ -152,56 +147,6 @@ export default function LecturerRegistrationPage() {
     });
     return { total, pending, approved, rejected };
   }, [data]);
-
-  const exportCsv = () => {
-    const rows = [
-      [
-        "Mã đăng ký",
-        "MSSV",
-        "Lớp",
-        "Họ tên",
-        "Ngày đăng ký",
-        "Người xử lý",
-        "Thời gian xử lý",
-        "Trạng thái",
-        "Điểm",
-        "Lý do từ chối",
-      ],
-      ...filteredData.map((r) => {
-        const student = r.student || {};
-        const user = student.user || {};
-        const stt = r.approved === null ? "CHUA_DUYET" : r.approved ? "DA_DUYET" : "TU_CHOI";
-        const dateStr = new Date(r.registeredAt).toLocaleString();
-        const reviewerName = r.reviewer?.user?.fullName || "";
-        const reviewedStr = r.reviewedAt ? new Date(r.reviewedAt).toLocaleString() : "";
-        return [
-          r.id,
-          student.studentCode || "",
-          student.className || "",
-          user.fullName || "",
-          dateStr,
-          reviewerName,
-          reviewedStr,
-          stt,
-          r.score !== null ? r.score : "",
-          r.rejectReason || "",
-        ];
-      }),
-    ];
-
-    const csv = rows
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      .join("\r\n");
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `dang-ky-topic-${topicId}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const handleExportExcel = async () => {
       try {
@@ -214,180 +159,215 @@ export default function LecturerRegistrationPage() {
           link.click();
           link.parentNode.removeChild(link);
       } catch (error) {
-          console.error("Xuất tệp thất bại", error);
-          setNotice({ type: "danger", message: "Xuất Excel thất bại" });
-          setTimeout(() => setNotice(null), 3000);
+          setNotice({ type: "danger", message: "Xuất tệp Excel thất bại." });
       }
   };
 
   return (
-    <div className="container py-4">
-      <h3>Giảng viên duyệt đăng ký đề tài</h3>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+      {/* Header / Hero */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 md:p-10 border border-outline-variant/10 shadow-sm flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
+         <div className="relative z-10 flex-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2 block">Duyệt đăng ký</span>
+            <h1 className="text-3xl font-black text-on-surface tracking-tight font-headline uppercase leading-none">Quản lý Đăng ký</h1>
+            <p className="text-sm text-outline mt-3 font-medium max-w-xl">
+               Theo dõi danh sách sinh viên đăng ký đề tài của bạn. Kiểm tra thông tin, thực hiện phê duyệt hoặc từ chối và tổng kết điểm số.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+               <div className="px-5 py-2 bg-surface-container rounded-xl flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg text-primary">topic</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-on-surface truncate max-w-[300px]">{topicTitle}</span>
+               </div>
+            </div>
+         </div>
+         <div className="grid grid-cols-2 gap-4 w-full md:w-auto shrink-0 relative z-10">
+            <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 text-center">
+               <p className="text-[9px] font-black text-outline uppercase tracking-widest mb-1">Tổng cộng</p>
+               <h3 className="text-2xl font-black text-on-surface">{stats.total}</h3>
+            </div>
+            <div className="bg-secondary-container p-4 rounded-2xl border border-secondary/10 text-center">
+               <p className="text-[9px] font-black text-on-secondary-container uppercase tracking-widest mb-1">Chờ duyệt</p>
+               <h3 className="text-2xl font-black text-on-secondary-container">{stats.pending}</h3>
+            </div>
+            <div className="bg-primary-container p-4 rounded-2xl border border-primary/10 text-center">
+               <p className="text-[9px] font-black text-on-primary-container uppercase tracking-widest mb-1">Đã duyệt</p>
+               <h3 className="text-2xl font-black text-on-primary-container">{stats.approved}</h3>
+            </div>
+            <div className="bg-error-container p-4 rounded-2xl border border-error/10 text-center">
+               <p className="text-[9px] font-black text-on-error-container uppercase tracking-widest mb-1">Từ chối</p>
+               <h3 className="text-2xl font-black text-on-error-container">{stats.rejected}</h3>
+            </div>
+         </div>
+         {/* Decoration */}
+         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+      </div>
+
       {notice && (
-        <InlineNotice
-          type={notice.type}
-          message={notice.message}
-          onClose={() => setNotice(null)}
-        />
+        <div className="max-w-2xl mx-auto">
+          <InlineNotice
+            type={notice.type}
+            message={notice.message}
+            onClose={() => setNotice(null)}
+            autoHideMs={3000}
+          />
+        </div>
       )}
-      <div className="mt-2">
-        <strong>Đề tài:</strong> {topicTitle}
-        <span className="ms-3 badge bg-dark" title="Tổng">{stats.total}</span>
-        <span className="ms-1 badge bg-warning" title="Chờ">{stats.pending}</span>
-        <span className="ms-1 badge bg-success" title="Duyệt">{stats.approved}</span>
-        <span className="ms-1 badge bg-danger" title="Từ chối">{stats.rejected}</span>
+
+      {/* Control Bar */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
+         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+            <div className="lg:col-span-2 space-y-1.5">
+               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mã Đề Tài</label>
+               <input
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-black transition-all duration-300 outline-none"
+                 value={topicId}
+                 onChange={(e) => setTopicId(e.target.value)}
+               />
+            </div>
+            <div className="lg:col-span-3 space-y-1.5">
+               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Sắp xếp theo</label>
+               <select
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+                 value={sortBy}
+                 onChange={(e) => setSortBy(e.target.value)}
+               >
+                 <option value="registered_desc">Ngày đăng ký (Mới trước)</option>
+                 <option value="registered_asc">Ngày đăng ký (Cũ trước)</option>
+                 <option value="studentCode_asc">Mã số sinh viên A-Z</option>
+                 <option value="fullName_asc">Họ tên sinh viên A-Z</option>
+               </select>
+            </div>
+            <div className="lg:col-span-4 space-y-1.5">
+               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm sinh viên</label>
+               <div className="relative group">
+                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+                 <input
+                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                   placeholder="Mã số, tên, lớp..."
+                   value={search}
+                   onChange={(e) => setSearch(e.target.value)}
+                 />
+               </div>
+            </div>
+            <div className="lg:col-span-3 flex gap-2">
+               <button onClick={load} className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                  Làm mới
+               </button>
+               <button onClick={handleExportExcel} className="flex-1 px-4 py-3 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-all border border-outline-variant/10">
+                  Xuất Excel
+               </button>
+            </div>
+         </div>
       </div>
 
-      <div className="row mb-3 mt-3">
-        <div className="col-md-3">
-          <input
-            className="form-control"
-            value={topicId}
-            onChange={(e) => setTopicId(e.target.value)}
+      {/* Main Table Container */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-outline-variant/10 shadow-sm overflow-hidden">
+        <div className="p-1">
+          <RegistrationTable
+            data={filteredData}
+            loadingId={loadingId}
+            onApproveClick={openApproveModal}
+            onRejectClick={openRejectModal}
+            onGradeClick={openGradeModal}
           />
-        </div>
-        <div className="col-md-2">
-          <button className="btn btn-primary w-100" onClick={load}>
-            Tải danh sách
-          </button>
-        </div>
-        <div className="col-md-2">
-          <button className="btn btn-success w-100" onClick={handleExportExcel}>
-            <i className="bi bi-file-earmark-excel me-1"></i>Xuất Excel
-          </button>
-        </div>
-        <div className="col-md-2">
-          <button className="btn btn-outline-secondary w-100" onClick={exportCsv}>
-            <i className="bi bi-filetype-csv me-1"></i>Xuất CSV
-          </button>
-        </div>
-        <div className="col-md-3">
-          <input
-            className="form-control"
-            placeholder="Tìm theo MSSV, Họ tên, Lớp..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="col-md-2">
-          <select
-            className="form-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="registered_desc">Mới nhất</option>
-            <option value="registered_asc">Cũ nhất</option>
-            <option value="studentCode_asc">MSSV A-Z</option>
-            <option value="fullName_asc">Tên A-Z</option>
-          </select>
         </div>
       </div>
 
-      <RegistrationTable
-        data={filteredData}
-        loadingId={loadingId}
-        onApproveClick={openApproveModal}
-        onRejectClick={openRejectModal}
-        onGradeClick={openGradeModal}
-      />
-
-      {/* Modal xác nhận đơn giản bằng React + CSS */}
+      {/* Modern Modal */}
       {showModal && selectedReg && (
-        <div className="custom-modal-backdrop">
-          <div className="custom-modal">
-            <h5 className="mb-3">
-              {modalAction === "approve"
-                ? "Xác nhận duyệt"
-                : modalAction === "reject"
-                ? "Xác nhận từ chối"
-                : "Chấm điểm & Tổng kết"}
-            </h5>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={closeModal}></div>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl z-10 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+            {/* Modal Header */}
+            <div className="px-8 py-6 border-b border-outline-variant/5 bg-surface-container-low/30">
+               <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 block">Yêu cầu xác nhận</span>
+                    <h2 className="text-xl font-black text-on-surface uppercase tracking-tight font-headline leading-none">
+                       {modalAction === "approve" ? "Phê duyệt đăng ký" : modalAction === "reject" ? "Từ chối đăng ký" : "Chấm điểm đề tài"}
+                    </h2>
+                  </div>
+                  <button onClick={closeModal} className="p-2 hover:bg-surface-container-high rounded-xl transition-colors">
+                     <span className="material-symbols-outlined">close</span>
+                  </button>
+               </div>
+            </div>
 
-            <p className="mb-1">
-              Sinh viên: <strong>{selectedReg.student?.user?.fullName}</strong>
-            </p>
-            <p className="mb-1">
-              MSSV: <strong>{selectedReg.student?.studentCode}</strong>
-            </p>
-            
-            {modalAction !== "grade" && (
-                <p className="mb-3">
-                Bạn có chắc muốn{" "}
-                <strong>{modalAction === "approve" ? "DUYỆT" : "TỪ CHỐI"}</strong> đăng ký này không?
-                </p>
-            )}
+            {/* Modal Body */}
+            <div className="p-8 space-y-6">
+               <div className="flex items-center gap-4 p-4 bg-surface-container-low rounded-2xl border border-outline-variant/5">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg">
+                     {selectedReg.student?.user?.fullName?.charAt(0)}
+                  </div>
+                  <div>
+                     <p className="text-sm font-black text-on-surface uppercase leading-none">{selectedReg.student?.user?.fullName}</p>
+                     <p className="text-[10px] text-outline font-bold mt-1.5 uppercase tracking-widest">MSSV: {selectedReg.student?.studentCode} • Lớp: {selectedReg.student?.className}</p>
+                  </div>
+               </div>
 
-            {modalAction === "reject" && (
-              <div className="mb-3">
-                <label className="form-label">Lý do từ chối</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Nhập lý do từ chối (tùy chọn)"
-                />
-              </div>
-            )}
+               {modalAction !== "grade" ? (
+                  <p className="text-sm font-medium text-on-surface-variant leading-relaxed">
+                     Bạn đang chuẩn bị hệ thống để <strong>{modalAction === "approve" ? "PHÊ DUYỆT" : "TỪ CHỐI"}</strong> yêu cầu của sinh viên này. Thao tác này sẽ cập nhật trạng thái đề tài và gửi thông báo cho sinh viên.
+                  </p>
+               ) : (
+                  <div className="space-y-6">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Điểm đánh giá (Hệ 10)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
+                          className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-3xl font-black text-primary transition-all duration-300 outline-none text-center"
+                          value={gradeScore}
+                          onChange={(e) => setGradeScore(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nhận xét chi tiết</label>
+                        <textarea
+                          className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[120px]"
+                          value={gradeFeedback}
+                          onChange={(e) => setGradeFeedback(e.target.value)}
+                          placeholder="Nhận xét về quá trình thực hiện và kết quả của sinh viên..."
+                        />
+                      </div>
+                      <div className="p-4 bg-secondary-container/20 text-on-secondary-container rounded-xl flex items-center gap-3">
+                         <span className="material-symbols-outlined">info</span>
+                         <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Sau khi lưu điểm, đề tài sẽ tự động chuyển sang trạng thái HOÀN THÀNH.</p>
+                      </div>
+                  </div>
+               )}
 
-            {modalAction === "grade" && (
-              <div className="mb-3">
-                <div className="mb-2">
-                    <label className="form-label">Điểm số (0 - 10)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="10"
-                      className="form-control"
-                      value={gradeScore}
-                      onChange={(e) => setGradeScore(e.target.value)}
-                    />
-                </div>
-                <div className="mb-2">
-                    <label className="form-label">Nhận xét / Đánh giá</label>
+               {modalAction === "reject" && (
+                  <div className="space-y-1.5 animate-in slide-in-from-top-4 duration-300">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do từ chối (Gửi đến sinh viên)</label>
                     <textarea
-                      className="form-control"
-                      rows={3}
-                      value={gradeFeedback}
-                      onChange={(e) => setGradeFeedback(e.target.value)}
-                      placeholder="Nhập nhận xét..."
+                      className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[100px]"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder="Giải thích lý do từ chối để sinh viên hiểu rõ và cải thiện..."
                     />
-                </div>
-                <div className="alert alert-warning small">
-                    Lưu ý: Sau khi chấm điểm, trạng thái đề tài sẽ chuyển thành <strong>HOÀN THÀNH</strong>.
-                </div>
-              </div>
-            )}
+                  </div>
+               )}
+            </div>
 
-            <div className="d-flex justify-content-end gap-2 mt-4">
-              <button
-                className="btn btn-secondary"
-                onClick={closeModal}
-                disabled={!!loadingId}
-              >
-                Hủy bỏ
-              </button>
-              <button
-                className={`btn ${
-                  modalAction === "reject" ? "btn-danger" : "btn-primary"
-                }`}
-                onClick={handleConfirm}
-                disabled={!!loadingId}
-              >
-                {loadingId === selectedReg.id ? (
-                  <span
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                ) : null}
-                {modalAction === "approve"
-                  ? "Duyệt ngay"
-                  : modalAction === "reject"
-                  ? "Từ chối ngay"
-                  : "Lưu kết quả"}
-              </button>
+            {/* Modal Footer */}
+            <div className="px-8 py-6 bg-surface-container-low/30 border-t border-outline-variant/5 flex justify-end gap-3">
+               <button onClick={closeModal} className="px-6 py-3 bg-white text-on-surface-variant font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-surface-container transition-all" disabled={!!loadingId}>
+                  Hủy bỏ
+               </button>
+               <button
+                 onClick={handleConfirm}
+                 className={`px-8 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg ${
+                    modalAction === "reject" 
+                    ? "bg-error text-white shadow-error/20" 
+                    : "bg-primary text-white shadow-primary/20"
+                 } hover:scale-105 active:scale-95 disabled:opacity-50`}
+                 disabled={!!loadingId}
+               >
+                 {loadingId === selectedReg.id ? "Đang xử lý..." : modalAction === "approve" ? "Duyệt ngay" : modalAction === "reject" ? "Từ chối ngay" : "Lưu kết quả"}
+               </button>
             </div>
           </div>
         </div>

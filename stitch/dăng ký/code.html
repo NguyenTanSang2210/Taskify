@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Đăng ký - Taskify Academic Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#dfe3e7",
+                      "surface-container-high": "#e4e9ed",
+                      "on-secondary-fixed-variant": "#2e4962",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#eaeef2",
+                      "on-secondary": "#ffffff",
+                      "surface-container-highest": "#dfe3e7",
+                      "secondary": "#46617b",
+                      "on-tertiary-container": "#ad8a5a",
+                      "tertiary-container": "#3b2400",
+                      "inverse-surface": "#2c3134",
+                      "on-error": "#ffffff",
+                      "on-primary-container": "#7a92b0",
+                      "tertiary-fixed-dim": "#e8c08c",
+                      "background": "#f6fafe",
+                      "surface-tint": "#49607c",
+                      "surface-container-low": "#f0f4f8",
+                      "on-secondary-container": "#48637d",
+                      "on-tertiary-fixed": "#291800",
+                      "on-primary-fixed-variant": "#314863",
+                      "surface": "#f6fafe",
+                      "on-tertiary-fixed-variant": "#5d4119",
+                      "inverse-on-surface": "#edf1f5",
+                      "outline": "#74777e",
+                      "surface-bright": "#f6fafe",
+                      "primary-fixed-dim": "#b0c9e8",
+                      "error": "#ba1a1a",
+                      "primary-container": "#102a43",
+                      "on-surface": "#171c1f",
+                      "on-secondary-fixed": "#001d32",
+                      "inverse-primary": "#b0c9e8",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed": "#ffddb4",
+                      "outline-variant": "#c3c6ce",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-container": "#c4e0fe",
+                      "tertiary": "#201100",
+                      "primary-fixed": "#d1e4ff",
+                      "surface-dim": "#d6dade",
+                      "on-background": "#171c1f",
+                      "secondary-fixed": "#cee5ff",
+                      "secondary-fixed-dim": "#aec9e7",
+                      "primary": "#00152a",
+                      "on-surface-variant": "#43474d",
+                      "on-primary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed": "#011d35"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.5rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f6fafe]/80 dark:bg-slate-950/80 backdrop-blur-2xl shadow-[0_12px_32px_-4px_rgba(0,21,42,0.08)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-black font-manrope text-[#00152a] dark:text-blue-400">Taskify</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] dark:hover:text-blue-300 transition-colors duration-300" href="#">Tính năng</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] dark:hover:text-blue-300 transition-colors duration-300" href="#">Giải pháp</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] dark:hover:text-blue-300 transition-colors duration-300" href="#">Tài liệu</a>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-[#00152a] transition-all active:scale-95" href="#">Login</a>
+<a class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-bold tracking-tight text-sm active:scale-95 transition-all duration-200 ease-in-out shadow-lg shadow-primary/10" href="#">Register</a>
+</div>
+</div>
+</header>
+<!-- Main Registration Section -->
+<main class="flex-grow flex items-center justify-center pt-24 pb-12 px-4 relative overflow-hidden">
+<!-- Abstract Background Elements -->
+<div class="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-40">
+<div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-secondary-container to-transparent blur-3xl"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-primary-fixed-dim to-transparent blur-3xl"></div>
+</div>
+<div class="w-full max-w-xl">
+<!-- Registration Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_20px_50px_-12px_rgba(0,21,42,0.12)] p-8 md:p-12 transition-all duration-500 border border-outline-variant/10">
+<!-- Branding & Title -->
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary-container mb-6 shadow-xl shadow-primary/5">
+<span class="material-symbols-outlined text-on-primary text-3xl" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<h1 class="text-3xl font-black text-primary tracking-tight mb-2">Đăng ký sinh viên</h1>
+<p class="text-on-surface-variant font-body text-sm">Bắt đầu hành trình quản lý nghiên cứu hiệu quả cùng Taskify</p>
+</div>
+<form class="space-y-5">
+<!-- Full Name -->
+<div class="space-y-1.5">
+<label class="text-[0.8rem] font-semibold text-secondary uppercase tracking-widest ml-1">Họ và tên</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">person</span>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-lg text-on-surface font-medium transition-all duration-300" placeholder="Nguyễn Văn A" type="text"/>
+</div>
+</div>
+<!-- Username / Student ID -->
+<div class="space-y-1.5">
+<label class="text-[0.8rem] font-semibold text-secondary uppercase tracking-widest ml-1">Tên đăng nhập / MSSV</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">badge</span>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-lg text-on-surface font-medium transition-all duration-300" placeholder="20120XXX" type="text"/>
+</div>
+</div>
+<!-- Password Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<!-- Password -->
+<div class="space-y-1.5">
+<label class="text-[0.8rem] font-semibold text-secondary uppercase tracking-widest ml-1">Mật khẩu</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-lg text-on-surface font-medium transition-all duration-300" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Confirm Password -->
+<div class="space-y-1.5">
+<label class="text-[0.8rem] font-semibold text-secondary uppercase tracking-widest ml-1">Xác nhận mật khẩu</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">verified_user</span>
+<input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-lg text-on-surface font-medium transition-all duration-300" placeholder="••••••••" type="password"/>
+</div>
+</div>
+</div>
+<!-- Submit Button -->
+<div class="pt-4">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-4 rounded-lg font-bold text-lg tracking-wide hover:shadow-2xl hover:shadow-primary/20 active:scale-[0.98] transition-all duration-300" type="submit">
+                            Đăng ký
+                        </button>
+</div>
+</form>
+<!-- Footer Link -->
+<div class="mt-8 pt-8 border-t border-surface-variant/30 text-center">
+<p class="text-on-surface-variant text-sm font-medium">
+                        Đã có tài khoản? 
+                        <a class="text-primary font-bold ml-1 hover:underline decoration-2 underline-offset-4 transition-all" href="#">Đăng nhập</a>
+</p>
+</div>
+</div>
+<!-- Academic Benefits (Bento hint) -->
+<div class="mt-8 grid grid-cols-3 gap-4 px-2">
+<div class="flex flex-col items-center p-3 rounded-lg bg-surface-container/50 backdrop-blur-sm border border-white/40">
+<span class="material-symbols-outlined text-primary mb-2">library_books</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Kho dữ liệu</span>
+</div>
+<div class="flex flex-col items-center p-3 rounded-lg bg-surface-container/50 backdrop-blur-sm border border-white/40">
+<span class="material-symbols-outlined text-primary mb-2">group_work</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Nhóm học thuật</span>
+</div>
+<div class="flex flex-col items-center p-3 rounded-lg bg-surface-container/50 backdrop-blur-sm border border-white/40">
+<span class="material-symbols-outlined text-primary mb-2">auto_graph</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Theo dõi tiến độ</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Component -->
+<footer class="w-full py-8 mt-auto bg-[#f0f4f8] dark:bg-slate-900 tonal-shift">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 gap-4 max-w-7xl mx-auto">
+<div class="text-slate-600 dark:text-slate-400 font-inter text-sm tracking-wide opacity-80">
+                © 2024 Taskify: Academic Task Workspace
+            </div>
+<div class="flex gap-8">
+<a class="text-slate-500 dark:text-slate-400 font-inter text-sm hover:underline hover:text-[#00152a] dark:hover:text-white transition-all" href="#">Support</a>
+<a class="text-slate-500 dark:text-slate-400 font-inter text-sm hover:underline hover:text-[#00152a] dark:hover:text-white transition-all" href="#">Privacy Policy</a>
+<a class="text-slate-500 dark:text-slate-400 font-inter text-sm hover:underline hover:text-[#00152a] dark:hover:text-white transition-all" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</body></html>

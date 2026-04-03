@@ -59,7 +59,7 @@ docker compose up --build -d
 ```
 
 Mac dinh theo file mau:
-- Frontend: `http://localhost:5173`
+- Frontend: `http://localhost:5175`
 - Backend API: `http://localhost:8081/api`
 - MySQL: `localhost:3307`
 

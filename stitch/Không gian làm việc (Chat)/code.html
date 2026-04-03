@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Không gian làm việc dự án - EduProject Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#b3cdfd",
+                    "surface": "#f7fafc",
+                    "on-secondary-fixed": "#354052",
+                    "error-dim": "#4e0309",
+                    "surface-bright": "#f7fafc",
+                    "surface-container": "#e7eff3",
+                    "on-primary": "#f6f7ff",
+                    "primary-fixed-dim": "#bfd5ff",
+                    "secondary": "#546073",
+                    "on-tertiary-fixed-variant": "#54546f",
+                    "on-background": "#283439",
+                    "inverse-surface": "#0b0f10",
+                    "tertiary-dim": "#51516c",
+                    "on-error": "#fff7f6",
+                    "outline-variant": "#a7b4ba",
+                    "tertiary-container": "#d9d7f8",
+                    "background": "#f7fafc",
+                    "on-tertiary-container": "#4a4a65",
+                    "surface-variant": "#d7e5eb",
+                    "on-error-container": "#752121",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#475265",
+                    "outline": "#707d82",
+                    "on-secondary": "#f8f8ff",
+                    "error-container": "#fe8983",
+                    "on-primary-container": "#38527b",
+                    "surface-dim": "#ccdde4",
+                    "secondary-fixed-dim": "#cad5ec",
+                    "surface-tint": "#455f88",
+                    "secondary-dim": "#495467",
+                    "on-primary-fixed-variant": "#425c85",
+                    "error": "#9f403d",
+                    "on-surface": "#283439",
+                    "inverse-on-surface": "#9a9d9f",
+                    "tertiary": "#5d5d78",
+                    "on-tertiary": "#fbf7ff",
+                    "on-surface-variant": "#546166",
+                    "secondary-fixed": "#d8e3fa",
+                    "tertiary-fixed": "#d9d7f8",
+                    "primary": "#455f88",
+                    "tertiary-fixed-dim": "#cbc9e9",
+                    "primary-fixed": "#d6e3ff",
+                    "secondary-container": "#d8e3fa",
+                    "primary-container": "#d6e3ff",
+                    "surface-container-highest": "#d7e5eb",
+                    "on-tertiary-fixed": "#373851",
+                    "on-secondary-fixed-variant": "#515c6f",
+                    "surface-container-low": "#eff4f7",
+                    "on-primary-fixed": "#254067",
+                    "surface-container-high": "#dfeaef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.5rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar (Authority Source: JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#eff4f7] flex flex-col p-4 gap-2 z-50">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-black text-[#455f88] tracking-tight">EduProject Pro</h1>
+<p class="text-[0.6875rem] uppercase tracking-wider font-semibold text-[#5d5d78] opacity-70">Kiến trúc học thuật</p>
+</div>
+<nav class="flex flex-col gap-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] opacity-80 font-medium text-sm transition-transform translate-x-0 hover:translate-x-1 hover:bg-white/50 hover:text-[#455f88] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Bảng điều khiển</span>
+</a>
+<!-- Topics -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] opacity-80 font-medium text-sm transition-transform translate-x-0 hover:translate-x-1 hover:bg-white/50 hover:text-[#455f88] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span>Chủ đề</span>
+</a>
+<!-- Workspace (Active State) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-white text-[#455f88] rounded-lg shadow-sm font-bold text-sm transition-transform translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="architecture" style="font-variation-settings: 'FILL' 1;">architecture</span>
+<span>Không gian làm việc</span>
+</a>
+<!-- Admin -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#5d5d78] opacity-80 font-medium text-sm transition-transform translate-x-0 hover:translate-x-1 hover:bg-white/50 hover:text-[#455f88] rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span>Quản trị</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-white/40 rounded-xl flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="Ảnh đại diện sinh viên" data-alt="Close-up professional portrait of a university student with soft natural lighting and a clean academic background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBACzaeTIrm8D28_EgfOA1_c4yViQ2aLkWW2rjF7ebR2Z_jB4pfaAjKOyMnD3mFfgSromJTu7jNJvV8lnY7oiVp33rb1bVnsYPy_YSPymkwVjfCeyxjPUkaP8mMaB7U4x2EWQ5TAqoy9LPaq6wJHnmU69bMPWZx4WXXDWoGeg0HXtEn4Et4dqxd-DCaMfV9nce0b7bcewmdBIspB8IMoL86dwTMBezanPkVwyNy0DCrbvLUkeVhyXPg1sisNwU1U9c7Aa1N2snZXdqb"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Alex Nguyễn</span>
+<span class="text-[10px] text-outline uppercase tracking-widest font-bold">CNTT Năm 4</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-screen">
+<!-- Top Header Area -->
+<header class="mb-10 flex justify-between items-end">
+<div>
+<h2 class="text-[1.5rem] font-bold tracking-tight text-on-surface">Dự án Nghiên cứu Blockchain</h2>
+<p class="text-on-surface-variant text-sm mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="groups">groups</span>
+                Nhóm 04 • TS. Elena Vance
+            </p>
+</div>
+<div class="flex gap-3">
+<button class="bg-surface-container-high px-4 py-2 rounded-lg text-sm font-semibold text-on-secondary-container hover:bg-surface-dim transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="share">share</span>
+                Chia sẻ không gian
+            </button>
+<button class="bg-[#455f88] text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="upload_file">upload_file</span>
+                Tải lên báo cáo
+            </button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Milestones (Timeline) - Span 12 -->
+<section class="col-span-12 bg-white rounded-xl p-6 shadow-[0_12px_32px_rgba(40,52,57,0.06)]">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-sm font-bold uppercase tracking-widest text-outline">Lộ trình dự án</h3>
+<span class="text-[0.6875rem] font-bold text-primary bg-primary-container px-3 py-1 rounded-full">Giai đoạn 2 đang thực hiện</span>
+</div>
+<div class="relative flex justify-between">
+<!-- Progress Line Background -->
+<div class="absolute top-5 left-0 w-full h-1 bg-surface-container rounded-full"></div>
+<!-- Progress Line Active -->
+<div class="absolute top-5 left-0 w-2/3 h-1 bg-primary rounded-full"></div>
+<!-- Phase 1 -->
+<div class="relative z-10 flex flex-col items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined" data-icon="check">check</span>
+</div>
+<div class="text-center">
+<p class="text-sm font-bold text-on-surface">Giai đoạn 1</p>
+<p class="text-[10px] text-outline font-medium">Tổng quan tài liệu</p>
+</div>
+</div>
+<!-- Phase 2 -->
+<div class="relative z-10 flex flex-col items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-white border-4 border-primary text-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined" data-icon="pending" style="font-variation-settings: 'FILL' 1;">pending</span>
+</div>
+<div class="text-center">
+<p class="text-sm font-bold text-on-surface">Giai đoạn 2</p>
+<p class="text-[10px] text-outline font-medium">Triển khai</p>
+</div>
+</div>
+<!-- Final Report -->
+<div class="relative z-10 flex flex-col items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container text-outline flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="flag">flag</span>
+</div>
+<div class="text-center">
+<p class="text-sm font-bold text-outline">Báo cáo cuối kỳ</p>
+<p class="text-[10px] text-outline font-medium">Nộp bài</p>
+</div>
+</div>
+</div>
+</section>
+<!-- File Management - Span 7 -->
+<section class="col-span-12 lg:col-span-7 bg-white rounded-xl p-6 shadow-[0_12px_32px_rgba(40,52,57,0.06)] flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-sm font-bold uppercase tracking-widest text-outline">Tài liệu đã nộp</h3>
+<button class="text-primary text-xs font-bold hover:underline">Xem tất cả</button>
+</div>
+<div class="flex flex-col gap-3">
+<div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#455f88] shadow-sm">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Weekly_Report_W04.pdf</p>
+<p class="text-[10px] text-outline">Đã tải lên 2 giờ trước bởi Alex Nguyễn</p>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-outline-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]" data-icon="download">download</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-outline-variant hover:text-error"><span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#455f88] shadow-sm">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">System_Architecture_V1.pdf</p>
+<p class="text-[10px] text-outline">Đã tải lên 24 tháng 10, 2024</p>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-outline-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]" data-icon="download">download</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-outline-variant hover:text-error"><span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-primary-container/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#455f88] shadow-sm">
+<span class="material-symbols-outlined" data-icon="table_chart">table_chart</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Dataset_Sample.csv</p>
+<p class="text-[10px] text-outline">Đã tải lên 20 tháng 10, 2024</p>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 hover:bg-white rounded-lg text-outline-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]" data-icon="download">download</span></button>
+<button class="p-2 hover:bg-white rounded-lg text-outline-variant hover:text-error"><span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6">
+<div class="p-8 border-2 border-dashed border-outline-variant/30 rounded-xl flex flex-col items-center justify-center text-outline">
+<span class="material-symbols-outlined text-[48px] mb-2 opacity-40" data-icon="cloud_upload">cloud_upload</span>
+<p class="text-xs font-semibold">Kéo thả tài liệu mới vào đây để nộp</p>
+</div>
+</div>
+</section>
+<!-- Chat Window - Span 5 -->
+<section class="col-span-12 lg:col-span-5 bg-white rounded-xl shadow-[0_12px_32px_rgba(40,52,57,0.06)] flex flex-col overflow-hidden max-h-[600px]">
+<div class="bg-surface-container-low p-4 flex items-center gap-3 border-b-0">
+<div class="relative">
+<img alt="Ảnh đại diện Giảng viên" class="w-8 h-8 rounded-full" data-alt="Close-up academic portrait of a senior professor with a kind expression and scholarly setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPi5H83gYiq541-ZHRF3v7xg8bS79CYcnDrN4hR65WK4X6jRk2Xt6o67z-SubbP2eJDxsbJt0vt93JNMP-g0WoNVWZnQEpjB72xQ3tpaA1Ijo7KJGZf4vTronh2FfGdOCZ6r3OcZDBo48iqDIglwocYBnO3pXoQSC6aZjQ9sFFnpsxeUdPSLfLaXvJcpySYjvxdWcEsuRUpNOVeGOY7FuoD8mG3OcIhRWiryeDmSILRDlPEEUAsc0DkghS_4xCgJ3SeGsarFGcesXL"/>
+<div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="text-xs font-black text-on-surface">TS. Elena Vance</p>
+<p class="text-[9px] uppercase tracking-widest text-primary font-bold">Người hướng dẫn dự án</p>
+</div>
+</div>
+<div class="flex-1 p-4 overflow-y-auto flex flex-col gap-4 no-scrollbar">
+<!-- Received -->
+<div class="flex items-start gap-2 max-w-[85%]">
+<div class="bg-surface-container-high p-3 rounded-2xl rounded-tl-none">
+<p class="text-xs text-on-surface">Chào cả nhóm, cô đã xem báo cáo Giai đoạn 1 của các em. Các em phân tích khá sâu về các cơ chế đồng thuận đấy.</p>
+<span class="text-[9px] text-outline mt-1 block">09:15 AM</span>
+</div>
+</div>
+<!-- Sent -->
+<div class="flex items-start gap-2 max-w-[85%] self-end flex-row-reverse">
+<div class="bg-primary text-white p-3 rounded-2xl rounded-tr-none">
+<p class="text-xs">Dạ em cảm ơn cô! Hôm nay chúng em đang bắt đầu triển khai smart contract ạ.</p>
+<span class="text-[9px] text-white/70 mt-1 block text-right">10:02 AM</span>
+</div>
+</div>
+<!-- Received -->
+<div class="flex items-start gap-2 max-w-[85%]">
+<div class="bg-surface-container-high p-3 rounded-2xl rounded-tl-none">
+<p class="text-xs text-on-surface">Các em nhớ tài liệu hóa quá trình kiểm thử bảo mật nhé. Nếu gặp khó khăn gì với giới hạn gas thì báo cô.</p>
+<span class="text-[9px] text-outline mt-1 block">10:45 AM</span>
+</div>
+</div>
+</div>
+<div class="p-4 bg-white">
+<div class="relative flex items-center">
+<input class="w-full bg-surface-variant/50 border-none rounded-xl py-3 pl-4 pr-12 text-xs focus:ring-2 focus:ring-primary/20 placeholder:text-outline-variant" placeholder="Gửi tin nhắn..." type="text"/>
+<button class="absolute right-2 p-2 text-primary hover:bg-primary-container rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Weekly Report Form - Span 12 -->
+<section class="col-span-12 bg-[#eff4f7] rounded-xl p-8 border-none">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="edit_note" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface tracking-tight">Báo cáo tiến độ tuần</h3>
+<p class="text-xs text-on-surface-variant">Hạn chót: Chủ nhật hàng tuần trước 23:59</p>
+</div>
+</div>
+<form class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold uppercase tracking-widest text-outline">Tuần báo cáo</label>
+<select class="bg-white border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-primary/20 shadow-sm">
+<option>Tuần 05 (28/10 - 03/11)</option>
+<option>Tuần 06 (04/11 - 10/11)</option>
+</select>
+</div>
+<div class="flex flex-col gap-2 md:col-span-2">
+<label class="text-[10px] font-bold uppercase tracking-widest text-outline">Cập nhật trạng thái công việc</label>
+<div class="flex gap-3">
+<input class="flex-1 bg-white border-none rounded-lg text-sm p-3 focus:ring-2 focus:ring-primary/20 shadow-sm" placeholder="Tóm tắt các đầu việc đã hoàn thành..." type="text"/>
+<button class="bg-primary text-white px-8 py-3 rounded-lg text-sm font-bold shadow-md hover:bg-primary-dim transition-colors" type="submit">Nộp báo cáo</button>
+</div>
+</div>
+</form>
+</section>
+</div>
+<!-- Footer (Authority Source: JSON) -->
+<footer class="w-full mt-16 py-8 flex flex-col items-center justify-center gap-4 px-8 border-t border-[#eff4f7]">
+<div class="flex gap-8 text-[0.6875rem] uppercase tracking-wider font-semibold">
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-opacity" href="#">Liên hệ Khoa</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-opacity underline font-bold" href="#">Hướng dẫn sử dụng</a>
+<a class="text-[#5d5d78] hover:text-[#455f88] transition-opacity" href="#">Hỗ trợ</a>
+</div>
+<p class="text-[0.6875rem] uppercase tracking-wider font-semibold text-[#5d5d78] opacity-60">© 2024 EduProject Pro. Bảo lưu mọi quyền.</p>
+</footer>
+</main>
+<!-- FAB Suppression Rule applied (Task-Focused Details Page) -->
+</body></html>

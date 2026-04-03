@@ -18,7 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workspace-classes")
-@CrossOrigin(origins = "http://localhost:5173")
+
 @SuppressWarnings("null")
 public class WorkspaceClassController {
 

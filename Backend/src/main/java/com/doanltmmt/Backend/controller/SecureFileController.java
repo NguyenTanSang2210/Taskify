@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/secure/files")
-@CrossOrigin(origins = "http://localhost:5173")
+
 @SuppressWarnings("null")
 public class SecureFileController {
 

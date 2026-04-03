@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.UserDTO;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
@@ -25,7 +26,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:5173") // for React local development
 @SuppressWarnings("null")
 public class UserController {
 
@@ -61,7 +61,7 @@ public class UserController {
 
     @PutMapping("/{id}/profile")
     @PreAuthorize("isAuthenticated()")
-    public User updateProfile(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+    public UserDTO updateProfile(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
@@ -77,7 +77,7 @@ public class UserController {
         
         User saved = userRepository.save(user);
         auditLogService.log("UPDATE_PROFILE", "User", saved.getId().toString(), "Updated profile info");
-        return saved;
+        return new UserDTO(saved);
     }
 
     @PutMapping("/{id}/password")
@@ -105,9 +105,10 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public User getUser(@PathVariable Long id) {
-        return userRepository.findById(id)
+    public UserDTO getUser(@PathVariable Long id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return new UserDTO(user);
     }
 
 
@@ -118,58 +119,18 @@ public class UserController {
         return "Backend OK";
     }
 
-    // create quick admin demo + role for DB testing
-    @PostMapping("/init-admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public User createAdminDemo() {
-        Role adminRole = roleRepository.findByName("ADMIN")
-                .orElseGet(() -> {
-                    Role r = new Role("ADMIN");
-                    r.setDescription("Quan tri he thong");
-                    return roleRepository.save(r);
-                });
 
-        User u = new User();
-        u.setUsername("admin");
-        u.setPassword("123456"); // will be encoded later
-        u.setFullName("Admin Demo");
-        u.setEmail("admin@example.com");
-        u.setRole(adminRole);
-        u.setActive(true);
-
-        return userRepository.save(u);
-    }
-
-    // create quick lecturer demo if missing
-    @PostMapping("/init-lecturer")
-    @PreAuthorize("hasRole('ADMIN')")
-    public User createLecturerDemo() {
-        Role lecturerRole = roleRepository.findByName("LECTURER")
-                .orElseGet(() -> roleRepository.save(new Role("LECTURER")));
-
-        return userRepository.findByUsername("lecturer")
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setUsername("lecturer");
-                    u.setPassword(passwordEncoder.encode("123456"));
-                    u.setFullName("Giang vien Demo");
-                    u.setEmail("lecturer@example.com");
-                    u.setRole(lecturerRole);
-                    u.setActive(true);
-                    return userRepository.save(u);
-                });
-    }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public List<UserDTO> getAll() {
+        return userRepository.findAll().stream().map(UserDTO::new).toList();
     }
 
     @PostMapping({ "", "/create" })
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public User create(@RequestBody Map<String, Object> body) {
+    public UserDTO create(@RequestBody Map<String, Object> body) {
         String username = String.valueOf(body.getOrDefault("username", "")).trim();
         String password = String.valueOf(body.getOrDefault("password", "")).trim();
         String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
@@ -263,21 +224,21 @@ public class UserController {
         }
 
         auditLogService.log("CREATE_USER", "User", saved.getId().toString(), "username=" + saved.getUsername());
-        return saved;
+        return new UserDTO(saved);
     }
 
     @GetMapping("/by-department")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public List<User> listByDepartment(@RequestParam(required = false) Long departmentId,
+    public List<UserDTO> listByDepartment(@RequestParam(required = false) Long departmentId,
                                        @RequestParam(required = false) String role) {
         if (departmentId == null && !scope.hasRole("ADMIN")) {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
         if (role != null && !role.isBlank()) {
-            return userRepository.findByDepartment_IdAndRole_NameOrderByIdDesc(departmentId, role.trim().toUpperCase());
+            return userRepository.findByDepartment_IdAndRole_NameOrderByIdDesc(departmentId, role.trim().toUpperCase()).stream().map(UserDTO::new).toList();
         }
-        return userRepository.findByDepartment_IdOrderByIdDesc(departmentId);
+        return userRepository.findByDepartment_IdOrderByIdDesc(departmentId).stream().map(UserDTO::new).toList();
     }
 
     @GetMapping("/roles")
@@ -288,7 +249,7 @@ public class UserController {
 
     @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
-    public User updateRole(@PathVariable Long id, @RequestParam Long roleId) {
+    public UserDTO updateRole(@PathVariable Long id, @RequestParam Long roleId) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         Role role = roleRepository.findById(roleId)
@@ -299,50 +260,21 @@ public class UserController {
         User saved = userRepository.save(user);
         
         auditLogService.log("UPDATE_USER_ROLE", "User", saved.getId().toString(), "Changed role from " + oldRole + " to " + role.getName());
-        return saved;
+        return new UserDTO(saved);
     }
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public User updateStatus(@PathVariable Long id, @RequestParam Boolean active) {
+    public UserDTO updateStatus(@PathVariable Long id, @RequestParam Boolean active) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.setActive(active);
         User saved = userRepository.save(user);
         auditLogService.log(active ? "UNLOCK_USER" : "LOCK_USER", "User", saved.getId().toString(), "Updated active status to " + active);
-        return saved;
+        return new UserDTO(saved);
     }
 
-    // create quick student demo if missing
-    @PostMapping("/init-student")
-    @PreAuthorize("hasRole('ADMIN')")
-    public User createStudentDemo() {
-        Role studentRole = roleRepository.findByName("STUDENT")
-                .orElseGet(() -> roleRepository.save(new Role("STUDENT")));
 
-        User user = userRepository.findByUsername("student")
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setUsername("student");
-                    u.setPassword(passwordEncoder.encode("123456"));
-                    u.setFullName("Sinh vien Demo");
-                    u.setEmail("student@example.com");
-                    u.setRole(studentRole);
-                    u.setActive(true);
-                    return userRepository.save(u);
-                });
-
-        // ensure Student record exists with 1-1 mapping to User
-        if (!studentRepository.existsById(user.getId())) {
-            Student s = new Student();
-            s.setUser(user);
-            s.setStudentCode("SV001");
-            s.setClassName("LTM1");
-            studentRepository.save(s);
-        }
-
-        return user;
-    }
 }
 
 

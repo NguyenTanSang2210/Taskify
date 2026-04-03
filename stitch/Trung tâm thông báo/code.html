@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#d7e5eb",
+                    "tertiary-fixed-dim": "#cbc9e9",
+                    "on-surface": "#283439",
+                    "secondary-fixed": "#d8e3fa",
+                    "on-secondary-container": "#475265",
+                    "on-secondary-fixed": "#354052",
+                    "tertiary-dim": "#51516c",
+                    "tertiary": "#5d5d78",
+                    "on-tertiary": "#fbf7ff",
+                    "secondary-fixed-dim": "#cad5ec",
+                    "on-primary-container": "#38527b",
+                    "outline": "#707d82",
+                    "primary-fixed": "#d6e3ff",
+                    "surface-tint": "#455f88",
+                    "on-tertiary-container": "#4a4a65",
+                    "on-secondary-fixed-variant": "#515c6f",
+                    "secondary-container": "#d8e3fa",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-dim": "#495467",
+                    "secondary": "#546073",
+                    "error-dim": "#4e0309",
+                    "error": "#9f403d",
+                    "inverse-on-surface": "#9a9d9f",
+                    "on-tertiary-fixed-variant": "#54546f",
+                    "surface-bright": "#f7fafc",
+                    "surface": "#f7fafc",
+                    "inverse-primary": "#b3cdfd",
+                    "tertiary-fixed": "#d9d7f8",
+                    "on-error-container": "#752121",
+                    "surface-container-high": "#dfeaef",
+                    "surface-container": "#e7eff3",
+                    "surface-dim": "#ccdde4",
+                    "inverse-surface": "#0b0f10",
+                    "primary-fixed-dim": "#bfd5ff",
+                    "surface-container-low": "#eff4f7",
+                    "outline-variant": "#a7b4ba",
+                    "on-error": "#fff7f6",
+                    "on-secondary": "#f8f8ff",
+                    "surface-variant": "#d7e5eb",
+                    "on-surface-variant": "#546166",
+                    "on-primary-fixed": "#254067",
+                    "on-primary-fixed-variant": "#425c85",
+                    "on-tertiary-fixed": "#373851",
+                    "error-container": "#fe8983",
+                    "on-background": "#283439",
+                    "primary-dim": "#39537c",
+                    "primary": "#455f88",
+                    "primary-container": "#d6e3ff",
+                    "on-primary": "#f6f7ff",
+                    "tertiary-container": "#d9d7f8",
+                    "background": "#f7fafc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.5rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-100 dark:bg-slate-950 flex flex-col h-full py-6 px-4 gap-4 z-50">
+<div class="flex items-center gap-3 px-2 mb-6">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<h1 class="text-lg font-black tracking-tighter text-blue-900 dark:text-blue-100">Project Manager</h1>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Hệ thống quản lý đồ án</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 transition-all duration-300 ease-out rounded-lg hover:bg-slate-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Bảng điều khiển</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 transition-all duration-300 ease-out rounded-lg hover:bg-slate-200" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-sm font-medium">Đề tài</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 transition-all duration-300 ease-out rounded-lg hover:bg-slate-200" href="#">
+<span class="material-symbols-outlined">tactic</span>
+<span class="text-sm font-medium">Workspace</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 transition-all duration-300 ease-out rounded-lg hover:bg-slate-200" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-sm font-medium">Lịch</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 transition-all duration-300 ease-out rounded-lg hover:bg-slate-200" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="text-sm font-medium">Tin nhắn</span>
+</a>
+</nav>
+<button class="mt-4 bg-primary text-on-primary py-2.5 px-4 rounded-xl text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
+            Đề xuất đồ án mới
+        </button>
+<div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 rounded-lg hover:bg-slate-200 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Cài đặt</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-700 rounded-lg hover:bg-slate-200 transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-sm font-medium">Đăng xuất</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-slate-50 dark:bg-slate-900 flex justify-between items-center px-8 h-16">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-headline tracking-tight">Trung tâm thông báo</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-200/50 transition-colors text-blue-700 font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-200/50 transition-colors text-slate-500">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-slate-200">
+<img alt="Student Profile" class="w-full h-full object-cover" data-alt="professional portrait of a university student with a friendly expression in a modern campus setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrKnbMj-H4BzpGJAeQf8H81InoS90L2yRPfdhK-pMUCdeg-vtS-vRgTT0QC63T0GdmwiU6j-l3sKRUXQg9u54Azrx8Ul8LAJxa0Dq8FHzSir72gFGNBB-duG9YtZ8NZ4UrHF-C33TBbrj86Z_z_alLC-Dv5YXkmx27Eh4XOSr69ERNfqWfgekxsxuxkincoWs8sI5gEsOOQVmvTx7dm50hMr5swlbz451yuXlMSpmpZ2lYEkZ_EIzkw29GPUg_pObVpOiFWyPyF-cb"/>
+</div>
+</div>
+</header>
+<!-- Notification List Content -->
+<div class="flex-1 p-8 max-w-4xl mx-auto w-full">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-2xl font-bold tracking-tight text-on-surface">Thông báo của bạn</h3>
+<p class="text-on-surface-variant text-sm mt-1">Quản lý các cập nhật quan trọng về đồ án và hoạt động học thuật.</p>
+</div>
+<button class="text-primary text-sm font-bold hover:underline">Đánh dấu tất cả là đã đọc</button>
+</div>
+<!-- Tabs Selection -->
+<div class="flex gap-6 mb-6">
+<button class="pb-3 border-b-2 border-primary text-primary font-bold text-sm">Tất cả</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-medium text-sm">Chưa đọc</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-medium text-sm">Lưu trữ</button>
+</div>
+<!-- Notification Grid/List -->
+<div class="space-y-4">
+<!-- Unread Notification Card -->
+<div class="bg-surface-container-lowest p-5 rounded-xl flex gap-5 items-start relative hover:bg-primary-container/10 transition-colors duration-200 group">
+<div class="absolute right-6 top-1/2 -translate-y-1/2">
+<div class="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>
+</div>
+<div class="w-12 h-12 flex-shrink-0 bg-primary-container text-primary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 pr-10">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-on-surface">Đề tài đã duyệt</h4>
+<span class="text-[11px] uppercase tracking-widest text-outline-variant font-bold">2 phút trước</span>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-2">Đề tài "Hệ thống quản lý chuỗi cung ứng bằng Blockchain" của bạn đã được Giảng viên hướng dẫn chấp thuận.</p>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold rounded uppercase tracking-wider">Học thuật</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded uppercase tracking-wider">Đồ án tốt nghiệp</span>
+</div>
+</div>
+</div>
+<!-- Unread Notification Card 2 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl flex gap-5 items-start relative hover:bg-primary-container/10 transition-colors duration-200 group">
+<div class="absolute right-6 top-1/2 -translate-y-1/2">
+<div class="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>
+</div>
+<div class="w-12 h-12 flex-shrink-0 bg-tertiary-container text-tertiary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">chat_bubble</span>
+</div>
+<div class="flex-1 pr-10">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-on-surface">Tin nhắn mới từ Mentor</h4>
+<span class="text-[11px] uppercase tracking-widest text-outline-variant font-bold">15 phút trước</span>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-2">Thầy Nguyễn Văn A đã gửi nhận xét mới cho phần báo cáo tiến độ tuần 4 của bạn. Vui lòng kiểm tra lại.</p>
+<button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                            Xem chi tiết <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Read Notification Card -->
+<div class="bg-surface-container-low p-5 rounded-xl flex gap-5 items-start hover:bg-surface-container transition-colors duration-200">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-container-high text-outline rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">event</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-on-surface-variant">Lịch họp định kỳ thay đổi</h4>
+<span class="text-[11px] uppercase tracking-widest text-outline-variant font-bold">3 giờ trước</span>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed opacity-75">Buổi họp tiến độ ngày mai được dời từ 08:00 sang 14:00 tại Phòng Lab 402.</p>
+</div>
+</div>
+<!-- Read Notification Card 2 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex gap-5 items-start hover:bg-surface-container transition-colors duration-200">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-container-high text-outline rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">upload_file</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-on-surface-variant">Nộp file thành công</h4>
+<span class="text-[11px] uppercase tracking-widest text-outline-variant font-bold">Hôm qua</span>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed opacity-75">Tài liệu "Phân tích yêu cầu hệ thống v2.0" đã được tải lên thành công vào Workspace.</p>
+</div>
+</div>
+<!-- Read Notification Card 3 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex gap-5 items-start hover:bg-surface-container transition-colors duration-200">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-container-high text-outline rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-on-surface-variant">Sắp đến hạn báo cáo</h4>
+<span class="text-[11px] uppercase tracking-widest text-outline-variant font-bold">2 ngày trước</span>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed opacity-75">Còn 48 giờ để hoàn thành báo cáo giữa kỳ. Đừng quên nộp bài đúng hạn để tránh bị trừ điểm.</p>
+</div>
+</div>
+</div>
+<!-- Pagination/Load More -->
+<div class="mt-10 text-center">
+<button class="bg-surface-container-high text-on-surface py-2 px-6 rounded-lg text-sm font-bold hover:bg-surface-container-highest transition-colors">
+                    Tải thêm thông báo cũ
+                </button>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full mt-auto flex justify-between items-center px-10 py-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+<p class="text-[11px] uppercase tracking-widest Inter text-slate-500 dark:text-slate-400">© 2024 Academic Architect - Hệ thống Hỗ trợ Học thuật</p>
+<div class="flex gap-8">
+<a class="text-[11px] uppercase tracking-widest Inter text-slate-400 dark:text-slate-500 hover:text-blue-800 dark:hover:text-blue-200 transition-opacity opacity-80 hover:opacity-100" href="#">Hướng dẫn</a>
+<a class="text-[11px] uppercase tracking-widest Inter text-slate-400 dark:text-slate-500 hover:text-blue-800 dark:hover:text-blue-200 transition-opacity opacity-80 hover:opacity-100" href="#">Quy định đồ án</a>
+<a class="text-[11px] uppercase tracking-widest Inter text-slate-400 dark:text-slate-500 hover:text-blue-800 dark:hover:text-blue-200 transition-opacity opacity-80 hover:opacity-100" href="#">Liên hệ phòng đào tạo</a>
+</div>
+</footer>
+</main>
+<!-- FAB (Floating Action Button) - Occurs only on main dashboards usually, suppressed here as it is a details/list view page -->
+</body></html>

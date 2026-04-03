@@ -6,7 +6,7 @@ const IS_LOCALHOST = IS_BROWSER
   ? window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   : false;
 const DEV_API_BASE_URL = "http://localhost:8080/api";
-const USE_DIRECT_BACKEND = IS_BROWSER && IS_LOCALHOST && window.location.port === "5173";
+const USE_DIRECT_BACKEND = IS_BROWSER && IS_LOCALHOST && window.location.port === "5175";
 const VITE_DEV_FLAG = import.meta?.env?.DEV;
 const IS_DEV = VITE_DEV_FLAG === true || USE_DIRECT_BACKEND;
 const API_BASE_URL = USE_DIRECT_BACKEND ? DEV_API_BASE_URL : "/api";

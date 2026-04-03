@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     // Lock dev server to required port and avoid auto change
-    port: 5173,
+    port: 5175,
     strictPort: true,
     proxy: {
       '/api': {

@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.UserDTO;
 import com.doanltmmt.Backend.dto.LoginRequest;
 import com.doanltmmt.Backend.dto.LoginResponse;
 import com.doanltmmt.Backend.entity.Student;
@@ -25,7 +26,7 @@ import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -104,7 +105,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public User register(@RequestBody Map<String, String> body) {
+    public UserDTO register(@RequestBody Map<String, String> body) {
         String username = body.get("username");
         String password = body.get("password");
         String fullName = body.get("fullName");
@@ -132,7 +133,7 @@ public class AuthController {
         student.setClassName(className);
         studentRepository.save(student);
 
-        return savedUser;
+        return new UserDTO(savedUser);
     }
 
     @PostMapping("/otp/verify")

@@ -10,7 +10,7 @@
       "name": "app.cors.allowed-origins",
       "type": "java.lang.String",
       "description": "Comma-separated list of allowed CORS origins for REST and WebSocket endpoints.",
-      "defaultValue": "http://localhost:5173"
+      "defaultValue": "http://localhost:5175"
     },
     {
       "name": "jwt.secret",

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduProject Pro - Hệ thống Quản lý Đồ án</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#d7e5eb",
+                    "tertiary-fixed-dim": "#cbc9e9",
+                    "on-surface": "#283439",
+                    "secondary-fixed": "#d8e3fa",
+                    "on-secondary-container": "#475265",
+                    "on-secondary-fixed": "#354052",
+                    "tertiary-dim": "#51516c",
+                    "tertiary": "#5d5d78",
+                    "on-tertiary": "#fbf7ff",
+                    "secondary-fixed-dim": "#cad5ec",
+                    "on-primary-container": "#38527b",
+                    "outline": "#707d82",
+                    "primary-fixed": "#d6e3ff",
+                    "surface-tint": "#455f88",
+                    "on-tertiary-container": "#4a4a65",
+                    "on-secondary-fixed-variant": "#515c6f",
+                    "secondary-container": "#d8e3fa",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-dim": "#495467",
+                    "secondary": "#546073",
+                    "error-dim": "#4e0309",
+                    "error": "#9f403d",
+                    "inverse-on-surface": "#9a9d9f",
+                    "on-tertiary-fixed-variant": "#54546f",
+                    "surface-bright": "#f7fafc",
+                    "surface": "#f7fafc",
+                    "inverse-primary": "#b3cdfd",
+                    "tertiary-fixed": "#d9d7f8",
+                    "on-error-container": "#752121",
+                    "surface-container-high": "#dfeaef",
+                    "surface-container": "#e7eff3",
+                    "surface-dim": "#ccdde4",
+                    "inverse-surface": "#0b0f10",
+                    "primary-fixed-dim": "#bfd5ff",
+                    "surface-container-low": "#eff4f7",
+                    "outline-variant": "#a7b4ba",
+                    "on-error": "#fff7f6",
+                    "on-secondary": "#f8f8ff",
+                    "surface-variant": "#d7e5eb",
+                    "on-surface-variant": "#546166",
+                    "on-primary-fixed": "#254067",
+                    "on-primary-fixed-variant": "#425c85",
+                    "on-tertiary-fixed": "#373851",
+                    "error-container": "#fe8983",
+                    "on-background": "#283439",
+                    "primary-dim": "#39537c",
+                    "primary": "#455f88",
+                    "primary-container": "#d6e3ff",
+                    "on-primary": "#f6f7ff",
+                    "tertiary-container": "#d9d7f8",
+                    "background": "#f7fafc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter", "sans-serif"],
+                    "body": ["Inter", "sans-serif"],
+                    "label": ["Inter", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased flex">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-100 dark:bg-slate-950 flex flex-col h-full py-6 px-4 gap-4 z-50">
+<!-- Brand Header -->
+<div class="flex flex-col gap-1 px-2 mb-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-xl">architecture</span>
+</div>
+<span class="text-lg font-black tracking-tighter text-blue-900 dark:text-blue-100">Project Manager</span>
+</div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-2">Hệ thống quản lý đồ án</p>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-800 dark:text-blue-200 font-bold border-r-4 border-blue-800 dark:border-blue-400 bg-white/50 dark:bg-white/5 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-sm font-medium Inter">Bảng điều khiển</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-sm font-medium Inter">Đề tài</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">tactic</span>
+<span class="text-sm font-medium Inter">Workspace</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-sm font-medium Inter">Lịch</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="text-sm font-medium Inter">Tin nhắn</span>
+</a>
+</nav>
+<!-- CTA Action -->
+<button class="mt-4 mx-2 py-3 px-4 bg-primary text-on-primary rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2 hover:bg-primary-dim transition-colors">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+            Đề xuất đồ án mới
+        </button>
+<!-- Footer Links -->
+<div class="mt-auto flex flex-col gap-1 border-t border-slate-200 dark:border-slate-800 pt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium Inter">Cài đặt</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-error-dim dark:text-error hover:bg-error-container/20 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-sm font-medium Inter">Đăng xuất</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen bg-surface">
+<!-- TopAppBar Shell -->
+<header class="w-full sticky top-0 z-40 bg-slate-50 dark:bg-slate-900 flex justify-between items-center px-8 h-16 w-full ml-auto">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container border-none focus:ring-2 focus:ring-primary-fixed rounded-full pl-10 pr-4 py-2 text-sm transition-all" placeholder="Tìm kiếm đồ án, tài liệu hoặc thành viên..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors relative">
+<span class="material-symbols-outlined text-slate-600">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-slate-50"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors">
+<span class="material-symbols-outlined text-slate-600">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/30 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-on-surface">Nguyễn Văn A</p>
+<p class="text-[10px] text-outline font-medium">Sinh viên - K65</p>
+</div>
+<img alt="Student Profile" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" data-alt="Close-up portrait of a young male student with a friendly expression in a brightly lit academic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6bsMtjQ0LEC9n-kX4ET9Dygs0cM-z2N_RhYqCpYrGH2JhYKxPqmk_sjwcetDkr17RzF6WKjr0s0wegB5Q0Ziz44pstR0_qkfceyvCBGnfZy7D9CyIJZqY7bHGJmIz5ErHPmjXiITCaVt_pmE7YldbHH3LtTZHxGujgcsfht8jewJU2S7Co1hagRZWVXgUoQyEeiL_9k8GywGzOTJeC1Ug264bW7grQyz-bnMe989BSORZdPqF7u605oiywRHMDPftmq3gs5YYw1TM"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="p-8 space-y-8 max-w-7xl mx-auto w-full">
+<!-- Dashboard Header Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="text-4xl font-black text-on-surface tracking-tight leading-none mb-2">Chào buổi sáng, A!</h1>
+<p class="text-outline font-medium">Hôm nay bạn có 3 mốc thời hạn đồ án cần lưu ý.</p>
+</div>
+<div class="flex gap-2">
+<div class="bg-surface-container-low px-4 py-3 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<div>
+<p class="text-[10px] uppercase font-bold tracking-widest text-outline">Tiến độ tổng</p>
+<p class="text-lg font-black text-on-surface leading-none">68%</p>
+</div>
+</div>
+<div class="bg-primary px-4 py-3 rounded-xl flex items-center gap-3 text-on-primary">
+<span class="material-symbols-outlined text-white">event_available</span>
+<div>
+<p class="text-[10px] uppercase font-bold tracking-widest opacity-80">Deadline tới</p>
+<p class="text-lg font-black leading-none">2 ngày</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Main Activity Card (Bento Large) -->
+<div class="md:col-span-2 bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Đồ án đang thực hiện</h2>
+<button class="text-primary text-xs font-bold uppercase tracking-wider hover:underline transition-all">Tất cả đồ án</button>
+</div>
+<div class="space-y-4">
+<!-- Project Item 1 -->
+<div class="group flex items-center gap-4 p-4 rounded-xl hover:bg-primary-container/30 transition-all duration-300">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-2xl">drive_ai</span>
+</div>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-on-surface">Phát triển Hệ thống Gợi ý Học tập bằng AI</h3>
+<div class="flex items-center gap-4 mt-1">
+<span class="text-[11px] font-bold uppercase tracking-widest text-outline px-2 py-0.5 bg-surface-container rounded-md">Research</span>
+<span class="text-[11px] font-medium text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">groups</span> 4 thành viên
+                                    </span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">85%</p>
+<div class="w-24 h-1.5 bg-surface-container rounded-full mt-1 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+</div>
+<!-- Project Item 2 -->
+<div class="group flex items-center gap-4 p-4 rounded-xl hover:bg-primary-container/30 transition-all duration-300">
+<div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">database</span>
+</div>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-on-surface">Tối ưu hóa Truy vấn Dữ liệu Quy mô lớn</h3>
+<div class="flex items-center gap-4 mt-1">
+<span class="text-[11px] font-bold uppercase tracking-widest text-outline px-2 py-0.5 bg-surface-container rounded-md">Administrative</span>
+<span class="text-[11px] font-medium text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">groups</span> 2 thành viên
+                                    </span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">42%</p>
+<div class="w-24 h-1.5 bg-surface-container rounded-full mt-1 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 42%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Performance Chart Placeholder -->
+<div class="mt-4 p-4 bg-surface-container rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="text-[11px] font-black uppercase tracking-widest text-outline">Thống kê tiến độ hàng tuần</span>
+<span class="text-[10px] text-outline">Tuần 12 - Học kỳ I</span>
+</div>
+<div class="h-32 flex items-end justify-between gap-2 px-2">
+<div class="flex-1 bg-primary/20 rounded-t-lg h-1/2"></div>
+<div class="flex-1 bg-primary/20 rounded-t-lg h-2/3"></div>
+<div class="flex-1 bg-primary/40 rounded-t-lg h-1/3"></div>
+<div class="flex-1 bg-primary/20 rounded-t-lg h-3/4"></div>
+<div class="flex-1 bg-primary h-full rounded-t-lg"></div>
+<div class="flex-1 bg-primary/20 rounded-t-lg h-2/3"></div>
+<div class="flex-1 bg-primary/10 rounded-t-lg h-1/2"></div>
+</div>
+</div>
+</div>
+<!-- Secondary Info Panel (Bento Sidebar) -->
+<div class="flex flex-col gap-6">
+<!-- Workspace Activity -->
+<div class="bg-surface-container-high rounded-xl p-6 shadow-sm">
+<h2 class="text-sm font-bold tracking-tight text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">history</span> Hoạt động mới
+                        </h2>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-sm text-primary">upload_file</span>
+</div>
+<div class="flex-1">
+<p class="text-xs text-on-surface leading-snug"><span class="font-bold">Lê Minh</span> đã tải lên tài liệu "Báo cáo Tuần 4"</p>
+<p class="text-[10px] text-outline mt-0.5">10 phút trước</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-sm text-tertiary">comment</span>
+</div>
+<div class="flex-1">
+<p class="text-xs text-on-surface leading-snug"><span class="font-bold">TS. Trần Quang</span> vừa nhận xét về đề xuất AI</p>
+<p class="text-[10px] text-outline mt-0.5">1 giờ trước</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-sm text-error">priority_high</span>
+</div>
+<div class="flex-1">
+<p class="text-xs text-on-surface leading-snug"><span class="font-bold">Hệ thống:</span> Nhắc nhở nộp báo cáo tiến độ</p>
+<p class="text-[10px] text-outline mt-0.5">3 giờ trước</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Upcoming Events Card -->
+<div class="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/10">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-sm font-bold tracking-tight text-on-surface">Lịch trình sắp tới</h2>
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-low">
+<div class="text-center bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+<p class="text-[10px] font-bold text-outline">OCT</p>
+<p class="text-sm font-black text-primary leading-none">24</p>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Họp Nhóm Lab 202</p>
+<p class="text-[10px] text-outline">09:00 - 11:00 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-low">
+<div class="text-center bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+<p class="text-[10px] font-bold text-outline">OCT</p>
+<p class="text-sm font-black text-primary leading-none">27</p>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Review Giai đoạn 1</p>
+<p class="text-[10px] text-outline">Deadline: 23:59 PM</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors uppercase tracking-widest">Xem lịch chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Academic Table Section (Recent Projects) -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Danh sách đề tài khả dụng</h2>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 text-xs font-bold text-outline hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">filter_list</span> Lọc
+                        </button>
+<button class="px-3 py-1.5 text-xs font-bold text-outline hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">sort</span> Sắp xếp
+                        </button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container">
+<tr>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-outline">Tên Đề Tài</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-outline">Giảng Viên</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-outline">Số Lượng</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-outline">Trạng Thái</th>
+<th class="px-6 py-4 text-right"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-on-surface leading-none">Hệ thống IoT cho Nông nghiệp Công nghệ cao</p>
+<p class="text-[10px] text-outline mt-1 italic">Ngôn ngữ: Python, C++</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface">PGS.TS Nguyễn Mạnh Hùng</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface">2 / 3 Sinh viên</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-secondary-container text-on-secondary-container">Đang mở đăng ký</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container p-1 rounded-full transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-on-surface leading-none">Ứng dụng Blockchain trong Xác thực Văn bằng</p>
+<p class="text-[10px] text-outline mt-1 italic">Công nghệ: Ethereum, Solidity</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface">TS. Đặng Thu Trang</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface">3 / 3 Sinh viên</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-surface-container text-outline">Đã đủ số lượng</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container p-1 rounded-full transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-on-surface leading-none">Xây dựng Ví điện tử tích hợp thanh toán QR</p>
+<p class="text-[10px] text-outline mt-1 italic">Platform: Flutter, Node.js</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface">ThS. Lê Hoàng Long</td>
+<td class="px-6 py-4 text-xs font-medium text-on-surface">1 / 2 Sinh viên</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-secondary-container text-on-secondary-container">Đang mở đăng ký</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary-container p-1 rounded-full transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Footer Shell -->
+<footer class="w-full mt-auto bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center px-10 py-4 ml-64">
+<p class="text-[11px] uppercase tracking-widest Inter text-slate-500 dark:text-slate-400 opacity-80 hover:opacity-100 transition-opacity">© 2024 Academic Architect - Hệ thống Hỗ trợ Học thuật</p>
+<div class="flex gap-6">
+<a class="text-[11px] uppercase tracking-widest Inter text-slate-400 dark:text-slate-500 hover:text-blue-800 dark:hover:text-blue-200 transition-opacity opacity-80 hover:opacity-100" href="#">Hướng dẫn</a>
+<a class="text-[11px] uppercase tracking-widest Inter text-slate-400 dark:text-slate-500 hover:text-blue-800 dark:hover:text-blue-200 transition-opacity opacity-80 hover:opacity-100" href="#">Quy định đồ án</a>
+<a class="text-[11px] uppercase tracking-widest Inter text-slate-400 dark:text-slate-500 hover:text-blue-800 dark:hover:text-blue-200 transition-opacity opacity-80 hover:opacity-100" href="#">Liên hệ phòng đào tạo</a>
+</div>
+</footer>
+</main>
+</body></html>

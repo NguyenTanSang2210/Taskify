@@ -1,47 +1,57 @@
-export default function InlineNotice({ type = "success", message, onClose, autoHideMs }) {
-  if (!message) return null;
-  if (autoHideMs && onClose) {
-    setTimeout(onClose, autoHideMs);
-  }
-  const className =
-    type === "danger"
-      ? "inline-notice inline-notice-danger"
-      : type === "warning"
-      ? "inline-notice inline-notice-warning"
-      : "inline-notice inline-notice-success";
+import React, { useEffect } from "react";
 
-  const renderIcon = () => {
-    if (type === "success") {
-      return (
-        <svg className="checkmark" viewBox="0 0 52 52" aria-hidden="true">
-          <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
-          <path className="checkmark__check" fill="none" d="M14 27l7 7 16-16" />
-        </svg>
-      );
+export default function InlineNotice({ type = "success", message, onClose, autoHideMs }) {
+  useEffect(() => {
+    if (autoHideMs && onClose) {
+      const timer = setTimeout(onClose, autoHideMs);
+      return () => clearTimeout(timer);
     }
-    if (type === "danger") {
-      return (
-        <svg className="crossmark" viewBox="0 0 52 52" aria-hidden="true">
-          <circle className="crossmark__circle" cx="26" cy="26" r="25" fill="none" />
-          <path className="crossmark__cross" fill="none" d="M18 18l16 16M34 18L18 34" />
-        </svg>
-      );
+  }, [autoHideMs, onClose]);
+
+  if (!message) return null;
+
+  const config = {
+    success: {
+      bg: "bg-secondary-container",
+      text: "text-on-secondary-container",
+      icon: "check_circle",
+      iconColor: "text-secondary"
+    },
+    danger: {
+      bg: "bg-error-container",
+      text: "text-on-error-container",
+      icon: "error",
+      iconColor: "text-error"
+    },
+    warning: {
+      bg: "bg-tertiary-container",
+      text: "text-on-tertiary-container",
+      icon: "warning",
+      iconColor: "text-tertiary"
     }
-    return (
-      <svg className="warnmark" viewBox="0 0 52 52" aria-hidden="true">
-        <circle className="warnmark__circle" cx="26" cy="26" r="25" fill="none" />
-        <path className="warnmark__excl" fill="none" d="M26 14v18M26 38v2" />
-      </svg>
-    );
   };
 
+  const current = config[type] || config.success;
+
   return (
-    <div className={className} role="alert">
-      {renderIcon()}
-      <span className="ms-2">{message}</span>
+    <div 
+      className={`flex items-center gap-3 px-4 py-3 rounded-2xl ${current.bg} ${current.text} shadow-sm border border-black/5 animate-in fade-in slide-in-from-top-2 duration-300`}
+      role="alert"
+    >
+      <span className={`material-symbols-outlined ${current.iconColor} text-xl`} style={{ fontVariationSettings: "'FILL' 1" }}>
+        {current.icon}
+      </span>
+      <span className="text-xs font-black uppercase tracking-widest flex-1">
+        {message}
+      </span>
       {onClose && (
-        <button type="button" className="btn btn-sm btn-link ms-3" onClick={onClose}>
-          Đóng
+        <button 
+          type="button" 
+          className="p-1 hover:bg-black/10 rounded-lg transition-colors" 
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <span className="material-symbols-outlined text-lg">close</span>
         </button>
       )}
     </div>
