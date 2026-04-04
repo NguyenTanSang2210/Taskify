@@ -20,6 +20,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ProjectSpacePage from "./pages/ProjectSpacePage";
 import ProjectChatPage from "./pages/ProjectChatPage";
 import StudentProgressDetailPage from "./pages/StudentProgressDetailPage";
+import RoleManagementPage from "./pages/RoleManagementPage";
 
 export default function App() {
   const { user, token, logout } = useAuth();

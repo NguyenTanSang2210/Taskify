@@ -98,17 +98,16 @@ export default function ProjectChatPage() {
       if (isStudent && user?.id) {
         const regs = await registrationApi.getMine(user.id);
         const approved = (regs || []).find((r) => r.approved === true);
-        const lecturer = approved?.topic?.lecturer;
-        if (lecturer?.id) {
-          pushCandidate(lecturer.id, buildName(lecturer?.user || lecturer, "Giảng viên"));
+        const topic = approved?.topic;
+        if (topic?.lecturerId) {
+          pushCandidate(topic.lecturerId, topic.lecturerName || "Giảng viên");
         }
       }
 
       if (isLecturer && topicId) {
         const regs = await registrationApi.getByTopic(topicId);
         (regs || []).forEach((r) => {
-          const su = r?.student?.user;
-          if (su?.id) pushCandidate(su.id, buildName(su, "Sinh viên"));
+          if (r?.studentId) pushCandidate(r.studentId, r.studentName || "Sinh viên");
         });
       }
     } catch (e) {

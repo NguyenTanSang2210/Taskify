@@ -1,6 +1,8 @@
 package com.doanltmmt.Backend.entity;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,7 +24,20 @@ public class Role {
     @Column(length = 255)
     private String description;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "roles_privileges",
+        joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name = "privilege_id", referencedColumnName = "id")
+    )
+    private Set<Privilege> privileges = new HashSet<>();
+
     public Role(String name) {
         this.name = name;
+    }
+
+    public Role(String name, String description) {
+        this.name = name;
+        this.description = description;
     }
 }

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from "react-router-dom";
 import api from '../api';
 import userApi from '../api/userApi';
 import InlineNotice from '../components/InlineNotice';
@@ -282,6 +283,13 @@ export default function AdminPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
+                   <Link 
+                     to="/roles"
+                     className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl shadow-sm text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary hover:text-white transition-all"
+                   >
+                      <span className="material-symbols-outlined text-sm">key</span>
+                      Quản lý Quyền hạn
+                   </Link>
                    <div className="px-4 py-2 bg-white dark:bg-slate-900 border border-outline-variant/10 rounded-xl shadow-sm text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                       <span className="material-symbols-outlined text-sm">shield_person</span>
                       {roles.length} VAI TRÒ

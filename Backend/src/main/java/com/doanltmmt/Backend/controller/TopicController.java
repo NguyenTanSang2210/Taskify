@@ -20,13 +20,13 @@ public class TopicController {
     }
 
     @PostMapping("/create")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
+    @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO createTopic(@RequestParam Long lecturerId, @RequestBody Topic topic) {
         return service.createTopic(lecturerId, topic);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO updateTopic(@PathVariable Long id,
                              @RequestParam(required = false) Long lecturerId,
                              @RequestBody Topic payload) {
@@ -34,21 +34,21 @@ public class TopicController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public void deleteTopic(@PathVariable Long id,
                             @RequestParam(required = false) Long lecturerId) {
         service.deleteTopic(id, lecturerId);
     }
 
     @PostMapping("/{id}/open")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO openTopic(@PathVariable Long id,
                            @RequestParam(required = false) Long lecturerId) {
         return service.openTopic(id, lecturerId);
     }
 
     @PostMapping("/{id}/close")
-    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO closeTopic(@PathVariable Long id,
                             @RequestParam(required = false) Long lecturerId) {
         return service.closeTopic(id, lecturerId);
