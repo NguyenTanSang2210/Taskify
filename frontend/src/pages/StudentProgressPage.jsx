@@ -320,7 +320,7 @@ export default function StudentProgressPage() {
     // Optimistic update
     setItems((prev) => prev.map((x) => x.id === id ? { ...x, status: newStatus } : x));
     try {
-      await progressApi.comment(id, { status: newStatus });
+      await progressApi.updateStatus(id, newStatus);
       setNotice({ type: "success", message: `Đã chuyển sang "${STATUS_CONFIG[newStatus].label}"` });
     } catch (e) {
       // Rollback on failure

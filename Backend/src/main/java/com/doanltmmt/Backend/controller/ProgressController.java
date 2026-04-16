@@ -216,6 +216,28 @@ public class ProgressController {
         return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId);
     }
 
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ProgressReport updateStatus(@PathVariable Long id,
+                                       @RequestBody Map<String, String> body) {
+        Long currentUserId = scope.requireCurrentUser().getId();
+        ProgressReport pr = progressRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
+        // Chỉ cho phép sinh viên sở hữu báo cáo này mới được đổi trạng thái
+        if (!currentUserId.equals(pr.getStudent().getUser().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+        }
+        String status = (body.getOrDefault("status", "")).trim().toUpperCase();
+        if (!status.equals("TODO") && !status.equals("IN_PROGRESS") && !status.equals("DONE")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status. Must be TODO, IN_PROGRESS, or DONE");
+        }
+        pr.setStatus(status);
+        ProgressReport saved = progressRepo.save(pr);
+        auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
+        eventPublisher.progressUpdated(saved);
+        return saved;
+    }
+
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public ProgressReport addComment(@PathVariable Long id,
