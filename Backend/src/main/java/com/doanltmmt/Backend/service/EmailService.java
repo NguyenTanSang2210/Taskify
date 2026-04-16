@@ -29,7 +29,7 @@ public class EmailService {
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
+            message.setFrom("Taskify <" + fromEmail + ">");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);

@@ -46,6 +46,8 @@ jobs:
           DB_USERNAME: ktpm
           DB_PASSWORD: ktpm123
           JWT_SECRET: ZGV2LXNlY3JldC1mb3ItdGVzdGluZy1wdXJwb3Nlcy1vbmx5LTIwMjY=
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
         run: |
           cd Backend
           chmod +x mvnw

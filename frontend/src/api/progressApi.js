@@ -21,4 +21,9 @@ export const progressApi = {
     const res = await api.put(`/progress/${id}/comment`, { lecturerComment, status, deadline });
     return res.data;
   },
+  // Dành riêng cho Sinh viên tự cập nhật trạng thái báo cáo của mình
+  updateStatus: async (id, status) => {
+    const res = await api.patch(`/progress/${id}/status`, { status });
+    return res.data;
+  },
 };
