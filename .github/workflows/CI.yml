@@ -40,6 +40,12 @@ jobs:
           cache: maven
 
       - name: Run Backend Tests and Build
+        env:
+          SPRING_PROFILES_ACTIVE: dev
+          DB_URL: jdbc:mysql://localhost:3306/doan_ltmmt?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          DB_USERNAME: ktpm
+          DB_PASSWORD: ktpm123
+          JWT_SECRET: ZGV2LXNlY3JldC1mb3ItdGVzdGluZy1wdXJwb3Nlcy1vbmx5LTIwMjY=
         run: |
           cd Backend
           chmod +x mvnw
