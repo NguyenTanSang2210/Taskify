@@ -10,6 +10,24 @@ jobs:
   # Job 1: Kiểm tra và Build Backend
   backend-test-and-build:
     runs-on: ubuntu-latest
+    
+    # Cấu hình Database ảo để Spring Boot có thể kết nối khi chạy Test
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root123
+          MYSQL_DATABASE: doan_ltmmt
+          MYSQL_USER: ktpm
+          MYSQL_PASSWORD: ktpm123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
