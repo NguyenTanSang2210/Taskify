@@ -60,7 +60,7 @@
 
 1. Khi bắt đầu một task: đổi `⬜` → `🟨` ở **bảng tổng quan (mục 2)** và ở **tiêu đề task**.
 2. Tick `- [x]` từng bước con khi làm xong.
-3. Khi xong: đổi sang `✅`, điền **Ngày xong** và **Commit/PR** vào dòng "Theo dõi" của task.
+3. Khi xong: đổi sang `✅`, điền **Ngày xong** và **mã Commit** vào dòng "Theo dõi" của task.
 4. Ghi một dòng vào **Changelog (mục 13)**.
 5. Mỗi khi kết thúc một giai đoạn: kiểm tra toàn bộ **Tiêu chí hoàn thành giai đoạn**, gắn tag git.
 
@@ -164,16 +164,20 @@
 
 ### 3.1. Nhánh Git
 
+> **Quy ước đã chốt với chủ dự án (25/09/2026): KHÔNG tạo nhánh task.** Code sửa trực tiếp trên `main` local; chủ dự án tự đẩy lên `develop` rồi merge vào `main`.
+
 ```
-main        ← chỉ nhận merge khi kết thúc giai đoạn (có tag)
- └─ develop ← nhánh tích hợp, nhận PR từ các nhánh task
-     ├─ fix/P1-01-otp-flow
-     ├─ feat/P2-05-forgot-password
-     └─ refactor/P3-05-service-layer
+main (local)  ← sửa code trực tiếp, mỗi task 1 commit có mã task
+   │  git push origin main:develop      (chủ dự án tự đẩy)
+   ▼
+origin/develop ← CI chạy kiểm tra
+   │  PR / merge develop → main          (chủ dự án tự merge)
+   ▼
+origin/main   ← gắn tag khi kết thúc mỗi giai đoạn
 ```
 
-- Tên nhánh: `<loại>/<ID-task>-<mô-tả-ngắn>` — loại: `fix`, `feat`, `refactor`, `chore`, `test`, `docs`, `security`.
-- **Mỗi task = 1 nhánh = 1 PR** (task lớn có thể chia nhiều PR, ghi rõ `[P1-05 phần 1/3]`).
+- Mỗi task = **1 commit** (task lớn có thể nhiều commit, ghi rõ `[P1-05 phần 1/3]`) để dễ truy vết và revert.
+- Claude **không** tạo nhánh, **không** push/merge/tag — chỉ commit trên `main` local; việc đẩy lên GitHub do chủ dự án thực hiện.
 
 ### 3.2. Quy ước commit (Conventional Commits)
 
@@ -195,10 +199,10 @@ test(security): thêm test IDOR cho milestone và calendar [P1-12]
 - [ ] Đã test thủ công luồng liên quan trên giao diện.
 - [ ] Không commit secret, file `.env`, file upload thật.
 - [ ] Cập nhật tài liệu nếu thay đổi API/cấu hình.
-- [ ] CI xanh trên PR.
+- [ ] CI xanh trên `develop` sau khi chủ dự án push.
 - [ ] Đã cập nhật trạng thái trong file kế hoạch này + Changelog.
 
-### 3.4. Mẫu mô tả PR
+### 3.4. Mẫu mô tả PR `develop` → `main` (khi chủ dự án merge, tùy chọn)
 
 ```markdown
 ## Task
@@ -441,9 +445,9 @@ P1-01 — Sửa luồng OTP
 > **Trạng thái:** Phần **local đã xong**; các bước **đẩy lên GitHub chờ bạn xác nhận** (push/merge/tag/branch protection là thao tác công khai lên remote).
 
 **Các bước:**
-- [x] Tạo nhánh `chore/P0-baseline` từ `main`; mỗi task GĐ0 một commit có mã task (`98027f4` P0-04 · `a121754` P0-06 · `c059255` P0-07 · `64d0382` P0-08 · `a18d1bf` P0-05 · + commit cập nhật Plan).
-- [ ] Push nhánh + tạo PR vào `develop`: `git push -u origin chore/P0-baseline` → mở PR trên GitHub → chờ CI xanh → merge.
-- [ ] Đồng bộ `develop` → `main` (PR `develop` → `main`).
+- [x] Mỗi task GĐ0 một commit có mã task trên `main` local (`98027f4` P0-04 · `a121754` P0-06 · `c059255` P0-07 · `64d0382` P0-08 · `a18d1bf` P0-05 · `6ef1fe7` Plan). *(Ban đầu làm trên nhánh `chore/P0-baseline`, đã fast-forward về `main` và xóa nhánh theo yêu cầu.)*
+- [ ] Chủ dự án đẩy lên develop: `git push origin main:develop` → chờ CI xanh.
+- [ ] Chủ dự án merge `develop` → `main` trên GitHub.
 - [ ] Bật **Branch protection** cho `main` (Settings → Branches → Add rule: Require PR + Require status checks).
 - [ ] Gắn tag trên `main` sau khi merge: `git tag -a v0.1.0-baseline -m "Baseline sau khi khôi phục môi trường"`; `git push origin v0.1.0-baseline`.
 - [ ] (Tùy chọn) GitHub Project/Milestones cho 5 giai đoạn.
@@ -547,7 +551,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - DevTools → Application → Local Storage không còn `temp_token`.
 - STUDENT đăng nhập vẫn như cũ.
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -569,7 +573,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - [ ] Frontend: khi nhận 401 → logout (đã có, sẽ tinh chỉnh ở P2-02).
 
 **✅ Nghiệm thu:** Kịch bản #19 của P0-05: admin khóa student → request tiếp theo của student bị 401 và về trang login.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -589,7 +593,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - [ ] **Nếu đã từng deploy công khai với secret mặc định:** coi như đã lộ, đổi secret ngay.
 
 **✅ Nghiệm thu:** `docker compose up` với `.env` thiếu `JWT_SECRET` → báo lỗi rõ ràng, không khởi động.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -627,7 +631,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - [ ] Test: client không token → CONNECT bị từ chối; SV A subscribe `/topic/progress/{đề tài của B}` → bị từ chối.
 
 **✅ Nghiệm thu:** Thông báo & chat realtime vẫn hoạt động; không thể nghe lén kênh của người khác.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -680,7 +684,7 @@ Topic loadTopicOr404(Long topicId);
 - [ ] Rà soát frontend: trang nào đang gọi endpoint bị siết quyền → vẫn hoạt động đúng với người có quyền.
 
 **✅ Nghiệm thu:** Mỗi mục có ít nhất 1 test "không có quyền → 403" trong P1-12.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -712,7 +716,7 @@ Topic loadTopicOr404(Long topicId);
 - [ ] Test: response của `/api/discuss/threads/{id}/posts` **không chứa** `email`, `phone`, `privileges`.
 
 **✅ Nghiệm thu:** Không endpoint nào trả entity JPA trực tiếp (grep `public .*Entity` kiểu trả về trong controller = 0); frontend hoạt động bình thường.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -743,7 +747,7 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 - [ ] Job dọn file mồ côi (upload > 24h không gắn vào báo cáo) — tùy chọn.
 
 **✅ Nghiệm thu:** Upload `.exe` → 400; SV A không tải được file của SV B (khác đề tài) → 403; tên file tiếng Việt tải về đúng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -754,7 +758,7 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 
 **Quyết định D-04 = B:** Xóa khỏi **cả lịch sử git** (viết lại lịch sử + force push).
 
-> ⚠️ **Thao tác phá hủy, không hoàn tác được trên remote.** Chỉ thực hiện khi: mọi nhánh đang làm dở đã được push, và đã có bản backup mirror. Nên làm **ngay đầu GĐ1**, trước khi tạo nhiều nhánh task, để giảm xung đột.
+> ⚠️ **Thao tác phá hủy, không hoàn tác được trên remote.** Chỉ thực hiện khi: mọi commit trên `main` local đã được push lên `develop`/`main`, và đã có bản backup mirror. Nên làm **ngay đầu GĐ1**, trước khi có thêm commit mới, để giảm xung đột.
 
 **Các bước:**
 
@@ -828,7 +832,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - Admin tạo user không có mật khẩu → user nhận email → tự kích hoạt → đăng nhập được.
 - Đặt mật khẩu `123` → 400 với thông báo rõ ràng.
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -845,7 +849,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] Ghi audit log `LOGIN_FAILED`, `LOGIN_LOCKED`, `LOGIN_SUCCESS`.
 
 **✅ Nghiệm thu:** Restart backend không reset bộ đếm (nếu lưu DB); 11 request login/phút từ 1 IP → 429.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -868,7 +872,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] Kiểm tra CORS chỉ cho origin cấu hình (đã có) — thêm cho `/ws/**`.
 
 **✅ Nghiệm thu:** `curl -I http://localhost:5175` thấy đủ header; `/swagger-ui.html` ở prod → 404.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -926,7 +930,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] (Tùy chọn) Thêm job OWASP Dependency-Check hoặc bật GitHub CodeQL.
 
 **✅ Nghiệm thu:** Build + toàn bộ test pass; Dependabot tạo PR tự động.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -972,7 +976,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] Test: LECTURER tạo đề tài trong workspace `OPEN_TOPIC` → 200; LECTURER sửa đề tài của GV khác → 403.
 
 **✅ Nghiệm thu:** Giảng viên tạo/sửa/đóng/mở đề tài được; đổi quyền qua trang Role → restart → quyền vẫn giữ.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -990,7 +994,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] Rà các trang đang tự bắt 403 riêng (Kanban) → dùng cơ chế chung.
 
 **✅ Nghiệm thu:** SV cố truy cập tài nguyên không có quyền → thấy thông báo lỗi, **vẫn đăng nhập**.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1012,7 +1016,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] Test thủ công kịch bản #11, #12, #13, #21 ở P0-05.
 
 **✅ Nghiệm thu:** Nộp báo cáo kèm file 10MB từ **cả hai trang** qua Docker thành công; GV tải được file, tên file đúng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1042,7 +1046,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [ ] Cập nhật test `TopicRegistrationServiceTest` (hiện có thể đang test hành vi 1 SV).
 
 **✅ Nghiệm thu:** Đề tài capacity=3 duyệt được 3 SV, SV thứ 4 không đăng ký được; hủy 1 → mở lại.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1068,7 +1072,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 - [ ] Test: reset thành công → token cũ vô hiệu; mã sai/hết hạn → 400.
 
 **✅ Nghiệm thu:** Người dùng tự lấy lại mật khẩu qua email mà không cần admin.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1086,7 +1090,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 - [ ] Tắt gửi email thật trong test (mock `JavaMailSender`).
 
 **✅ Nghiệm thu:** Đăng nhập ADMIN trả response < 500ms; email tiếng Việt có định dạng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1104,7 +1108,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 - [ ] Unit test logic chọn đối tượng nhắc.
 
 **✅ Nghiệm thu:** Chạy job 2 lần liên tiếp → mỗi SV chỉ nhận 1 thông báo.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1122,7 +1126,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 - [ ] Unit test với văn bản tiếng Việt.
 
 **✅ Nghiệm thu:** 2 báo cáo tiếng Việt gần giống → điểm ≥ 0,8 và GV thấy cảnh báo.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1153,7 +1157,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 > Ghi chú: P3-02 sẽ chuẩn hóa bằng Bean Validation; ở đây sửa **logic** trước để người dùng không gặp lỗi 500.
 
 **✅ Nghiệm thu:** Không còn lỗi 500 do dữ liệu đầu vào ở các endpoint trên.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1169,7 +1173,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 - [ ] Test cho `deleteRole`.
 
 **✅ Nghiệm thu:** Admin vào được trang quản lý vai trò; xóa role đang dùng → thông báo rõ ràng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1189,7 +1193,7 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 - [ ] Build + test pass.
 
 **✅ Nghiệm thu:** Không còn class/bảng `ProjectPermission`; `/api/permissions` → 404.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1294,7 +1298,7 @@ grade_history(
 - [ ] Gửi 2 yêu cầu PENDING cùng lúc cho 1 SV → yêu cầu thứ 2 bị từ chối.
 
 **✅ Nghiệm thu:** Không thể sửa điểm ở workspace đã đóng nếu không có yêu cầu được duyệt; mọi thay đổi điểm đều truy vết được (ai, khi nào, lý do, ai duyệt).
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1342,7 +1346,7 @@ grade_history(
 - [ ] Test: DB trống → Flyway tạo đủ bảng → app khởi động; DB cũ → baseline → migrate OK.
 
 **✅ Nghiệm thu:** Không còn `ddl-auto=update`, `SchemaFixer`; `flyway_schema_history` có đủ bản ghi.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1373,7 +1377,7 @@ grade_history(
 - [ ] Kiểm tra frontend gửi đúng tên trường.
 
 **✅ Nghiệm thu:** `grep "Map<String" BE/controller` = 0 (trừ trường hợp có lý do ghi chú).
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1398,7 +1402,7 @@ grade_history(
 - [ ] Việt hóa thông báo lỗi còn tiếng Anh ("Out of scope", "Topic not found"…).
 
 **✅ Nghiệm thu:** Mọi lỗi API cùng một định dạng; không lộ stacktrace.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1426,7 +1430,7 @@ grade_history(
 - [ ] Frontend: file `FE/constants/status.js` dùng chung nhãn tiếng Việt.
 
 **✅ Nghiệm thu:** Không còn chuỗi trạng thái "cứng" trong service; test chuyển trạng thái pass.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1455,7 +1459,7 @@ grade_history(
 - [ ] Thay `SecurityContextHolder...getName()` lặp lại bằng `scope.requireCurrentUser()`.
 
 **✅ Nghiệm thu:** Không controller nào inject `*Repository`; mỗi controller < 120 dòng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1479,7 +1483,7 @@ grade_history(
 - [ ] Frontend: component `Pagination` dùng chung / "Tải thêm" cho thông báo & chat.
 
 **✅ Nghiệm thu:** Không endpoint danh sách nào trả toàn bộ bảng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1507,7 +1511,7 @@ grade_history(
 | Thông báo của tôi | | | | |
 | Scheduler nhắc nhở (100 đăng ký) | | | | |
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1522,7 +1526,7 @@ grade_history(
 - [ ] `docker-compose.yml`: healthcheck backend gọi `/actuator/health`; frontend `depends_on: backend: condition: service_healthy`.
 
 **✅ Nghiệm thu:** `docker compose ps` hiển thị backend `healthy`; log prod là JSON có request id.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1547,7 +1551,7 @@ grade_history(
 | Coverage service | chưa đo | ≥ 60% | |
 | Số test frontend | 0 | ≥ 20 | |
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1562,7 +1566,7 @@ grade_history(
 - [ ] (Tùy chọn) Build & push image lên GitHub Container Registry khi gắn tag.
 
 **✅ Nghiệm thu:** PR thiếu test/không đạt ngưỡng coverage/lint lỗi → CI đỏ.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1582,7 +1586,7 @@ grade_history(
 - [ ] (Tùy chọn) Chuyển dần sang **TypeScript** (bắt đầu từ `api/`).
 
 **✅ Nghiệm thu:** Không file > 400 dòng; bundle ban đầu < 250KB; giao diện không đổi.
-**Theo dõi:** Trạng thái: ⬜ · Kích thước bundle: `____KB` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Kích thước bundle: `____KB` · Commit: `____`
 
 ---
 
@@ -1598,7 +1602,7 @@ grade_history(
 - [ ] **Giữ nguyên** tên DB `doan_ltmmt` và package Java `com.doanltmmt.Backend` (đổi rủi ro cao, lợi ích thấp) — hoặc đổi package trong một PR riêng nếu muốn.
 - [ ] Đổi thư mục `Backend/` → giữ nguyên (tránh vỡ CI/Docker) hoặc đổi thành `backend/` cho đồng bộ với `frontend/` (PR riêng).
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1614,7 +1618,7 @@ grade_history(
 - [ ] `documentation_vận_hành.md`: đồng bộ với tính năng thực tế — đánh dấu "Học phí" là **"Tạm hoãn — sẽ phát triển sau phiên bản 1.0"** (D-05); cập nhật mục 1 theo luồng kích hoạt tài khoản mới (P1-09); thêm mục quy trình chấm lại (P2-13).
 - [ ] `CONTRIBUTING.md`: quy trình nhánh/commit (mục 3 của file này).
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1645,7 +1649,7 @@ grade_history(
 - [ ] Test: access token hết hạn → tự refresh trong suốt; refresh token dùng lại → toàn bộ phiên bị thu hồi; logout → refresh lỗi 401.
 
 **✅ Nghiệm thu:** Không còn token trong `localStorage`; người dùng không bị đăng xuất khi access token 15 phút hết hạn; đăng xuất thu hồi phiên thật sự.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
 
 ---
 
@@ -1707,7 +1711,7 @@ grade_history(
 - [ ] Frontend: thư viện biểu đồ **Recharts**; bộ lọc workspace.
 - [ ] Xuất báo cáo thống kê ra Excel/PDF.
 
-**Theo dõi:** Trạng thái: ⬜ · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
 
 ---
 
@@ -1718,7 +1722,7 @@ grade_history(
 - [ ] Ghi thêm IP + user-agent vào audit log.
 - [ ] Chính sách lưu trữ: xóa/lưu trữ log > 12 tháng (job định kỳ) — **trừ** log liên quan điểm số (giữ lâu dài).
 
-**Theo dõi:** Trạng thái: ⬜ · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
 
 ---
 
@@ -1733,7 +1737,7 @@ grade_history(
 - [ ] Tài khoản tạo ra ở trạng thái **chưa kích hoạt** + gửi email kích hoạt (dùng luồng của P1-09) — khớp quy trình ở tài liệu vận hành mục 1. Gửi email theo lô qua hàng đợi async (P2-06) để không bị Gmail chặn.
 - [ ] Import chạy trong transaction; báo cáo kết quả (thành công X, lỗi Y) + tải file lỗi.
 
-**Theo dõi:** Trạng thái: ⬜ · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
 
 ---
 
@@ -1771,7 +1775,7 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 - [ ] GV chấm từng mốc → điểm tổng kết = tổng có trọng số (có thể chỉnh tay).
 - [ ] Lịch học thuật hiển thị milestone tự động (hợp nhất `CalendarEvent` và `Milestone`).
 
-**Theo dõi:** Trạng thái: ⬜ · PR: `____`
+**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
 
 ---
 
@@ -1882,7 +1886,7 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 |---|---|:---:|:---:|---|:---:|
 | R-01 | Đổi response sang DTO (P1-06) làm vỡ giao diện | Cao | Cao | Giữ nguyên đường dẫn JSON; so sánh JSON trước/sau; test thủ công từng trang | ⬜ |
 | R-02 | Flyway baseline không khớp DB đang chạy | TB | Cao | Backup DB trước; thử trên bản sao; `baseline-on-migrate` | ⬜ |
-| R-03 | Force push khi xóa lịch sử git (D-04 = B, **sẽ thực hiện**) làm mất dữ liệu / nhánh đang làm dở | TB | Cao | Làm ngay đầu GĐ1 khi ít nhánh; push hết trước; `git clone --mirror` backup; clone lại sau khi xong (quy trình chi tiết ở P1-08) | ⬜ |
+| R-03 | Force push khi xóa lịch sử git (D-04 = B, **sẽ thực hiện**) làm mất dữ liệu / commit chưa push | TB | Cao | Làm ngay đầu GĐ1; push hết commit trước; `git clone --mirror` backup; clone lại sau khi xong (quy trình chi tiết ở P1-08) | ⬜ |
 | R-10 | Tắt đăng ký công khai (D-02) khi chưa có import Excel → nhập tay nhiều SV mất thời gian | Cao | TB | Làm P4-03 sớm (có thể kéo lên ngay sau GĐ2 nếu cần dùng cho học kỳ tới) | ⬜ |
 | R-11 | Quy trình chấm lại (P2-13) phức tạp hơn nhu cầu thực tế | TB | Thấp | Làm bản tối thiểu trước (yêu cầu → duyệt → sửa → lịch sử); đơn phúc khảo của SV để sau | ⬜ |
 | R-04 | Siết phân quyền làm chặn nhầm người có quyền | TB | TB | Ma trận phân quyền (Phụ lục A) + test cả chiều "được phép" | ⬜ |
@@ -1975,10 +1979,10 @@ docker exec ktpm-db mysqldump -uroot -p<ROOT_PASS> doan_ltmmt > backup_$(Get-Dat
 Get-Content backup.sql | docker exec -i ktpm-db mysql -uroot -p<ROOT_PASS> doan_ltmmt
 
 # ===== Git =====
-git checkout develop; git pull
-git checkout -b fix/P1-01-otp-flow
+git checkout main; git pull
 git commit -m "security(auth): chỉ cấp access token sau khi xác thực OTP [P1-01]"
-git push -u origin fix/P1-01-otp-flow
+git push origin main:develop               # đẩy lên develop để CI kiểm tra
+# sau đó merge develop → main trên GitHub
 git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 ```
 
