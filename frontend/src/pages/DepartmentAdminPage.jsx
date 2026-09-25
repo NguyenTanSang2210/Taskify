@@ -84,7 +84,7 @@ export default function DepartmentAdminPage() {
             }
             setNotice({ type: 'success', message: 'Cập nhật trạng thái đề tài thành công.' });
             loadTopics();
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Không thể cập nhật đề tài.' });
         }
     };
@@ -166,7 +166,7 @@ export default function DepartmentAdminPage() {
             setNotice({ type: 'success', message: 'Lớp học học thuật mới đã được thêm vào hệ thống.' });
             setClassCreate({ code: '', name: '' });
             await loadClasses();
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Không thể khởi tạo lớp học.' });
         } finally {
             setLoading(false);
@@ -194,7 +194,7 @@ export default function DepartmentAdminPage() {
         try {
             await api.post('/workspace-classes/assign', { workspaceId, classId });
             await loadWorkspaceClasses(workspaceId);
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Lỗi gán lớp.' });
         } finally {
             setLoading(false);
@@ -206,7 +206,7 @@ export default function DepartmentAdminPage() {
         try {
             await api.post('/workspace-classes/unassign', { workspaceId, classId });
             await loadWorkspaceClasses(workspaceId);
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Lỗi gỡ lớp.' });
         } finally {
             setLoading(false);
@@ -286,7 +286,7 @@ export default function DepartmentAdminPage() {
             await api.post('/assignments/revoke', { assignmentId, reason: reason.trim() || null });
             setNotice({ type: 'success', message: 'Đã thu hồi quyền tham gia của giảng viên.' });
             await loadAssignments(Number(selectedWorkspaceId));
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Lỗi thu hồi phân công.' });
         } finally {
             setLoading(false);

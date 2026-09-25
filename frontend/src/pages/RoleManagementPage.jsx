@@ -1,10 +1,8 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { roleApi } from "../api/roleApi";
 import InlineNotice from "../components/InlineNotice";
-import { useAuth } from "../context/AuthContext";
 
 export default function RoleManagementPage() {
-  const { user } = useAuth();
   const [roles, setRoles] = useState([]);
   const [privileges, setPrivileges] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +26,7 @@ export default function RoleManagementPage() {
       ]);
       setRoles(rData || []);
       setPrivileges(pData || []);
-    } catch (err) {
+    } catch {
       setError("Không thể tải cấu hình quyền hạn từ máy chủ.");
     } finally {
       setLoading(false);
@@ -57,7 +55,7 @@ export default function RoleManagementPage() {
       });
       await loadData();
       setNotice({ type: "success", message: "Đã cập nhật quyền hạn thành công!" });
-    } catch (err) {
+    } catch {
       setNotice({ type: "danger", message: "Cập nhật quyền thất bại." });
     }
   };
@@ -95,7 +93,7 @@ export default function RoleManagementPage() {
       setNotice({ type: "success", message: "Đã xóa vai trò thành công." });
       setShowConfirmDelete(null);
       await loadData();
-    } catch (err) {
+    } catch {
       setNotice({ type: "danger", message: "Không thể xóa vai trò này." });
     } finally {
       setActionLoading(false);
@@ -136,6 +134,12 @@ export default function RoleManagementPage() {
             onClose={() => setNotice(null)}
             autoHideMs={3000}
           />
+        </div>
+      )}
+
+      {error && (
+        <div className="max-w-2xl mx-auto">
+          <InlineNotice type="danger" message={error} onClose={() => setError("")} />
         </div>
       )}
 
