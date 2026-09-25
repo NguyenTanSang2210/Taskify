@@ -7,6 +7,11 @@
       "defaultValue": false
     },
     {
+      "name": "app.seed.otp-email",
+      "type": "java.lang.String",
+      "description": "Base email for demo OTP accounts; admin/deptadmin/lecturer receive name+<username>@domain."
+    },
+    {
       "name": "app.cors.allowed-origins",
       "type": "java.lang.String",
       "description": "Comma-separated list of allowed CORS origins for REST and WebSocket endpoints.",

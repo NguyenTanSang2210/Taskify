@@ -30,6 +30,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: 8080
+      # Seed dữ liệu demo chỉ có tác dụng với profile dev
+      APP_SEED_ENABLED: ${APP_SEED_ENABLED:-false}
+      APP_SEED_OTP_EMAIL: ${APP_SEED_OTP_EMAIL:-}
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-doan_ltmmt}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-ktpm}
       DB_PASSWORD: ${MYSQL_PASSWORD:-ktpm123}
