@@ -3,3 +3,10 @@
 .env.*
 !.env.example
 !.env.*.example
+
+# IDE
+.idea/
+
+# Uploaded files (runtime data). Tracked legacy files are removed in Plan P1-08.
+Backend/uploads/*
+!Backend/uploads/.gitkeep

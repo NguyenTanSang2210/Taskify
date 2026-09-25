@@ -104,12 +104,17 @@ npm run build
 ```
 
 ### Script nhanh co san
-Tu thu muc goc `KTPM/`:
+Tu thu muc goc cua repo (script tu tim dung thu muc, chay tu dau cung duoc):
 ```powershell
-.\scripts\pre-demo-check.ps1
-.\scripts\run-backend.ps1
-.\scripts\run-frontend.ps1
+.\scripts\pre-demo-check.ps1        # backend compile + test, frontend lint + build
+.\scripts\run-backend.ps1           # backend local (doc Backend/.env)
+.\scripts\run-frontend.ps1          # frontend dev server http://localhost:5175
+.\scripts\get-otp.ps1 admin         # lay ma OTP moi nhat tu DB (khi chua cau hinh email)
+node scripts/smoke-test.mjs         # smoke test toan luong nghiep vu (can stack Docker profile dev)
 ```
+
+Du lieu demo (profile `dev` + `APP_SEED_ENABLED=true`), mat khau `123456`:
+`admin`, `deptadmin`, `lecturer` (can OTP), `student`, `student2` (lop CNTT-K15).
 
 ## 6. Chuc nang nghiep vu chinh
 - Quan ly workspace theo vong doi hoc ky.
