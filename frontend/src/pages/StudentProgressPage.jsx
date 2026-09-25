@@ -322,7 +322,7 @@ export default function StudentProgressPage() {
     try {
       await progressApi.updateStatus(id, newStatus);
       setNotice({ type: "success", message: `Đã chuyển sang "${STATUS_CONFIG[newStatus].label}"` });
-    } catch (e) {
+    } catch {
       // Rollback on failure
       loadProgress();
       setNotice({ type: "danger", message: "Cập nhật trạng thái thất bại" });

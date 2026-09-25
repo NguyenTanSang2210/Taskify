@@ -95,6 +95,12 @@ export default function DashboardPage() {
                 </div>
             )}
 
+            {loading && (roleName === 'ADMIN' || roleName === 'LECTURER') && (
+                <p className="text-center text-xs font-bold uppercase tracking-widest text-outline animate-pulse">
+                    Đang tải số liệu thống kê...
+                </p>
+            )}
+
             {/* Metrics Bento Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((card, idx) => (

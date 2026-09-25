@@ -158,7 +158,7 @@ export default function LecturerRegistrationPage() {
           document.body.appendChild(link);
           link.click();
           link.parentNode.removeChild(link);
-      } catch (error) {
+      } catch {
           setNotice({ type: "danger", message: "Xuất tệp Excel thất bại." });
       }
   };

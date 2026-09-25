@@ -135,12 +135,12 @@ Quan he noi bat:
 
 ## 10. Gioi han va huong phat trien
 Gioi han hien tai:
-- Chua co CI/CD va quality gate tu dong.
+- Da co CI (GitHub Actions: backend test + build, frontend lint + build, docker compose build) nhung chua co CD va quality gate coverage.
 - Chua co bao cao coverage/chuan benchmark hieu nang.
 
-Huong phat trien:
-1. Bo sung CI pipeline (build/lint/test/security scan).
-2. Them OpenAPI/Swagger de dong bo API contract.
+Huong phat trien (chi tiet: `Plan/plan1.md`):
+1. Bo sung security scan va nguong coverage vao CI.
+2. Hoan thien OpenAPI/Swagger (da co springdoc) de dong bo API contract.
 3. Bo sung observability (structured logging, metrics, tracing).
 4. Hoan thien phan dashboard va thong ke nang cao.
 

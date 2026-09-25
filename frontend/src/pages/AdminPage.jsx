@@ -141,7 +141,7 @@ export default function AdminPage() {
             await userApi.updateStatus(u.id, !u.active);
             setNotice({ type: 'success', message: `Đã cập nhật trạng thái tài khoản ${u.username}.` });
             loadUsers();
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Không thể cập nhật trạng thái người dùng.' });
         }
     };
@@ -152,7 +152,7 @@ export default function AdminPage() {
             await userApi.updateRole(u.id, newRoleId);
             setNotice({ type: 'success', message: `Đã cập nhật vai trò mới cho ${u.username}.` });
             loadUsers();
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Không thể thay đổi vai trò.' });
         }
     };
