@@ -1,47 +1,47 @@
 package com.doanltmmt.Backend.security;
 
-import com.doanltmmt.Backend.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.lang.NonNull;
 
 import java.io.IOException;
 
+/**
+ * Xác thực request bằng access token trong header Authorization.
+ * Token không hợp lệ / hết hạn / bị thu hồi / sai loại → request đi tiếp KHÔNG xác thực; các endpoint được bảo vệ
+ * sẽ trả 401 qua {@code authenticationEntryPoint} (xem {@code SecurityConfig}).
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider tokenProvider;
-    private final CustomUserDetailsService userDetailsService;
+    private final TokenAuthenticator tokenAuthenticator;
 
-    public JwtAuthenticationFilter(JwtTokenProvider tokenProvider, CustomUserDetailsService userDetailsService) {
-        this.tokenProvider = tokenProvider;
-        this.userDetailsService = userDetailsService;
+    public JwtAuthenticationFilter(TokenAuthenticator tokenAuthenticator) {
+        this.tokenAuthenticator = tokenAuthenticator;
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            if (tokenProvider.validate(token)) {
-                String username = tokenProvider.getUsername(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
-        }
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+        TokenAuthenticator.extractBearer(request.getHeader("Authorization"))
+                .flatMap(tokenAuthenticator::authenticate)
+                .ifPresent(user -> {
+                    var authorities = user.getAuthorities();
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(user, null, authorities);
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    user.eraseCredentials(); // không giữ băm mật khẩu trong bộ nhớ suốt vòng đời request
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                });
 
         filterChain.doFilter(request, response);
     }
 }
-

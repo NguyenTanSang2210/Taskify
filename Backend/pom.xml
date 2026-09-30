@@ -116,6 +116,19 @@
 
 	<build>
 		<plugins>
+			<!-- Mặc định surefire chỉ chạy *Test / *Tests. Các test tích hợp bảo mật đặt tên *IT
+			     (cần MySQL) nên phải khai báo tường minh, nếu không chúng KHÔNG chạy trong `mvn test` / CI. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*IT.java</include>
+					</includes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

@@ -20,7 +20,9 @@ api.interceptors.response.use(
     // Không redirect đối với các endpoint auth (đặc biệt /auth/login)
     const isAuthEndpoint = url.includes("/auth/");
 
-    if (!isAuthEndpoint && (status === 401 || status === 403)) {
+    // Chỉ 401 (chưa đăng nhập / token hết hạn / bị thu hồi) mới đăng xuất.
+    // 403 = đã đăng nhập nhưng không đủ quyền: chỉ báo lỗi, KHÔNG đá người dùng ra màn hình đăng nhập.
+    if (!isAuthEndpoint && status === 401) {
       try {
         localStorage.removeItem("token");
         localStorage.removeItem("user");

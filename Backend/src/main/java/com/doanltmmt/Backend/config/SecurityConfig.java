@@ -1,15 +1,18 @@
 package com.doanltmmt.Backend.config;
 
 import com.doanltmmt.Backend.security.JwtAuthenticationFilter;
+import com.doanltmmt.Backend.security.SecurityErrorHandlers;
+import com.doanltmmt.Backend.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,11 +22,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /**
+     * Các endpoint công khai (không cần đăng nhập) — liệt kê TỪNG cái (mặc định từ chối): thêm endpoint mới
+     * dưới /api/auth sẽ KHÔNG vô tình trở nên công khai.
+     */
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {
+            "/api/auth/login",
+            "/api/auth/otp/verify",
+            "/api/auth/otp/resend",
+            "/api/auth/activate",
+            "/api/auth/password/initial",
+            "/api/auth/password/forgot",
+            "/api/auth/password/reset",
+            "/api/auth/register" // TODO(P1-09): xóa cùng với việc bỏ đăng ký công khai
+    };
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final com.doanltmmt.Backend.service.CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-            com.doanltmmt.Backend.service.CustomUserDetailsService userDetailsService) {
+                          CustomUserDetailsService userDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
     }
@@ -36,10 +54,14 @@ public class SecurityConfig {
                 .cors(cors -> {
                 })
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // 401 cho chưa đăng nhập/token hỏng/hết hạn/bị thu hồi; 403 cho đã đăng nhập nhưng không đủ quyền
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(SecurityErrorHandlers.unauthorized())
+                        .accessDeniedHandler(SecurityErrorHandlers.forbidden()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated())
 

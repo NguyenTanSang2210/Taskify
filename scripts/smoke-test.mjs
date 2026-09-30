@@ -18,8 +18,8 @@
  *   FAIL  — lỗi ngoài dự kiến → cần điều tra (script trả exit code 1)
  */
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -70,6 +70,29 @@ async function call(method, path, { token, body, query, form, base = API, timeou
   return { status: res.status, data, type };
 }
 
+/** Duyệt đệ quy thư mục, trả về danh sách file. */
+function walk(dir) {
+  const out = [];
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) out.push(...walk(p));
+    else out.push(p);
+  }
+  return out;
+}
+
+/** Tìm các dòng trong frontend/src khớp regex — dùng cho lỗi nằm ở FRONTEND (API không thể tái hiện được). */
+function grepFrontend(regex) {
+  const hits = [];
+  for (const file of walk(join(ROOT, "frontend", "src"))) {
+    if (!/\.(jsx?|tsx?)$/.test(file)) continue;
+    readFileSync(file, "utf8").split(/\r?\n/).forEach((line, i) => {
+      if (regex.test(line)) hits.push(`${relative(ROOT, file).replace(/\\/g, "/")}:${i + 1}`);
+    });
+  }
+  return hits;
+}
+
 function sql(query) {
   const cmd = `docker exec -e MYSQL_PWD=${DB_PASS} ${DB_CONTAINER} mysql -u${DB_USER} ${DB_NAME} -N -B -e "${query}"`;
   return execSync(cmd, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
@@ -111,11 +134,24 @@ async function step(id, name, fn) {
   }
 }
 
-/** Kịch bản tái hiện lỗi đã biết. fn trả về { bug: boolean, detail }. */
+/**
+ * Kịch bản tái hiện lỗi đã biết. fn trả về { bug, fixed?, detail }.
+ *  - bug=true              → BUG   (lỗi còn tái hiện)
+ *  - bug=false, fixed=true → FIXED (đúng trạng thái an toàn mong đợi, ví dụ 403)
+ *  - bug=false, fixed=false→ FAIL  (không còn lỗi cũ nhưng cũng CHƯA đúng trạng thái an toàn — thường do kịch bản
+ *                                   dùng token đã chết; tránh báo "FIXED" giả chỉ vì không còn HTTP 200)
+ *  - bug=false, fixed bỏ trống → FIXED (kiểu cũ)
+ */
 async function knownBug(id, name, task, fn) {
   try {
-    const { bug, detail } = await fn();
-    record(id, name, bug ? "BUG" : "FIXED", detail, task);
+    const { bug, fixed, detail } = await fn();
+    if (bug) {
+      record(id, name, "BUG", detail, task);
+    } else if (fixed === undefined || fixed) {
+      record(id, name, "FIXED", detail, task);
+    } else {
+      record(id, name, "FAIL", `Không còn lỗi cũ nhưng cũng chưa đúng trạng thái an toàn mong đợi: ${detail}`, task);
+    }
   } catch (e) {
     record(id, name, "FAIL", e.message, task);
   }
@@ -195,7 +231,7 @@ async function main() {
   await knownBug("5", "Giảng viên tự tạo đề tài", "P2-01", async () => {
     const r = await call("POST", "/topics/create", { token: ctx.lecturer.token, query: { lecturerId: ctx.lecturer.id }, body: topicBody });
     if (r.status === 200) ctx.topicId = r.data.id;
-    return { bug: r.status === 403, detail: `HTTP ${r.status}${r.status === 403 ? " — thiếu quyền TOPIC_MANAGE (frontend sẽ đăng xuất GV)" : ""}` };
+    return { bug: r.status === 403, fixed: r.status === 200, detail: `HTTP ${r.status}${r.status === 403 ? " — thiếu quyền TOPIC_MANAGE" : ""}` };
   });
   if (!ctx.topicId) {
     await step("5b", "DeptAdmin tạo đề tài thay giảng viên (đường vòng)", async () => {
@@ -234,7 +270,7 @@ async function main() {
   });
   await knownBug("9b", "Giảng viên duyệt Student2 (đề tài capacity=3)", "P2-04", async () => {
     const r = await call("POST", `/registration/approve/${ctx.reg2}`, { token: ctx.lecturer.token });
-    return { bug: r.status === 400, detail: `HTTP ${r.status} ${r.data?.message || ""}` };
+    return { bug: r.status === 400, fixed: r.status === 200, detail: `HTTP ${r.status} ${r.data?.message || ""}` };
   });
 
   // 10 — Khóa đăng ký → thực hiện
@@ -245,12 +281,15 @@ async function main() {
   });
 
   // 11 — Nộp báo cáo kiểu ProjectSpacePage (fileUrl là object) — lỗi P2-03
-  await knownBug("11", "Nộp báo cáo kèm file từ trang Không gian dự án", "P2-03", async () => {
-    const r = await call("POST", "/progress/create", {
-      token: ctx.student.token, query: { studentId: ctx.student.id, topicId: ctx.topicId },
-      body: { title: "Báo cáo tuần 1", content: "Nội dung", fileUrl: { fileName: "a.pdf", fileUrl: "/api/secure/files/a.pdf" } },
-    });
-    return { bug: r.status === 400, detail: `gửi fileUrl dạng object như ProjectSpacePage.jsx:126 → HTTP ${r.status}` };
+  await knownBug("11", "Frontend gán nguyên object trả về của /upload vào fileUrl khi nộp báo cáo", "P2-03", async () => {
+    const hits = grepFrontend(/fileUrl\s*=\s*await\s+fileApi\.upload\(/);
+    return {
+      bug: hits.length > 0,
+      fixed: hits.length === 0,
+      detail: hits.length
+        ? `còn ${hits.length} chỗ: ${hits.join(", ")} — API upload trả object {fileUrl,...} nên body báo cáo bị 400`
+        : "không còn chỗ nào",
+    };
   });
 
   // 12 — Upload + nộp báo cáo đúng định dạng
@@ -268,9 +307,18 @@ async function main() {
   });
 
   // 13 — Tải file: <a href> không gửi token (lỗi P2-03) / có token thì được
-  await knownBug("13a", "Tải file bằng link <a href> (không có header Authorization)", "P2-03", async () => {
+  await knownBug("13a", "Frontend tải file bằng <a href> (trình duyệt không gửi header Authorization)", "P2-03", async () => {
+    const hits = grepFrontend(/href=\{[^}]*fileUrl[^}]*\}/);
+    return {
+      bug: hits.length > 0,
+      fixed: hits.length === 0,
+      detail: hits.length ? `còn ${hits.length} chỗ: ${hits.join(", ")}` : "không còn chỗ nào",
+    };
+  });
+  await step("13c", "Backend từ chối tải file khi KHÔNG có token (401)", async () => {
     const r = await call("GET", ctx.fileUrl, { base: API_ORIGIN });
-    return { bug: r.status === 401 || r.status === 403, detail: `HTTP ${r.status}` };
+    expectStatus(r, 401, "Tải file ẩn danh");
+    return "HTTP 401";
   });
   await step("13b", "Giảng viên tải file có kèm token", async () => {
     const data = expectStatus(await call("GET", ctx.fileUrl, { base: API_ORIGIN, token: ctx.lecturer.token }), 200, "Download");
@@ -320,41 +368,48 @@ async function main() {
     expectStatus(await call("PUT", `/users/${ctx.student.id}/status`, { token: ctx.admin.token, query: { active: false } }), 200, "Khóa");
     const r = await call("GET", "/registration/mine", { token: ctx.student.token, query: { studentId: ctx.student.id } });
     expectStatus(await call("PUT", `/users/${ctx.student.id}/status`, { token: ctx.admin.token, query: { active: true } }), 200, "Mở khóa lại");
-    return { bug: r.status === 200, detail: `sau khi khóa: HTTP ${r.status} (đã mở khóa lại tài khoản)` };
+    return { bug: r.status === 200, fixed: r.status === 401, detail: `sau khi khóa: HTTP ${r.status} (đã mở khóa lại tài khoản)` };
   });
+  // Khóa làm tăng tokenVersion → token cũ của sinh viên đã bị thu hồi (đúng thiết kế); đăng nhập lại cho các bước sau
+  ctx.student = await login("student");
 
   // 20 — Quên mật khẩu (P2-05)
   await knownBug("20", "Chức năng Quên mật khẩu", "P2-05", async () => {
     const r = await call("POST", "/auth/password/forgot", { body: { identifier: "student" } });
-    return { bug: r.status === 404 || r.status === 405 || r.status === 401, detail: `POST /auth/password/forgot → HTTP ${r.status}` };
+    return { bug: r.status === 404 || r.status === 405 || r.status === 401, fixed: r.status === 200, detail: `POST /auth/password/forgot → HTTP ${r.status}` };
   });
 
   // 21 — Upload > 1MB qua nginx (P2-03)
   await knownBug("21", "Upload file 2MB qua nginx (cổng frontend)", "P2-03", async () => {
     const form = new FormData();
-    form.append("file", new Blob([Buffer.alloc(2 * 1024 * 1024, 65)], { type: "application/pdf" }), `big-${RUN}.pdf`);
+    // Nội dung bắt đầu bằng "%PDF-" để vượt kiểm tra magic bytes của backend (P1-07); phần còn lại là đệm
+    form.append("file", new Blob([Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(2 * 1024 * 1024, 32)])], { type: "application/pdf" }), `big-${RUN}.pdf`);
     const r = await call("POST", "/api/upload", { base: WEB, token: ctx.student.token, form });
-    return { bug: r.status === 413, detail: `HTTP ${r.status}` };
+    return { bug: r.status === 413, fixed: r.status === 200, detail: `HTTP ${r.status}` };
   });
 
   // ── Thăm dò bảo mật (bằng chứng cho Giai đoạn 1) ──
   await knownBug("S1", "Sinh viên đọc toàn bộ audit log", "P1-05 #12", async () => {
     const r = await call("GET", "/audit/recent", { token: ctx.student.token });
-    return { bug: r.status === 200, detail: `HTTP ${r.status}${Array.isArray(r.data) ? `, ${r.data.length} bản ghi` : ""}` };
+    return { bug: r.status === 200, fixed: r.status === 403, detail: `HTTP ${r.status}${Array.isArray(r.data) ? `, ${r.data.length} bản ghi` : ""}` };
   });
   await knownBug("S2", "Giảng viên khác tạo milestone trên đề tài không phải của mình", "P1-05 #1", async () => {
     const other = await login(ctx.lecturer2Name);
     const r = await call("POST", "/milestones", { token: other.token, body: { topicId: ctx.topicId, title: "Milestone lạ", deadline: "2030-01-01T00:00:00" } });
     if (r.status === 200) await call("DELETE", `/milestones/${r.data.id}`, { token: other.token });
-    return { bug: r.status === 200, detail: `HTTP ${r.status}` };
+    return { bug: r.status === 200, fixed: r.status === 403, detail: `HTTP ${r.status}` };
   });
   await knownBug("S3", "Sinh viên xem email/SĐT của người khác qua /users/{id}", "P1-05 #13", async () => {
     const r = await call("GET", `/users/${ctx.lecturer.id}`, { token: ctx.student.token });
-    return { bug: r.status === 200 && !!r.data?.email, detail: `HTTP ${r.status}, email=${r.data?.email ?? "—"}` };
+    // an toàn = vẫn xem được hồ sơ tối thiểu (200) nhưng KHÔNG có email/SĐT
+    return { bug: r.status === 200 && !!r.data?.email, fixed: r.status === 200 && !r.data?.email && !r.data?.phone,
+      detail: `HTTP ${r.status}, email=${r.data?.email ?? "—"}` };
   });
   await knownBug("S4", "Tự đăng ký tài khoản công khai /auth/register", "P1-09", async () => {
     const r = await call("POST", "/auth/register", { body: { username: `self${RUN}`, password: "1", fullName: "Tự đăng ký", studentCode: `X${RUN}`, className: "X" } });
-    return { bug: r.status === 200, detail: `HTTP ${r.status}${r.status === 200 ? " — tạo được tài khoản với mật khẩu '1'" : ""}` };
+    // endpoint đã bị xóa và không còn nằm trong danh sách công khai ⇒ request ẩn danh nhận 401 (deny-by-default)
+    return { bug: r.status === 200, fixed: [401, 403, 404, 405].includes(r.status),
+      detail: `HTTP ${r.status}${r.status === 200 ? " — tạo được tài khoản với mật khẩu '1'" : ""}` };
   });
 }
 

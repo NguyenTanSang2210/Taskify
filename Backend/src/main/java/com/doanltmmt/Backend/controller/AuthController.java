@@ -11,6 +11,7 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.security.JwtTokenProvider;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,6 +37,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final StudentRepository studentRepository;
+    private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
 
     private static final ConcurrentHashMap<String, Integer> ATTEMPTS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Long> LOCKED_UNTIL = new ConcurrentHashMap<>();
@@ -47,7 +49,8 @@ public class AuthController {
                           com.doanltmmt.Backend.service.OtpService otpService,
                           PasswordEncoder passwordEncoder,
                           RoleRepository roleRepository,
-                          StudentRepository studentRepository) {
+                          StudentRepository studentRepository,
+                          com.doanltmmt.Backend.service.AuditLogService auditLogService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userRepository = userRepository;
@@ -55,6 +58,7 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.studentRepository = studentRepository;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping("/login")
@@ -77,11 +81,7 @@ public class AuthController {
 
             User user = userRepository.findByUsername(username).orElseThrow();
             String roleName = user.getRole() != null ? user.getRole().getName() : "STUDENT";
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("role", roleName);
-            claims.put("userId", user.getId());
-
-            String token = tokenProvider.generateToken(user.getUsername(), claims);
+            String token = tokenProvider.generateAccessToken(user.getUsername(), user.getId(), roleName, user.getTokenVersion());
             ATTEMPTS.remove(username);
 
             boolean otpRequired = "ADMIN".equals(roleName) || "LECTURER".equals(roleName) || "DEPARTMENT_ADMIN".equals(roleName);
@@ -134,6 +134,19 @@ public class AuthController {
         studentRepository.save(student);
 
         return new UserDTO(savedUser);
+    }
+
+    /** Đăng xuất mọi thiết bị: tăng tokenVersion → mọi token đang lưu hành của người dùng này lập tức vô hiệu. */
+    @PostMapping("/logout-all")
+    @PreAuthorize("isAuthenticated()")
+    public Map<String, Object> logoutAll() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        auditLogService.log("LOGOUT_ALL", "User", user.getId().toString(), "Đăng xuất mọi thiết bị");
+        return Map.of("loggedOut", true);
     }
 
     @PostMapping("/otp/verify")

@@ -12,6 +12,7 @@ import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.security.JwtAuthenticationFilter;
+import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.CustomUserDetailsService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
@@ -75,6 +76,9 @@ public class UserControllerTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
     private CustomUserDetailsService userDetailsService;

@@ -4,7 +4,7 @@ import api from '../api';
 import InlineNotice from '../components/InlineNotice';
 
 export default function ProfilePage() {
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, updateToken } = useAuth();
     
     const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
     const [loading, setLoading] = useState(false);
@@ -81,7 +81,9 @@ export default function ProfilePage() {
 
         setLoading(true);
         try {
-            await api.put(`/users/${user.id}/password`, { oldPassword, newPassword });
+            const res = await api.put(`/users/${user.id}/password`, { oldPassword, newPassword });
+            // Đổi mật khẩu làm mọi token cũ mất hiệu lực; server cấp token mới cho phiên này
+            updateToken(res.data?.token);
             setNotice({ type: 'success', message: 'Mật khẩu đã được thay đổi thành công!' });
             setOldPassword('');
             setNewPassword('');

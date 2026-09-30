@@ -13,6 +13,7 @@ import com.doanltmmt.Backend.repository.LecturerRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +39,7 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
     private final SecurityScopeService scope;
+    private final JwtTokenProvider tokenProvider;
 
     public UserController(UserRepository userRepository,
                           RoleRepository roleRepository,
@@ -47,7 +49,8 @@ public class UserController {
                           AcademicClassRepository classRepository,
                           PasswordEncoder passwordEncoder,
                           com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                          SecurityScopeService scope) {
+                          SecurityScopeService scope,
+                          JwtTokenProvider tokenProvider) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.studentRepository = studentRepository;
@@ -57,6 +60,7 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
         this.scope = scope;
+        this.tokenProvider = tokenProvider;
     }
 
     @PutMapping("/{id}/profile")
@@ -82,7 +86,7 @@ public class UserController {
 
     @PutMapping("/{id}/password")
     @PreAuthorize("isAuthenticated()")
-    public void changePassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+    public Map<String, String> changePassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
@@ -99,8 +103,13 @@ public class UserController {
         }
         
         user.setPassword(passwordEncoder.encode(newPass));
-        userRepository.save(user);
-        auditLogService.log("CHANGE_PASSWORD", "User", user.getId().toString(), "Password changed");
+        // Vô hiệu MỌI token cũ (kể cả token của phiên đang gọi API này)
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        User saved = userRepository.save(user);
+        auditLogService.log("CHANGE_PASSWORD", "User", saved.getId().toString(), "Password changed");
+        // ... nên cấp token mới cho chính phiên hiện tại để người dùng không bị đăng xuất giữa chừng
+        String roleName = saved.getRole() != null ? saved.getRole().getName() : "STUDENT";
+        return Map.of("token", tokenProvider.generateAccessToken(saved.getUsername(), saved.getId(), roleName, saved.getTokenVersion()));
     }
 
     @GetMapping("/{id}")
@@ -257,6 +266,7 @@ public class UserController {
         
         String oldRole = user.getRole() != null ? user.getRole().getName() : "None";
         user.setRole(role);
+        user.setTokenVersion(user.getTokenVersion() + 1); // quyền đổi → token cũ (mang role cũ) không còn hiệu lực
         User saved = userRepository.save(user);
         
         auditLogService.log("UPDATE_USER_ROLE", "User", saved.getId().toString(), "Changed role from " + oldRole + " to " + role.getName());
@@ -269,6 +279,9 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.setActive(active);
+        if (!active) {
+            user.setTokenVersion(user.getTokenVersion() + 1); // khóa tài khoản → token đang dùng chết ngay
+        }
         User saved = userRepository.save(user);
         auditLogService.log(active ? "UNLOCK_USER" : "LOCK_USER", "User", saved.getId().toString(), "Updated active status to " + active);
         return new UserDTO(saved);
