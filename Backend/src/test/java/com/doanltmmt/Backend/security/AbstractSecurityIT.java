@@ -19,6 +19,7 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.EmailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -66,11 +67,18 @@ public abstract class AbstractSecurityIT {
     @Autowired protected TopicRegistrationRepository regRepo;
     @Autowired protected PasswordEncoder encoder;
     @Autowired protected JwtTokenProvider tokens;
+    @Autowired protected RateLimiter rateLimiter;
 
     @MockBean protected EmailService emailService;
 
     private final String run = Long.toString(System.nanoTime(), 36);
     private int seq = 0;
+
+    /** Bộ giới hạn tần suất nằm trong RAM và dùng chung giữa các test: xóa trước mỗi test để không ảnh hưởng nhau. */
+    @BeforeEach
+    void resetRateLimiter() {
+        rateLimiter.reset();
+    }
 
     // ------------------------------------------------------------------ định danh duy nhất
 

@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.config.SecurityProperties;
 import com.doanltmmt.Backend.dto.LoginRequest;
 import com.doanltmmt.Backend.dto.LoginResponse;
 import com.doanltmmt.Backend.dto.OtpResendResponse;
@@ -9,6 +10,7 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.security.JwtTokenProvider.Scope;
 import com.doanltmmt.Backend.security.JwtTokenProvider.TokenClaims;
+import com.doanltmmt.Backend.security.RateLimiter;
 import com.doanltmmt.Backend.service.OtpService.VerifyOutcome;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,6 +19,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
@@ -44,29 +47,50 @@ public class AuthService {
     private final UserRepository userRepository;
     private final OtpService otpService;
     private final AuditLogService auditLogService;
+    private final LoginThrottleService throttle;
+    private final RateLimiter rateLimiter;
+    private final SecurityProperties props;
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtTokenProvider tokenProvider,
                        UserRepository userRepository,
                        OtpService otpService,
-                       AuditLogService auditLogService) {
+                       AuditLogService auditLogService,
+                       LoginThrottleService throttle,
+                       RateLimiter rateLimiter,
+                       SecurityProperties props) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userRepository = userRepository;
         this.otpService = otpService;
         this.auditLogService = auditLogService;
+        this.throttle = throttle;
+        this.rateLimiter = rateLimiter;
+        this.props = props;
     }
 
     // ------------------------------------------------------------------ đăng nhập
 
     public LoginResponse login(LoginRequest request, String clientIp) {
         String username = request.getUsername().trim();
+
+        // Lớp 1: giới hạn theo IP; lớp 2: khóa theo cặp (username, IP) — cả hai chặn TRƯỚC khi kiểm tra mật khẩu
+        rateLimiter.check("login", clientIp, props.getRate().getLoginPerMinute(), Duration.ofMinutes(1));
+        throttle.assertNotLocked(username, clientIp);
+
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, request.getPassword()));
         } catch (AuthenticationException ex) {
+            boolean lockedNow = throttle.recordFailure(username, clientIp);
             auditLogService.log("LOGIN_FAILED", "User", username, "ip=" + clientIp, username);
+            if (lockedNow) {
+                auditLogService.log("LOGIN_LOCKED", "User", username,
+                        "ip=" + clientIp + ", khóa " + props.getLogin().getLockMinutes() + " phút", username);
+            }
             throw unauthorized(INVALID_CREDENTIALS);
         }
+        throttle.recordSuccess(username, clientIp);
+
         User user = userRepository.findByUsername(username).orElseThrow(() -> unauthorized(INVALID_CREDENTIALS));
         return continueAfterPassword(user, clientIp);
     }
@@ -74,6 +98,7 @@ public class AuthService {
     // ------------------------------------------------------------------ OTP
 
     public LoginResponse verifyOtp(String preAuthToken, String code, String clientIp) {
+        rateLimiter.check("otp-verify", clientIp, props.getRate().getOtpVerifyPerMinute(), Duration.ofMinutes(1));
         User user = requirePreAuthUser(preAuthToken, Scope.OTP_PENDING);
         VerifyOutcome outcome = otpService.verify(user, OtpPurpose.LOGIN, code);
         switch (outcome.result()) {
@@ -94,6 +119,7 @@ public class AuthService {
     }
 
     public OtpResendResponse resendOtp(String preAuthToken, String clientIp) {
+        rateLimiter.check("otp-resend", clientIp, props.getRate().getOtpResendPer10Minutes(), Duration.ofMinutes(10));
         User user = requirePreAuthUser(preAuthToken, Scope.OTP_PENDING);
         otpService.issueWithCooldown(user, OtpPurpose.LOGIN);
         return new OtpResendResponse(true, OtpService.RESEND_COOLDOWN_SECONDS, maskEmail(user.getEmail()));
