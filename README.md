@@ -48,15 +48,20 @@ Luu y dong bo giua cac may:
 ## 5. Chay du an
 
 ### Cach 1: Docker Compose (khuyen nghi)
-Tu thu muc goc `KTPM/`:
+Tu thu muc goc cua repo:
 
 ```powershell
-# Tao file bien moi truong tu file mau
-Copy-Item .env.docker.example .env
+# Tao .env (va Backend/.env) voi JWT_SECRET + mat khau MySQL NGAU NHIEN, an toan.
+# Khong ghi de file da co. Them -Profile prod khi trien khai that; -OtpEmail ten@gmail.com de nhan OTP demo.
+.\scripts\init-env.ps1
 
 # Build va chay toan bo stack
 docker compose up --build -d
 ```
+
+> **Bat buoc:** `JWT_SECRET`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` khong co gia tri mac dinh — thieu la
+> `docker compose` tu choi chay, va backend khong khoi dong o profile `prod` neu dung secret cong khai trong repo.
+> Neu tu tao `.env` bang tay (`Copy-Item .env.docker.example .env`), phai dien du 3 gia tri tren.
 
 Mac dinh theo file mau:
 - Frontend: `http://localhost:5175`
@@ -106,6 +111,7 @@ npm run build
 ### Script nhanh co san
 Tu thu muc goc cua repo (script tu tim dung thu muc, chay tu dau cung duoc):
 ```powershell
+.\scripts\init-env.ps1              # tao .env / Backend/.env voi secret ngau nhien (khong ghi de)
 .\scripts\pre-demo-check.ps1        # backend compile + test, frontend lint + build
 .\scripts\run-backend.ps1           # backend local (doc Backend/.env)
 .\scripts\run-frontend.ps1          # frontend dev server http://localhost:5175

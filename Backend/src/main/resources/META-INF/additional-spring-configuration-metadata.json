@@ -27,6 +27,12 @@
       "type": "java.lang.Long",
       "description": "JWT expiration duration in milliseconds.",
       "defaultValue": 86400000
+    },
+    {
+      "name": "jwt.preauth-expiration",
+      "type": "java.lang.Long",
+      "description": "Lifetime in milliseconds of the short-lived pre-auth tokens (OTP_PENDING / PWD_CHANGE).",
+      "defaultValue": 600000
     }
   ]
 }
