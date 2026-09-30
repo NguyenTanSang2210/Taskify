@@ -83,7 +83,7 @@ if ((Test-Path (Join-Path $repoRoot ".git\MERGE_HEAD")) -or (Test-Path (Join-Pat
     Fail "Repo đang ở giữa merge/rebase."
 }
 
-$remoteTracked = Git-Out -C $repoRoot ls-tree -r --name-only origin/main -- $RemovePath
+$remoteTracked = & git -C $repoRoot ls-tree -r --name-only origin/main -- $RemovePath
 if ($remoteTracked) {
     Write-Host "ℹ origin/main hiện vẫn theo dõi $(@($remoteTracked).Count) file dưới $RemovePath (bình thường nếu commit gỡ file chưa được merge)." -ForegroundColor Yellow
 }
@@ -100,8 +100,16 @@ Ok "Backup: $backup   (GIỮ NGUYÊN, không đẩy đi đâu; xóa sau ~30 ngà
 # ---------------------------------------------------------------------------------------------
 Step "3/6 git-filter-repo"
 # ---------------------------------------------------------------------------------------------
-& git filter-repo --version *> $null
-if ($LASTEXITCODE -ne 0) {
+function Test-FilterRepo { & git filter-repo --version *> $null; return ($LASTEXITCODE -eq 0) }
+function Get-PythonUserScripts {
+    try { return (& python -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))" 2>$null).Trim() } catch { return "" }
+}
+if (-not (Test-FilterRepo)) {
+    # Đã cài bằng pip --user nhưng thư mục Scripts của Python chưa nằm trong PATH?
+    $userScripts = Get-PythonUserScripts
+    if ($userScripts -and (Test-Path (Join-Path $userScripts "git-filter-repo.exe"))) { $env:Path = "$userScripts;$env:Path" }
+}
+if (-not (Test-FilterRepo)) {
     if (-not $InstallFilterRepo) {
         Write-Host "Chưa có git-filter-repo. Chạy lại với -InstallFilterRepo (script sẽ chạy: python -m pip install --user git-filter-repo)," -ForegroundColor Yellow
         Write-Host "hoặc tự cài: python -m pip install --user git-filter-repo" -ForegroundColor Yellow
@@ -109,10 +117,9 @@ if ($LASTEXITCODE -ne 0) {
     }
     & python -m pip install --user git-filter-repo
     if ($LASTEXITCODE -ne 0) { Fail "pip install git-filter-repo thất bại" }
-    $scripts = (& python -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))").Trim()
-    if ($scripts -and (Test-Path $scripts)) { $env:Path = "$scripts;$env:Path" }
-    & git filter-repo --version *> $null
-    if ($LASTEXITCODE -ne 0) { Fail "Đã cài nhưng git vẫn không thấy filter-repo. Thêm thư mục Scripts của Python (user) vào PATH rồi chạy lại." }
+    $userScripts = Get-PythonUserScripts
+    if ($userScripts -and (Test-Path $userScripts)) { $env:Path = "$userScripts;$env:Path" }
+    if (-not (Test-FilterRepo)) { Fail "Đã cài nhưng git vẫn không thấy filter-repo. Thêm thư mục Scripts của Python (user) vào PATH rồi chạy lại." }
 }
 Ok "git-filter-repo sẵn sàng"
 
@@ -124,7 +131,7 @@ if (Test-Path $clean) {
     if (-not $clean.StartsWith($WorkRoot, [System.StringComparison]::OrdinalIgnoreCase)) { Fail "Đường dẫn clean nằm ngoài WorkRoot — dừng." }
     Remove-Item -Recurse -Force $clean
 }
-Invoke-Git clone $RepoUrl $clean
+Invoke-Git clone --no-local $RepoUrl $clean
 
 $branches = @()
 foreach ($ref in (Git-Out -C $clean for-each-ref --format='%(refname:short)' refs/remotes/origin)) {
@@ -153,7 +160,8 @@ Step "5/6 Kiểm chứng"
 # ---------------------------------------------------------------------------------------------
 $problems = @()
 
-$leftLog = Git-Out -C $clean log --all --oneline -- $RemovePath
+$leftLog = & git -C $clean log --all --oneline -- $RemovePath
+if ($LASTEXITCODE -ne 0) { Fail "git log thất bại (exit $LASTEXITCODE)" }
 if ($leftLog) { $problems += "Lịch sử vẫn còn commit chạm tới $RemovePath" } else { Ok "git log --all -- ${RemovePath}: rỗng" }
 
 $leftObjects = Git-Out -C $clean rev-list --all --objects | Where-Object { $_ -match "\s$([regex]::Escape($RemovePath))(/|$)" }
