@@ -98,23 +98,26 @@ function sql(query) {
   return execSync(cmd, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
 }
 
-function latestOtp(username) {
+function latestOtp(username, purpose = "LOGIN") {
   return sql(
     `SELECT o.code FROM otp_tokens o JOIN users u ON u.id=o.user_id ` +
-    `WHERE u.username='${username}' AND o.used=0 ORDER BY o.id DESC LIMIT 1`
+    `WHERE u.username='${username}' AND o.used=0 AND o.purpose='${purpose}' ORDER BY o.id DESC LIMIT 1`
   );
 }
 
 async function login(username, password = PASSWORD) {
   const r = await call("POST", "/auth/login", { body: { username, password } });
-  if (r.status !== 200) throw new Error(`login ${username} → HTTP ${r.status}`);
+  if (r.status !== 200) throw new Error(`login ${username} → HTTP ${r.status} ${JSON.stringify(r.data)}`);
   const d = r.data;
-  if (d.otpRequired) {
+  if (d.nextStep === "OTP") {
+    // Vai trò cần OTP: đọc mã từ DB (dev chưa cấu hình email thật) rồi xác minh bằng token tạm
     const code = latestOtp(username);
-    const v = await call("POST", "/auth/otp/verify", { body: { username, code } });
-    if (!v.data?.verified) throw new Error(`OTP ${username} không xác thực được`);
+    const v = await call("POST", "/auth/otp/verify", { body: { preAuthToken: d.preAuthToken, code } });
+    if (v.status !== 200) throw new Error(`OTP ${username} → HTTP ${v.status} ${JSON.stringify(v.data)}`);
+    return { token: v.data.token, id: v.data.userId, role: v.data.role, otpRequired: true };
   }
-  return { token: d.token, id: d.userId, role: d.role, otpRequired: d.otpRequired };
+  if (d.nextStep !== "NONE") throw new Error(`login ${username}: bước tiếp theo chưa hỗ trợ trong script: ${d.nextStep}`);
+  return { token: d.token, id: d.userId, role: d.role, otpRequired: false };
 }
 
 function record(id, name, status, detail, task = "") {
@@ -178,10 +181,15 @@ async function main() {
   }
 
   // 1 — Admin + OTP (kèm kiểm tra lỗi P1-01: token dùng được trước khi nhập OTP)
-  await knownBug("1a", "Token ADMIN dùng được TRƯỚC khi xác thực OTP", "P1-01", async () => {
+  await knownBug("1a", "Đăng nhập ADMIN (chưa nhập OTP) có nhận được token dùng được không?", "P1-01", async () => {
     const r = await call("POST", "/auth/login", { body: { username: "admin", password: PASSWORD } });
-    const pre = await call("GET", "/users", { token: r.data.token });
-    return { bug: pre.status === 200, detail: `GET /users bằng token chưa qua OTP → HTTP ${pre.status}` };
+    const leaked = r.data?.token;                               // access token cấp trước OTP = lỗi cũ
+    const probe = await call("GET", "/users", { token: leaked || r.data?.preAuthToken });
+    return {
+      bug: probe.status === 200,
+      fixed: !leaked && probe.status === 401,
+      detail: `token trong phản hồi: ${leaked ? "CÓ" : "không"}; GET /users bằng token/preAuthToken → HTTP ${probe.status}`,
+    };
   });
   await step("1", "Admin đăng nhập + OTP", async () => {
     ctx.admin = await login("admin");
@@ -379,8 +387,11 @@ async function main() {
     return { bug: r.status === 404 || r.status === 405 || r.status === 401, fixed: r.status === 200, detail: `POST /auth/password/forgot → HTTP ${r.status}` };
   });
 
-  // 21 — Upload > 1MB qua nginx (P2-03)
-  await knownBug("21", "Upload file 2MB qua nginx (cổng frontend)", "P2-03", async () => {
+  // 21 — Upload > 1MB qua nginx (P2-03). Chỉ có nghĩa khi WEB thật sự là nginx (không phải Vite dev server).
+  const webServer = await fetch(WEB).then((r) => r.headers.get("server") || "").catch(() => "");
+  if (!/nginx/i.test(webServer)) {
+    record("21", "Upload file 2MB qua nginx (cổng frontend)", "SKIP", `WEB=${WEB} không phải nginx (Server: "${webServer || "?"}") — chạy lại khi frontend Docker đang chạy`, "P2-03");
+  } else await knownBug("21", "Upload file 2MB qua nginx (cổng frontend)", "P2-03", async () => {
     const form = new FormData();
     // Nội dung bắt đầu bằng "%PDF-" để vượt kiểm tra magic bytes của backend (P1-07); phần còn lại là đệm
     form.append("file", new Blob([Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(2 * 1024 * 1024, 32)])], { type: "application/pdf" }), `big-${RUN}.pdf`);
@@ -417,7 +428,7 @@ async function main() {
 
 function summary() {
   const count = (s) => results.filter((r) => r.status === s).length;
-  const line = `OK=${count("OK")}  BUG(đã biết)=${count("BUG")}  FIXED=${count("FIXED")}  FAIL=${count("FAIL")}  — tổng ${results.length}`;
+  const line = `OK=${count("OK")}  BUG(đã biết)=${count("BUG")}  FIXED=${count("FIXED")}  SKIP=${count("SKIP")}  FAIL=${count("FAIL")}  — tổng ${results.length}`;
   console.log(`\n${"─".repeat(70)}\n${line}\n`);
   if (process.env.REPORT_FILE) {
     const md = [

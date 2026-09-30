@@ -211,18 +211,4 @@ class JwtTokenProviderTest {
     void freshRandomSecret_isAcceptedInProd() {
         assertDoesNotThrow(() -> provider(randomSecret(48), 1000, 1000, "prod"));
     }
-
-    // ---------------------------------------------------------------- API cũ (tạm giữ tới P1-01)
-
-    @Test
-    @SuppressWarnings("deprecation")
-    void legacyApi_stillWorksAndProducesAccessScopedTokens() {
-        JwtTokenProvider p = provider();
-        String token = p.generateToken("legacy-user", Map.of("role", "STUDENT", "userId", 3L));
-
-        assertTrue(p.validate(token));
-        assertEquals("legacy-user", p.getUsername(token));
-        assertTrue(p.parse(token, Scope.ACCESS).isPresent());
-        assertFalse(p.validate("garbage"));
-    }
 }

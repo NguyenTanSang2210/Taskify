@@ -26,6 +26,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
+import com.jayway.jsonpath.JsonPath;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -155,6 +157,43 @@ public abstract class AbstractSecurityIT {
         r.setApproved(approved);
         r.setRegisteredAt(LocalDateTime.now());
         return regRepo.save(r);
+    }
+
+    // ------------------------------------------------------------------ so khớp thông báo lỗi
+
+    /**
+     * Thông báo lỗi của response. Với ResponseStatusException, MockMvc KHÔNG forward sang /error nên thông báo nằm ở
+     * getErrorMessage(); với lỗi do bộ xử lý bảo mật ghi JSON trực tiếp thì nằm ở body ($.message).
+     * (Server thật luôn trả JSON có $.message.)
+     */
+    protected static String errorMessageOf(org.springframework.test.web.servlet.MvcResult result) throws Exception {
+        String message = result.getResponse().getErrorMessage();
+        if (message == null || message.isEmpty()) {
+            try {
+                message = JsonPath.read(result.getResponse().getContentAsString(), "$.message");
+            } catch (Exception ignored) {
+                message = "";
+            }
+        }
+        return message == null ? "" : message;
+    }
+
+    protected static ResultMatcher errorMessageContains(String fragment) {
+        return result -> {
+            String message = errorMessageOf(result);
+            if (!message.contains(fragment)) {
+                throw new AssertionError("Thông báo lỗi \"" + message + "\" không chứa \"" + fragment + "\"");
+            }
+        };
+    }
+
+    protected static ResultMatcher errorMessageIs(String expected) {
+        return result -> {
+            String message = errorMessageOf(result);
+            if (!message.equals(expected)) {
+                throw new AssertionError("Thông báo lỗi \"" + message + "\" khác mong đợi \"" + expected + "\"");
+            }
+        };
     }
 
     // ------------------------------------------------------------------ token

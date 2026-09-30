@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
@@ -13,8 +13,14 @@ export default function LoginPage() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
 
-  const [otpRequired, setOtpRequired] = useState(false);
+  // Luồng đăng nhập nhiều bước: "login" → (vai trò cần OTP) "otp". preAuthToken chỉ nằm trong state React
+  // (không lưu localStorage): nó chỉ dùng được cho bước OTP, không gọi được API nghiệp vụ.
+  const [step, setStep] = useState("login");
+  const [preAuthToken, setPreAuthToken] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
+  const [resendIn, setResendIn] = useState(0);
+  const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -50,29 +56,54 @@ export default function LoginPage() {
     }
   };
 
+  // Đếm ngược để cho phép "Gửi lại mã"
+  useEffect(() => {
+    if (resendIn <= 0) return undefined;
+    const timer = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
+
+  const finishLogin = (data) => {
+    const userData = {
+      id: data.userId,
+      username: data.username,
+      fullName: data.fullName,
+      role: data.role,
+    };
+    login(userData, data.token);
+    if (data.role === "LECTURER") navigate("/lecturer");
+    else navigate("/");
+  };
+
+  const backToLogin = (message = "") => {
+    setStep("login");
+    setPreAuthToken("");
+    setMaskedEmail("");
+    setOtpCode("");
+    setResendIn(0);
+    setPassword("");
+    setSuccessMsg("");
+    setError(message);
+  };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     setLoading(true);
     try {
       const data = await authApi.login(username, password);
-      const userData = {
-        id: data.userId,
-        username: data.username,
-        fullName: data.fullName,
-        role: data.role,
-      };
 
-      if (data.otpRequired) {
-        localStorage.setItem("temp_user", JSON.stringify(userData));
-        localStorage.setItem("temp_token", data.token);
-        setOtpRequired(true);
+      if (data.nextStep === "OTP") {
+        setPreAuthToken(data.preAuthToken);
+        setMaskedEmail(data.maskedEmail || "");
+        setResendIn(data.resendCooldownSeconds ?? 60);
+        setOtpCode("");
+        setStep("otp");
         return;
       }
 
-      login(userData, data.token);
-      if (data.role === "LECTURER") navigate("/lecturer");
-      else navigate("/");
+      finishLogin(data);
     } catch (err) {
       setError(err.message || "Đăng nhập thất bại");
     } finally {
@@ -83,29 +114,41 @@ export default function LoginPage() {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     setLoading(true);
     try {
-      const resp = await authApi.verifyOtp(username, otpCode);
-      if (!resp.verified) {
-        throw new Error("OTP không hợp lệ");
-      }
-      
-      const tempUser = JSON.parse(localStorage.getItem("temp_user"));
-      const tempToken = localStorage.getItem("temp_token");
-
-      if (tempUser && tempToken) {
-          login(tempUser, tempToken);
-          localStorage.removeItem("temp_user");
-          localStorage.removeItem("temp_token");
-          if (tempUser.role === "LECTURER") navigate("/lecturer");
-          else navigate("/");
-      } else {
-          navigate("/login");
-      }
+      const data = await authApi.verifyOtp(preAuthToken, otpCode.trim());
+      finishLogin(data);
     } catch (err) {
-      setError(err.message || "Xác thực OTP thất bại");
+      // Phiên xác thực hỏng (hết hạn / sai quá số lần / mã bị hủy) → quay lại bước 1 kèm thông báo
+      if (err.status === 401 && /đăng nhập lại/i.test(err.message || "")) {
+        backToLogin(err.message);
+      } else {
+        setError(err.message || "Xác thực OTP thất bại");
+        setOtpCode("");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError("");
+    setSuccessMsg("");
+    setResending(true);
+    try {
+      const data = await authApi.resendOtp(preAuthToken);
+      setResendIn(data.cooldownSeconds ?? 60);
+      setOtpCode("");
+      setSuccessMsg("Đã gửi mã mới. Mã cũ không còn hiệu lực.");
+    } catch (err) {
+      if (err.status === 401) {
+        backToLogin(err.message);
+      } else {
+        setError(err.message || "Không gửi lại được mã");
+      }
+    } finally {
+      setResending(false);
     }
   };
 
@@ -135,8 +178,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form className="space-y-5" onSubmit={otpRequired ? handleVerifyOtp : handleLoginSubmit}>
-          {!otpRequired ? (
+        <form className="space-y-5" onSubmit={step === "otp" ? handleVerifyOtp : handleLoginSubmit}>
+          {step === "login" ? (
             <>
               <div className="space-y-1.5">
                 <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập / MSSV</label>
@@ -224,35 +267,48 @@ export default function LoginPage() {
                  </div>
                  <h2 className="text-xl font-black text-primary uppercase tracking-widest leading-none">Xác thực OTP</h2>
                  <p className="text-xs text-outline font-medium leading-relaxed">
-                   Một mã xác thực đã được gửi đến email đăng ký của bạn. Vui lòng kiểm tra và nhập vào bên dưới.
+                   Mã xác thực gồm 6 chữ số đã được gửi tới{" "}
+                   {maskedEmail ? <strong className="text-on-surface">{maskedEmail}</strong> : "email đăng ký của bạn"}.
+                   Mã có hiệu lực trong 5 phút.
                  </p>
               </div>
-              
+
               <div className="space-y-1.5 mt-6">
                 <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã OTP (6 chữ số)</label>
                 <input
                   className="w-full text-center text-2xl tracking-[0.5em] font-black py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl transition-all duration-300 outline-none"
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
+                  autoFocus
                   required
                 />
               </div>
 
-              <button 
-                className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50" 
-                disabled={loading} 
+              <button
+                className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
+                disabled={loading || otpCode.length !== 6}
                 type="submit"
               >
                 {loading ? "Đang xác thực..." : "Xác nhận OTP"}
               </button>
 
-              <div className="text-center mt-4">
-                 <button 
-                    className="text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors" 
-                    type="button" 
-                    onClick={() => setOtpRequired(false)}
+              <div className="flex items-center justify-between mt-4">
+                 <button
+                    className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resendIn > 0 || resending}
+                 >
+                    {resending ? "Đang gửi..." : resendIn > 0 ? `Gửi lại mã sau ${resendIn}s` : "Gửi lại mã"}
+                 </button>
+                 <button
+                    className="text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors"
+                    type="button"
+                    onClick={() => backToLogin()}
                  >
                     Quay lại đăng nhập
                  </button>

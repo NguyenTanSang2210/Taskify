@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -187,31 +186,5 @@ public class JwtTokenProvider {
 
     public long getPreAuthTtlSeconds() {
         return preAuthTtlMs / 1000;
-    }
-
-    // ------------------------------------------------------------------------------------------
-    // API cũ — tạm giữ để các lớp gọi chưa đổi vẫn biên dịch; sẽ xóa ở P1-01
-    // ------------------------------------------------------------------------------------------
-
-    /** @deprecated dùng {@link #generateAccessToken}. */
-    @Deprecated
-    public String generateToken(String username, Map<String, Object> claims) {
-        Object userId = claims == null ? null : claims.get(CLAIM_USER_ID);
-        Object role = claims == null ? null : claims.get(CLAIM_ROLE);
-        return build(username, userId instanceof Number n ? n.longValue() : null, Scope.ACCESS, accessTtlMs, 0,
-                role == null ? null : role.toString());
-    }
-
-    /** @deprecated dùng {@link #parse}. */
-    @Deprecated
-    public String getUsername(String token) {
-        return parse(token, Scope.ACCESS).map(TokenClaims::username)
-                .orElseThrow(() -> new JwtException("Token không hợp lệ"));
-    }
-
-    /** @deprecated dùng {@link #parse}. */
-    @Deprecated
-    public boolean validate(String token) {
-        return parse(token, Scope.ACCESS).isPresent();
     }
 }
