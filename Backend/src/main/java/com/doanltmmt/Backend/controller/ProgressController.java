@@ -1,6 +1,9 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.entity.StoredFile;
+import com.doanltmmt.Backend.repository.StoredFileRepository;
+import com.doanltmmt.Backend.service.FileStorageService;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
@@ -39,6 +42,7 @@ public class ProgressController {
     private final com.doanltmmt.Backend.service.EmailService emailService;
     private final com.doanltmmt.Backend.service.SimilarityService similarityService;
     private final SecurityScopeService scope;
+    private final StoredFileRepository storedFileRepo;
 
     public ProgressController(ProgressReportRepository progressRepo,
                               StudentRepository studentRepo,
@@ -50,7 +54,9 @@ public class ProgressController {
                               com.doanltmmt.Backend.service.AuditLogService auditLogService,
                               com.doanltmmt.Backend.service.EmailService emailService,
                               com.doanltmmt.Backend.service.SimilarityService similarityService,
-                              SecurityScopeService scope) {
+                              SecurityScopeService scope,
+                              StoredFileRepository storedFileRepo) {
+        this.storedFileRepo = storedFileRepo;
         this.progressRepo = progressRepo;
         this.studentRepo = studentRepo;
         this.topicRepo = topicRepo;
@@ -102,8 +108,18 @@ public class ProgressController {
         pr.setTopic(topic);
         pr.setTitle(title);
         pr.setContent(content);
+        // File đính kèm phải là file CỦA CHÍNH sinh viên này (đã tải lên qua /api/upload) và chưa gắn vào báo cáo nào.
+        StoredFile attachment = null;
         if (!fileUrl.isBlank()) {
-            pr.setFileUrl(fileUrl);
+            attachment = storedFileRepo.findByStoredName(FileStorageService.storedNameFromUrl(fileUrl))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "File đính kèm không hợp lệ."));
+            if (!attachment.getOwnerId().equals(currentUserId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể đính kèm file của người khác.");
+            }
+            if (attachment.getRefType() != null) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
+            }
+            pr.setFileUrl(FileStorageService.urlFor(attachment));
         }
         
         String deadlineStr = body.getOrDefault("deadline", "");
@@ -142,6 +158,11 @@ public class ProgressController {
             } catch (Exception ignored) {}
         }
         ProgressReport saved = progressRepo.save(pr);
+        if (attachment != null && storedFileRepo.claim(attachment.getId(), StoredFile.REF_PROGRESS_REPORT, saved.getId()) == 0) {
+            // Có request khác vừa gắn cùng file này (đua nhau): hoàn tác báo cáo vừa tạo
+            progressRepo.delete(saved);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
+        }
         auditLogService.log("CREATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Title: " + saved.getTitle());
         if (maxSim >= 0.8) {
             auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(), "Similarity >= 0.8 with previous submissions");

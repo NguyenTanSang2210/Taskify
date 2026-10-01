@@ -29,6 +29,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 import com.jayway.jsonpath.JsonPath;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -46,6 +48,23 @@ import java.time.LocalDateTime;
 @Transactional
 @SuppressWarnings({"removal", "null"})
 public abstract class AbstractSecurityIT {
+
+    /** Thư mục upload tạm: test không ghi rác vào Backend/uploads. */
+    private static final java.nio.file.Path UPLOAD_DIR;
+
+    static {
+        try {
+            UPLOAD_DIR = java.nio.file.Files.createTempDirectory("taskify-it-uploads");
+            UPLOAD_DIR.toFile().deleteOnExit();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @DynamicPropertySource
+    static void uploadProperties(DynamicPropertyRegistry registry) {
+        registry.add("app.upload.dir", UPLOAD_DIR::toString);
+    }
 
     /** Mật khẩu của mọi user tạo bằng {@link #newUser}. */
     protected static final String PASSWORD = "Passw0rd-Test";
