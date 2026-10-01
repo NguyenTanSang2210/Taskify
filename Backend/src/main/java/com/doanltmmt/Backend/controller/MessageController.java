@@ -4,11 +4,11 @@ import com.doanltmmt.Backend.entity.Message;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.MessageRepository;
-import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.service.TopicAccessService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,40 +21,43 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Tin nhắn trong phạm vi một đề tài: cả NGƯỜI GỬI lẫn NGƯỜI NHẬN đều phải là thành viên của đề tài
+ * (trước đây gửi được cho bất kỳ người dùng nào trong hệ thống).
+ */
 @RestController
 @RequestMapping("/api/messages")
-
 @SuppressWarnings("null")
 public class MessageController {
 
     private static final Logger log = LoggerFactory.getLogger(MessageController.class);
+    private static final int MAX_CONTENT_LENGTH = 5000;
 
     private final MessageRepository repo;
     private final UserRepository userRepo;
-    private final TopicRepository topicRepo;
     private final AuditLogService auditLogService;
     private final EventPublisher events;
     private final SecurityScopeService scope;
+    private final TopicAccessService topicAccess;
 
     public MessageController(MessageRepository repo,
                              UserRepository userRepo,
-                             TopicRepository topicRepo,
                              AuditLogService auditLogService,
                              EventPublisher events,
-                             SecurityScopeService scope) {
+                             SecurityScopeService scope,
+                             TopicAccessService topicAccess) {
         this.repo = repo;
         this.userRepo = userRepo;
-        this.topicRepo = topicRepo;
         this.auditLogService = auditLogService;
         this.events = events;
         this.scope = scope;
+        this.topicAccess = topicAccess;
     }
 
     @GetMapping("/inbox")
     @PreAuthorize("isAuthenticated()")
     public List<Map<String, Object>> inbox() {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-        User me = userRepo.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        User me = scope.requireCurrentUser();
         try {
             List<MessageRepository.InboxRow> rows = repo.findInboxRowsByUserId(me.getId());
             List<Map<String, Object>> result = new ArrayList<>();
@@ -84,32 +87,35 @@ public class MessageController {
     @PostMapping("/send")
     @PreAuthorize("isAuthenticated()")
     public Message send(@RequestBody Map<String, String> body) {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-        User me = userRepo.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        Long recipientId = Long.valueOf(body.get("recipientId"));
-        User recipient = userRepo.findById(recipientId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
-        String topicIdRaw = body.get("topicId");
-        if (topicIdRaw == null || topicIdRaw.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId is required");
+        User me = scope.requireCurrentUser();
+
+        Long recipientId = parseId(body.get("recipientId"), "recipientId");
+        Long topicId = parseId(body.get("topicId"), "topicId");
+        String content = body.get("content") == null ? "" : body.get("content").trim();
+        if (content.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nội dung tin nhắn không được để trống");
+        }
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tin nhắn quá dài (tối đa " + MAX_CONTENT_LENGTH + " ký tự)");
         }
 
-        Topic topic = topicRepo.findById(Long.valueOf(topicIdRaw))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+        Topic topic = topicAccess.loadTopicOr404(topicId);
         if (topic.getWorkspace() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+        }
+        User recipient = userRepo.findById(recipientId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
+
+        // Cả hai đầu đều phải thuộc đề tài: chặn nhắn tin cho người ngoài đề tài
+        topicAccess.requireMember(topic);
+        if (!topicAccess.isMember(topic, recipient)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Người nhận không thuộc đề tài này.");
         }
 
         Message m = new Message();
         m.setSender(me);
         m.setRecipient(recipient);
-        m.setContent(body.get("content"));
-        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            if (topic.getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
-            }
-            scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
-        }
-
+        m.setContent(content);
         m.setTopic(topic);
         m.setWorkspace(topic.getWorkspace());
         Message saved = repo.save(m);
@@ -117,5 +123,16 @@ public class MessageController {
         auditLogService.log("SEND_MESSAGE", "Message", saved.getId().toString(), "To: " + recipient.getUsername());
         events.genericEvent("MESSAGE_SENT", saved.getId());
         return saved;
+    }
+
+    private static Long parseId(String raw, String field) {
+        if (raw == null || raw.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, field + " là bắt buộc");
+        }
+        try {
+            return Long.valueOf(raw.trim());
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, field + " không hợp lệ");
+        }
     }
 }

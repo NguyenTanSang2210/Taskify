@@ -76,8 +76,28 @@ public class UserController {
              throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to update other user's profile");
         }
 
-        if (body.containsKey("fullName")) user.setFullName(body.get("fullName"));
-        if (body.containsKey("email")) user.setEmail(body.get("email"));
+        if (body.containsKey("fullName")) {
+            String fullName = body.get("fullName") == null ? "" : body.get("fullName").trim();
+            if (fullName.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Họ tên không được để trống");
+            }
+            user.setFullName(fullName);
+        }
+        if (body.containsKey("email")) {
+            String email = body.get("email") == null ? "" : body.get("email").trim();
+            if (email.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không được để trống");
+            }
+            if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
+            }
+            boolean usedByAnother = userRepository.findByEmail(email)
+                    .filter(other -> !other.getId().equals(user.getId())).isPresent();
+            if (usedByAnother) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email đã được sử dụng bởi tài khoản khác");
+            }
+            user.setEmail(email);
+        }
         
         User saved = userRepository.save(user);
         auditLogService.log("UPDATE_PROFILE", "User", saved.getId().toString(), "Updated profile info");
@@ -117,7 +137,19 @@ public class UserController {
     public UserDTO getUser(@PathVariable Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return new UserDTO(user);
+
+        // Hồ sơ ĐẦY ĐỦ (email, SĐT, vai trò, khoa) chỉ cho: chính chủ, quản trị hệ thống, quản trị khoa CÙNG khoa.
+        // Người khác chỉ thấy id + họ tên.
+        User me = scope.requireCurrentUser();
+        boolean self = me.getId().equals(user.getId());
+        boolean admin = scope.hasRole("ADMIN");
+        boolean sameDepartmentAdmin = scope.hasRole("DEPARTMENT_ADMIN")
+                && me.getDepartment() != null && user.getDepartment() != null
+                && me.getDepartment().getId().equals(user.getDepartment().getId());
+        if (self || admin || sameDepartmentAdmin) {
+            return new UserDTO(user);
+        }
+        return UserDTO.limited(user);
     }
 
 

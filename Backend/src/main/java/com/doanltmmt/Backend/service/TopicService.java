@@ -60,6 +60,12 @@ public class TopicService {
         
         requireWorkspaceAllowsTopicCreateOrEdit(w);
 
+        // Quản trị khoa chỉ được tạo đề tài trong workspace của KHOA MÌNH
+        // (trước đây chỉ kiểm tra giảng viên thuộc khoa của workspace, không kiểm tra chính quản trị khoa)
+        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN") && w.getDepartment() != null) {
+            scope.requireDepartmentAccess(w.getDepartment().getId());
+        }
+
         Lecturer lecturer = lecturerRepo.findById(lecturerId).orElseGet(() -> {
             User user = userRepo.findById(lecturerId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found for lecturerId"));

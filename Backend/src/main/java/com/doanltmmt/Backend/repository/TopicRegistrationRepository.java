@@ -16,6 +16,8 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
 
     boolean existsByTopic_IdAndApprovedTrue(Long topicId);
     boolean existsByStudent_IdAndTopic_IdAndApprovedTrue(Long studentId, Long topicId);
+    /** Sinh viên đã đăng ký (bất kể trạng thái) một đề tài do giảng viên này hướng dẫn. */
+    boolean existsByTopic_Lecturer_IdAndStudent_Id(Long lecturerId, Long studentId);
     boolean existsByStudent_IdAndTopic_Workspace_IdAndApprovedIsNull(Long studentId, Long workspaceId);
     boolean existsByStudent_IdAndTopic_Workspace_IdAndApprovedTrue(Long studentId, Long workspaceId);
 

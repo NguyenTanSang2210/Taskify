@@ -31,4 +31,16 @@ public class UserDTO {
         this.department = user.getDepartment();
         this.active = user.isActive();
     }
+
+    /**
+     * Hồ sơ rút gọn để người khác xem: CHỈ id và họ tên — không có email, số điện thoại, vai trò, khoa.
+     * Dùng khi người gọi không phải chính chủ / quản trị hệ thống / quản trị khoa cùng khoa.
+     */
+    public static UserDTO limited(User user) {
+        UserDTO dto = new UserDTO();
+        if (user == null) return dto;
+        dto.id = user.getId();
+        dto.fullName = user.getFullName();
+        return dto;
+    }
 }

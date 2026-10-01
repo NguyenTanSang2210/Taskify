@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.controller;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.repository.ProgressReportRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
@@ -30,6 +31,7 @@ public class ProgressController {
     private final StudentRepository studentRepo;
     private final TopicRepository topicRepo;
     private final TopicRegistrationRepository regRepo;
+    private final MilestoneRepository milestoneRepo;
     private final EventPublisher eventPublisher;
     private final NotificationRepository notificationRepo;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
@@ -41,6 +43,7 @@ public class ProgressController {
                               StudentRepository studentRepo,
                               TopicRepository topicRepo,
                               TopicRegistrationRepository regRepo,
+                              MilestoneRepository milestoneRepo,
                               EventPublisher eventPublisher,
                               NotificationRepository notificationRepo,
                               com.doanltmmt.Backend.service.AuditLogService auditLogService,
@@ -51,6 +54,7 @@ public class ProgressController {
         this.studentRepo = studentRepo;
         this.topicRepo = topicRepo;
         this.regRepo = regRepo;
+        this.milestoneRepo = milestoneRepo;
         this.eventPublisher = eventPublisher;
         this.notificationRepo = notificationRepo;
         this.auditLogService = auditLogService;
@@ -110,17 +114,23 @@ public class ProgressController {
             }
         }
 
-        // Optional: link to milestone if provided
+        // Tùy chọn: gắn vào milestone. Milestone phải TỒN TẠI và thuộc đúng đề tài này
+        // (trước đây tạo một Milestone "rỗng" chỉ có id: gây lỗi khóa ngoại 500 hoặc gắn nhầm milestone đề tài khác).
         String milestoneIdStr = body.getOrDefault("milestoneId", "");
-        if (!milestoneIdStr.isBlank()) {
+        if (milestoneIdStr != null && !milestoneIdStr.isBlank()) {
+            Long milestoneId;
             try {
-                Long milestoneId = Long.parseLong(milestoneIdStr);
-                com.doanltmmt.Backend.entity.Milestone ms = new com.doanltmmt.Backend.entity.Milestone();
-                ms.setId(milestoneId);
-                pr.setMilestone(ms);
-            } catch (Exception ignored) {}
+                milestoneId = Long.parseLong(milestoneIdStr.trim());
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milestoneId không hợp lệ");
+            }
+            com.doanltmmt.Backend.entity.Milestone ms = milestoneRepo.findById(milestoneId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy milestone"));
+            if (ms.getTopic() == null || !ms.getTopic().getId().equals(topicId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Milestone không thuộc đề tài này");
+            }
+            pr.setMilestone(ms);
         }
-
         pr.setStatus("TODO");
         // Similarity check (simple)
         List<ProgressReport> previous = progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId);
@@ -170,7 +180,7 @@ public class ProgressController {
     }
 
     @GetMapping("/student/{studentId}")
-    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public List<ProgressReport> listByStudent(@PathVariable Long studentId,
                                               @RequestParam(required = false) Long topicId) {
         if (scope.hasRole("STUDENT")) {
@@ -178,6 +188,14 @@ public class ProgressController {
             if (!currentUserId.equals(studentId)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
             }
+        } else if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
+            // Quản trị khoa chỉ xem tiến độ của sinh viên thuộc KHOA MÌNH
+            Student student = studentRepo.findById(studentId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+            if (student.getUser() == null || student.getUser().getDepartment() == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            }
+            scope.requireDepartmentAccess(student.getUser().getDepartment().getId());
         } else if (scope.hasRole("LECTURER")) {
             if (topicId == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId is required");
