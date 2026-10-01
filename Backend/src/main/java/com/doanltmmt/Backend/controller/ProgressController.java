@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
@@ -65,7 +66,7 @@ public class ProgressController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('STUDENT')")
-    public ProgressReport create(@RequestParam Long studentId,
+    public ProgressReportDTO create(@RequestParam Long studentId,
                                  @RequestParam Long topicId,
                                  @Valid @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
@@ -176,12 +177,12 @@ public class ProgressController {
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
         Notification savedStudent = notificationRepo.save(nStudent);
         eventPublisher.notificationCreated(savedStudent);
-        return saved;
+        return ProgressReportDTO.from(saved);
     }
 
     @GetMapping("/student/{studentId}")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<ProgressReport> listByStudent(@PathVariable Long studentId,
+    public List<ProgressReportDTO> listByStudent(@PathVariable Long studentId,
                                               @RequestParam(required = false) Long topicId) {
         if (scope.hasRole("STUDENT")) {
             Long currentUserId = scope.requireCurrentUser().getId();
@@ -208,14 +209,14 @@ public class ProgressController {
             }
         }
         if (topicId != null) {
-            return progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId);
+            return progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId).stream().map(ProgressReportDTO::from).toList();
         }
-        return progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId);
+        return progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId).stream().map(ProgressReportDTO::from).toList();
     }
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<ProgressReport> listByTopic(@PathVariable Long topicId) {
+    public List<ProgressReportDTO> listByTopic(@PathVariable Long topicId) {
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
         if (!scope.hasRole("ADMIN")) {
@@ -231,12 +232,12 @@ public class ProgressController {
                 }
             }
         }
-        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId);
+        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::from).toList();
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STUDENT')")
-    public ProgressReport updateStatus(@PathVariable Long id,
+    public ProgressReportDTO updateStatus(@PathVariable Long id,
                                        @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         ProgressReport pr = progressRepo.findById(id)
@@ -253,12 +254,12 @@ public class ProgressController {
         ProgressReport saved = progressRepo.save(pr);
         auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
         eventPublisher.progressUpdated(saved);
-        return saved;
+        return ProgressReportDTO.from(saved);
     }
 
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public ProgressReport addComment(@PathVariable Long id,
+    public ProgressReportDTO addComment(@PathVariable Long id,
                                      @RequestBody Map<String, String> body) {
         ProgressReport pr = progressRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
@@ -316,7 +317,7 @@ public class ProgressController {
         Notification savedN = notificationRepo.save(nStudent);
         eventPublisher.notificationCreated(savedN);
         emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Progress Report Feedback", "Lecturer commented on your report: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "Status updated"));
-        return saved;
+        return ProgressReportDTO.from(saved);
     }
 }
 

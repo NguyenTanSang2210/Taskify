@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.ProjectPermission;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.repository.ProjectPermissionRepository;
@@ -34,15 +35,15 @@ public class ProjectPermissionController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<ProjectPermission> list(@RequestParam Long topicId) {
+    public List<ProjectPermissionDTO> list(@RequestParam Long topicId) {
         Topic topic = topicRepo.findById(topicId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
         requireAccess(topic);
-        return repo.findByTopic_Id(topicId);
+        return repo.findByTopic_Id(topicId).stream().map(ProjectPermissionDTO::from).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public ProjectPermission upsert(@RequestBody Map<String, Object> body) {
+    public ProjectPermissionDTO upsert(@RequestBody Map<String, Object> body) {
         Long topicId = Long.valueOf(body.get("topicId").toString());
         String roleName = (String) body.get("roleName");
         String toolName = (String) body.get("toolName");
@@ -59,7 +60,7 @@ public class ProjectPermissionController {
         perm.setCanDelete(Boolean.parseBoolean(body.getOrDefault("canDelete", false).toString()));
         ProjectPermission saved = repo.save(perm);
         auditLogService.log("UPSERT_PERMISSION", "ProjectPermission", saved.getId().toString(), roleName + " / " + toolName);
-        return saved;
+        return ProjectPermissionDTO.from(saved);
     }
 
     private void requireAccess(Topic topic) {

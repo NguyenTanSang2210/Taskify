@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.CalendarEvent;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.repository.CalendarEventRepository;
@@ -32,15 +33,15 @@ public class CalendarController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<CalendarEvent> list(@RequestParam Long topicId) {
+    public List<CalendarEventDTO> list(@RequestParam Long topicId) {
         Topic topic = topicAccess.loadTopicOr404(topicId);
         topicAccess.requireMember(topic);
-        return repo.findByTopic_IdOrderByStartTimeAsc(topicId);
+        return repo.findByTopic_IdOrderByStartTimeAsc(topicId).stream().map(CalendarEventDTO::from).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public CalendarEvent create(@RequestBody Map<String, String> body) {
+    public CalendarEventDTO create(@RequestBody Map<String, String> body) {
         if (body.get("topicId") == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
         }
@@ -56,7 +57,7 @@ public class CalendarController {
         ev.setType(body.getOrDefault("type", "MEETING"));
         CalendarEvent saved = repo.save(ev);
         auditLogService.log("CREATE_CAL_EVENT", "CalendarEvent", saved.getId().toString(), "Title: " + saved.getTitle());
-        return saved;
+        return CalendarEventDTO.from(saved);
     }
 
     @DeleteMapping("/{id}")

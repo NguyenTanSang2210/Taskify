@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.doanltmmt.Backend.dto.LoginRequest;
 import com.doanltmmt.Backend.dto.LoginResponse;
 import com.doanltmmt.Backend.dto.OtpResendRequest;
@@ -86,6 +88,7 @@ public class AuthController {
 
     // TODO(P1-09): xóa endpoint đăng ký công khai (quyết định D-02: tài khoản do quản trị tạo, người dùng tự kích hoạt)
     @PostMapping("/register")
+    @Transactional
     public UserDTO register(@RequestBody Map<String, String> body) {
         String username = body.get("username");
         String password = body.get("password");

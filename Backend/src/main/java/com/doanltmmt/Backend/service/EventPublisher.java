@@ -1,5 +1,9 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
+import com.doanltmmt.Backend.dto.response.MessageDTO;
+import com.doanltmmt.Backend.dto.response.NotificationDTO;
+import com.doanltmmt.Backend.dto.response.ProgressReportDTO;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.Notification;
@@ -21,7 +25,7 @@ public class EventPublisher {
     public void progressCreated(ProgressReport pr) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROGRESS_CREATED");
-        payload.put("progress", pr);
+        payload.put("progress", ProgressReportDTO.from(pr));
         String dest = "/topic/progress/" + pr.getTopic().getId();
         template.convertAndSend(dest, payload);
     }
@@ -29,7 +33,7 @@ public class EventPublisher {
     public void progressUpdated(ProgressReport pr) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROGRESS_UPDATED");
-        payload.put("progress", pr);
+        payload.put("progress", ProgressReportDTO.from(pr));
         String dest = "/topic/progress/" + pr.getTopic().getId();
         template.convertAndSend(dest, payload);
     }
@@ -37,7 +41,7 @@ public class EventPublisher {
     public void registrationChanged(TopicRegistration reg, String action) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", action);
-        payload.put("registration", reg);
+        payload.put("registration", new TopicRegistrationDTO(reg));
         String dest = "/topic/registration/" + reg.getTopic().getId();
         template.convertAndSend(dest, payload);
     }
@@ -45,7 +49,7 @@ public class EventPublisher {
     public void notificationCreated(Notification n) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "NOTIFICATION_CREATED");
-        payload.put("notification", n);
+        payload.put("notification", NotificationDTO.from(n));
         String dest = "/topic/notifications/" + n.getUser().getId();
         template.convertAndSend(dest, payload);
     }
@@ -53,7 +57,7 @@ public class EventPublisher {
     public void messageCreated(Message m) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "MESSAGE_CREATED");
-        payload.put("message", m);
+        payload.put("message", MessageDTO.from(m));
 
         String senderDest = "/topic/messages/" + m.getSender().getId();
         String recipientDest = "/topic/messages/" + m.getRecipient().getId();
@@ -62,13 +66,5 @@ public class EventPublisher {
         if (!m.getSender().getId().equals(m.getRecipient().getId())) {
             template.convertAndSend(recipientDest, payload);
         }
-    }
-
-    public void genericEvent(String type, Long id) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("type", type);
-        payload.put("id", id);
-        String dest = "/topic/events";
-        template.convertAndSend(dest, payload);
     }
 }

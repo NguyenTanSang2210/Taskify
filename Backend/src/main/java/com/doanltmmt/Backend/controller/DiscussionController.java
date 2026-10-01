@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.DiscussionPost;
 import com.doanltmmt.Backend.entity.DiscussionThread;
 import com.doanltmmt.Backend.entity.Topic;
@@ -47,15 +48,15 @@ public class DiscussionController {
 
     @GetMapping("/threads")
     @PreAuthorize("isAuthenticated()")
-    public List<DiscussionThread> listThreads(@RequestParam Long topicId) {
+    public List<DiscussionThreadDTO> listThreads(@RequestParam Long topicId) {
         Topic topic = topicAccess.loadTopicOr404(topicId);
         topicAccess.requireMember(topic);
-        return threadRepo.findByTopic_IdOrderByCreatedAtDesc(topicId);
+        return threadRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(DiscussionThreadDTO::from).toList();
     }
 
     @PostMapping("/threads")
     @PreAuthorize("isAuthenticated()")
-    public DiscussionThread createThread(@RequestBody Map<String, String> body) {
+    public DiscussionThreadDTO createThread(@RequestBody Map<String, String> body) {
         if (body.get("topicId") == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
         }
@@ -69,21 +70,20 @@ public class DiscussionController {
         t.setCreatedBy(user);
         DiscussionThread saved = threadRepo.save(t);
         auditLogService.log("CREATE_THREAD", "DiscussionThread", saved.getId().toString(), "Title: " + saved.getTitle());
-        events.genericEvent("THREAD_CREATED", saved.getId());
-        return saved;
+        return DiscussionThreadDTO.from(saved);
     }
 
     @GetMapping("/threads/{threadId}/posts")
     @PreAuthorize("isAuthenticated()")
-    public List<DiscussionPost> listPosts(@PathVariable Long threadId) {
+    public List<DiscussionPostDTO> listPosts(@PathVariable Long threadId) {
         DiscussionThread th = loadThread(threadId);
         topicAccess.requireMember(th.getTopic());
-        return postRepo.findByThread_IdOrderByCreatedAtAsc(threadId);
+        return postRepo.findByThread_IdOrderByCreatedAtAsc(threadId).stream().map(DiscussionPostDTO::from).toList();
     }
 
     @PostMapping("/threads/{threadId}/posts")
     @PreAuthorize("isAuthenticated()")
-    public DiscussionPost addPost(@PathVariable Long threadId, @RequestBody Map<String, String> body) {
+    public DiscussionPostDTO addPost(@PathVariable Long threadId, @RequestBody Map<String, String> body) {
         DiscussionThread th = loadThread(threadId);
         topicAccess.requireMember(th.getTopic());
 
@@ -94,8 +94,7 @@ public class DiscussionController {
         p.setContent(body.get("content"));
         DiscussionPost saved = postRepo.save(p);
         auditLogService.log("CREATE_POST", "DiscussionPost", saved.getId().toString(), "Thread " + th.getId());
-        events.genericEvent("POST_ADDED", saved.getId());
-        return saved;
+        return DiscussionPostDTO.from(saved);
     }
 
     private DiscussionThread loadThread(Long threadId) {

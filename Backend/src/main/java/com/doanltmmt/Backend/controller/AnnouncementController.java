@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Announcement;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
@@ -48,18 +49,18 @@ public class AnnouncementController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<Announcement> list(@RequestParam(required = false) Long topicId) {
+    public List<AnnouncementDTO> list(@RequestParam(required = false) Long topicId) {
         if (topicId == null) {
-            return repo.findByTopicIsNullOrderByCreatedAtDesc();
+            return repo.findByTopicIsNullOrderByCreatedAtDesc().stream().map(AnnouncementDTO::from).toList();
         }
         Topic topic = topicAccess.loadTopicOr404(topicId);
         topicAccess.requireMember(topic);
-        return repo.findByTopic_IdOrderByCreatedAtDesc(topicId);
+        return repo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(AnnouncementDTO::from).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public Announcement create(@RequestBody Map<String, String> body) {
+    public AnnouncementDTO create(@RequestBody Map<String, String> body) {
         Topic topic = null;
         if (body.get("topicId") != null) {
             topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId")));
@@ -76,7 +77,6 @@ public class AnnouncementController {
         a.setTopic(topic);
         Announcement saved = repo.save(a);
         auditLogService.log("CREATE_ANNOUNCEMENT", "Announcement", saved.getId().toString(), saved.getTitle());
-        events.genericEvent("ANNOUNCEMENT_CREATED", saved.getId());
-        return saved;
+        return AnnouncementDTO.from(saved);
     }
 }

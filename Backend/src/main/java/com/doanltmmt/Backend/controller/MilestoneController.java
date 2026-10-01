@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
@@ -35,23 +36,23 @@ public class MilestoneController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public Milestone getMilestone(@PathVariable Long id) {
+    public MilestoneDTO getMilestone(@PathVariable Long id) {
         Milestone m = loadMilestone(id);
         topicAccess.requireMember(m.getTopic());
-        return m;
+        return MilestoneDTO.from(m);
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<Milestone> getMilestones(@RequestParam Long topicId) {
+    public List<MilestoneDTO> getMilestones(@RequestParam Long topicId) {
         Topic topic = topicAccess.loadTopicOr404(topicId);
         topicAccess.requireMember(topic);
-        return milestoneRepo.findByTopic_IdOrderByDeadlineAsc(topicId);
+        return milestoneRepo.findByTopic_IdOrderByDeadlineAsc(topicId).stream().map(MilestoneDTO::from).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public Milestone createMilestone(@RequestBody Map<String, Object> body) {
+    public MilestoneDTO createMilestone(@RequestBody Map<String, Object> body) {
         if (body.get("topicId") == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
         }
@@ -70,12 +71,12 @@ public class MilestoneController {
         }
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("CREATE_MILESTONE", "Milestone", saved.getId().toString(), "Created milestone: " + saved.getTitle());
-        return saved;
+        return MilestoneDTO.from(saved);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public Milestone updateMilestone(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public MilestoneDTO updateMilestone(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Milestone milestone = loadMilestone(id);
         topicAccess.requireOwner(milestone.getTopic());
 
@@ -87,7 +88,7 @@ public class MilestoneController {
         }
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("UPDATE_MILESTONE", "Milestone", saved.getId().toString(), "Updated milestone");
-        return saved;
+        return MilestoneDTO.from(saved);
     }
 
     @DeleteMapping("/{id}")

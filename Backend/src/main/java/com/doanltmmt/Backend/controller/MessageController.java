@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Message;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
@@ -86,7 +87,7 @@ public class MessageController {
 
     @PostMapping("/send")
     @PreAuthorize("isAuthenticated()")
-    public Message send(@RequestBody Map<String, String> body) {
+    public MessageDTO send(@RequestBody Map<String, String> body) {
         User me = scope.requireCurrentUser();
 
         Long recipientId = parseId(body.get("recipientId"), "recipientId");
@@ -121,8 +122,7 @@ public class MessageController {
         Message saved = repo.save(m);
         events.messageCreated(saved);
         auditLogService.log("SEND_MESSAGE", "Message", saved.getId().toString(), "To: " + recipient.getUsername());
-        events.genericEvent("MESSAGE_SENT", saved.getId());
-        return saved;
+        return MessageDTO.from(saved);
     }
 
     private static Long parseId(String raw, String field) {
