@@ -98,9 +98,10 @@ class JwtTokenProviderTest {
     void tamperedToken_isRejected() {
         JwtTokenProvider p = provider();
         String token = p.generateAccessToken("alice", 1L, "ADMIN", 0);
-        // đổi 1 ký tự trong phần chữ ký
-        char last = token.charAt(token.length() - 1);
-        String tampered = token.substring(0, token.length() - 1) + (last == 'A' ? 'B' : 'A');
+        // đổi ký tự ĐẦU của phần chữ ký (ký tự cuối của base64url chỉ mang 4 bit có nghĩa nên đổi nó đôi khi không làm đổi chữ ký)
+        int sig = token.lastIndexOf('.') + 1;
+        char c = token.charAt(sig);
+        String tampered = token.substring(0, sig) + (c == 'A' ? 'B' : 'A') + token.substring(sig + 1);
 
         assertTrue(p.parse(tampered, Scope.ACCESS).isEmpty());
     }

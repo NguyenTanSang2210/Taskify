@@ -10,12 +10,14 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.security.JwtTokenProvider.Scope;
 import com.doanltmmt.Backend.security.JwtTokenProvider.TokenClaims;
+import com.doanltmmt.Backend.security.PasswordPolicy;
 import com.doanltmmt.Backend.security.RateLimiter;
 import com.doanltmmt.Backend.service.OtpService.VerifyOutcome;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -38,6 +40,7 @@ public class AuthService {
     /** Thông báo dùng chung cho sai mật khẩu / sai tên / tài khoản khóa / chưa kích hoạt — không cho dò tài khoản. */
     static final String INVALID_CREDENTIALS = "Sai tên đăng nhập hoặc mật khẩu";
     static final String PREAUTH_EXPIRED = "Phiên xác thực đã hết hạn. Vui lòng đăng nhập lại.";
+    static final String ACTIVATION_FAILED = "Mã kích hoạt không đúng hoặc đã hết hạn.";
 
     /** Các vai trò bắt buộc xác thực 2 bước bằng OTP. */
     private static final Set<String> OTP_ROLES = Set.of("ADMIN", "LECTURER", "DEPARTMENT_ADMIN");
@@ -50,6 +53,7 @@ public class AuthService {
     private final LoginThrottleService throttle;
     private final RateLimiter rateLimiter;
     private final SecurityProperties props;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtTokenProvider tokenProvider,
@@ -58,7 +62,9 @@ public class AuthService {
                        AuditLogService auditLogService,
                        LoginThrottleService throttle,
                        RateLimiter rateLimiter,
-                       SecurityProperties props) {
+                       SecurityProperties props,
+                       PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userRepository = userRepository;
@@ -125,11 +131,63 @@ public class AuthService {
         return new OtpResendResponse(true, OtpService.RESEND_COOLDOWN_SECONDS, maskEmail(user.getEmail()));
     }
 
+    // ------------------------------------------------------------------ đổi mật khẩu bắt buộc / kích hoạt
+
+    /** Đặt mật khẩu mới khi đang dùng mật khẩu tạm, rồi tiếp tục luồng đăng nhập (có thể sang bước OTP). */
+    public LoginResponse changeInitialPassword(String preAuthToken, String newPassword, String clientIp) {
+        rateLimiter.check("pwd-initial", clientIp, props.getRate().getOtpVerifyPerMinute(), Duration.ofMinutes(1));
+        User user = requirePreAuthUser(preAuthToken, Scope.PWD_CHANGE);
+        if (!user.isMustChangePassword()) {
+            throw unauthorized(PREAUTH_EXPIRED);
+        }
+        PasswordPolicy.requireValid(newPassword, user.getUsername());
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới không được trùng mật khẩu hiện tại");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setMustChangePassword(false);
+        user.setTokenVersion(user.getTokenVersion() + 1); // token PWD_CHANGE vừa dùng cũng hết hiệu lực
+        userRepository.save(user);
+        auditLogService.log("PASSWORD_INITIAL_SET", "User", user.getId().toString(), "ip=" + clientIp, user.getUsername());
+        return continueAfterPassword(user, clientIp);
+    }
+
+    /**
+     * Kích hoạt tài khoản do quản trị tạo (chưa có mật khẩu). Mọi lỗi về tài khoản/mã trả CÙNG một thông báo
+     * để không dò được tên đăng nhập hay email nào tồn tại.
+     */
+    public void activate(String identifier, String code, String newPassword, String clientIp) {
+        rateLimiter.check("activate", clientIp, props.getRate().getActivatePer10Minutes(), Duration.ofMinutes(10));
+        String id = identifier.trim();
+        User user = userRepository.findByUsername(id).or(() -> userRepository.findByEmail(id)).orElse(null);
+        // Kiểm tra mật khẩu TRƯỚC khi tiêu thụ mã: mật khẩu yếu không làm mất mã kích hoạt của người dùng
+        PasswordPolicy.requireValid(newPassword, user != null ? user.getUsername() : id);
+        if (user == null || user.isActivated() || !user.isActive()) {
+            throw unauthorized(ACTIVATION_FAILED);
+        }
+        VerifyOutcome outcome = otpService.verify(user, OtpPurpose.ACTIVATION, code);
+        if (outcome.result() != OtpService.VerifyResult.OK) {
+            auditLogService.log("ACTIVATION_FAILED", "User", user.getId().toString(), "ip=" + clientIp + ", " + outcome.result(), user.getUsername());
+            throw unauthorized(ACTIVATION_FAILED);
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setActivated(true);
+        user.setMustChangePassword(false);
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        auditLogService.log("ACTIVATE_ACCOUNT", "User", user.getId().toString(), "ip=" + clientIp, user.getUsername());
+    }
+
     // ------------------------------------------------------------------ nội bộ
 
     /** Sau khi mật khẩu đúng: quyết định bước kế tiếp. */
     private LoginResponse continueAfterPassword(User user, String clientIp) {
         String role = roleName(user);
+        if (user.isMustChangePassword()) {
+            // Đang dùng mật khẩu tạm do quản trị đặt: phải đổi trước (token PWD_CHANGE chỉ gọi được /auth/password/initial)
+            String preAuth = tokenProvider.generatePreAuthToken(user.getUsername(), user.getId(), user.getTokenVersion(), Scope.PWD_CHANGE);
+            return LoginResponse.passwordChangeRequired(preAuth, user, tokenProvider.getPreAuthTtlSeconds());
+        }
         if (OTP_ROLES.contains(role)) {
             otpService.issue(user, OtpPurpose.LOGIN);
             String preAuth = tokenProvider.generatePreAuthToken(user.getUsername(), user.getId(), user.getTokenVersion(), Scope.OTP_PENDING);

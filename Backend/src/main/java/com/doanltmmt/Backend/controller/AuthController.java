@@ -1,17 +1,13 @@
 package com.doanltmmt.Backend.controller;
 
-import org.springframework.transaction.annotation.Transactional;
-
+import com.doanltmmt.Backend.dto.ActivateRequest;
+import com.doanltmmt.Backend.dto.InitialPasswordRequest;
 import com.doanltmmt.Backend.dto.LoginRequest;
 import com.doanltmmt.Backend.dto.LoginResponse;
 import com.doanltmmt.Backend.dto.OtpResendRequest;
 import com.doanltmmt.Backend.dto.OtpResendResponse;
 import com.doanltmmt.Backend.dto.OtpVerifyRequest;
-import com.doanltmmt.Backend.dto.UserDTO;
-import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.User;
-import com.doanltmmt.Backend.repository.RoleRepository;
-import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.AuthService;
@@ -20,7 +16,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,22 +31,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final RoleRepository roleRepository;
-    private final StudentRepository studentRepository;
     private final AuditLogService auditLogService;
 
     public AuthController(AuthService authService,
                           UserRepository userRepository,
-                          PasswordEncoder passwordEncoder,
-                          RoleRepository roleRepository,
-                          StudentRepository studentRepository,
                           AuditLogService auditLogService) {
         this.authService = authService;
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
-        this.studentRepository = studentRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -86,38 +72,17 @@ public class AuthController {
         return Map.of("loggedOut", true);
     }
 
-    // TODO(P1-09): xóa endpoint đăng ký công khai (quyết định D-02: tài khoản do quản trị tạo, người dùng tự kích hoạt)
-    @PostMapping("/register")
-    @Transactional
-    public UserDTO register(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
-        String fullName = body.get("fullName");
-        String email = body.get("email");
-        String studentCode = body.get("studentCode");
-        String className = body.get("className");
+    /** Đổi mật khẩu bắt buộc lần đầu (dùng token PWD_CHANGE nhận ở bước đăng nhập). */
+    @PostMapping("/password/initial")
+    public LoginResponse changeInitialPassword(@Valid @RequestBody InitialPasswordRequest request, HttpServletRequest http) {
+        return authService.changeInitialPassword(request.preAuthToken(), request.newPassword(), clientIp(http));
+    }
 
-        if (userRepository.findByUsername(username).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập đã tồn tại");
-        }
-
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setFullName(fullName);
-        user.setEmail(email);
-        user.setActive(true);
-        user.setRole(roleRepository.findByName("STUDENT").orElseThrow(() -> new RuntimeException("Role STUDENT not found")));
-
-        User savedUser = userRepository.save(user);
-
-        Student student = new Student();
-        student.setUser(savedUser);
-        student.setStudentCode(studentCode);
-        student.setClassName(className);
-        studentRepository.save(student);
-
-        return new UserDTO(savedUser);
+    /** Kích hoạt tài khoản do quản trị tạo: tên đăng nhập/email + mã nhận qua email + mật khẩu mới. */
+    @PostMapping("/activate")
+    public Map<String, Object> activate(@Valid @RequestBody ActivateRequest request, HttpServletRequest http) {
+        authService.activate(request.identifier(), request.code(), request.newPassword(), clientIp(http));
+        return Map.of("activated", true);
     }
 
     /** IP client (đã qua {@code server.forward-headers-strategy=native} nên là IP thật khi đứng sau nginx). */

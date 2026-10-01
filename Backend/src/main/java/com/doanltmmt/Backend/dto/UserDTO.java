@@ -19,6 +19,8 @@ public class UserDTO {
     private Role role;
     private Department department;
     private boolean active;
+    private boolean activated;
+    private boolean mustChangePassword;
 
     public UserDTO(User user) {
         if (user == null) return;
@@ -30,6 +32,8 @@ public class UserDTO {
         this.role = user.getRole();
         this.department = user.getDepartment();
         this.active = user.isActive();
+        this.activated = user.isActivated();
+        this.mustChangePassword = user.isMustChangePassword();
     }
 
     /**

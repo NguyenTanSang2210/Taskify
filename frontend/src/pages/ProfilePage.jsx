@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import InlineNotice from '../components/InlineNotice';
+import PasswordChecklist, { isPasswordValid } from '../components/PasswordChecklist';
 
 export default function ProfilePage() {
     const { user, updateUser, updateToken } = useAuth();
@@ -74,8 +75,8 @@ export default function ProfilePage() {
             return;
         }
         
-        if (newPassword.length < 6) {
-             setNotice({ type: 'danger', message: 'Mật khẩu phải chứa ít nhất 6 ký tự.' });
+        if (!isPasswordValid(newPassword, user?.username)) {
+             setNotice({ type: 'danger', message: 'Mật khẩu mới chưa đạt yêu cầu: 8–64 ký tự, có chữ cái và chữ số, không chứa tên đăng nhập.' });
              return;
         }
 
@@ -288,8 +289,9 @@ export default function ProfilePage() {
                                           value={newPassword}
                                           onChange={(e) => setNewPassword(e.target.value)}
                                           required
-                                          placeholder="Tối thiểu 6 ký tự"
+                                          placeholder="Từ 8 ký tự, có chữ và số"
                                        />
+                                       <PasswordChecklist password={newPassword} username={user?.username} />
                                    </div>
                                    <div className="space-y-1.5">
                                        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Xác nhận lại</label>

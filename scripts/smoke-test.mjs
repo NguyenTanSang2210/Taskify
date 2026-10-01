@@ -205,11 +205,15 @@ async function main() {
     const roles = expectStatus(await call("GET", "/users/roles", { token: ctx.admin.token }), 200, "GET roles");
     const lecRole = roles.find((r) => r.name === "LECTURER");
     ctx.lecturer2Name = `lect${RUN}`;
+    // P1-09: không nhập mật khẩu ⇒ tài khoản chưa kích hoạt, mã kích hoạt gửi qua email (ở đây đọc từ DB) → kích hoạt → đăng nhập
     expectStatus(await call("POST", "/users", {
       token: ctx.admin.token,
-      body: { username: ctx.lecturer2Name, password: PASSWORD, fullName: `GV thử ${RUN}`, roleId: lecRole.id, departmentId: ctx.cntt.id },
+      body: { username: ctx.lecturer2Name, email: `${ctx.lecturer2Name}@smoke.local`, fullName: `GV thử ${RUN}`, roleId: lecRole.id, departmentId: ctx.cntt.id },
     }), 200, "Tạo giảng viên");
-    return `khoa T${RUN}, giảng viên ${ctx.lecturer2Name}`;
+    ctx.lecturer2Pass = `Smoke${RUN}x9`;
+    const act = await call("POST", "/auth/activate", { body: { identifier: ctx.lecturer2Name, code: latestOtp(ctx.lecturer2Name, "ACTIVATION"), newPassword: ctx.lecturer2Pass } });
+    expectStatus(act, 200, "Kích hoạt tài khoản");
+    return `khoa T${RUN}, giảng viên ${ctx.lecturer2Name} (đã kích hoạt qua mã)`;
   });
 
   // 3 — DeptAdmin tạo workspace → OPEN_TOPIC
@@ -405,7 +409,7 @@ async function main() {
     return { bug: r.status === 200, fixed: r.status === 403, detail: `HTTP ${r.status}${Array.isArray(r.data) ? `, ${r.data.length} bản ghi` : ""}` };
   });
   await knownBug("S2", "Giảng viên khác tạo milestone trên đề tài không phải của mình", "P1-05 #1", async () => {
-    const other = await login(ctx.lecturer2Name);
+    const other = await login(ctx.lecturer2Name, ctx.lecturer2Pass);
     const r = await call("POST", "/milestones", { token: other.token, body: { topicId: ctx.topicId, title: "Milestone lạ", deadline: "2030-01-01T00:00:00" } });
     if (r.status === 200) await call("DELETE", `/milestones/${r.data.id}`, { token: other.token });
     return { bug: r.status === 200, fixed: r.status === 403, detail: `HTTP ${r.status}` };

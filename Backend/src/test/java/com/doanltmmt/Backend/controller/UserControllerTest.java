@@ -86,6 +86,9 @@ public class UserControllerTest {
     @MockBean
     private DataSeeder dataSeeder;
 
+    @MockBean
+    private com.doanltmmt.Backend.service.OtpService otpService;
+
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void getAllRoles_ShouldReturnRoles() throws Exception {
@@ -125,7 +128,7 @@ public class UserControllerTest {
         given(userRepository.findByEmail("newlecturer@example.com")).willReturn(Optional.empty());
         given(roleRepository.findById(2L)).willReturn(Optional.of(lecturerRole));
         given(departmentRepository.findById(10L)).willReturn(Optional.of(dept));
-        given(passwordEncoder.encode("123456")).willReturn("ENC");
+        given(passwordEncoder.encode("Matkhau2026")).willReturn("ENC");
         given(userRepository.save(any(User.class))).willAnswer(invocation -> {
             User arg = invocation.getArgument(0);
             arg.setId(1L);
@@ -141,7 +144,7 @@ public class UserControllerTest {
         String payload = """
                 {
                   "username": "newlecturer",
-                  "password": "123456",
+                  "password": "Matkhau2026",
                   "fullName": "New Lecturer",
                   "email": "newlecturer@example.com",
                   "phone": "0123456789",

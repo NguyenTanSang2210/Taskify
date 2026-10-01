@@ -33,8 +33,7 @@ public class SecurityConfig {
             "/api/auth/activate",
             "/api/auth/password/initial",
             "/api/auth/password/forgot",
-            "/api/auth/password/reset",
-            "/api/auth/register" // TODO(P1-09): xóa cùng với việc bỏ đăng ký công khai
+            "/api/auth/password/reset"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;

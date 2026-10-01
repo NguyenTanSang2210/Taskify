@@ -13,7 +13,10 @@ import com.doanltmmt.Backend.repository.LecturerRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.entity.OtpPurpose;
 import com.doanltmmt.Backend.security.JwtTokenProvider;
+import com.doanltmmt.Backend.security.PasswordPolicy;
+import com.doanltmmt.Backend.service.OtpService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +43,7 @@ public class UserController {
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
     private final SecurityScopeService scope;
     private final JwtTokenProvider tokenProvider;
+    private final OtpService otpService;
 
     public UserController(UserRepository userRepository,
                           RoleRepository roleRepository,
@@ -50,7 +54,9 @@ public class UserController {
                           PasswordEncoder passwordEncoder,
                           com.doanltmmt.Backend.service.AuditLogService auditLogService,
                           SecurityScopeService scope,
-                          JwtTokenProvider tokenProvider) {
+                          JwtTokenProvider tokenProvider,
+                          OtpService otpService) {
+        this.otpService = otpService;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.studentRepository = studentRepository;
@@ -118,8 +124,12 @@ public class UserController {
         String oldPass = body.get("oldPassword");
         String newPass = body.get("newPassword");
         
-        if (!passwordEncoder.matches(oldPass, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect old password");
+        if (oldPass == null || !passwordEncoder.matches(oldPass, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không đúng");
+        }
+        PasswordPolicy.requireValid(newPass, user.getUsername());
+        if (passwordEncoder.matches(newPass, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới không được trùng mật khẩu hiện tại");
         }
         
         user.setPassword(passwordEncoder.encode(newPass));
@@ -173,7 +183,7 @@ public class UserController {
     @Transactional
     public UserDTO create(@RequestBody Map<String, Object> body) {
         String username = String.valueOf(body.getOrDefault("username", "")).trim();
-        String password = String.valueOf(body.getOrDefault("password", "")).trim();
+        String password = body.get("password") == null ? "" : String.valueOf(body.get("password")).trim();
         String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
         String email = body.get("email") != null ? String.valueOf(body.get("email")).trim() : null;
         String phone = body.get("phone") != null ? String.valueOf(body.get("phone")).trim() : null;
@@ -181,8 +191,18 @@ public class UserController {
         Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
         boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
 
-        if (username.isBlank() || password.isBlank() || fullName.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username, password, fullName are required");
+        if (username.isBlank() || fullName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username, fullName are required");
+        }
+        // Có mật khẩu tạm: bắt buộc đổi ở lần đăng nhập đầu. Không có: gửi mã kích hoạt qua email để người dùng tự đặt.
+        boolean sendActivation = password.isBlank();
+        if (sendActivation) {
+            if (email == null || email.isBlank() || !email.contains("@")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Cần nhập email hợp lệ để gửi mã kích hoạt (hoặc đặt mật khẩu tạm cho người dùng)");
+            }
+        } else {
+            PasswordPolicy.requireValid(password, username);
         }
         if (roleId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "roleId is required");
@@ -235,7 +255,10 @@ public class UserController {
 
         User u = new User();
         u.setUsername(username);
-        u.setPassword(passwordEncoder.encode(password));
+        // Chưa kích hoạt: mật khẩu ngẫu nhiên không ai biết (đăng nhập bị chặn cho tới khi kích hoạt)
+        u.setPassword(passwordEncoder.encode(sendActivation ? java.util.UUID.randomUUID().toString() : password));
+        u.setActivated(!sendActivation);
+        u.setMustChangePassword(!sendActivation);
         u.setFullName(fullName);
         if (email != null && !email.isBlank()) u.setEmail(email);
         if (phone != null && !phone.isBlank()) u.setPhone(phone);
@@ -265,7 +288,27 @@ public class UserController {
         }
 
         auditLogService.log("CREATE_USER", "User", saved.getId().toString(), "username=" + saved.getUsername());
+        if (sendActivation) {
+            otpService.issue(saved, OtpPurpose.ACTIVATION);
+        }
         return new UserDTO(saved);
+    }
+
+    /** Gửi lại mã kích hoạt cho tài khoản chưa kích hoạt (cách nhau tối thiểu 60 giây). */
+    @PostMapping("/{id}/resend-activation")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> resendActivation(@PathVariable Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.isActivated()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản này đã được kích hoạt");
+        }
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản chưa có email để gửi mã kích hoạt");
+        }
+        otpService.issueWithCooldown(user, OtpPurpose.ACTIVATION);
+        auditLogService.log("RESEND_ACTIVATION", "User", user.getId().toString(), "username=" + user.getUsername());
+        return Map.of("sent", true, "cooldownSeconds", OtpService.RESEND_COOLDOWN_SECONDS);
     }
 
     @GetMapping("/by-department")
