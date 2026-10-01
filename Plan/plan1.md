@@ -106,19 +106,19 @@
 | P0-07 | Sửa 18 lỗi ESLint | P1 | 1h | ✅ |
 | P0-08 | Dọn repo & bổ sung lint vào CI | P1 | 1h | ✅ |
 | P0-09 | Thiết lập Git workflow & tag baseline | P1 | 0,5h | 🟦 (chờ push) |
-| P1-01 | Sửa luồng OTP (không cấp JWT trước OTP) | P0 | 1 ngày | ⬜ |
-| P1-02 | Chặn tài khoản bị khóa & thu hồi token | P0 | 0,5 ngày | ⬜ |
-| P1-03 | Loại bỏ JWT secret mặc định, kiểm tra cấu hình khi khởi động | P0 | 2h | ⬜ |
-| P1-04 | Bảo mật WebSocket (CONNECT + SUBSCRIBE) | P0 | 1 ngày | ⬜ |
-| P1-05 | Dịch vụ kiểm tra quyền theo đề tài + vá IDOR | P0 | 1,5 ngày | ⬜ |
-| P1-06 | Response DTO — chặn lộ dữ liệu cá nhân | P0 | 1,5 ngày | ⬜ |
-| P1-07 | Gia cố upload/download file | P0 | 1 ngày | ⬜ |
-| P1-08 | Gỡ file cá nhân khỏi git | P0 | 1h | ⬜ |
-| P1-09 | Tắt đăng ký công khai, kích hoạt tài khoản & chính sách mật khẩu | P1 | 1 ngày | ⬜ |
-| P1-10 | Chống brute-force đăng nhập (bền vững) | P1 | 0,5 ngày | ⬜ |
-| P1-11 | Security headers, tắt Swagger ở prod | P1 | 2h | ⬜ |
-| P1-12 | Bộ test hồi quy phân quyền | P0 | 1 ngày | ⬜ |
-| P1-13 | Nâng cấp dependency backend + Dependabot | P1 | 0,5 ngày | ⬜ |
+| P1-01 | Sửa luồng OTP (không cấp JWT trước OTP) | P0 | 1 ngày | ✅ |
+| P1-02 | Chặn tài khoản bị khóa & thu hồi token | P0 | 0,5 ngày | ✅ |
+| P1-03 | Loại bỏ JWT secret mặc định, kiểm tra cấu hình khi khởi động | P0 | 2h | ✅ |
+| P1-04 | Bảo mật WebSocket (CONNECT + SUBSCRIBE) | P0 | 1 ngày | ✅ |
+| P1-05 | Dịch vụ kiểm tra quyền theo đề tài + vá IDOR | P0 | 1,5 ngày | ✅ |
+| P1-06 | Response DTO — chặn lộ dữ liệu cá nhân | P0 | 1,5 ngày | ✅ |
+| P1-07 | Gia cố upload/download file | P0 | 1 ngày | ✅ |
+| P1-08 | Gỡ file cá nhân khỏi git | P0 | 1h | 🟨 (phần local xong; viết lại lịch sử chờ xác nhận) |
+| P1-09 | Tắt đăng ký công khai, kích hoạt tài khoản & chính sách mật khẩu | P1 | 1 ngày | ✅ |
+| P1-10 | Chống brute-force đăng nhập (bền vững) | P1 | 0,5 ngày | ✅ |
+| P1-11 | Security headers, tắt Swagger ở prod | P1 | 2h | ✅ |
+| P1-12 | Bộ test hồi quy phân quyền | P0 | 1 ngày | ✅ |
+| P1-13 | Nâng cấp dependency backend + Dependabot | P1 | 0,5 ngày | ✅ |
 | P2-01 | Cấp quyền TOPIC_MANAGE cho giảng viên + sửa initializer | P0 | 2h | ⬜ |
 | P2-02 | Tách xử lý 401/403 ở frontend + toast lỗi | P0 | 0,5 ngày | ⬜ |
 | P2-03 | Sửa lỗi upload/tải file đính kèm | P0 | 0,5 ngày | ⬜ |
