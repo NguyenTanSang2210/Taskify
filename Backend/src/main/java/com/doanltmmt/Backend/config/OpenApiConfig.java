@@ -27,7 +27,7 @@ public class OpenApiConfig {
                         )
                 )
                 .info(new Info()
-                        .title("KTPM - Academic Task Management API")
+                        .title("Taskify API")
                         .version("1.0.0")
                         .description("API documentation for Academic Task Management workspace.")
                         .contact(new Contact().name("Development Team").email("dev@example.com"))

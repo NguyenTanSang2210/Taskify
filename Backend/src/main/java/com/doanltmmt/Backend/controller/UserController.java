@@ -164,11 +164,6 @@ public class UserController {
 
 
 
-    @GetMapping("/test")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String test() {
-        return "Backend OK";
-    }
 
 
 

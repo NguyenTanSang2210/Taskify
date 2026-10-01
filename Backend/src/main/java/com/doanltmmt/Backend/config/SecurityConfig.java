@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.config;
 import com.doanltmmt.Backend.security.JwtAuthenticationFilter;
 import com.doanltmmt.Backend.security.SecurityErrorHandlers;
 import com.doanltmmt.Backend.service.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,6 +27,8 @@ public class SecurityConfig {
      * Các endpoint công khai (không cần đăng nhập) — liệt kê TỪNG cái (mặc định từ chối): thêm endpoint mới
      * dưới /api/auth sẽ KHÔNG vô tình trở nên công khai.
      */
+    private static final String[] SWAGGER_ENDPOINTS = {"/swagger-ui/**", "/swagger-ui.html", "/api-docs/**"};
+
     private static final String[] PUBLIC_AUTH_ENDPOINTS = {
             "/api/auth/login",
             "/api/auth/otp/verify",
@@ -46,7 +49,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   @Value("${app.swagger.public:false}") boolean swaggerPublic) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 // Bật CORS trong Spring Security để preflight/POST từ frontend không bị 403
@@ -57,12 +61,17 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(SecurityErrorHandlers.unauthorized())
                         .accessDeniedHandler(SecurityErrorHandlers.forbidden()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/error").permitAll()
+                            .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+                            .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
+                            .requestMatchers("/ws/**").permitAll();
+                    // Swagger chỉ mở ở môi trường dev (app.swagger.public=true); production tắt hẳn (springdoc.*.enabled=false)
+                    if (swaggerPublic) {
+                        auth.requestMatchers(SWAGGER_ENDPOINTS).permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                })
 
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
