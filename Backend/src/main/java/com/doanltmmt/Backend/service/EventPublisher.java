@@ -50,8 +50,8 @@ public class EventPublisher {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "NOTIFICATION_CREATED");
         payload.put("notification", NotificationDTO.from(n));
-        String dest = "/topic/notifications/" + n.getUser().getId();
-        template.convertAndSend(dest, payload);
+        // Kênh riêng theo Principal: chỉ chính người dùng đó nhận được (/user/queue/notifications)
+        template.convertAndSendToUser(n.getUser().getUsername(), "/queue/notifications", payload);
     }
 
     public void messageCreated(Message m) {
@@ -59,12 +59,9 @@ public class EventPublisher {
         payload.put("type", "MESSAGE_CREATED");
         payload.put("message", MessageDTO.from(m));
 
-        String senderDest = "/topic/messages/" + m.getSender().getId();
-        String recipientDest = "/topic/messages/" + m.getRecipient().getId();
-
-        template.convertAndSend(senderDest, payload);
+        template.convertAndSendToUser(m.getSender().getUsername(), "/queue/messages", payload);
         if (!m.getSender().getId().equals(m.getRecipient().getId())) {
-            template.convertAndSend(recipientDest, payload);
+            template.convertAndSendToUser(m.getRecipient().getUsername(), "/queue/messages", payload);
         }
     }
 }

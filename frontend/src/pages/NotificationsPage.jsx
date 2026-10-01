@@ -32,7 +32,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (!userId) return;
     const client = connectAndSubscribe({
-      destination: `/topic/notifications/${userId}`,
+      destination: "/user/queue/notifications",
       onMessage: async (payload) => {
         const n = payload?.notification;
         if (n) {
