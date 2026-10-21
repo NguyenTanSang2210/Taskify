@@ -93,6 +93,13 @@ class AuthFlowIT extends AbstractSecurityIT {
     // ------------------------------------------------------------------ bước 1: đăng nhập
 
     @Test
+    void overlongUsername_isRejectedWith400_notServerError() throws Exception {
+        // Trước đây: ghi audit log thất bại (cột 255 ký tự) -> HTTP 500 kèm câu lệnh SQL trong phản hồi
+        doLogin("x".repeat(10_000), "sai")
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void student_getsAccessTokenDirectly_noOtpStep() throws Exception {
         JsonNode body = loginOk(student);
 
