@@ -442,7 +442,7 @@ function summary() {
       "",
       "| # | Kịch bản | Kết quả | Task | Chi tiết |",
       "|---|---|:---:|---|---|",
-      ...results.map((r) => `| ${r.id} | ${r.name} | ${r.status} | ${r.task} | ${String(r.detail).replace(/\|/g, "\\|")} |`),
+      ...results.map((r) => `| ${r.id} | ${r.name} | ${r.status} | ${r.task} | ${String(r.detail).replace(/\\/g, "\\\\").replace(/\|/g, "\\|")} |`),
       "",
     ].join("\n");
     writeFileSync(process.env.REPORT_FILE, md, "utf8");
