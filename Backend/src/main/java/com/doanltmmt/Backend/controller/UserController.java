@@ -69,6 +69,13 @@ public class UserController {
         this.tokenProvider = tokenProvider;
     }
 
+    // Tên miền tách theo dấu chấm (mỗi phần không chứa '.') để regex không quay lui đa thức (ReDoS)
+    private static final java.util.regex.Pattern EMAIL = java.util.regex.Pattern.compile("^[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)+$");
+
+    static boolean isValidEmail(String email) {
+        return email != null && email.length() <= 254 && EMAIL.matcher(email).matches();
+    }
+
     @PutMapping("/{id}/profile")
     @PreAuthorize("isAuthenticated()")
     public UserDTO updateProfile(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
@@ -94,7 +101,7 @@ public class UserController {
             if (email.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không được để trống");
             }
-            if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            if (!isValidEmail(email)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
             }
             boolean usedByAnother = userRepository.findByEmail(email)

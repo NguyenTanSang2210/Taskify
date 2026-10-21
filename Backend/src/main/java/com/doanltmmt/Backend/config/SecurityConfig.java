@@ -52,6 +52,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    @Value("${app.swagger.public:false}") boolean swaggerPublic) throws Exception {
         http
+                // CSRF không áp dụng: xác thực bằng header Authorization (Bearer), không dùng cookie/session.
+                // Khi có refresh token trong cookie (P3-14) phải bảo vệ CSRF cho endpoint đó (SameSite + kiểm tra Origin).
                 .csrf(csrf -> csrf.disable())
                 // Bật CORS trong Spring Security để preflight/POST từ frontend không bị 403
                 .cors(cors -> {
