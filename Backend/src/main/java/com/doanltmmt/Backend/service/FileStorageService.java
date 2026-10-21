@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -102,7 +103,13 @@ public class FileStorageService {
     /** Đường dẫn trên đĩa của file; null nếu tên trỏ ra ngoài thư mục upload. */
     public Path resolve(String storedName) {
         if (storedName == null || storedName.isBlank()) return null;
-        Path p = root.resolve(storedName).normalize();
+        Path p;
+        try {
+            p = root.resolve(storedName).normalize();
+        } catch (InvalidPathException ex) { // tên cũ có ký tự hệ thống file không mã hóa được (locale không phải UTF-8)
+            log.warn("Bỏ qua một tên file không biểu diễn được trên hệ thống file (kiểm tra locale UTF-8 của máy chủ).");
+            return null;
+        }
         return p.startsWith(root) && !p.equals(root) ? p : null;
     }
 
