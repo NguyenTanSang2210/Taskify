@@ -1,6 +1,6 @@
 # KẾ HOẠCH PHÁT TRIỂN TASKIFY — GIAI ĐOẠN 0 → 4
 
-> **Phiên bản kế hoạch:** 1.3 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 25/09/2026 (đã chốt Decision Log) · **Người thực hiện:** NguyenTanSang2210
+> **Phiên bản kế hoạch:** 1.4 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 21/10/2026 (đồng bộ trạng thái GĐ1 + kiểm thử toàn diện, xem `Plan/reports/report_plan1.md`) · **Người thực hiện:** NguyenTanSang2210
 > **Căn cứ:** Báo cáo phân tích hiện trạng mã nguồn ngày 25/09/2026 (commit `00862fb` trên `main`).
 > **Mục tiêu tổng:** Đưa Taskify từ trạng thái "đồ án chạy demo được" lên "sản phẩm an toàn, ổn định, có thể triển khai thật", sau đó mới mở rộng tính năng.
 
@@ -72,8 +72,8 @@
 
 | Giai đoạn | Nội dung | Số task | Ước lượng | Trạng thái | Bắt đầu | Kết thúc | Tag git |
 |---|---|:---:|:---:|:---:|---|---|---|
-| **0** | Khôi phục môi trường & baseline | 9 | 1,5–2 ngày | ✅ (8/9 · P0-09 chờ push) | 25/09/2026 | 25/09/2026 | `v0.1.0-baseline` (chờ) |
-| **1** | Vá bảo mật | 13 | 8–10 ngày | ⬜ | | | `v0.2.0-security` |
+| **0** | Khôi phục môi trường & baseline | 9 | 1,5–2 ngày | ✅ (8/9 · P0-09: đã push `develop`, PR #3 chờ merge + tag) | 25/09/2026 | 25/09/2026 | `v0.1.0-baseline` (chờ) |
+| **1** | Vá bảo mật | 13 | 8–10 ngày | 🟦 (12/13 ✅ · P1-08 🟨 chờ viết lại lịch sử git · chờ merge + tag) | 30/09/2026 | | `v0.2.0-security` (chờ) |
 | **2** | Sửa lỗi nghiệp vụ & chức năng | 13 | 8–10 ngày | ⬜ | | | `v0.3.0-business` |
 | **3** | Củng cố kỹ thuật | 14 | 12–15 ngày | ⬜ | | | `v0.4.0-hardening` |
 | **4** | Tính năng mới & triển khai | 11 (2 task 🕒 để sau v1.0) | Theo backlog | ⬜ | | | `v1.0.0` |
@@ -446,14 +446,14 @@ P1-01 — Sửa luồng OTP
 
 **Các bước:**
 - [x] Mỗi task GĐ0 một commit có mã task trên `main` local (`98027f4` P0-04 · `a121754` P0-06 · `c059255` P0-07 · `64d0382` P0-08 · `a18d1bf` P0-05 · `6ef1fe7` Plan). *(Ban đầu làm trên nhánh `chore/P0-baseline`, đã fast-forward về `main` và xóa nhánh theo yêu cầu.)*
-- [ ] Chủ dự án đẩy lên develop: `git push origin main:develop` → chờ CI xanh.
+- [x] Chủ dự án đẩy lên develop → CI (backend/frontend/docker) xanh; PR #3 `develop` → `main` đã mở.
 - [ ] Chủ dự án merge `develop` → `main` trên GitHub.
 - [ ] Bật **Branch protection** cho `main` (Settings → Branches → Add rule: Require PR + Require status checks).
 - [ ] Gắn tag trên `main` sau khi merge: `git tag -a v0.1.0-baseline -m "Baseline sau khi khôi phục môi trường"`; `git push origin v0.1.0-baseline`.
 - [ ] (Tùy chọn) GitHub Project/Milestones cho 5 giai đoạn.
 
 **✅ Nghiệm thu:** Tag `v0.1.0-baseline` tồn tại trên remote.
-**Theo dõi:** Ngày xong (local): `25/09/2026` · Remote: `____`
+**Theo dõi:** Ngày xong (local): `25/09/2026` · Remote: đã push `develop`; merge + tag `v0.1.0-baseline` chờ chủ dự án
 
 ---
 
@@ -503,11 +503,13 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 2. Kiểm tra quyền ở **tầng service**, không chỉ ở `@PreAuthorize`.
 3. Không bao giờ tin `studentId`/`lecturerId`/`userId` do client gửi lên — **luôn lấy từ token**.
 
+> **Theo dõi chi tiết GĐ1** (thiết kế, các điều chỉnh có lý do so với bản này, nhật ký từng task): `Plan/GĐ1.md`. Kết quả kiểm thử tổng: `Plan/reports/report_plan1.md`.
+
 **Thứ tự đề xuất:** P1-03 → P1-01 → P1-02 → P1-05 → P1-12 (viết song song) → P1-06 → P1-04 → P1-07 → P1-08 → P1-09 → P1-10 → P1-11 → P1-13.
 
 ---
 
-### ⬜ P1-01 — Sửa luồng OTP (không cấp JWT trước OTP)
+### ✅ P1-01 — Sửa luồng OTP (không cấp JWT trước OTP)
 
 **Mức độ:** 🔴 Nghiêm trọng
 **Vấn đề:** `BE/controller/AuthController.java:84` sinh JWT đầy đủ quyền **trước** khi OTP được xác thực. `/api/auth/otp/verify` chỉ trả `{verified: true/false}`, không cấp gì. Frontend (`FE/pages/LoginPage.jsx:68`) lưu token vào `localStorage.temp_token`. → Kẻ tấn công biết mật khẩu ADMIN/LECTURER **bỏ qua được OTP** bằng cách dùng token này trực tiếp.
@@ -535,27 +537,27 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - `FE/pages/LoginPage.jsx`, `FE/api/auth.js`, `FE/context/AuthContext.jsx`
 
 **Các bước:**
-- [ ] Backend: thêm claim `scope` vào JWT (`ACCESS` | `OTP_PENDING`).
-- [ ] Backend: `login()` — nếu `otpRequired` chỉ trả `preAuthToken`, không trả access token.
-- [ ] Backend: `verifyOtp()` — nhận `preAuthToken` + `code`; lấy username **từ token** (không nhận username từ body); đúng → cấp access token.
-- [ ] Backend: `OtpToken` thêm `attempts` (int), `purpose` (`LOGIN` / `ACTIVATION` / `RESET_PASSWORD` — dùng lại ở P1-09, P2-05). Sai > 5 lần → đánh dấu `used=true`.
-- [ ] Backend: khi gửi OTP mới → vô hiệu các OTP cũ chưa dùng của user đó.
-- [ ] Backend: endpoint `/otp/resend` với cooldown 60s.
-- [ ] Backend: filter từ chối token có `scope != ACCESS` (trả 401).
-- [ ] Frontend: lưu `preAuthToken` trong **state React** (không dùng localStorage); xóa toàn bộ `temp_token`/`temp_user`.
-- [ ] Frontend: thêm nút "Gửi lại mã" có đếm ngược 60s.
-- [ ] Test (xem P1-12): token OTP_PENDING gọi `/api/users` → 401; verify sai 6 lần → bị khóa OTP; verify đúng → nhận access token hoạt động.
+- [x] Backend: thêm claim `scope` vào JWT (`ACCESS` | `OTP_PENDING`).
+- [x] Backend: `login()` — nếu `otpRequired` chỉ trả `preAuthToken`, không trả access token.
+- [x] Backend: `verifyOtp()` — nhận `preAuthToken` + `code`; lấy username **từ token** (không nhận username từ body); đúng → cấp access token.
+- [x] Backend: `OtpToken` thêm `attempts` (int), `purpose` (`LOGIN` / `ACTIVATION` / `RESET_PASSWORD` — dùng lại ở P1-09, P2-05). Sai > 5 lần → đánh dấu `used=true`.
+- [x] Backend: khi gửi OTP mới → vô hiệu các OTP cũ chưa dùng của user đó.
+- [x] Backend: endpoint `/otp/resend` với cooldown 60s.
+- [x] Backend: filter từ chối token có `scope != ACCESS` (trả 401).
+- [x] Frontend: lưu `preAuthToken` trong **state React** (không dùng localStorage); xóa toàn bộ `temp_token`/`temp_user`.
+- [x] Frontend: thêm nút "Gửi lại mã" có đếm ngược 60s.
+- [x] Test (xem P1-12): token OTP_PENDING gọi `/api/users` → 401; verify sai 6 lần → bị khóa OTP; verify đúng → nhận access token hoạt động.
 
 **✅ Nghiệm thu:**
 - Đăng nhập ADMIN, **không nhập OTP**, không có cách nào gọi API nghiệp vụ.
 - DevTools → Application → Local Storage không còn `temp_token`.
 - STUDENT đăng nhập vẫn như cũ.
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `45255ee`
 
 ---
 
-### ⬜ P1-02 — Chặn tài khoản bị khóa & thu hồi token
+### ✅ P1-02 — Chặn tài khoản bị khóa & thu hồi token
 
 **Mức độ:** 🔴 Nghiêm trọng
 **Vấn đề:** `BE/security/JwtAuthenticationFilter.java:34` chỉ kiểm tra chữ ký token, không kiểm tra `userDetails.isEnabled()`. Tài khoản bị admin khóa vẫn dùng được token cũ tới 24 giờ. Đổi mật khẩu cũng không vô hiệu token cũ.
@@ -565,19 +567,19 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 **File ảnh hưởng:** `BE/entity/User.java`, `BE/security/JwtAuthenticationFilter.java`, `BE/security/WebSocketAuthChannelInterceptor.java`, `BE/security/JwtTokenProvider.java`, `BE/controller/UserController.java` (updateStatus, updateRole, changePassword), `BE/controller/AuthController.java`.
 
 **Các bước:**
-- [ ] Filter: nếu `!userDetails.isEnabled()` → không set authentication (trả 401).
-- [ ] Thêm `User.tokenVersion` (mặc định 0) + claim `tv` khi tạo token.
-- [ ] Filter + WS interceptor: so sánh `tv`, lệch → 401.
-- [ ] Tăng `tokenVersion` ở: `updateStatus(active=false)`, `updateRole`, `changePassword`, reset mật khẩu (P2-05).
-- [ ] Thêm endpoint `POST /api/auth/logout` tăng `tokenVersion` (đăng xuất mọi thiết bị) — tùy chọn.
-- [ ] Frontend: khi nhận 401 → logout (đã có, sẽ tinh chỉnh ở P2-02).
+- [x] Filter: nếu `!userDetails.isEnabled()` → không set authentication (trả 401).
+- [x] Thêm `User.tokenVersion` (mặc định 0) + claim `tv` khi tạo token.
+- [x] Filter + WS interceptor: so sánh `tv`, lệch → 401.
+- [x] Tăng `tokenVersion` ở: `updateStatus(active=false)`, `updateRole`, `changePassword`, reset mật khẩu (P2-05).
+- [x] Thêm endpoint `POST /api/auth/logout` tăng `tokenVersion` (đăng xuất mọi thiết bị) — tùy chọn.
+- [x] Frontend: khi nhận 401 → logout (đã có, sẽ tinh chỉnh ở P2-02).
 
 **✅ Nghiệm thu:** Kịch bản #19 của P0-05: admin khóa student → request tiếp theo của student bị 401 và về trang login.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `304b95f`
 
 ---
 
-### ⬜ P1-03 — Loại bỏ JWT secret mặc định, kiểm tra cấu hình khi khởi động
+### ✅ P1-03 — Loại bỏ JWT secret mặc định, kiểm tra cấu hình khi khởi động
 
 **Mức độ:** 🔴 Nghiêm trọng
 **Vấn đề:** `docker-compose.yml:36` có `JWT_SECRET: ${JWT_SECRET:-ZGV2...}` và profile mặc định là `prod`. Nếu triển khai quên `.env` → dùng secret công khai trên GitHub → **ai cũng giả mạo được token admin**. Tương tự: `MYSQL_ROOT_PASSWORD:-root123`, `application-dev.properties` có fallback `DB_PASSWORD:123456`.
@@ -585,19 +587,19 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 **File ảnh hưởng:** `docker-compose.yml`, `.env.docker.example`, `BE/security/JwtTokenProvider.java`, `BE-RES/application-prod.properties`.
 
 **Các bước:**
-- [ ] `docker-compose.yml`: đổi thành `JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}` (compose sẽ báo lỗi nếu thiếu). Làm tương tự cho `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`.
-- [ ] `.env.docker.example`: thay giá trị bằng placeholder `CHANGE_ME_...` + hướng dẫn sinh secret.
-- [ ] `JwtTokenProvider`: thêm `@PostConstruct validateSecret()` — decode base64, yêu cầu ≥ 32 byte; nếu profile `prod` và secret trùng secret dev đã biết → **ném exception, dừng ứng dụng**.
-- [ ] Cache `Key` một lần thay vì decode mỗi request (`getSigningKey()` đang tạo mới mỗi lần).
-- [ ] Cập nhật CI dùng secret riêng (đã có — giữ nguyên).
-- [ ] **Nếu đã từng deploy công khai với secret mặc định:** coi như đã lộ, đổi secret ngay.
+- [x] `docker-compose.yml`: đổi thành `JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}` (compose sẽ báo lỗi nếu thiếu). Làm tương tự cho `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`.
+- [x] `.env.docker.example`: thay giá trị bằng placeholder `CHANGE_ME_...` + hướng dẫn sinh secret.
+- [x] `JwtTokenProvider`: thêm `@PostConstruct validateSecret()` — decode base64, yêu cầu ≥ 32 byte; nếu profile `prod` và secret trùng secret dev đã biết → **ném exception, dừng ứng dụng**.
+- [x] Cache `Key` một lần thay vì decode mỗi request (`getSigningKey()` đang tạo mới mỗi lần).
+- [x] Cập nhật CI dùng secret riêng (đã có — giữ nguyên).
+- [x] **Nếu đã từng deploy công khai với secret mặc định:** coi như đã lộ, đổi secret ngay.
 
 **✅ Nghiệm thu:** `docker compose up` với `.env` thiếu `JWT_SECRET` → báo lỗi rõ ràng, không khởi động.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `b4b78f1`
 
 ---
 
-### ⬜ P1-04 — Bảo mật WebSocket (CONNECT + SUBSCRIBE)
+### ✅ P1-04 — Bảo mật WebSocket (CONNECT + SUBSCRIBE)
 
 **Mức độ:** 🔴 Nghiêm trọng
 **Vấn đề:**
@@ -622,20 +624,20 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - `FE/components/NotificationsBell.jsx:29`, `FE/pages/NotificationsPage.jsx:35`, `FE/pages/ProjectChatPage.jsx:132`
 
 **Các bước:**
-- [ ] CONNECT: không có token hoặc token không hợp lệ → ném `MessagingException` (từ chối kết nối).
-- [ ] SUBSCRIBE: parse destination; với `/topic/progress/{id}` và `/topic/registration/{id}` gọi `TopicAccessService` (tạo ở P1-05) để kiểm tra; không đủ quyền → từ chối.
-- [ ] SEND tới `/app/**`: hiện chưa có `@MessageMapping` → từ chối toàn bộ SEND từ client cho an toàn.
-- [ ] `EventPublisher`: đổi `notificationCreated`, `messageCreated` sang `convertAndSendToUser`.
-- [ ] Bỏ `genericEvent` → `/topic/events` (kiểm tra frontend không subscribe — hiện không có trang nào subscribe).
-- [ ] Frontend: đổi destination ở 3 file trên.
-- [ ] Test: client không token → CONNECT bị từ chối; SV A subscribe `/topic/progress/{đề tài của B}` → bị từ chối.
+- [x] CONNECT: không có token hoặc token không hợp lệ → ném `MessagingException` (từ chối kết nối).
+- [x] SUBSCRIBE: parse destination; với `/topic/progress/{id}` và `/topic/registration/{id}` gọi `TopicAccessService` (tạo ở P1-05) để kiểm tra; không đủ quyền → từ chối.
+- [x] SEND tới `/app/**`: hiện chưa có `@MessageMapping` → từ chối toàn bộ SEND từ client cho an toàn.
+- [x] `EventPublisher`: đổi `notificationCreated`, `messageCreated` sang `convertAndSendToUser`.
+- [x] Bỏ `genericEvent` → `/topic/events` (kiểm tra frontend không subscribe — hiện không có trang nào subscribe).
+- [x] Frontend: đổi destination ở 3 file trên.
+- [x] Test: client không token → CONNECT bị từ chối; SV A subscribe `/topic/progress/{đề tài của B}` → bị từ chối.
 
 **✅ Nghiệm thu:** Thông báo & chat realtime vẫn hoạt động; không thể nghe lén kênh của người khác.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `590fb10`
 
 ---
 
-### ⬜ P1-05 — Dịch vụ kiểm tra quyền theo đề tài + vá IDOR
+### ✅ P1-05 — Dịch vụ kiểm tra quyền theo đề tài + vá IDOR
 
 **Mức độ:** 🔴 Nghiêm trọng
 **Vấn đề:** Nhiều endpoint chỉ kiểm tra role, không kiểm tra người dùng có liên quan tới đề tài/tài nguyên hay không (IDOR — Insecure Direct Object Reference).
@@ -676,19 +678,19 @@ Topic loadTopicOr404(Long topicId);
 | 16 | `PUT /api/users/{id}/profile` | Cho đổi email tự do | Kiểm tra email trùng; đổi email → cần xác minh (tùy chọn) | `BE/controller/UserController.java` |
 
 **Các bước:**
-- [ ] Tạo `TopicAccessService` + unit test đầy đủ 4 role × (thành viên / không thành viên).
-- [ ] Áp dụng lần lượt 16 mục trên (tick từng mục):
-  - [ ] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8
-  - [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15 · [ ] 16
-- [ ] Thay các đoạn lặp `if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {...}` rải rác bằng `TopicAccessService`.
-- [ ] Rà soát frontend: trang nào đang gọi endpoint bị siết quyền → vẫn hoạt động đúng với người có quyền.
+- [x] Tạo `TopicAccessService` + unit test đầy đủ 4 role × (thành viên / không thành viên).
+- [x] Áp dụng lần lượt 16 mục trên (tick từng mục):
+  - [x] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8
+  - [x] 9 · [ ] 10 · [ ] 11 · [ ] 12 · [ ] 13 · [ ] 14 · [ ] 15 · [ ] 16
+- [x] Thay các đoạn lặp `if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {...}` rải rác bằng `TopicAccessService`.
+- [x] Rà soát frontend: trang nào đang gọi endpoint bị siết quyền → vẫn hoạt động đúng với người có quyền.
 
 **✅ Nghiệm thu:** Mỗi mục có ít nhất 1 test "không có quyền → 403" trong P1-12.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `6e38226`
 
 ---
 
-### ⬜ P1-06 — Response DTO: chặn lộ dữ liệu cá nhân
+### ✅ P1-06 — Response DTO: chặn lộ dữ liệu cá nhân
 
 **Mức độ:** 🟠 Cao
 **Vấn đề:** Controller trả thẳng entity JPA (`ProgressReport`, `Message`, `DiscussionThread`, `DiscussionPost`, `Announcement`, `Notification`, `Milestone`, `CalendarEvent`, `AuditLog`, `Role`) → Jackson serialize cả cây quan hệ: `User` (email, phone, department, role + toàn bộ privileges). `UserDTO` cũng chứa nguyên entity `Role` và `Department`. Payload WebSocket (`EventPublisher`) cũng gửi entity.
@@ -708,19 +710,19 @@ Topic loadTopicOr404(Long topicId);
 | `AnnouncementDTO`, `NotificationDTO`, `MilestoneDTO`, `CalendarEventDTO`, `AuditLogDTO`, `RoleDTO` | trường cần thiết | Controller tương ứng |
 
 **Các bước:**
-- [ ] Trước khi sửa: ghi lại JSON mẫu hiện tại của từng endpoint (dùng Swagger/Postman) để so sánh.
-- [ ] Tạo DTO + phương thức `static from(Entity)`.
-- [ ] Đổi kiểu trả về của controller + `EventPublisher`.
-- [ ] Grep frontend các trường đang dùng (`.user.email`, `.role.name`, `.department.name`…) → cập nhật nếu đổi.
-- [ ] Cấu hình `spring.jpa.open-in-view=false` (sau khi đã dùng DTO) để tránh lazy-load ngoài transaction.
-- [ ] Test: response của `/api/discuss/threads/{id}/posts` **không chứa** `email`, `phone`, `privileges`.
+- [x] Trước khi sửa: ghi lại JSON mẫu hiện tại của từng endpoint (dùng Swagger/Postman) để so sánh.
+- [x] Tạo DTO + phương thức `static from(Entity)`.
+- [x] Đổi kiểu trả về của controller + `EventPublisher`.
+- [x] Grep frontend các trường đang dùng (`.user.email`, `.role.name`, `.department.name`…) → cập nhật nếu đổi.
+- [x] Cấu hình `spring.jpa.open-in-view=false` (sau khi đã dùng DTO) để tránh lazy-load ngoài transaction.
+- [x] Test: response của `/api/discuss/threads/{id}/posts` **không chứa** `email`, `phone`, `privileges`.
 
 **✅ Nghiệm thu:** Không endpoint nào trả entity JPA trực tiếp (grep `public .*Entity` kiểu trả về trong controller = 0); frontend hoạt động bình thường.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `765d542`
 
 ---
 
-### ⬜ P1-07 — Gia cố upload/download file
+### ✅ P1-07 — Gia cố upload/download file
 
 **Mức độ:** 🟠 Cao
 **Vấn đề:**
@@ -736,22 +738,22 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 ```
 
 **Các bước:**
-- [ ] Tạo entity/repository `StoredFile` + `FileStorageService` (lưu, đọc, kiểm tra quyền).
-- [ ] Whitelist phần mở rộng: `pdf, doc, docx, xls, xlsx, ppt, pptx, zip, rar, png, jpg, jpeg, txt`; kiểm tra **magic bytes** (Apache Tika `tika-core`) khớp loại khai báo.
-- [ ] Giảm giới hạn: `max-file-size=20MB` (cấu hình được qua env).
-- [ ] Upload trả về `{fileId, fileName, fileUrl: "/api/secure/files/{storedName}"}`.
-- [ ] `ProgressController.create`: nhận `fileId` (hoặc `fileUrl`), kiểm tra `StoredFile.owner == currentUser` → gán `refType=PROGRESS_REPORT, refId`.
-- [ ] `SecureFileController`: tra `StoredFile` theo `storedName`, quyền = owner / thành viên đề tài của báo cáo (`TopicAccessService`) / Admin.
-- [ ] `Content-Disposition`: dùng `ContentDisposition.attachment().filename(originalName, UTF_8)`.
-- [ ] Đường dẫn upload lấy từ cấu hình `app.upload.dir` (thay vì `Paths.get("uploads")` cứng ở 2 nơi).
-- [ ] Job dọn file mồ côi (upload > 24h không gắn vào báo cáo) — tùy chọn.
+- [x] Tạo entity/repository `StoredFile` + `FileStorageService` (lưu, đọc, kiểm tra quyền).
+- [x] Whitelist phần mở rộng: `pdf, doc, docx, xls, xlsx, ppt, pptx, zip, rar, png, jpg, jpeg, txt`; kiểm tra **magic bytes** (Apache Tika `tika-core`) khớp loại khai báo.
+- [x] Giảm giới hạn: `max-file-size=20MB` (cấu hình được qua env).
+- [x] Upload trả về `{fileId, fileName, fileUrl: "/api/secure/files/{storedName}"}`.
+- [x] `ProgressController.create`: nhận `fileId` (hoặc `fileUrl`), kiểm tra `StoredFile.owner == currentUser` → gán `refType=PROGRESS_REPORT, refId`.
+- [x] `SecureFileController`: tra `StoredFile` theo `storedName`, quyền = owner / thành viên đề tài của báo cáo (`TopicAccessService`) / Admin.
+- [x] `Content-Disposition`: dùng `ContentDisposition.attachment().filename(originalName, UTF_8)`.
+- [x] Đường dẫn upload lấy từ cấu hình `app.upload.dir` (thay vì `Paths.get("uploads")` cứng ở 2 nơi).
+- [x] Job dọn file mồ côi (upload > 24h không gắn vào báo cáo) — tùy chọn.
 
 **✅ Nghiệm thu:** Upload `.exe` → 400; SV A không tải được file của SV B (khác đề tài) → 403; tên file tiếng Việt tải về đúng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `b57fdd8`
 
 ---
 
-### ⬜ P1-08 — Gỡ file cá nhân khỏi git
+### 🟨 P1-08 — Gỡ file cá nhân khỏi git
 
 **Mức độ:** 🟠 Cao
 **Vấn đề:** 3 file tài liệu thật của sinh viên đã commit trong `Backend/uploads/` (`Nhom5.doc` ×2, `Phieu theo doi tien do DACN.doc`).
@@ -763,8 +765,8 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 **Các bước:**
 
 *Bước A — Gỡ khỏi phiên bản hiện tại:*
-- [ ] `git rm --cached -r Backend/uploads` + thêm `Backend/uploads/` vào `.gitignore` (giữ `Backend/uploads/.gitkeep` nếu cần thư mục).
-- [ ] Commit & push lên `develop`, merge vào `main`.
+- [x] `git rm --cached -r Backend/uploads` + thêm `Backend/uploads/` vào `.gitignore` (giữ `Backend/uploads/.gitkeep` nếu cần thư mục).
+- [x] Commit & push lên `develop` (`5d785c1`, script `ebeb7ae`); merge vào `main` chờ PR #3.
 
 *Bước B — Chuẩn bị:*
 - [ ] Đảm bảo không còn thay đổi chưa commit/chưa push ở mọi nhánh (`git status`, `git log origin/<nhánh>..<nhánh>`).
@@ -786,11 +788,11 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 - [ ] Giữ bản backup mirror ở nơi riêng tư, **không** đẩy lên đâu cả; xóa sau khi xác nhận ổn định (ví dụ 30 ngày).
 
 **✅ Nghiệm thu:** `git ls-files Backend/uploads` rỗng **và** `git log --all -- Backend/uploads` rỗng trên bản clone mới từ GitHub.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Vị trí backup: `____`
+**Theo dõi:** Trạng thái: 🟨 — Bước A xong (`5d785c1`, `ebeb7ae`, script `scripts/git-remove-uploads-history.ps1`); Bước B–D (viết lại lịch sử + force push) **chờ chủ dự án xác nhận** · Vị trí backup: `____`
 
 ---
 
-### ⬜ P1-09 — Tắt đăng ký công khai, kích hoạt tài khoản & chính sách mật khẩu
+### ✅ P1-09 — Tắt đăng ký công khai, kích hoạt tài khoản & chính sách mật khẩu
 
 **Mức độ:** 🟡 Trung bình
 **Vấn đề:** `POST /api/auth/register` công khai: ai cũng tạo được tài khoản STUDENT, không validate, không có khoa/lớp, không email xác minh. `FE/pages/LoginPage.jsx` có form "Đăng ký mới" (`renderRegisterForm`, nút "Đăng ký ngay"). Trái với tài liệu vận hành ("Admin cấp tài khoản tập trung"). Không có chính sách mật khẩu ở đâu cả.
@@ -810,73 +812,73 @@ Admin có nút "Gửi lại email kích hoạt"
 **Các bước:**
 
 *Backend:*
-- [ ] Xóa endpoint `POST /api/auth/register` trong `BE/controller/AuthController.java` (cùng các dependency không còn dùng: `StudentRepository`, `RoleRepository` nếu thừa).
-- [ ] Xóa quy tắc permitAll thừa nếu có; kiểm tra `/api/auth/register` trả **404**.
-- [ ] Thêm `purpose=ACTIVATION` cho `OtpToken` (đã chuẩn bị ở P1-01), hạn 72 giờ.
-- [ ] `UserController.create`: mật khẩu **không bắt buộc**; nếu bỏ trống → sinh ngẫu nhiên, đặt `active=false`, gửi email kích hoạt. Nếu Admin nhập mật khẩu tạm → bắt buộc đổi ở lần đăng nhập đầu (cờ `mustChangePassword=true`).
-- [ ] Endpoint mới: `POST /api/auth/activate {identifier, code, newPassword}` và `POST /api/users/{id}/resend-activation` (ADMIN).
-- [ ] Tạo `PasswordPolicy` (≥ 8 ký tự, có chữ và số, không chứa username) áp dụng ở: kích hoạt, đổi mật khẩu, reset mật khẩu (P2-05), tạo user có mật khẩu tạm.
-- [ ] `changePassword`: không cho mật khẩu mới trùng mật khẩu cũ.
-- [ ] Login với user `mustChangePassword=true` → trả cờ để frontend bắt đổi mật khẩu trước khi vào hệ thống.
+- [x] Xóa endpoint `POST /api/auth/register` trong `BE/controller/AuthController.java` (cùng các dependency không còn dùng: `StudentRepository`, `RoleRepository` nếu thừa).
+- [x] Xóa quy tắc permitAll thừa nếu có; kiểm tra `/api/auth/register` trả **404**.
+- [x] Thêm `purpose=ACTIVATION` cho `OtpToken` (đã chuẩn bị ở P1-01), hạn 72 giờ.
+- [x] `UserController.create`: mật khẩu **không bắt buộc**; nếu bỏ trống → sinh ngẫu nhiên, đặt `active=false`, gửi email kích hoạt. Nếu Admin nhập mật khẩu tạm → bắt buộc đổi ở lần đăng nhập đầu (cờ `mustChangePassword=true`).
+- [x] Endpoint mới: `POST /api/auth/activate {identifier, code, newPassword}` và `POST /api/users/{id}/resend-activation` (ADMIN).
+- [x] Tạo `PasswordPolicy` (≥ 8 ký tự, có chữ và số, không chứa username) áp dụng ở: kích hoạt, đổi mật khẩu, reset mật khẩu (P2-05), tạo user có mật khẩu tạm.
+- [x] `changePassword`: không cho mật khẩu mới trùng mật khẩu cũ.
+- [x] Login với user `mustChangePassword=true` → trả cờ để frontend bắt đổi mật khẩu trước khi vào hệ thống.
 
 *Frontend:*
-- [ ] Xóa form đăng ký trong `FE/pages/LoginPage.jsx` (`isRegistering`, `handleRegisterSubmit`, `renderRegisterForm`, nút "Đăng ký ngay") và hàm `register` trong `FE/api/auth.js`.
-- [ ] Thay bằng dòng hướng dẫn: "Chưa có tài khoản? Liên hệ quản trị viên khoa."
-- [ ] Trang/modal **Kích hoạt tài khoản** (có thể dùng chung component với Quên mật khẩu ở P2-05).
-- [ ] Màn hình **bắt buộc đổi mật khẩu** khi `mustChangePassword=true`.
-- [ ] `AdminPage`: bỏ bắt buộc ô mật khẩu khi tạo user; thêm nút "Gửi lại email kích hoạt"; cột trạng thái "Chưa kích hoạt".
-- [ ] Hiển thị yêu cầu mật khẩu (checklist trực quan) ở mọi form đặt mật khẩu.
+- [x] Xóa form đăng ký trong `FE/pages/LoginPage.jsx` (`isRegistering`, `handleRegisterSubmit`, `renderRegisterForm`, nút "Đăng ký ngay") và hàm `register` trong `FE/api/auth.js`.
+- [x] Thay bằng dòng hướng dẫn: "Chưa có tài khoản? Liên hệ quản trị viên khoa."
+- [x] Trang/modal **Kích hoạt tài khoản** (có thể dùng chung component với Quên mật khẩu ở P2-05).
+- [x] Màn hình **bắt buộc đổi mật khẩu** khi `mustChangePassword=true`.
+- [x] `AdminPage`: bỏ bắt buộc ô mật khẩu khi tạo user; thêm nút "Gửi lại email kích hoạt"; cột trạng thái "Chưa kích hoạt".
+- [x] Hiển thị yêu cầu mật khẩu (checklist trực quan) ở mọi form đặt mật khẩu.
 
 **✅ Nghiệm thu:**
 - `POST /api/auth/register` → 404; trang login không còn nút đăng ký.
 - Admin tạo user không có mật khẩu → user nhận email → tự kích hoạt → đăng nhập được.
 - Đặt mật khẩu `123` → 400 với thông báo rõ ràng.
 
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `e5aa01f`
 
 ---
 
-### ⬜ P1-10 — Chống brute-force đăng nhập (bền vững)
+### ✅ P1-10 — Chống brute-force đăng nhập (bền vững)
 
 **Mức độ:** 🟡 Trung bình
 **Vấn đề:** `AuthController` khóa theo username bằng `ConcurrentHashMap` tĩnh → mất khi restart, không chia sẻ giữa nhiều instance, và kẻ xấu có thể **cố tình khóa tài khoản người khác** (chỉ cần nhập sai 5 lần).
 
 **Các bước:**
-- [ ] Thêm thư viện **Bucket4j** (hoặc tự cài) — giới hạn theo **IP**: 10 lần login/phút; theo **username + IP**: 5 lần sai → khóa 10 phút.
-- [ ] Lưu `failedAttempts`, `lockedUntil` vào DB (bảng `users`) thay vì RAM — hoặc giữ RAM nhưng có giới hạn theo IP để tránh DoS tài khoản.
-- [ ] Áp dụng rate limit cho `/api/auth/otp/**` và `/api/auth/password/**` (P2-05).
-- [ ] Đọc IP thật qua header `X-Forwarded-For` (nginx đã gửi) — cấu hình `server.forward-headers-strategy=native`.
-- [ ] Ghi audit log `LOGIN_FAILED`, `LOGIN_LOCKED`, `LOGIN_SUCCESS`.
+- [x] Thêm thư viện **Bucket4j** (hoặc tự cài) — giới hạn theo **IP**: 10 lần login/phút; theo **username + IP**: 5 lần sai → khóa 10 phút.
+- [x] Lưu `failedAttempts`, `lockedUntil` vào DB (bảng `users`) thay vì RAM — hoặc giữ RAM nhưng có giới hạn theo IP để tránh DoS tài khoản.
+- [x] Áp dụng rate limit cho `/api/auth/otp/**` và `/api/auth/password/**` (P2-05).
+- [x] Đọc IP thật qua header `X-Forwarded-For` (nginx đã gửi) — cấu hình `server.forward-headers-strategy=native`.
+- [x] Ghi audit log `LOGIN_FAILED`, `LOGIN_LOCKED`, `LOGIN_SUCCESS`.
 
 **✅ Nghiệm thu:** Restart backend không reset bộ đếm (nếu lưu DB); 11 request login/phút từ 1 IP → 429.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `53f9b96`
 
 ---
 
-### ⬜ P1-11 — Security headers, tắt Swagger ở prod
+### ✅ P1-11 — Security headers, tắt Swagger ở prod
 
 **Mức độ:** 🟡 Trung bình
 
 **Các bước:**
-- [ ] `frontend/nginx.conf`: thêm header
+- [x] `frontend/nginx.conf`: thêm header
   ```nginx
   add_header X-Content-Type-Options "nosniff" always;
   add_header X-Frame-Options "DENY" always;
   add_header Referrer-Policy "strict-origin-when-cross-origin" always;
   add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' ws: wss:" always;
   ```
-- [ ] `application-prod.properties`: `springdoc.api-docs.enabled=false`, `springdoc.swagger-ui.enabled=false`.
-- [ ] **(Phát hiện ở GĐ0)** Swagger hiện bị `SecurityConfig` chặn 403 ở mọi môi trường → cho phép `/swagger-ui/**`, `/swagger-ui.html`, `/api-docs/**` **chỉ ở profile dev**; thêm cấu hình Bearer auth trong `OpenApiConfig` để thử API có token ngay trên Swagger.
-- [ ] `application.properties`: `server.error.include-message` → chỉ `always` ở dev; prod `never` (tránh lộ thông tin nội bộ) — hoặc làm chuẩn ở P3-03.
-- [ ] `/api/users/test` (endpoint thử nghiệm) → xóa.
-- [ ] Kiểm tra CORS chỉ cho origin cấu hình (đã có) — thêm cho `/ws/**`.
+- [x] `application-prod.properties`: `springdoc.api-docs.enabled=false`, `springdoc.swagger-ui.enabled=false`.
+- [x] **(Phát hiện ở GĐ0)** Swagger hiện bị `SecurityConfig` chặn 403 ở mọi môi trường → cho phép `/swagger-ui/**`, `/swagger-ui.html`, `/api-docs/**` **chỉ ở profile dev**; thêm cấu hình Bearer auth trong `OpenApiConfig` để thử API có token ngay trên Swagger.
+- [x] `application.properties`: `server.error.include-message` → chỉ `always` ở dev; prod `never` (tránh lộ thông tin nội bộ) — hoặc làm chuẩn ở P3-03.
+- [x] `/api/users/test` (endpoint thử nghiệm) → xóa.
+- [x] Kiểm tra CORS chỉ cho origin cấu hình (đã có) — thêm cho `/ws/**`.
 
 **✅ Nghiệm thu:** `curl -I http://localhost:5175` thấy đủ header; `/swagger-ui.html` ở prod → 404.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `a1284ee`, `1a99da7`, `f40369c`
 
 ---
 
-### ⬜ P1-12 — Bộ test hồi quy phân quyền
+### ✅ P1-12 — Bộ test hồi quy phân quyền
 
 **Mức độ:** 🔴 Bắt buộc
 **Mục tiêu:** Mỗi lỗ hổng GĐ1 có test tự động. Viết **song song** với P1-01 → P1-07.
@@ -907,11 +909,11 @@ Admin có nút "Gửi lại email kích hoạt"
 | 18 | Response posts không chứa `email`/`privileges` | Pass |
 
 **✅ Nghiệm thu:** 18/18 test pass; chạy trong CI.
-**Theo dõi:** Trạng thái: ⬜ · Số test pass: `__/18`
+**Theo dõi:** Trạng thái: ✅ · Số test pass: `18/18` (toàn bộ backend 196 test ngày 01/10/2026; 202 test ngày 21/10/2026) · Commit: `9ece91b` · Bảng ánh xạ: `Plan/GĐ1.md` mục 6.1
 
 ---
 
-### ⬜ P1-13 — Nâng cấp dependency backend + Dependabot
+### ✅ P1-13 — Nâng cấp dependency backend + Dependabot
 
 **Mức độ:** 🟡 Trung bình
 
@@ -924,28 +926,29 @@ Admin có nút "Gửi lại email kích hoạt"
 | dotenv-java | 3.0.0 | 3.x mới nhất | |
 
 **Các bước:**
-- [ ] Nâng từng thư viện một, chạy test sau mỗi lần.
-- [ ] Viết lại `JwtTokenProvider` theo API jjwt 0.12.
-- [ ] Tạo `.github/dependabot.yml` (maven `/Backend`, npm `/frontend`, github-actions `/`) — lịch hàng tuần.
-- [ ] (Tùy chọn) Thêm job OWASP Dependency-Check hoặc bật GitHub CodeQL.
+- [x] Nâng từng thư viện một, chạy test sau mỗi lần.
+- [x] Viết lại `JwtTokenProvider` theo API jjwt 0.12.
+- [x] Tạo `.github/dependabot.yml` (maven `/Backend`, npm `/frontend`, github-actions `/`) — lịch hàng tuần.
+- [x] (Tùy chọn) Thêm job OWASP Dependency-Check hoặc bật GitHub CodeQL.
 
 **✅ Nghiệm thu:** Build + toàn bộ test pass; Dependabot tạo PR tự động.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `d982264`
 
 ---
 
 ### 🏁 Tiêu chí hoàn thành Giai đoạn 1
 
-- [ ] Không thể bỏ qua OTP; tài khoản khóa bị chặn ngay.
-- [ ] Không còn secret mặc định trong cấu hình prod.
-- [ ] WebSocket yêu cầu xác thực + kiểm soát subscribe.
-- [ ] 16 điểm IDOR ở P1-05 đã vá.
-- [ ] Không controller nào trả entity JPA.
-- [ ] Upload có whitelist + gắn chủ sở hữu.
-- [ ] File cá nhân đã rời khỏi git **và lịch sử git** (D-04).
-- [ ] Không còn đăng ký công khai; tài khoản mới kích hoạt qua email (D-02).
-- [ ] Bộ test bảo mật 18/18 pass trong CI.
-- [ ] Chạy lại smoke test P0-05 — không có hồi quy.
+- [x] Không thể bỏ qua OTP; tài khoản khóa bị chặn ngay.
+- [x] Không còn secret mặc định trong cấu hình prod.
+- [x] WebSocket yêu cầu xác thực + kiểm soát subscribe.
+- [x] 16 điểm IDOR ở P1-05 đã vá.
+- [x] Không controller nào trả entity JPA.
+- [x] Upload có whitelist + gắn chủ sở hữu.
+- [ ] File cá nhân đã rời khỏi git **và lịch sử git** (D-04). *Đã rời phiên bản hiện tại; lịch sử: chờ xác nhận (P1-08 bước B–D).*
+- [x] Không còn đăng ký công khai; tài khoản mới kích hoạt qua email (D-02).
+- [x] Bộ test bảo mật 18/18 pass trong CI (job `backend-test-and-build` xanh trên PR #3).
+- [x] Chạy lại smoke test P0-05 — không có hồi quy (21/10/2026: OK=18 · FIXED=6 · BUG đã biết thuộc GĐ2=6 · FAIL=0).
+- [ ] Check bảo mật trên PR #3 xanh: CodeQL (còn 4 cảnh báo cần đánh dấu trên GitHub — xem báo cáo mục 5) và GitGuardian (15 phát hiện là dữ liệu test, cần đánh dấu trên dashboard).
 - [ ] Merge `develop` → `main`, tag `v0.2.0-security`.
 
 ---
@@ -2005,7 +2008,13 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 25/09/2026 | P0-07 | Sửa 18 lỗi ESLint | `c059255` | |
 | 25/09/2026 | P0-08 | Dọn repo, lint trong CI, sửa script `$PSScriptRoot`, ignore uploads | `64d0382` | |
 | 25/09/2026 | P0-09 | Commit theo task trên nhánh `chore/P0-baseline` | — | Push/PR/tag chờ xác nhận |
-| | | | | |
+| 30/09/2026 | P1 | Lập kế hoạch chi tiết GĐ1 (`Plan/GĐ1.md`) | `51641cd` | |
+| 30/09/2026 | P1-08A, P1-11a | Gỡ file upload thật khỏi git + script viết lại lịch sử; frontend gọi API bằng đường dẫn tương đối | `5d785c1`, `ebeb7ae`, `a1284ee`, `1a99da7` | P1-08B chờ xác nhận |
+| 30/09/2026 | P1-03, P1-02 | Secret JWT bắt buộc + jjwt 0.12.7; thu hồi token, chặn tài khoản khóa, 401 | `b4b78f1`, `304b95f` | |
+| 30/09/2026 | P1-01, P1-10 | OTP pre-auth (không cấp token trước OTP); chống dò mật khẩu bền vững | `45255ee`, `53f9b96` | |
+| 01/10/2026 | P1-05, P1-06, P1-04, P1-07 | `TopicAccessService` + 16 điểm IDOR; DTO phản hồi; bảo mật WebSocket; gia cố upload | `6e38226`, `765d542`, `590fb10`, `b57fdd8` | |
+| 01/10/2026 | P1-09, P1-11b, P1-13, P1-12 | Kích hoạt tài khoản + chính sách mật khẩu; header/CSP; nâng dependency + Dependabot + CodeQL; 18/18 test bắt buộc | `e5aa01f`, `f40369c`, `d982264`, `9ece91b` | 196 test |
+| 21/10/2026 | GĐ1-QA | Kiểm thử toàn diện + vá 5 lỗi phát hiện thêm (ReDoS email, username dài → 500 lộ SQL, InvalidPath tên file cũ, 2 lỗ hổng npm, lộ phiên bản nginx); tắt attribution Claude Code cho repo | xem `report_plan1.md` | 202 test · smoke 0 FAIL |
 | | | | | |
 
 ---
@@ -2018,3 +2027,4 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 1.1 | 25/09/2026 | Chốt Decision Log D-01 → D-08; thêm task P2-13 (khóa điểm & chấm lại); tổng 60 task (58 thực hiện, 2 bỏ qua/hoãn) |
 | 1.2 | 25/09/2026 | P4-04 (Team) và P4-07 (Học phí) giữ lại trong lộ trình, trạng thái 🕒 "phát triển sau v1.0" |
 | 1.3 | 25/09/2026 | Hoàn thành Giai đoạn 0 (8/9 task; P0-09 chờ push lên GitHub); thêm hướng dẫn dùng môi trường + báo cáo smoke test baseline |
+| 1.4 | 21/10/2026 | Đồng bộ trạng thái GĐ1 (12/13 ✅, P1-08 🟨); cập nhật tiêu chí hoàn thành GĐ1; kiểm thử toàn diện — `Plan/reports/report_plan1.md` |
