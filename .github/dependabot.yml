@@ -1,9 +1,11 @@
 # Dependabot: mỗi tuần kiểm tra bản cập nhật (đặc biệt là bản vá bảo mật) cho 3 hệ sinh thái.
 # Gộp các bản vá/phụ vào một PR cho mỗi hệ sinh thái để không ngập PR.
+# PR nhắm vào `develop` (quy trình develop -> main); main chỉ nhận thay đổi qua PR develop -> main.
 version: 2
 updates:
   - package-ecosystem: "maven"
     directory: "/Backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -14,17 +16,26 @@ updates:
       # Spring Boot 4.x (Spring Framework 7, Jackson 3) là nâng cấp lớn — làm thành task riêng sau v1.0
       - dependency-name: "org.springframework.boot:*"
         update-types: ["version-update:semver-major"]
+      # springdoc-openapi 3.x yêu cầu Spring Boot 4 — nâng cùng Spring Boot 4
+      - dependency-name: "org.springdoc:*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
       frontend-minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # @vitejs/plugin-react 6.x yêu cầu Vite 8 (dự án đang dùng rolldown-vite 7) — nâng cùng Vite 8
+      - dependency-name: "@vitejs/plugin-react"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"

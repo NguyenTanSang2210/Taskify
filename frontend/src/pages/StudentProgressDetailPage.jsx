@@ -79,7 +79,7 @@ export default function StudentProgressDetailPage() {
             const upData = await fileApi.upload(file);
             finalFileUrl = upData.fileUrl;
         } catch (upErr) {
-            throw new Error("Không thể tự động tải tệp: " + (upErr.message || "Lỗi không xác định"));
+            throw new Error("Không thể tự động tải tệp: " + (upErr.message || "Lỗi không xác định"), { cause: upErr });
         }
       }
 

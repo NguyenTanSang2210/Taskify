@@ -25,6 +25,11 @@ export default defineConfig([
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
       'react-refresh/only-export-components': 'off',
+      // Quy tắc mới của React Compiler (eslint-plugin-react-hooks 7.1): gọi setState đồng bộ trong useEffect /
+      // memo thủ công không giữ được. Là khuyến nghị hiệu năng, không phải lỗi chức năng — để mức cảnh báo
+      // và xử lý khi tách/refactor các trang lớn ở P3-11.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
     },
   },
   {
