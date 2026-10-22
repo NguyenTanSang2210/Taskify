@@ -5,7 +5,7 @@ import { fileApi } from "../api/fileApi";
 import FileDownloadButton from "../components/FileDownloadButton";
 import { topicApi } from "../api/topicApi";
 import { connectAndSubscribe } from "../ws/stomp";
-import ProgressRow from "../components/ProgressRow";
+import ProgressRow, { mergeProgressUpdate } from "../components/ProgressRow";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 
@@ -96,15 +96,14 @@ export default function ProjectSpacePage() {
         const pr = payload?.progress;
         if (!type || !pr) return;
         if (type === "PROGRESS_CREATED") {
-          setItems((prev) => {
-            const exists = prev.find((x) => x.id === pr.id);
-            return exists ? prev : [pr, ...prev];
-          });
           if (isLecturer) {
+            loadProgress(); // tải lại để có điểm trùng lặp (bản WebSocket không chứa)
             setNotice({ type: "success", message: "Có báo cáo mới từ sinh viên!" });
+          } else {
+            setItems((prev) => (prev.some((x) => x.id === pr.id) ? prev : [pr, ...prev]));
           }
         } else if (type === "PROGRESS_UPDATED") {
-          setItems((prev) => prev.map((x) => (x.id === pr.id ? pr : x)));
+          setItems((prev) => mergeProgressUpdate(prev, pr));
           if (isStudent) {
             setNotice({ type: "info", message: "Giảng viên đã cập nhật phản hồi báo cáo." });
           }
@@ -112,7 +111,7 @@ export default function ProjectSpacePage() {
       },
     });
     return () => client?.deactivate?.();
-  }, [topicId, isStudent, isLecturer]);
+  }, [topicId, isStudent, isLecturer, loadProgress]);
 
   const handleStudentSubmit = async (e) => {
     e.preventDefault();

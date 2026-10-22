@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import com.doanltmmt.Backend.service.EmailService;
 import com.doanltmmt.Backend.service.EmailTemplates;
+import com.doanltmmt.Backend.service.SimilarityService;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 @RestController
 @RequestMapping("/api/progress")
@@ -42,7 +44,7 @@ public class ProgressController {
     private final NotificationRepository notificationRepo;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
     private final EmailService emailService;
-    private final com.doanltmmt.Backend.service.SimilarityService similarityService;
+    private final SimilarityService similarityService;
     private final SecurityScopeService scope;
     private final StoredFileRepository storedFileRepo;
 
@@ -55,7 +57,7 @@ public class ProgressController {
                               NotificationRepository notificationRepo,
                               com.doanltmmt.Backend.service.AuditLogService auditLogService,
                               EmailService emailService,
-                              com.doanltmmt.Backend.service.SimilarityService similarityService,
+                              SimilarityService similarityService,
                               SecurityScopeService scope,
                               StoredFileRepository storedFileRepo) {
         this.storedFileRepo = storedFileRepo;
@@ -151,13 +153,13 @@ public class ProgressController {
             pr.setMilestone(ms);
         }
         pr.setStatus("TODO");
-        // Similarity check (simple)
-        List<ProgressReport> previous = progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId);
-        double maxSim = 0.0;
-        for (ProgressReport prev : previous) {
-            try {
-                maxSim = Math.max(maxSim, similarityService.cosineSimilarity(content, prev.getContent()));
-            } catch (Exception ignored) {}
+        // P2-08: so với mọi báo cáo trong cùng workspace (của chính SV và của SV khác)
+        SimilarityService.Match match = similarityService.mostSimilar(content, topic.getWorkspace() != null
+                ? progressRepo.findSimilarityCandidatesInWorkspace(topic.getWorkspace().getId())
+                : progressRepo.findSimilarityCandidatesInTopic(topicId));
+        if (match != null) {
+            pr.setSimilarityScore(Math.round(match.score() * 1000) / 1000.0);
+            pr.setSimilarToReportId(match.reportId());
         }
         ProgressReport saved = progressRepo.save(pr);
         if (attachment != null && storedFileRepo.claim(attachment.getId(), StoredFile.REF_PROGRESS_REPORT, saved.getId()) == 0) {
@@ -166,8 +168,9 @@ public class ProgressController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
         }
         auditLogService.log("CREATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Title: " + saved.getTitle());
-        if (maxSim >= 0.8) {
-            auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(), "Similarity >= 0.8 with previous submissions");
+        if (match != null && match.score() >= SimilarityService.ALERT_THRESHOLD) {
+            auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(),
+                    "Giống " + Math.round(match.score() * 100) + "% với báo cáo #" + match.reportId());
         }
         eventPublisher.progressCreated(saved);
         // notify lecturer when available
@@ -175,8 +178,8 @@ public class ProgressController {
             Notification nLecturer = new Notification();
             nLecturer.setUser(saved.getTopic().getLecturer().getUser());
             nLecturer.setType("INFO");
-            nLecturer.setTitle("Sinh vien gui bao cao #" + saved.getId());
-            nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gui \"" + saved.getTitle() + "\" cho de tai #" + saved.getTopic().getId());
+            nLecturer.setTitle("Sinh viên gửi báo cáo #" + saved.getId());
+            nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
             nLecturer.setRefType("PROGRESS_REPORT");
             nLecturer.setRefId(saved.getId());
             nLecturer.setLinkPath("/lecturer-progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
@@ -191,8 +194,8 @@ public class ProgressController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("Da gui bao cao #" + saved.getId());
-        nStudent.setContent("Ban da gui \"" + saved.getTitle() + "\" cho de tai #" + saved.getTopic().getId());
+        nStudent.setTitle("Đã gửi báo cáo #" + saved.getId());
+        nStudent.setContent("Bạn đã gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
         nStudent.setRefType("PROGRESS_REPORT");
         nStudent.setRefId(saved.getId());
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
@@ -229,10 +232,12 @@ public class ProgressController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
             }
         }
-        if (topicId != null) {
-            return progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId).stream().map(ProgressReportDTO::from).toList();
-        }
-        return progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId).stream().map(ProgressReportDTO::from).toList();
+        Function<ProgressReport, ProgressReportDTO> view =
+                scope.hasRole("STUDENT") ? ProgressReportDTO::from : ProgressReportDTO::forReviewer;
+        List<ProgressReport> reports = topicId != null
+                ? progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId)
+                : progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId);
+        return reports.stream().map(view).toList();
     }
 
     @GetMapping("/topic/{topicId}")
@@ -253,7 +258,7 @@ public class ProgressController {
                 }
             }
         }
-        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::from).toList();
+        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::forReviewer).toList();
     }
 
     @PatchMapping("/{id}/status")
@@ -329,9 +334,9 @@ public class ProgressController {
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
         nStudent.setType("INFO");
-        nStudent.setTitle("GV nhan xet bao cao #" + saved.getId());
-        String msg = "Nhan xet: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
-        nStudent.setContent(msg.trim().isEmpty() ? "Bao cao \"" + saved.getTitle() + "\" da duoc cap nhat" : msg);
+        nStudent.setTitle("Giảng viên nhận xét báo cáo #" + saved.getId());
+        String msg = "Nhận xét: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
+        nStudent.setContent(msg.trim().isEmpty() ? "Báo cáo \"" + saved.getTitle() + "\" đã được cập nhật" : msg);
         nStudent.setRefType("PROGRESS_REPORT");
         nStudent.setRefId(saved.getId());
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
@@ -339,7 +344,7 @@ public class ProgressController {
         eventPublisher.notificationCreated(savedN);
         EmailTemplates.Mail feedbackMail = EmailTemplates.progressFeedback(saved.getTitle(), saved.getLecturerComment());
         emailService.sendEmail(saved.getStudent().getUser().getEmail(), feedbackMail.subject(), feedbackMail.html());
-        return ProgressReportDTO.from(saved);
+        return ProgressReportDTO.forReviewer(saved);
     }
 }
 

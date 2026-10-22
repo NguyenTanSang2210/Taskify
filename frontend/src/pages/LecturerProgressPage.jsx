@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { topicApi } from "../api/topicApi";
 import { progressApi } from "../api/progressApi";
 import { connectAndSubscribe } from "../ws/stomp";
-import ProgressRow from "../components/ProgressRow";
+import ProgressRow, { mergeProgressUpdate } from "../components/ProgressRow";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 
@@ -68,18 +68,15 @@ export default function LecturerProgressPage() {
         const pr = payload?.progress;
         if (!type || !pr) return;
         if (type === "PROGRESS_CREATED") {
-          setItems((prev) => {
-            const exists = prev.find((x) => x.id === pr.id);
-            return exists ? prev : [pr, ...prev];
-          });
+          loadProgress(); // tải lại để có điểm trùng lặp (bản WebSocket không chứa)
           setNotice({ type: "success", message: "Có báo cáo mới từ sinh viên!" });
         } else if (type === "PROGRESS_UPDATED") {
-          setItems((prev) => prev.map((x) => (x.id === pr.id ? pr : x)));
+          setItems((prev) => mergeProgressUpdate(prev, pr));
         }
       },
     });
     return () => client?.deactivate?.();
-  }, [topicId]);
+  }, [topicId, loadProgress]);
 
   // --- ACTIONS ---
   const handleLecturerUpdate = async (it, nextStatus, nextComment, nextDeadline) => {

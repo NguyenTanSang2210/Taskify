@@ -1,6 +1,31 @@
 import React, { useState } from "react";
 import FileDownloadButton from "./FileDownloadButton";
 
+/** Ngưỡng cảnh báo trùng lặp — khớp SimilarityService.ALERT_THRESHOLD ở backend. */
+export const SIMILARITY_ALERT = 0.8;
+
+/**
+ * Bản cập nhật qua WebSocket là bản công khai (không có điểm trùng lặp) — giữ lại điểm đã tải cho giảng viên.
+ */
+export function mergeProgressUpdate(prev, pr) {
+  return prev.map((x) =>
+    x.id === pr.id ? { ...x, ...pr, similarityScore: x.similarityScore, similarToReportId: x.similarToReportId } : x
+  );
+}
+
+function SimilarityBadge({ score, reportId }) {
+  if (score == null || score < SIMILARITY_ALERT) return null;
+  return (
+    <span
+      className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-[10px] font-black text-error"
+      title="Nội dung giống một báo cáo khác trong cùng đợt — cần kiểm tra"
+    >
+      <span className="material-symbols-outlined text-[12px]">content_copy</span>
+      Trùng lặp {Math.round(score * 100)}% với báo cáo #{reportId}
+    </span>
+  );
+}
+
 export default function ProgressRow({ item, loadingId, onSave }) {
   const student = item.student || {};
   const user = student.user || {};
@@ -44,6 +69,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
       <td className="px-6 py-4 max-w-xs">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-black text-on-surface leading-snug">{item.title}</span>
+          <SimilarityBadge score={item.similarityScore} reportId={item.similarToReportId} />
           <p className="text-xs text-outline line-clamp-2 italic">{item.content}</p>
           {item.fileUrl && (
             <FileDownloadButton

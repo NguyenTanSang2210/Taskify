@@ -52,6 +52,13 @@ public class ProgressReport {
     @JoinColumn(name = "milestone_id")
     private Milestone milestone;
 
+    /** Độ giống (0–1) với báo cáo giống nhất trong cùng workspace lúc nộp — chỉ giảng viên/quản trị thấy. */
+    @Column(name = "similarity_score")
+    private Double similarityScore;
+
+    @Column(name = "similar_to_report_id")
+    private Long similarToReportId;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {

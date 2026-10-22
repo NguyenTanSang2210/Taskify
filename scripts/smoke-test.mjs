@@ -341,7 +341,7 @@ async function main() {
   await step("14", "Giảng viên nhận xét → sinh viên nhận thông báo", async () => {
     expectStatus(await call("PUT", `/progress/${ctx.prId}/comment`, { token: ctx.lecturer.token, body: { lecturerComment: "Làm tốt, bổ sung sơ đồ use case" } }), 200, "Nhận xét");
     const ns = expectStatus(await call("GET", "/notifications/mine", { token: ctx.student.token, query: { userId: ctx.student.id } }), 200, "Thông báo");
-    const found = ns.find((n) => n.refId === ctx.prId && n.title.startsWith("GV nhan xet"));
+    const found = ns.find((n) => n.refId === ctx.prId && n.title.startsWith("Giảng viên nhận xét"));
     if (!found) throw new Error("Sinh viên không nhận được thông báo nhận xét");
     return `thông báo #${found.id}`;
   });
