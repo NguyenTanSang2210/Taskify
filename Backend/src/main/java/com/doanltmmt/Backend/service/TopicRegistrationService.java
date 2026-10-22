@@ -193,7 +193,7 @@ public class TopicRegistrationService {
                 "De tai #" + topic.getId() + " - \"" + topic.getTitle() + "\" da duoc duyet", saved.getId());
         
         auditLogService.log("APPROVE_REGISTRATION", "TopicRegistration", saved.getId().toString(), "Approved registration for topic " + topic.getId());
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Topic Registration Approved", "Your registration for topic " + topic.getTitle() + " has been approved.");
+        sendMail(saved.getStudent().getUser(), EmailTemplates.registrationApproved(topic.getTitle()));
         return new TopicRegistrationDTO(saved);
     }
 
@@ -234,7 +234,7 @@ public class TopicRegistrationService {
         sendNotification(saved.getStudent().getUser(), "Dang ky de tai bi tu choi", msg, saved.getId());
         
         auditLogService.log("REJECT_REGISTRATION", "TopicRegistration", saved.getId().toString(), "Rejected registration for topic " + reg.getTopic().getId() + (reason != null ? ". Reason: " + reason : ""));
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Topic Registration Rejected", "Your registration for topic " + reg.getTopic().getTitle() + " has been rejected." + (reason != null ? " Reason: " + reason : ""));
+        sendMail(saved.getStudent().getUser(), EmailTemplates.registrationRejected(reg.getTopic().getTitle(), reason));
         return new TopicRegistrationDTO(saved);
     }
 
@@ -300,8 +300,12 @@ public class TopicRegistrationService {
                 "Diem so: " + score + ". Nhan xet: " + feedback, saved.getId());
         
         auditLogService.log("GRADE_TOPIC", "TopicRegistration", saved.getId().toString(), "Graded topic " + topic.getId() + " with score " + score);
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Topic Graded", "Your topic " + topic.getTitle() + " has been graded. Score: " + score);
+        sendMail(saved.getStudent().getUser(), EmailTemplates.graded(topic.getTitle(), score, feedback));
         return new TopicRegistrationDTO(saved);
+    }
+
+    private void sendMail(User to, EmailTemplates.Mail mail) {
+        emailService.sendEmail(to.getEmail(), mail.subject(), mail.html());
     }
 
     private TopicRegistration findRegistration(Long regId) {

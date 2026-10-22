@@ -61,7 +61,8 @@ public class OtpService {
     /** Cấp mã mới (hủy mã cũ cùng mục đích) rồi gửi email cho người dùng. */
     public void issue(User user, OtpPurpose purpose) {
         String code = tx.execute(status -> createToken(user, purpose));
-        emailService.sendEmail(user.getEmail(), subject(purpose), body(purpose, code));
+        EmailTemplates.Mail mail = mail(purpose, code);
+        emailService.sendEmail(user.getEmail(), mail.subject(), mail.html());
     }
 
     /** Như {@link #issue} nhưng từ chối (429) nếu mã gần nhất vừa được tạo cách đây chưa tới thời gian chờ. */
@@ -168,27 +169,11 @@ public class OtpService {
         return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static String subject(OtpPurpose purpose) {
+    private static EmailTemplates.Mail mail(OtpPurpose purpose, String code) {
         return switch (purpose) {
-            case LOGIN -> "Taskify - Mã xác thực đăng nhập";
-            case ACTIVATION -> "Taskify - Kích hoạt tài khoản";
-            case RESET_PASSWORD -> "Taskify - Mã đặt lại mật khẩu";
-        };
-    }
-
-    private static String body(OtpPurpose purpose, String code) {
-        String warning = "\n\nKhông chia sẻ mã này cho bất kỳ ai — nhân viên Taskify không bao giờ hỏi mã của bạn.";
-        return switch (purpose) {
-            case LOGIN -> "Mã xác thực đăng nhập Taskify của bạn là: " + code
-                    + "\nMã có hiệu lực trong 5 phút." + warning
-                    + "\nNếu không phải bạn đang đăng nhập, hãy đổi mật khẩu ngay.";
-            case ACTIVATION -> "Tài khoản Taskify của bạn đã được tạo. Mã kích hoạt: " + code
-                    + "\nMã có hiệu lực trong 72 giờ."
-                    + "\nMở trang đăng nhập → \"Kích hoạt tài khoản\", nhập tên đăng nhập (hoặc email) cùng mã này để đặt mật khẩu."
-                    + warning;
-            case RESET_PASSWORD -> "Mã đặt lại mật khẩu Taskify của bạn là: " + code
-                    + "\nMã có hiệu lực trong 10 phút." + warning
-                    + "\nNếu không phải bạn yêu cầu, hãy bỏ qua email này.";
+            case LOGIN -> EmailTemplates.loginOtp(code);
+            case ACTIVATION -> EmailTemplates.activation(code);
+            case RESET_PASSWORD -> EmailTemplates.resetPassword(code);
         };
     }
 }

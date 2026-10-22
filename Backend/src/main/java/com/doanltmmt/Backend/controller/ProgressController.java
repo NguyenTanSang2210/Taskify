@@ -16,6 +16,8 @@ import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.entity.Notification;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import com.doanltmmt.Backend.service.EmailService;
+import com.doanltmmt.Backend.service.EmailTemplates;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,7 +41,7 @@ public class ProgressController {
     private final EventPublisher eventPublisher;
     private final NotificationRepository notificationRepo;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
-    private final com.doanltmmt.Backend.service.EmailService emailService;
+    private final EmailService emailService;
     private final com.doanltmmt.Backend.service.SimilarityService similarityService;
     private final SecurityScopeService scope;
     private final StoredFileRepository storedFileRepo;
@@ -52,7 +54,7 @@ public class ProgressController {
                               EventPublisher eventPublisher,
                               NotificationRepository notificationRepo,
                               com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                              com.doanltmmt.Backend.service.EmailService emailService,
+                              EmailService emailService,
                               com.doanltmmt.Backend.service.SimilarityService similarityService,
                               SecurityScopeService scope,
                               StoredFileRepository storedFileRepo) {
@@ -182,11 +184,9 @@ public class ProgressController {
             eventPublisher.notificationCreated(savedLecturer);
             
             // Email to lecturer
-            emailService.sendEmail(
-                saved.getTopic().getLecturer().getUser().getEmail(), 
-                "New Progress Report Submitted", 
-                "Student " + saved.getStudent().getUser().getFullName() + " submitted a progress report for topic " + saved.getTopic().getTitle()
-            );
+            EmailTemplates.Mail mail = EmailTemplates.progressSubmitted(
+                    saved.getStudent().getUser().getFullName(), saved.getTitle(), saved.getTopic().getTitle());
+            emailService.sendEmail(saved.getTopic().getLecturer().getUser().getEmail(), mail.subject(), mail.html());
         }
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
@@ -337,7 +337,8 @@ public class ProgressController {
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
         Notification savedN = notificationRepo.save(nStudent);
         eventPublisher.notificationCreated(savedN);
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Progress Report Feedback", "Lecturer commented on your report: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "Status updated"));
+        EmailTemplates.Mail feedbackMail = EmailTemplates.progressFeedback(saved.getTitle(), saved.getLecturerComment());
+        emailService.sendEmail(saved.getStudent().getUser().getEmail(), feedbackMail.subject(), feedbackMail.html());
         return ProgressReportDTO.from(saved);
     }
 }
