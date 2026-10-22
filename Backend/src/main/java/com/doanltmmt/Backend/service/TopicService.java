@@ -69,6 +69,10 @@ public class TopicService {
         Lecturer lecturer = lecturerRepo.findById(lecturerId).orElseGet(() -> {
             User user = userRepo.findById(lecturerId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found for lecturerId"));
+            // Chỉ tài khoản giảng viên mới được làm người hướng dẫn (trước đây có thể gán đề tài cho bất kỳ tài khoản nào)
+            if (user.getRole() == null || !"LECTURER".equals(user.getRole().getName())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Người hướng dẫn phải là tài khoản giảng viên");
+            }
             Lecturer newLecturer = new Lecturer();
             newLecturer.setUser(user);
             newLecturer.setDepartment(user.getDepartment());

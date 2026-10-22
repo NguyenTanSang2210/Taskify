@@ -1,60 +1,96 @@
 package com.doanltmmt.Backend.config;
 
+import com.doanltmmt.Backend.entity.DataMigration;
 import com.doanltmmt.Backend.entity.Privilege;
 import com.doanltmmt.Backend.entity.Role;
+import com.doanltmmt.Backend.repository.DataMigrationRepository;
 import com.doanltmmt.Backend.repository.PrivilegeRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Tạo quyền (privilege) và 4 vai trò hệ thống.
+ *
+ * <p>Quyền mặc định chỉ được gán khi vai trò được tạo LẦN ĐẦU. Vai trò đã tồn tại giữ nguyên quyền do quản trị viên
+ * chỉnh trên trang Vai trò (trước đây bị ghi đè mỗi lần khởi động). Bổ sung quyền cho dữ liệu đã có thì làm bằng
+ * một bước {@link DataMigration} chạy đúng một lần.
+ */
 @Configuration
 public class RolePrivilegeInitializer {
 
-    @Bean
-    CommandLineRunner initRolesAndPrivileges(RoleRepository roleRepo, PrivilegeRepository privilegeRepo) {
-        return args -> {
-            // 1. Khởi tạo Privileges
-            Privilege userManage = createPrivilegeIfNotFound(privilegeRepo, "USER_MANAGE", "Quản lý người dùng (Xem, Thêm, Sửa, Xóa)");
-            Privilege roleManage = createPrivilegeIfNotFound(privilegeRepo, "ROLE_MANAGE", "Quản lý vai trò và quyền hạn");
-            Privilege deptManage = createPrivilegeIfNotFound(privilegeRepo, "DEPT_MANAGE", "Quản lý khoa và lớp học");
-            Privilege topicManage = createPrivilegeIfNotFound(privilegeRepo, "TOPIC_MANAGE", "Quản lý đề tài (Phê duyệt, Đóng/Mở)");
-            Privilege regManage = createPrivilegeIfNotFound(privilegeRepo, "REGISTRATION_MANAGE", "Duyệt đăng ký đề tài");
-            Privilege reportView = createPrivilegeIfNotFound(privilegeRepo, "SYSTEM_REPORT", "Xem báo cáo và thống kê hệ thống");
+    private static final Logger log = LoggerFactory.getLogger(RolePrivilegeInitializer.class);
 
-            // 2. Cấu hình vai trò ADMIN
-            Role adminRole = roleRepo.findByName("ADMIN").orElse(new Role("ADMIN"));
-            adminRole.setDescription("Quản trị viên toàn hệ thống");
-            adminRole.setPrivileges(new HashSet<>(Arrays.asList(userManage, roleManage, deptManage, topicManage, regManage, reportView)));
-            roleRepo.save(adminRole);
+    static final String MIGRATION_LECTURER_TOPIC_MANAGE = "P2-01_lecturer_topic_manage";
 
-            // 3. Cấu hình vai trò DEPARTMENT_ADMIN
-            Role deptAdminRole = roleRepo.findByName("DEPARTMENT_ADMIN").orElse(new Role("DEPARTMENT_ADMIN"));
-            deptAdminRole.setDescription("Quản trị viên cấp khoa");
-            deptAdminRole.setPrivileges(new HashSet<>(Arrays.asList(deptManage, topicManage, regManage, reportView)));
-            roleRepo.save(deptAdminRole);
+    /** Tên quyền → mô tả. */
+    private static final Map<String, String> PRIVILEGES = new LinkedHashMap<>();
+    /** Vai trò → mô tả + quyền mặc định. */
+    private static final Map<String, Map.Entry<String, List<String>>> ROLES = new LinkedHashMap<>();
 
-            // 4. Cấu hình vai trò LECTURER
-            Role lecturerRole = roleRepo.findByName("LECTURER").orElse(new Role("LECTURER"));
-            lecturerRole.setDescription("Giảng viên hướng dẫn");
-            lecturerRole.setPrivileges(new HashSet<>(Arrays.asList(regManage))); // Giảng viên chỉ có quyền duyệt đăng ký của mình (logic chi tiết ở Service)
-            roleRepo.save(lecturerRole);
-            
-            // 5. Cấu hình vai trò STUDENT
-            Role studentRole = roleRepo.findByName("STUDENT").orElse(new Role("STUDENT"));
-            studentRole.setDescription("Sinh viên thực hiện đề tài");
-            studentRole.setPrivileges(new HashSet<>()); 
-            roleRepo.save(studentRole);
-        };
+    static {
+        PRIVILEGES.put("USER_MANAGE", "Quản lý người dùng (Xem, Thêm, Sửa, Xóa)");
+        PRIVILEGES.put("ROLE_MANAGE", "Quản lý vai trò và quyền hạn");
+        PRIVILEGES.put("DEPT_MANAGE", "Quản lý khoa và lớp học");
+        PRIVILEGES.put("TOPIC_MANAGE", "Quản lý đề tài (Tạo, Sửa, Đóng/Mở)");
+        PRIVILEGES.put("REGISTRATION_MANAGE", "Duyệt đăng ký đề tài");
+        PRIVILEGES.put("SYSTEM_REPORT", "Xem báo cáo và thống kê hệ thống");
+
+        ROLES.put("ADMIN", Map.entry("Quản trị viên toàn hệ thống",
+                List.of("USER_MANAGE", "ROLE_MANAGE", "DEPT_MANAGE", "TOPIC_MANAGE", "REGISTRATION_MANAGE", "SYSTEM_REPORT")));
+        ROLES.put("DEPARTMENT_ADMIN", Map.entry("Quản trị viên cấp khoa",
+                List.of("DEPT_MANAGE", "TOPIC_MANAGE", "REGISTRATION_MANAGE", "SYSTEM_REPORT")));
+        // Giảng viên chỉ thao tác trên đề tài/đăng ký của mình — phạm vi kiểm tra ở tầng service
+        ROLES.put("LECTURER", Map.entry("Giảng viên hướng dẫn", List.of("TOPIC_MANAGE", "REGISTRATION_MANAGE")));
+        ROLES.put("STUDENT", Map.entry("Sinh viên thực hiện đề tài", List.of()));
     }
 
-    private Privilege createPrivilegeIfNotFound(PrivilegeRepository repo, String name, String description) {
-        return repo.findByName(name).orElseGet(() -> {
-            Privilege p = new Privilege(name, description);
-            return repo.save(p);
+    /** Chạy TRƯỚC DataSeeder để vai trò được tạo kèm quyền mặc định (DataSeeder chỉ tạo vai trò trống nếu thiếu). */
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    CommandLineRunner initRolesAndPrivileges(RoleRepository roleRepo, PrivilegeRepository privilegeRepo,
+                                             DataMigrationRepository migrationRepo, TransactionTemplate tx) {
+        return args -> tx.executeWithoutResult(status -> {
+            Map<String, Privilege> privileges = new LinkedHashMap<>();
+            PRIVILEGES.forEach((name, description) -> privileges.put(name, privilegeRepo.findByName(name)
+                    .orElseGet(() -> privilegeRepo.save(new Privilege(name, description)))));
+
+            ROLES.forEach((name, def) -> {
+                if (roleRepo.findByName(name).isEmpty()) {
+                    Role role = new Role(name, def.getKey());
+                    role.setPrivileges(collect(privileges, def.getValue()));
+                    roleRepo.save(role);
+                    log.info("Đã tạo vai trò {} với quyền mặc định {}", name, def.getValue());
+                }
+            });
+
+            // DB tạo trước P2-01: giảng viên thiếu TOPIC_MANAGE nên không tự tạo được đề tài (bổ sung đúng một lần)
+            if (!migrationRepo.existsById(MIGRATION_LECTURER_TOPIC_MANAGE)) {
+                roleRepo.findByName("LECTURER").ifPresent(lecturer -> {
+                    lecturer.getPrivileges().add(privileges.get("TOPIC_MANAGE"));
+                    roleRepo.save(lecturer);
+                });
+                migrationRepo.save(new DataMigration(MIGRATION_LECTURER_TOPIC_MANAGE));
+                log.info("Đã chạy bước dữ liệu {}", MIGRATION_LECTURER_TOPIC_MANAGE);
+            }
         });
+    }
+
+    private static Set<Privilege> collect(Map<String, Privilege> privileges, List<String> names) {
+        Set<Privilege> result = new HashSet<>();
+        names.forEach(n -> result.add(privileges.get(n)));
+        return result;
     }
 }
