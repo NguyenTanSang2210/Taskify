@@ -8,7 +8,8 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   // Luồng nhiều bước: "login" → ("changePassword" nếu đang dùng mật khẩu tạm) → ("otp" nếu vai trò cần OTP).
-  // Ngoài ra "activate": kích hoạt tài khoản do quản trị tạo bằng mã nhận qua email.
+  // Ngoài ra "activate": kích hoạt tài khoản do quản trị tạo bằng mã nhận qua email;
+  // "forgot" → "reset": quên mật khẩu (nhận mã qua email rồi đặt mật khẩu mới).
   // preAuthToken chỉ nằm trong state React
   // (không lưu localStorage): nó chỉ dùng được cho bước OTP, không gọi được API nghiệp vụ.
   const [step, setStep] = useState("login");
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [activationCode, setActivationCode] = useState("");
+  const [resetCode, setResetCode] = useState("");
   const [resendIn, setResendIn] = useState(0);
   const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,7 @@ export default function LoginPage() {
     setNewPassword("");
     setConfirmPassword("");
     setActivationCode("");
+    setResetCode("");
     setResendIn(0);
     setPassword("");
     setSuccessMsg("");
@@ -163,6 +166,42 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+    setLoading(true);
+    try {
+      const data = await authApi.forgotPassword(username.trim());
+      setSuccessMsg(data.message || "Nếu tài khoản tồn tại, mã đã được gửi tới email đăng ký.");
+      setResetCode("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setStep("reset");
+    } catch (err) {
+      setError(err.message || "Không gửi được yêu cầu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+    if (!passwordsOk()) return;
+    setLoading(true);
+    try {
+      await authApi.resetPassword(username.trim(), resetCode.trim(), newPassword);
+      backToLogin();
+      setSuccessMsg("Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.");
+    } catch (err) {
+      setError(err.message || "Đặt lại mật khẩu thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResendOtp = async () => {
     setError("");
     setSuccessMsg("");
@@ -211,7 +250,7 @@ export default function LoginPage() {
 
         <form
           className="space-y-5"
-          onSubmit={{ login: handleLoginSubmit, otp: handleVerifyOtp, changePassword: handleChangeInitialPassword, activate: handleActivate }[step]}
+          onSubmit={{ login: handleLoginSubmit, otp: handleVerifyOtp, changePassword: handleChangeInitialPassword, activate: handleActivate, forgot: handleForgot, reset: handleReset }[step]}
         >
           {step === "login" ? (
             <>
@@ -249,7 +288,13 @@ export default function LoginPage() {
                   <input className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 cursor-pointer" type="checkbox" />
                   <span className="text-outline font-bold group-hover:text-on-surface transition-colors uppercase tracking-tighter">Ghi nhớ tôi</span>
                 </label>
-                <button type="button" className="text-primary font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4">Quên mật khẩu?</button>
+                <button
+                  type="button"
+                  className="text-primary font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4"
+                  onClick={() => { setError(""); setSuccessMsg(""); setStep("forgot"); }}
+                >
+                  Quên mật khẩu?
+                </button>
               </div>
 
               <button 
@@ -394,6 +439,96 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => backToLogin()}
               >
+                Quay lại đăng nhập
+              </button>
+            </>
+          ) : step === "forgot" ? (
+            <>
+              <div className="space-y-3 text-center">
+                <div className="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="material-symbols-outlined text-3xl">lock_reset</span>
+                </div>
+                <h2 className="text-xl font-black text-primary uppercase tracking-widest leading-none">Quên mật khẩu</h2>
+                <p className="text-xs text-outline font-medium leading-relaxed">
+                  Nhập tên đăng nhập (hoặc email). Mã đặt lại mật khẩu sẽ được gửi tới email đăng ký của tài khoản, có hiệu lực 10 phút.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập hoặc email</label>
+                <input
+                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoFocus
+                  required
+                />
+              </div>
+              <button className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50" disabled={loading || !username.trim()} type="submit">
+                {loading ? "Đang gửi..." : "Gửi mã đặt lại"}
+              </button>
+              <button className="w-full text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors" type="button" onClick={() => backToLogin()}>
+                Quay lại đăng nhập
+              </button>
+            </>
+          ) : step === "reset" ? (
+            <>
+              <div className="space-y-3 text-center">
+                <div className="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="material-symbols-outlined text-3xl">key</span>
+                </div>
+                <h2 className="text-xl font-black text-primary uppercase tracking-widest leading-none">Đặt lại mật khẩu</h2>
+                <p className="text-xs text-outline font-medium leading-relaxed">
+                  Nhập mã 6 chữ số trong email và mật khẩu mới cho tài khoản <strong className="text-on-surface">{username}</strong>.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã xác nhận (6 chữ số)</label>
+                <input
+                  className="w-full text-center text-2xl tracking-[0.5em] font-black py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl transition-all duration-300 outline-none"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  autoFocus
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
+                <input
+                  type="password"
+                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                <PasswordChecklist password={newPassword} username={username} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
+                <input
+                  type="password"
+                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+              <button
+                className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
+                disabled={loading || resetCode.length !== 6 || !isPasswordValid(newPassword, username) || !confirmPassword}
+                type="submit"
+              >
+                {loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}
+              </button>
+              <button className="w-full text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors" type="button" onClick={() => setStep("forgot")}>
+                Chưa nhận được mã? Gửi lại
+              </button>
+              <button className="w-full text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors" type="button" onClick={() => backToLogin()}>
                 Quay lại đăng nhập
               </button>
             </>

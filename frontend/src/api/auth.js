@@ -25,4 +25,13 @@ export const authApi = {
     const res = await api.post("/auth/activate", { identifier, code, newPassword });
     return res.data;
   },
+  // Quên mật khẩu: gửi mã về email (luôn trả cùng một thông báo, kể cả khi tài khoản không tồn tại)
+  forgotPassword: async (identifier) => {
+    const res = await api.post("/auth/password/forgot", { identifier });
+    return res.data;
+  },
+  resetPassword: async (identifier, code, newPassword) => {
+    const res = await api.post("/auth/password/reset", { identifier, code, newPassword });
+    return res.data;
+  },
 };

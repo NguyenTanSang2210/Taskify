@@ -41,6 +41,12 @@ public class AuthService {
     static final String INVALID_CREDENTIALS = "Sai tên đăng nhập hoặc mật khẩu";
     static final String PREAUTH_EXPIRED = "Phiên xác thực đã hết hạn. Vui lòng đăng nhập lại.";
     static final String ACTIVATION_FAILED = "Mã kích hoạt không đúng hoặc đã hết hạn.";
+    static final String RESET_FAILED = "Mã xác nhận không đúng hoặc đã hết hạn.";
+    /** Trả về như nhau dù tài khoản có tồn tại hay không (chống dò tài khoản). */
+    public static final String RESET_REQUESTED = "Nếu tài khoản tồn tại, mã đặt lại mật khẩu đã được gửi tới email đăng ký.";
+    private static final int RESET_REQUESTS_PER_IDENTIFIER = 3;
+    private static final int RESET_REQUESTS_PER_IP = 10;
+    private static final Duration RESET_WINDOW = Duration.ofMinutes(15);
 
     /** Các vai trò bắt buộc xác thực 2 bước bằng OTP. */
     private static final Set<String> OTP_ROLES = Set.of("ADMIN", "LECTURER", "DEPARTMENT_ADMIN");
@@ -159,7 +165,7 @@ public class AuthService {
     public void activate(String identifier, String code, String newPassword, String clientIp) {
         rateLimiter.check("activate", clientIp, props.getRate().getActivatePer10Minutes(), Duration.ofMinutes(10));
         String id = identifier.trim();
-        User user = userRepository.findByUsername(id).or(() -> userRepository.findByEmail(id)).orElse(null);
+        User user = findByIdentifier(id);
         // Kiểm tra mật khẩu TRƯỚC khi tiêu thụ mã: mật khẩu yếu không làm mất mã kích hoạt của người dùng
         PasswordPolicy.requireValid(newPassword, user != null ? user.getUsername() : id);
         if (user == null || user.isActivated() || !user.isActive()) {
@@ -178,7 +184,56 @@ public class AuthService {
         auditLogService.log("ACTIVATE_ACCOUNT", "User", user.getId().toString(), "ip=" + clientIp, user.getUsername());
     }
 
+    /**
+     * Quên mật khẩu — bước 1: gửi mã RESET_PASSWORD (10 phút) tới email của tài khoản.
+     * Không tiết lộ tài khoản có tồn tại hay không: luôn trả cùng một kết quả; tài khoản không hợp lệ hoặc
+     * đang trong thời gian chờ gửi lại thì bỏ qua im lặng.
+     */
+    public void requestPasswordReset(String identifier, String clientIp) {
+        String id = identifier.trim();
+        rateLimiter.check("pwd-reset-ip", clientIp, RESET_REQUESTS_PER_IP, RESET_WINDOW);
+        rateLimiter.check("pwd-reset-id", id.toLowerCase(), RESET_REQUESTS_PER_IDENTIFIER, RESET_WINDOW);
+        User user = findByIdentifier(id);
+        if (user == null || !user.isActive() || !user.isActivated() || user.getEmail() == null || user.getEmail().isBlank()) {
+            return;
+        }
+        if (otpService.secondsUntilResendAllowed(user, OtpPurpose.RESET_PASSWORD) > 0) {
+            return;
+        }
+        otpService.issue(user, OtpPurpose.RESET_PASSWORD);
+        auditLogService.log("PASSWORD_RESET_REQUESTED", "User", user.getId().toString(), "ip=" + clientIp, user.getUsername());
+    }
+
+    /**
+     * Quên mật khẩu — bước 2: mã đúng → đặt mật khẩu mới và thu hồi mọi token cũ (tokenVersion + 1).
+     * Mọi lỗi về tài khoản/mã trả CÙNG một thông báo.
+     */
+    public void resetPassword(String identifier, String code, String newPassword, String clientIp) {
+        rateLimiter.check("pwd-reset-ip", clientIp, RESET_REQUESTS_PER_IP, RESET_WINDOW);
+        String id = identifier.trim();
+        User user = findByIdentifier(id);
+        // Kiểm tra mật khẩu TRƯỚC khi tiêu thụ mã: mật khẩu yếu không làm mất mã của người dùng
+        PasswordPolicy.requireValid(newPassword, user != null ? user.getUsername() : id);
+        if (user == null || !user.isActive() || !user.isActivated()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, RESET_FAILED);
+        }
+        VerifyOutcome outcome = otpService.verify(user, OtpPurpose.RESET_PASSWORD, code);
+        if (outcome.result() != OtpService.VerifyResult.OK) {
+            auditLogService.log("PASSWORD_RESET_FAILED", "User", user.getId().toString(), "ip=" + clientIp + ", " + outcome.result(), user.getUsername());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, RESET_FAILED);
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setMustChangePassword(false);
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        auditLogService.log("PASSWORD_RESET_DONE", "User", user.getId().toString(), "ip=" + clientIp, user.getUsername());
+    }
+
     // ------------------------------------------------------------------ nội bộ
+
+    private User findByIdentifier(String id) {
+        return userRepository.findByUsername(id).or(() -> userRepository.findByEmail(id)).orElse(null);
+    }
 
     /** Sau khi mật khẩu đúng: quyết định bước kế tiếp. */
     private LoginResponse continueAfterPassword(User user, String clientIp) {

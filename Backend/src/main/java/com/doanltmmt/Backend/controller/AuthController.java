@@ -1,12 +1,14 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.ActivateRequest;
+import com.doanltmmt.Backend.dto.ForgotPasswordRequest;
 import com.doanltmmt.Backend.dto.InitialPasswordRequest;
 import com.doanltmmt.Backend.dto.LoginRequest;
 import com.doanltmmt.Backend.dto.LoginResponse;
 import com.doanltmmt.Backend.dto.OtpResendRequest;
 import com.doanltmmt.Backend.dto.OtpResendResponse;
 import com.doanltmmt.Backend.dto.OtpVerifyRequest;
+import com.doanltmmt.Backend.dto.ResetPasswordRequest;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
@@ -83,6 +85,20 @@ public class AuthController {
     public Map<String, Object> activate(@Valid @RequestBody ActivateRequest request, HttpServletRequest http) {
         authService.activate(request.identifier(), request.code(), request.newPassword(), clientIp(http));
         return Map.of("activated", true);
+    }
+
+    /** Quên mật khẩu — gửi mã qua email. Luôn trả cùng một thông báo (không tiết lộ tài khoản có tồn tại hay không). */
+    @PostMapping("/password/forgot")
+    public Map<String, Object> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest http) {
+        authService.requestPasswordReset(request.identifier(), clientIp(http));
+        return Map.of("message", AuthService.RESET_REQUESTED);
+    }
+
+    /** Quên mật khẩu — đặt mật khẩu mới bằng mã nhận qua email; mọi phiên đăng nhập cũ bị thu hồi. */
+    @PostMapping("/password/reset")
+    public Map<String, Object> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest http) {
+        authService.resetPassword(request.identifier(), request.code(), request.newPassword(), clientIp(http));
+        return Map.of("reset", true);
     }
 
     /** IP client (đã qua {@code server.forward-headers-strategy=native} nên là IP thật khi đứng sau nginx). */
