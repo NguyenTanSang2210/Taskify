@@ -26,7 +26,8 @@ export default function LecturerTopicsPage() {
   const getStatusInfo = (s) => {
     if (s === "OPEN") return { label: "Mở đăng ký", color: "text-primary", bg: "bg-primary/10", icon: "door_open" };
     if (s === "CLOSED") return { label: "Đã đóng", color: "text-outline", bg: "bg-surface-container", icon: "lock" };
-    if (s === "REGISTERED") return { label: "Đã đăng ký", color: "text-secondary", bg: "bg-secondary/10", icon: "group" };
+    if (s === "FULL") return { label: "Đã đủ sinh viên", color: "text-secondary", bg: "bg-secondary/10", icon: "group" };
+    if (s === "COMPLETED") return { label: "Hoàn thành", color: "text-green-700", bg: "bg-green-500/10", icon: "task_alt" };
     return { label: s || "N/A", color: "text-outline", bg: "bg-surface-container", icon: "help" };
   };
 
@@ -204,7 +205,8 @@ export default function LecturerTopicsPage() {
                  <option value="">Tất cả trạng thái</option>
                  <option value="OPEN">Đang mở đăng ký</option>
                  <option value="CLOSED">Đã đóng</option>
-                 <option value="REGISTERED">Đã có sinh viên</option>
+                 <option value="FULL">Đã đủ sinh viên</option>
+                 <option value="COMPLETED">Hoàn thành</option>
                </select>
             </div>
             <div className="md:col-span-2 space-y-1.5">
@@ -284,7 +286,7 @@ export default function LecturerTopicsPage() {
                                <span className={`text-sm font-black ${t.pendingCount > 0 ? "text-secondary" : "text-outline/30"}`}>{t.pendingCount ?? 0}</span>
                             </td>
                             <td className="px-6 py-6 text-center">
-                               <span className={`text-sm font-black ${t.approvedCount > 0 ? "text-primary" : "text-outline/30"}`}>{t.approvedCount ?? 0}</span>
+                               <span className={`text-sm font-black ${t.approvedCount > 0 ? "text-primary" : "text-outline/30"}`} title="Đã duyệt / số chỗ">{t.approvedCount ?? 0}/{t.capacity || 1}</span>
                             </td>
                             <td className="px-8 py-6 text-right">
                                <div className="flex justify-end gap-2">
@@ -302,7 +304,7 @@ export default function LecturerTopicsPage() {
                                   >
                                      <span className="material-symbols-outlined text-lg">edit</span>
                                   </button>
-                                  {t.status !== "OPEN" ? (
+                                  {t.status === "COMPLETED" ? null : t.status === "CLOSED" ? (
                                     <button 
                                       onClick={() => handleOpen(t.id)} 
                                       disabled={actionLoadingId === t.id}

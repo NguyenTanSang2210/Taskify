@@ -2,6 +2,9 @@ import React from "react";
 
 export default function TopicCard({ topic, onRegister, loading }) {
   const isOpen = topic.status === "OPEN";
+  const isFull = topic.status === "FULL";
+  const capacity = topic.capacity || 1;
+  const approved = topic.approvedCount || 0;
   const registrationStatus = topic.registrationStatus;
 
   const renderActionButton = () => {
@@ -70,7 +73,7 @@ export default function TopicCard({ topic, onRegister, loading }) {
         
         {!isOpen && (
            <span className="px-3 py-1 bg-surface-container-high text-outline/60 text-[9px] font-black rounded-lg uppercase tracking-widest border border-outline-variant/5">
-             Đã đóng
+             {isFull ? "Đã đủ sinh viên" : "Đã đóng"}
            </span>
         )}
       </div>
@@ -88,11 +91,11 @@ export default function TopicCard({ topic, onRegister, loading }) {
       <div className="mt-auto pt-6 border-t border-outline-variant/5 relative z-10">
         <div className="flex items-center gap-4 mb-6 p-4 bg-surface-container-low/30 rounded-[1.5rem] border border-outline-variant/5 transition-colors group-hover:bg-primary/[0.03]">
           <div className="w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center font-black text-sm shadow-lg shadow-primary/10 border border-white/20 overflow-hidden shrink-0">
-            {topic.lecturer?.user?.fullName?.charAt(0) || "L"}
+            {topic.lecturerName?.charAt(0) || "L"}
           </div>
           <div>
             <p className="text-[11px] font-black text-on-surface leading-none uppercase tracking-[0.1em]">
-              {topic.lecturer?.user?.fullName}
+              {topic.lecturerName}
             </p>
             <p className="text-[9px] text-outline font-black mt-1.5 uppercase tracking-widest opacity-60">Giảng viên hướng dẫn</p>
           </div>
@@ -103,13 +106,13 @@ export default function TopicCard({ topic, onRegister, loading }) {
              <div className="flex items-center gap-2 text-outline mb-1">
                <span className="material-symbols-outlined text-[16px]">groups</span>
                <span className="text-[10px] font-black uppercase tracking-widest">
-                 {topic.currentGroups || 0} / {topic.maxGroups || 3} nhóm
+                 {approved} / {capacity} chỗ
                </span>
              </div>
              <div className="w-24 h-1 bg-surface-container rounded-full overflow-hidden">
                 <div 
                    className="h-full bg-primary transition-all duration-1000" 
-                   style={{ width: `${Math.min(100, ((topic.currentGroups || 0) / (topic.maxGroups || 3)) * 100)}%` }}
+                   style={{ width: `${Math.min(100, (approved / capacity) * 100)}%` }}
                 ></div>
              </div>
           </div>

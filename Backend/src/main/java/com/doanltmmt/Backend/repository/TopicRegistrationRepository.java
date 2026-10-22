@@ -25,6 +25,7 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
 
     long countByTopic_IdAndApprovedIsNull(Long topicId);
     long countByTopic_IdAndApprovedTrue(Long topicId);
+    long countByTopic_IdAndApprovedTrueAndScoreIsNull(Long topicId);
     long countByTopic_IdAndApprovedFalse(Long topicId);
 
 }

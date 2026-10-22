@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.config.DataMigrationRunner;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.Privilege;
@@ -37,6 +38,9 @@ class TopicManagementIT extends AbstractSecurityIT {
     @Autowired
     @Qualifier("initRolesAndPrivileges")
     private CommandLineRunner roleInitializer;
+
+    @Autowired
+    private DataMigrationRunner dataMigrations;
 
     private Lecturer lecA;
     private Lecturer lecA2;
@@ -129,6 +133,7 @@ class TopicManagementIT extends AbstractSecurityIT {
         roleRepo.saveAndFlush(lecturer);
 
         roleInitializer.run(); // giả lập khởi động lại
+        dataMigrations.run();
 
         Role after = roleRepo.findByName("LECTURER").orElseThrow();
         assertFalse(after.getPrivileges().stream().map(Privilege::getName).anyMatch("TOPIC_MANAGE"::equals),

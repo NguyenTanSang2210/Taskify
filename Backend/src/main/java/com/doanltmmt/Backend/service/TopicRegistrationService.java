@@ -62,9 +62,12 @@ public class TopicRegistrationService {
         }
 
         Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new RuntimeException("Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài"));
 
-        if (!"OPEN".equalsIgnoreCase(topic.getStatus())) {
+        if (Topic.FULL.equals(topic.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
+        }
+        if (!Topic.OPEN.equalsIgnoreCase(topic.getStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not open for registration");
         }
         if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
@@ -77,7 +80,7 @@ public class TopicRegistrationService {
         }
 
         Student student = studentRepo.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên"));
         
         if (student.getAcademicClass() == null || student.getAcademicClass().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student must be assigned to a class");
@@ -95,11 +98,8 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student already registered this topic");
         }
         
-        if (topic.getCapacity() != null && topic.getCapacity() > 0) {
-            long approvedCount = regRepo.countByTopic_IdAndApprovedTrue(topicId);
-            if (approvedCount >= topic.getCapacity()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is full");
-            }
+        if (regRepo.countByTopic_IdAndApprovedTrue(topicId) >= topic.effectiveCapacity()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
         }
 
         TopicRegistration reg = new TopicRegistration();
@@ -147,17 +147,19 @@ public class TopicRegistrationService {
 
     @Transactional
     public TopicRegistrationDTO approve(Long regId) {
-        TopicRegistration reg = regRepo.findById(regId)
-                .orElseThrow(() -> new RuntimeException("Registration not found"));
+        TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getTopic() == null || reg.getTopic().getLecturer() == null || reg.getTopic().getLecturer().getId() == null || !currentUserId.equals(reg.getTopic().getLecturer().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
         }
-
-        Long topicId = reg.getTopic().getId();
-        if (regRepo.existsByTopic_IdAndApprovedTrue(topicId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic already has an approved registration");
+        if (Boolean.TRUE.equals(reg.getApproved())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đăng ký này đã được duyệt");
         }
+
+        // Nhiều SV/đề tài (D-01 = B): khóa dòng đề tài để 2 lượt duyệt đồng thời không vượt capacity
+        Long topicId = reg.getTopic().getId();
+        Topic topic = topicRepo.findByIdForUpdate(topicId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài"));
         if (reg.getTopic().getWorkspace() == null || reg.getTopic().getWorkspace().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
         }
@@ -167,11 +169,8 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in registration review phase");
         }
         
-        if (reg.getTopic().getCapacity() != null && reg.getTopic().getCapacity() > 0) {
-            long approvedCount = regRepo.countByTopic_IdAndApprovedTrue(topicId);
-            if (approvedCount >= reg.getTopic().getCapacity()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is full");
-            }
+        if (regRepo.countByTopic_IdAndApprovedTrue(topicId) >= topic.effectiveCapacity()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
         }
 
         reg.setApproved(true);
@@ -186,11 +185,8 @@ public class TopicRegistrationService {
             }
         }
         
-        Topic topic = reg.getTopic();
-        topic.setStatus("REGISTERED");
-        topicRepo.save(topic);
-        
         TopicRegistration saved = regRepo.save(reg);
+        refreshCapacityStatus(topic);
         eventPublisher.registrationChanged(saved, "REGISTRATION_UPDATED");
         
         sendNotification(saved.getStudent().getUser(), "Dang ky de tai da duoc duyet", 
@@ -203,8 +199,7 @@ public class TopicRegistrationService {
 
     @Transactional
     public TopicRegistrationDTO reject(Long regId, String reason) {
-        TopicRegistration reg = regRepo.findById(regId)
-                .orElseThrow(() -> new RuntimeException("Registration not found"));
+        TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getTopic() == null || reg.getTopic().getLecturer() == null || reg.getTopic().getLecturer().getId() == null || !currentUserId.equals(reg.getTopic().getLecturer().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
@@ -233,6 +228,8 @@ public class TopicRegistrationService {
         }
         
         TopicRegistration saved = regRepo.save(reg);
+        // Từ chối một SV đã được duyệt trước đó → đề tài có thể còn chỗ trở lại
+        refreshCapacityStatus(reg.getTopic());
         String msg = (reason != null && !reason.isBlank()) ? ("Ly do: " + reason) : "No reason provided";
         sendNotification(saved.getStudent().getUser(), "Dang ky de tai bi tu choi", msg, saved.getId());
         
@@ -243,15 +240,14 @@ public class TopicRegistrationService {
 
     @Transactional
     public void cancel(Long regId) {
-        TopicRegistration reg = regRepo.findById(regId)
-                .orElseThrow(() -> new RuntimeException("Registration not found"));
+        TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getStudent() == null || reg.getStudent().getId() == null || !currentUserId.equals(reg.getStudent().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
         }
 
         if (reg.getApproved() != null) {
-            throw new RuntimeException("Cannot cancel a processed registration");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể hủy đăng ký đã được giảng viên xử lý");
         }
         if (reg.getTopic() == null || reg.getTopic().getWorkspace() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
@@ -269,8 +265,7 @@ public class TopicRegistrationService {
 
     @Transactional
     public TopicRegistrationDTO grade(Long regId, Map<String, Object> body) {
-        TopicRegistration reg = regRepo.findById(regId)
-                .orElseThrow(() -> new RuntimeException("Registration not found"));
+        TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getTopic() == null || reg.getTopic().getLecturer() == null || reg.getTopic().getLecturer().getId() == null || !currentUserId.equals(reg.getTopic().getLecturer().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
@@ -295,18 +290,28 @@ public class TopicRegistrationService {
         reg.setFeedback(feedback);
         
         Topic topic = reg.getTopic();
-        if (!"COMPLETED".equals(topic.getStatus())) {
-            topic.setStatus("COMPLETED");
+        TopicRegistration saved = regRepo.save(reg);
+        // Đề tài chỉ hoàn thành khi MỌI sinh viên đã duyệt đều có điểm
+        if (!Topic.COMPLETED.equals(topic.getStatus()) && regRepo.countByTopic_IdAndApprovedTrueAndScoreIsNull(topic.getId()) == 0) {
+            topic.setStatus(Topic.COMPLETED);
             topicRepo.save(topic);
         }
-
-        TopicRegistration saved = regRepo.save(reg);
         sendNotification(saved.getStudent().getUser(), "De tai da co diem tong ket", 
                 "Diem so: " + score + ". Nhan xet: " + feedback, saved.getId());
         
         auditLogService.log("GRADE_TOPIC", "TopicRegistration", saved.getId().toString(), "Graded topic " + topic.getId() + " with score " + score);
         emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Topic Graded", "Your topic " + topic.getTitle() + " has been graded. Score: " + score);
         return new TopicRegistrationDTO(saved);
+    }
+
+    private TopicRegistration findRegistration(Long regId) {
+        return regRepo.findById(regId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đăng ký"));
+    }
+
+    private void refreshCapacityStatus(Topic topic) {
+        topic.refreshCapacityStatus(regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
+        topicRepo.save(topic);
     }
 
     private String normalizeStatus(String status) {

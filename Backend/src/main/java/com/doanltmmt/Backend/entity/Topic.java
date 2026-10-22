@@ -31,7 +31,26 @@ public class Topic {
     @Column(name = "capacity")
     private Integer capacity;
 
-    // OPEN, REGISTERED, CLOSED
+    /** {@link #OPEN} (còn chỗ) → {@link #FULL} (đủ SV được duyệt) → {@link #CLOSED} (GV đóng) → {@link #COMPLETED} (đã chấm hết). */
     @Column(length = 50)
     private String status;
+
+    public static final String OPEN = "OPEN";
+    public static final String FULL = "FULL";
+    public static final String CLOSED = "CLOSED";
+    public static final String COMPLETED = "COMPLETED";
+
+    /** Số sinh viên tối đa; dữ liệu cũ không đặt capacity được hiểu là 1. */
+    public int effectiveCapacity() {
+        return capacity == null || capacity < 1 ? 1 : capacity;
+    }
+
+    /**
+     * Cập nhật trạng thái theo số SV đã được duyệt: còn chỗ → OPEN, đủ → FULL.
+     * Đề tài GV đã đóng hoặc đã hoàn thành giữ nguyên trạng thái.
+     */
+    public void refreshCapacityStatus(long approvedCount) {
+        if (CLOSED.equals(status) || COMPLETED.equals(status)) return;
+        status = approvedCount >= effectiveCapacity() ? FULL : OPEN;
+    }
 }

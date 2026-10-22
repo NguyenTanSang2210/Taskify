@@ -1,9 +1,7 @@
 package com.doanltmmt.Backend.config;
 
-import com.doanltmmt.Backend.entity.DataMigration;
 import com.doanltmmt.Backend.entity.Privilege;
 import com.doanltmmt.Backend.entity.Role;
-import com.doanltmmt.Backend.repository.DataMigrationRepository;
 import com.doanltmmt.Backend.repository.PrivilegeRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
 import org.slf4j.Logger;
@@ -26,14 +24,12 @@ import java.util.Set;
  *
  * <p>Quyền mặc định chỉ được gán khi vai trò được tạo LẦN ĐẦU. Vai trò đã tồn tại giữ nguyên quyền do quản trị viên
  * chỉnh trên trang Vai trò (trước đây bị ghi đè mỗi lần khởi động). Bổ sung quyền cho dữ liệu đã có thì làm bằng
- * một bước {@link DataMigration} chạy đúng một lần.
+ * một bước trong {@link DataMigrationRunner} (chạy đúng một lần).
  */
 @Configuration
 public class RolePrivilegeInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(RolePrivilegeInitializer.class);
-
-    static final String MIGRATION_LECTURER_TOPIC_MANAGE = "P2-01_lecturer_topic_manage";
 
     /** Tên quyền → mô tả. */
     private static final Map<String, String> PRIVILEGES = new LinkedHashMap<>();
@@ -61,7 +57,7 @@ public class RolePrivilegeInitializer {
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     CommandLineRunner initRolesAndPrivileges(RoleRepository roleRepo, PrivilegeRepository privilegeRepo,
-                                             DataMigrationRepository migrationRepo, TransactionTemplate tx) {
+                                             TransactionTemplate tx) {
         return args -> tx.executeWithoutResult(status -> {
             Map<String, Privilege> privileges = new LinkedHashMap<>();
             PRIVILEGES.forEach((name, description) -> privileges.put(name, privilegeRepo.findByName(name)
@@ -75,16 +71,6 @@ public class RolePrivilegeInitializer {
                     log.info("Đã tạo vai trò {} với quyền mặc định {}", name, def.getValue());
                 }
             });
-
-            // DB tạo trước P2-01: giảng viên thiếu TOPIC_MANAGE nên không tự tạo được đề tài (bổ sung đúng một lần)
-            if (!migrationRepo.existsById(MIGRATION_LECTURER_TOPIC_MANAGE)) {
-                roleRepo.findByName("LECTURER").ifPresent(lecturer -> {
-                    lecturer.getPrivileges().add(privileges.get("TOPIC_MANAGE"));
-                    roleRepo.save(lecturer);
-                });
-                migrationRepo.save(new DataMigration(MIGRATION_LECTURER_TOPIC_MANAGE));
-                log.info("Đã chạy bước dữ liệu {}", MIGRATION_LECTURER_TOPIC_MANAGE);
-            }
         });
     }
 

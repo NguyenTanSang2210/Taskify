@@ -19,7 +19,9 @@ const getWorkspaceStatusLabel = (status) => {
 const getTopicStatusLabel = (status) => {
     const s = normalizeKey(status);
     if (s === 'OPEN') return 'Đang mở';
+    if (s === 'FULL') return 'Đã đủ sinh viên';
     if (s === 'CLOSED') return 'Đã đóng';
+    if (s === 'COMPLETED') return 'Hoàn thành';
     return status || '';
 };
 
@@ -74,7 +76,8 @@ export default function DepartmentAdminPage() {
     }, [page]);
 
     const toggleTopicStatus = async (t) => {
-        const nextAction = t.status === 'OPEN' ? 'CLOSED' : 'OPEN';
+        // Đề tài còn mở hoặc đã đủ SV → đóng; đã đóng → mở lại (backend tự chuyển FULL nếu vẫn đủ SV)
+        const nextAction = t.status === 'OPEN' || t.status === 'FULL' ? 'CLOSED' : 'OPEN';
         if (!window.confirm(`Xác nhận ${nextAction === 'OPEN' ? 'mở' : 'đóng'} đề tài này?`)) return;
         try {
             if (nextAction === 'OPEN') {

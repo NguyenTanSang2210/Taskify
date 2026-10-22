@@ -121,7 +121,8 @@ public class TopicRegistrationServiceTest {
 
         when(regRepo.findById(500L)).thenReturn(Optional.of(reg));
         when(scope.requireCurrentUser()).thenReturn(lecturerUser);
-        when(regRepo.existsByTopic_IdAndApprovedTrue(100L)).thenReturn(false);
+        when(topicRepo.findByIdForUpdate(100L)).thenReturn(Optional.of(topic));
+        when(regRepo.countByTopic_IdAndApprovedTrue(100L)).thenReturn(0L);
         when(regRepo.save(any())).thenAnswer(i -> i.getArgument(0));
         when(notificationRepo.save(any())).thenAnswer(i -> i.getArgument(0));
 

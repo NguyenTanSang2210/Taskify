@@ -135,7 +135,7 @@ export default function StudentTopicPage() {
               <option value="">Tất cả trạng thái</option>
               <option value="OPEN">Đang mở đăng ký</option>
               <option value="CLOSED">Đã đóng đăng ký</option>
-              <option value="REGISTERED">Đề tài đã đăng ký</option>
+              <option value="FULL">Đã đủ sinh viên</option>
             </select>
           </div>
 

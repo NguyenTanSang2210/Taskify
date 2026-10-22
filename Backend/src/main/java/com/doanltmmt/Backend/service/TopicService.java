@@ -148,7 +148,9 @@ public class TopicService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to open topic");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
-        topic.setStatus("OPEN");
+        topic.setStatus(Topic.OPEN);
+        // Mở lại đề tài đã đủ SV được duyệt → FULL (không nhận thêm đăng ký)
+        topic.refreshCapacityStatus(regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
         return new TopicDTO(topicRepo.save(topic));
     }
 
