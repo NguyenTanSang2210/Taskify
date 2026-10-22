@@ -32,7 +32,9 @@ class SecurityEndpointsIT extends AbstractSecurityIT {
             "/api/auth/otp/verify",
             "/api/auth/otp/resend",
             "/api/auth/activate",
-            "/api/auth/password/initial");
+            "/api/auth/password/initial",
+            "/api/auth/password/forgot",   // P2-05
+            "/api/auth/password/reset");   // P2-05
 
     @Autowired private RequestMappingHandlerMapping mapping;
 
