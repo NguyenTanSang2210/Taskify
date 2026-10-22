@@ -1,5 +1,31 @@
 // src/components/RegistrationTable.jsx
-export default function RegistrationTable({ data, onApproveClick, onRejectClick, onGradeClick, loadingId }) {
+import { fmtDateTime, fmtScore } from "./GradeHistoryModal";
+
+/** Trạng thái khóa điểm / yêu cầu chấm lại (P2-13). */
+function GradeStatus({ r }) {
+  const rev = r.latestRevision;
+  const chips = [];
+  if (r.gradeState === "LOCKED") chips.push(["bg-surface-container text-outline", "lock", "Đã khóa"]);
+  if (r.gradeState === "UNLOCKED" && rev?.unlockUntil) {
+    chips.push(["bg-green-500/10 text-green-700", "lock_open", `Được sửa đến ${fmtDateTime(rev.unlockUntil)}`]);
+  }
+  if (rev?.status === "PENDING") chips.push(["bg-amber-500/10 text-amber-700", "hourglass_top", "Chờ duyệt chấm lại"]);
+  if (rev?.status === "REJECTED") chips.push(["bg-error/10 text-error", "block", `Bị từ chối${rev.reviewNote ? `: ${rev.reviewNote}` : ""}`]);
+  if (r.scoreRevisionCount > 0) chips.push(["bg-secondary/10 text-secondary", "history", `Đã sửa ${r.scoreRevisionCount} lần`]);
+  if (!chips.length) return null;
+  return (
+    <div className="mt-2 flex flex-col items-start gap-1">
+      {chips.map(([cls, icon, label]) => (
+        <span key={label} className={`inline-flex max-w-[220px] items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black ${cls}`} title={label}>
+          <span className="material-symbols-outlined text-[12px]">{icon}</span>
+          <span className="truncate">{label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export default function RegistrationTable({ data, onApproveClick, onRejectClick, onGradeClick, onRevisionClick, onHistoryClick, loadingId }) {
   return (
     <div className="overflow-hidden rounded-[2rem] border border-outline-variant/10 shadow-sm bg-white dark:bg-slate-900">
       <div className="overflow-x-auto no-scrollbar">
@@ -28,8 +54,8 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
             )}
 
             {data.map((r) => {
-              const student = r.student;
-              const user = student?.user;
+              const canGrade = r.gradeState === "OPEN" || r.gradeState === "UNLOCKED";
+              const canRequestRevision = r.gradeState === "LOCKED" && r.score !== null && r.latestRevision?.status !== "PENDING";
 
               return (
                 <tr key={r.id} className="group hover:bg-primary/[0.01] transition-all duration-300">
@@ -39,12 +65,12 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
                        <div className="w-9 h-9 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center font-black text-xs shrink-0">
-                          {user?.fullName?.charAt(0)}
+                          {r.studentName?.charAt(0)}
                        </div>
                        <div className="flex flex-col">
-                         <span className="text-sm font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors">{user?.fullName}</span>
+                         <span className="text-sm font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors">{r.studentName}</span>
                          <span className="text-[10px] font-bold text-outline uppercase tracking-tight mt-0.5">
-                           {student?.studentCode} • {student?.className}
+                           {r.studentCode}
                          </span>
                        </div>
                     </div>
@@ -59,7 +85,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                   </td>
                   <td className="px-8 py-5">
                      <div className="flex flex-col">
-                      <span className="text-[11px] font-black text-secondary uppercase tracking-tight">{r.reviewer?.user?.fullName || <span className="opacity-20 italic">Chưa xét</span>}</span>
+                      <span className="text-[11px] font-black text-secondary uppercase tracking-tight">{r.reviewerName || <span className="opacity-20 italic">Chưa xét</span>}</span>
                       {r.reviewedAt && (
                         <span className="text-[9px] text-outline font-black uppercase tracking-widest mt-0.5">{new Date(r.reviewedAt).toLocaleDateString()}</span>
                       )}
@@ -85,10 +111,11 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                   </td>
                   <td className="px-8 py-5">
                     {r.score !== null ? (
-                      <span className="px-4 py-2 bg-secondary text-white rounded-xl text-xs font-black shadow-lg shadow-secondary/20">{r.score}</span>
+                      <span className="px-4 py-2 bg-secondary text-white rounded-xl text-xs font-black shadow-lg shadow-secondary/20">{fmtScore(r.score)}</span>
                     ) : (
                       <span className="text-outline/30 font-black uppercase tracking-widest text-[9px]">Chưa chấm</span>
                     )}
+                    <GradeStatus r={r} />
                   </td>
                   <td className="px-8 py-5 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-300">
@@ -112,7 +139,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                           </button>
                         </>
                       )}
-                      {r.approved === true && (
+                      {r.approved === true && canGrade && (
                         <button
                           className="p-2.5 rounded-xl bg-secondary text-white hover:scale-110 active:scale-95 transition-all shadow-xl shadow-secondary/20"
                           disabled={loadingId === r.id}
@@ -120,6 +147,25 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                           title={r.score !== null ? "Điều chỉnh điểm số" : "Cập nhật điểm bảo vệ"}
                         >
                           <span className="material-symbols-outlined text-lg">{r.score !== null ? 'edit_square' : 'history_edu'}</span>
+                        </button>
+                      )}
+                      {r.approved === true && canRequestRevision && onRevisionClick && (
+                        <button
+                          className="p-2.5 rounded-xl bg-amber-500/10 text-amber-700 border border-amber-500/20 hover:bg-amber-500 hover:text-white hover:scale-110 active:scale-95 transition-all"
+                          disabled={loadingId === r.id}
+                          onClick={() => onRevisionClick(r)}
+                          title="Yêu cầu chấm lại (điểm đã khóa)"
+                        >
+                          <span className="material-symbols-outlined text-lg">lock_reset</span>
+                        </button>
+                      )}
+                      {r.score !== null && onHistoryClick && (
+                        <button
+                          className="p-2.5 rounded-xl bg-surface-container text-on-surface-variant hover:bg-primary hover:text-white hover:scale-110 active:scale-95 transition-all"
+                          onClick={() => onHistoryClick(r)}
+                          title="Lịch sử điểm"
+                        >
+                          <span className="material-symbols-outlined text-lg">history</span>
                         </button>
                       )}
                     </div>

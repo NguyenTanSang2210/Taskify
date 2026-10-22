@@ -31,6 +31,7 @@ public class TopicRegistrationServiceTest {
     @Mock private EmailService emailService;
     @Mock private SecurityScopeService scope;
     @Mock private WorkspaceClassRepository workspaceClassRepo;
+    @Mock private GradeService gradeService;
 
     @InjectMocks
     private TopicRegistrationService registrationService;

@@ -3,7 +3,6 @@ package com.doanltmmt.Backend.service;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
-import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +30,7 @@ public class TopicRegistrationService {
     private final EmailService emailService;
     private final SecurityScopeService scope;
     private final WorkspaceClassRepository workspaceClassRepo;
+    private final GradeService gradeService;
 
     public TopicRegistrationService(TopicRepository topicRepo, StudentRepository studentRepo,
                                     TopicRegistrationRepository regRepo,
@@ -41,7 +41,8 @@ public class TopicRegistrationService {
                                     AuditLogService auditLogService,
                                     EmailService emailService,
                                     SecurityScopeService scope,
-                                    WorkspaceClassRepository workspaceClassRepo) {
+                                    WorkspaceClassRepository workspaceClassRepo,
+                                    GradeService gradeService) {
         this.topicRepo = topicRepo;
         this.studentRepo = studentRepo;
         this.regRepo = regRepo;
@@ -53,6 +54,7 @@ public class TopicRegistrationService {
         this.emailService = emailService;
         this.scope = scope;
         this.workspaceClassRepo = workspaceClassRepo;
+        this.gradeService = gradeService;
     }
 
     @Transactional
@@ -133,7 +135,7 @@ public class TopicRegistrationService {
             }
             list = regRepo.findByTopic_Id(topicId);
         }
-        return list.stream().map(TopicRegistrationDTO::new).collect(Collectors.toList());
+        return list.stream().map(reg -> gradeService.describe(reg, true)).collect(Collectors.toList());
     }
 
     public List<TopicRegistrationDTO> myRegistrations(Long studentId) {
@@ -142,7 +144,7 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
         }
         return regRepo.findByStudent_IdOrderByRegisteredAtDesc(studentId).stream()
-                .map(TopicRegistrationDTO::new)
+                .map(reg -> gradeService.describe(reg, false))
                 .collect(Collectors.toList());
     }
 
@@ -262,63 +264,6 @@ public class TopicRegistrationService {
         regRepo.deleteById(regId);
         auditLogService.log("CANCEL_REGISTRATION", "TopicRegistration", regId.toString(), "Cancelled registration");
         eventPublisher.registrationChanged(reg, "REGISTRATION_CANCELLED");
-    }
-
-    @Transactional
-    public TopicRegistrationDTO grade(Long regId, Map<String, Object> body) {
-        TopicRegistration reg = findRegistration(regId);
-        Long currentUserId = scope.requireCurrentUser().getId();
-        if (reg.getTopic() == null || reg.getTopic().getLecturer() == null || reg.getTopic().getLecturer().getId() == null || !currentUserId.equals(reg.getTopic().getLecturer().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-        }
-        
-        if (!Boolean.TRUE.equals(reg.getApproved())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot grade unapproved registration");
-        }
-        if (reg.getTopic().getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
-        }
-        
-        String wsStatus = normalizeStatus(reg.getTopic().getWorkspace().getStatus());
-        if (!wsStatus.equals("IN_PROGRESS") && !wsStatus.equals("CLOSED")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in grading phase");
-        }
-        
-        Double score = parseScore(body.get("score"));
-        String feedback = Inputs.optionalText(body.get("feedback"), "Nhận xét", 5000);
-
-        reg.setScore(score);
-        reg.setFeedback(feedback);
-        
-        Topic topic = reg.getTopic();
-        TopicRegistration saved = regRepo.save(reg);
-        // Đề tài chỉ hoàn thành khi MỌI sinh viên đã duyệt đều có điểm
-        if (!Topic.COMPLETED.equals(topic.getStatus()) && regRepo.countByTopic_IdAndApprovedTrueAndScoreIsNull(topic.getId()) == 0) {
-            topic.setStatus(Topic.COMPLETED);
-            topicRepo.save(topic);
-        }
-        sendNotification(saved.getStudent().getUser(), "Đề tài đã có điểm tổng kết",
-                "Điểm: " + EmailTemplates.formatScore(score) + (feedback == null ? "" : ". Nhận xét: " + feedback), saved.getId());
-        
-        auditLogService.log("GRADE_TOPIC", "TopicRegistration", saved.getId().toString(), "Graded topic " + topic.getId() + " with score " + score);
-        sendMail(saved.getStudent().getUser(), EmailTemplates.graded(topic.getTitle(), score, feedback));
-        return new TopicRegistrationDTO(saved);
-    }
-
-    /** Điểm thang 10, làm tròn đến 0,25; thiếu hoặc sai → 400. */
-    static Double parseScore(Object raw) {
-        if (raw == null || raw.toString().isBlank()) throw Inputs.badRequest("Vui lòng nhập điểm");
-        double score;
-        try {
-            score = Double.parseDouble(raw.toString().trim().replace(',', '.'));
-        } catch (NumberFormatException e) {
-            throw Inputs.badRequest("Điểm phải là một số");
-        }
-        if (Double.isNaN(score) || score < 0 || score > 10) throw Inputs.badRequest("Điểm phải từ 0 đến 10");
-        if (Math.abs(score * 4 - Math.round(score * 4)) > 1e-9) {
-            throw Inputs.badRequest("Điểm chỉ được lẻ đến 0,25 (ví dụ 7,25; 7,5; 7,75)");
-        }
-        return score;
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {

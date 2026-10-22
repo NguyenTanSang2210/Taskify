@@ -148,9 +148,9 @@ export default function StudentMyRegistrationsPage() {
                            <td className="px-8 py-6">
                               <div className="flex items-center gap-3">
                                  <div className="w-8 h-8 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center font-black text-xs">
-                                    {r.topic?.lecturer?.fullName?.charAt(0)}
+                                    {r.topic?.lecturerName?.charAt(0)}
                                  </div>
-                                 <span className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant truncate">{r.topic?.lecturer?.fullName}</span>
+                                 <span className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant truncate">{r.topic?.lecturerName}</span>
                               </div>
                            </td>
                            <td className="px-8 py-6">
@@ -162,6 +162,16 @@ export default function StudentMyRegistrationsPage() {
                                  <span className="material-symbols-outlined text-sm">{status.icon}</span>
                                  <span className="text-[10px] font-black uppercase tracking-widest">{status.label}</span>
                               </div>
+                              {r.approved === true && r.score !== null && (
+                                 <div className="mt-2 text-[11px] font-bold text-on-surface-variant">
+                                    Điểm: <span className="font-black text-primary">{String(r.score).replace(".", ",")}</span>
+                                    {r.scoreRevisedAt && (
+                                       <p className="text-[10px] text-outline">
+                                          Điểm đã được cập nhật ngày {new Date(r.scoreRevisedAt).toLocaleDateString("vi-VN")}
+                                       </p>
+                                    )}
+                                 </div>
+                              )}
                               {r.approved === false && r.rejectReason && (
                                  <div className="mt-2 p-3 bg-error/5 rounded-xl border border-error/10 max-w-[200px]">
                                     <p className="text-[10px] font-bold text-error leading-relaxed">

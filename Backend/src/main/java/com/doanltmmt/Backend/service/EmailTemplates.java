@@ -125,6 +125,34 @@ public final class EmailTemplates {
                         + p("Hãy nộp báo cáo cho mốc này trước hạn để giảng viên kịp nhận xét.")));
     }
 
+    public static Mail gradeChanged(String topicTitle, Double oldScore, Double newScore, String feedback) {
+        String fb = feedback == null || feedback.isBlank() ? "" : p("Nhận xét: <i>" + esc(feedback) + "</i>");
+        return new Mail("Taskify - Điểm đề tài đã được cập nhật", layout("Điểm đã được cập nhật",
+                p("Điểm đề tài <b>" + esc(topicTitle) + "</b> của bạn đã được giảng viên cập nhật: <b>"
+                        + formatScore(oldScore) + " → " + formatScore(newScore) + "</b>.") + fb));
+    }
+
+    // ------------------------------------------------------------------ chấm lại (P2-13)
+
+    public static Mail gradeRevisionRequested(String lecturerName, String studentName, String topicTitle, String reason) {
+        return new Mail("Taskify - Yêu cầu chấm lại điểm", layout("Có yêu cầu chấm lại điểm",
+                p("Giảng viên <b>" + esc(lecturerName) + "</b> đề nghị mở khóa điểm của sinh viên <b>" + esc(studentName)
+                        + "</b> (đề tài <b>" + esc(topicTitle) + "</b>).")
+                        + p("Lý do: <i>" + esc(reason) + "</i>")
+                        + p("Vào mục <b>Quản trị khoa → Yêu cầu chấm lại</b> trên Taskify để duyệt hoặc từ chối.")));
+    }
+
+    public static Mail gradeRevisionReviewed(String studentName, String topicTitle, boolean approved, String note,
+                                             String unlockUntil) {
+        String result = approved
+                ? p("Yêu cầu chấm lại điểm của sinh viên <b>" + esc(studentName) + "</b> (đề tài <b>" + esc(topicTitle)
+                + "</b>) đã được <b>duyệt</b>. Bạn có thể sửa điểm đến <b>" + esc(unlockUntil) + "</b>.")
+                : p("Yêu cầu chấm lại điểm của sinh viên <b>" + esc(studentName) + "</b> (đề tài <b>" + esc(topicTitle)
+                + "</b>) đã bị <b>từ chối</b>.");
+        String noteHtml = note == null || note.isBlank() ? "" : p("Ghi chú của người duyệt: <i>" + esc(note) + "</i>");
+        return new Mail("Taskify - Kết quả yêu cầu chấm lại", layout("Kết quả yêu cầu chấm lại", result + noteHtml));
+    }
+
     public static String formatScore(Double score) {
         if (score == null) return "—";
         return score % 1 == 0 ? String.valueOf(score.intValue()) : String.format(Locale.ROOT, "%.2f", score).replaceAll("0+$", "");

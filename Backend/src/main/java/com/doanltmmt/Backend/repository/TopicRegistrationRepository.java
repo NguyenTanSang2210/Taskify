@@ -1,7 +1,9 @@
 package com.doanltmmt.Backend.repository;
 
 import com.doanltmmt.Backend.entity.TopicRegistration;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -23,6 +25,11 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
     List<TopicRegistration> findApprovedWithoutProgressSince(@Param("since") LocalDateTime since);
 
     List<TopicRegistration> findByTopic_IdAndApprovedTrue(Long topicId);
+
+    /** Khóa dòng đăng ký khi chấm điểm / gửi yêu cầu chấm lại để hai request đồng thời không chồng nhau. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from TopicRegistration r where r.id = :id")
+    Optional<TopicRegistration> findByIdForUpdate(@Param("id") Long id);
 
     List<TopicRegistration> findByTopic_Id(Long topicId);
 

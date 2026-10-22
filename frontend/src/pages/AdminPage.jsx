@@ -4,6 +4,7 @@ import api from '../api';
 import userApi from '../api/userApi';
 import PasswordChecklist, { isPasswordValid } from '../components/PasswordChecklist';
 import InlineNotice from '../components/InlineNotice';
+import GradeRevisionPanel from '../components/GradeRevisionPanel';
 
 const normalizeKey = (value) => String(value ?? '').trim().toUpperCase();
 const getRoleLabel = (roleName) => {
@@ -331,7 +332,8 @@ export default function AdminPage() {
                 {[
                     { id: 'createUser', label: 'Khởi tạo tài khoản', icon: 'person_add' },
                     { id: 'userList', label: 'Danh bạ thành viên', icon: 'group_work' },
-                    { id: 'departments', label: 'Quản lý Khoa', icon: 'account_tree' }
+                    { id: 'departments', label: 'Quản lý Khoa', icon: 'account_tree' },
+                    { id: 'gradeRevisions', label: 'Yêu cầu chấm lại', icon: 'lock_reset' }
                 ].map(tab => (
                     <button 
                         key={tab.id}
@@ -579,6 +581,8 @@ export default function AdminPage() {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'gradeRevisions' && <GradeRevisionPanel />}
 
                 {activeTab === 'departments' && (
                     <div className="p-10 space-y-12 animate-in fade-in duration-500">

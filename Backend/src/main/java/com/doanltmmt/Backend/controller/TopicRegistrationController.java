@@ -1,6 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
+import com.doanltmmt.Backend.service.GradeService;
 import com.doanltmmt.Backend.service.TopicRegistrationService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class TopicRegistrationController {
 
     private final TopicRegistrationService service;
+    private final GradeService gradeService;
 
-    public TopicRegistrationController(TopicRegistrationService service) {
+    public TopicRegistrationController(TopicRegistrationService service, GradeService gradeService) {
         this.service = service;
+        this.gradeService = gradeService;
     }
 
     @PostMapping("/register")
@@ -62,7 +65,7 @@ public class TopicRegistrationController {
     @PreAuthorize("hasRole('LECTURER')")
     public TopicRegistrationDTO grade(@PathVariable Long regId,
                                    @RequestBody Map<String, Object> body) {
-        return service.grade(regId, body);
+        return gradeService.grade(regId, body);
     }
 }
 

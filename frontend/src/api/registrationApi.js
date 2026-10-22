@@ -37,8 +37,35 @@ export const registrationApi = {
     return res.data;
   },
 
-  grade: async (regId, score, feedback) => {
-    const res = await api.post(`/registration/grade/${regId}`, { score, feedback });
+  // reason: bắt buộc khi sửa điểm đã có (P2-13)
+  grade: async (regId, score, feedback, reason) => {
+    const res = await api.post(`/registration/grade/${regId}`, { score, feedback, reason: reason || undefined });
+    return res.data;
+  },
+
+  // --- Chấm lại (P2-13) ---
+  requestRevision: async (regId, reason) => {
+    const res = await api.post(`/registration/${regId}/grade-revisions`, { reason });
+    return res.data;
+  },
+
+  gradeHistory: async (regId) => {
+    const res = await api.get(`/registration/${regId}/grade-history`);
+    return res.data;
+  },
+
+  listRevisions: async (params = {}) => {
+    const res = await api.get("/grade-revisions", { params });
+    return res.data;
+  },
+
+  approveRevision: async (id, note, unlockHours) => {
+    const res = await api.post(`/grade-revisions/${id}/approve`, { note, unlockHours });
+    return res.data;
+  },
+
+  rejectRevision: async (id, note) => {
+    const res = await api.post(`/grade-revisions/${id}/reject`, { note });
     return res.data;
   },
 

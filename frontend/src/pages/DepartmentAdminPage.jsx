@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../api';
 import userApi from '../api/userApi';
 import { topicApi } from '../api/topicApi';
+import { useLocation } from 'react-router-dom';
 import InlineNotice from '../components/InlineNotice';
+import GradeRevisionPanel from '../components/GradeRevisionPanel';
 
 const normalizeKey = (value) => String(value ?? '').trim().toUpperCase();
 const getWorkspaceStatusLabel = (status) => {
@@ -26,7 +28,10 @@ const getTopicStatusLabel = (status) => {
 };
 
 export default function DepartmentAdminPage() {
-    const [activeTab, setActiveTab] = useState('workspaces');
+    const location = useLocation();
+    // ?tab=grade-revisions: mở thẳng tab duyệt chấm lại (liên kết từ thông báo)
+    const [activeTab, setActiveTab] = useState(() =>
+        new URLSearchParams(location.search).get('tab') === 'grade-revisions' ? 'gradeRevisions' : 'workspaces');
     const [loading, setLoading] = useState(false);
     const [notice, setNotice] = useState(null);
 
@@ -385,6 +390,7 @@ export default function DepartmentAdminPage() {
                     { id: 'workspaceClasses', label: 'Phân bổ Lớp', icon: 'hub' },
                     { id: 'assignments', label: 'Giảng viên & Quota', icon: 'assignment_ind' },
                     { id: 'topics', label: 'Duyệt Đề tài', icon: 'inventory_2' },
+                    { id: 'gradeRevisions', label: 'Yêu cầu chấm lại', icon: 'lock_reset' },
                     { id: 'stats', label: 'Báo cáo số liệu', icon: 'bar_chart' }
                 ].map(tab => (
                     <button 
@@ -404,7 +410,7 @@ export default function DepartmentAdminPage() {
 
             {/* Main Content Rendering Layer */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden min-h-[500px]">
-                {loading && activeTab !== 'stats' && (
+                {loading && activeTab !== 'stats' && activeTab !== 'gradeRevisions' && (
                     <div className="py-32 flex flex-col items-center justify-center opacity-30 select-none">
                         <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mb-4"></div>
                         <p className="text-[10px] font-black uppercase tracking-widest">Đang trích xuất dữ liệu...</p>
@@ -844,6 +850,8 @@ export default function DepartmentAdminPage() {
                         )}
                     </div>
                 )}
+
+                {activeTab === 'gradeRevisions' && <GradeRevisionPanel />}
 
                 {activeTab === 'stats' && !loading && (
                     <div className="p-10 space-y-12 animate-in fade-in duration-500">
