@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { registrationApi } from "../api/registrationApi";
 import { progressApi } from "../api/progressApi";
 import { fileApi } from "../api/fileApi";
+import FileDownloadButton from "../components/FileDownloadButton";
 import { connectAndSubscribe } from "../ws/stomp";
 import { useAuth } from "../context/AuthContext";
 import InlineNotice from "../components/InlineNotice";
@@ -131,16 +132,13 @@ function KanbanCard({ item, onMove, updating }) {
         <span className="text-[10px] font-bold text-outline">{fmtDate(item.createdAt)}</span>
         <div className="flex items-center gap-2">
           {item.fileUrl && (
-            <a
-              href={item.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <FileDownloadButton
+              fileUrl={item.fileUrl}
               className="text-primary hover:text-primary/70 transition-colors"
               title="Tài liệu đính kèm"
             >
               <span className="material-symbols-outlined text-[18px]">attach_file</span>
-            </a>
+            </FileDownloadButton>
           )}
           {item.lecturerComment && (
             <span className="material-symbols-outlined text-[18px] text-secondary" title={item.lecturerComment}>
@@ -341,7 +339,7 @@ export default function StudentProgressPage() {
     setSubmitting(true);
     try {
       let fileUrl = "";
-      if (file) fileUrl = await fileApi.upload(file);
+      if (file) fileUrl = (await fileApi.upload(file)).fileUrl;
       await progressApi.create(user.id, topicId, {
         title: title.trim(),
         content: content.trim(),
@@ -628,10 +626,10 @@ export default function StudentProgressPage() {
                               <p className="text-sm font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors">{it.title}</p>
                               <p className="text-[11px] text-outline mt-1.5 font-medium line-clamp-2 leading-relaxed">{it.content || "Không có mô tả chi tiết."}</p>
                               {it.fileUrl && (
-                                <a href={it.fileUrl} target="_blank" rel="noreferrer"
+                                <FileDownloadButton fileUrl={it.fileUrl}
                                   className="inline-flex items-center gap-1.5 mt-3 text-[10px] font-black text-primary uppercase tracking-widest hover:underline">
                                   <span className="material-symbols-outlined text-sm">attach_file</span>Tài liệu đính kèm
-                                </a>
+                                </FileDownloadButton>
                               )}
                             </td>
                             <td className="px-8 py-6 text-center">

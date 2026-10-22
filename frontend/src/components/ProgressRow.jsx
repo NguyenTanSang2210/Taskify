@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import FileDownloadButton from "./FileDownloadButton";
 
 export default function ProgressRow({ item, loadingId, onSave }) {
   const student = item.student || {};
@@ -45,15 +46,13 @@ export default function ProgressRow({ item, loadingId, onSave }) {
           <span className="text-sm font-black text-on-surface leading-snug">{item.title}</span>
           <p className="text-xs text-outline line-clamp-2 italic">{item.content}</p>
           {item.fileUrl && (
-            <a 
-              href={item.fileUrl} 
-              target="_blank" 
-              rel="noreferrer" 
+            <FileDownloadButton
+              fileUrl={item.fileUrl}
               className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-black text-primary hover:underline uppercase tracking-widest"
             >
               <span className="material-symbols-outlined text-sm">attach_file</span>
               Tải tài liệu đính kèm
-            </a>
+            </FileDownloadButton>
           )}
         </div>
       </td>

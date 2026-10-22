@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { registrationApi } from "../api/registrationApi";
 import { progressApi } from "../api/progressApi";
 import { fileApi } from "../api/fileApi";
+import FileDownloadButton from "../components/FileDownloadButton";
 import { topicApi } from "../api/topicApi";
 import { connectAndSubscribe } from "../ws/stomp";
 import ProgressRow from "../components/ProgressRow";
@@ -123,7 +124,7 @@ export default function ProjectSpacePage() {
     try {
       let fileUrl = "";
       if (file) {
-        fileUrl = await fileApi.upload(file);
+        fileUrl = (await fileApi.upload(file)).fileUrl;
       }
       await progressApi.create(user.id, topicId, {
         title: title.trim(),
@@ -450,15 +451,12 @@ export default function ProjectSpacePage() {
                                  </td>
                                  <td className="px-8 py-6 text-right">
                                     {it.fileUrl ? (
-                                       <a 
-                                          href={it.fileUrl} 
-                                          target="_blank" 
-                                          rel="noreferrer" 
+                                       <FileDownloadButton
+                                          fileUrl={it.fileUrl}
                                           className="p-2.5 rounded-xl bg-surface-container text-primary hover:bg-primary hover:text-white transition-all shadow-sm inline-flex"
-                                          title="Tải tệp đính kèm"
                                        >
                                           <span className="material-symbols-outlined text-lg">download</span>
-                                       </a>
+                                       </FileDownloadButton>
                                     ) : (
                                        <span className="material-symbols-outlined text-outline/20">block</span>
                                     )}

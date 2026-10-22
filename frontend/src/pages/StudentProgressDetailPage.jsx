@@ -4,6 +4,7 @@ import InlineNotice from "../components/InlineNotice";
 import { milestoneApi } from "../api/milestoneApi";
 import { progressApi } from "../api/progressApi";
 import { fileApi } from "../api/fileApi";
+import FileDownloadButton from "../components/FileDownloadButton";
 import { useAuth } from "../context/AuthContext";
 
 export default function StudentProgressDetailPage() {
@@ -272,15 +273,13 @@ export default function StudentProgressDetailPage() {
                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Đã tải lên hệ thống</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                   <a 
-                                      href={fileUrl} 
-                                      target="_blank" 
-                                      rel="noreferrer"
+                                   <FileDownloadButton
+                                      fileUrl={fileUrl}
                                       className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"
-                                      title="Xem tệp"
+                                      title="Tải tệp"
                                    >
-                                      <span className="material-symbols-outlined text-lg">visibility</span>
-                                   </a>
+                                      <span className="material-symbols-outlined text-lg">download</span>
+                                   </FileDownloadButton>
                                    <button 
                                       onClick={() => { setFileUrl(""); setFile(null); }}
                                       className="p-2 text-error hover:bg-error/10 rounded-lg transition-all"

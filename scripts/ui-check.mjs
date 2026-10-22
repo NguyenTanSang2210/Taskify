@@ -7,7 +7,8 @@
  * Kiểm tra: (1) trang đăng nhập không có vi phạm CSP / lỗi console, (2) sinh viên đăng nhập → dashboard,
  * (3) vào các trang tiến độ / thông báo / chat / tài khoản không vi phạm CSP, (4) màn "Kích hoạt tài khoản" mở được
  * và không còn nút "Đăng ký ngay", (5) ADMIN: đăng nhập → bước OTP hiển thị (không vào thẳng hệ thống),
- * (6) 403 chỉ hiện thông báo — vẫn đăng nhập; 401 → về trang đăng nhập kèm lý do, (7) token hết hạn sẵn → tự đăng xuất.
+ * (6) 403 chỉ hiện thông báo — vẫn đăng nhập; 401 → về trang đăng nhập kèm lý do, (7) token hết hạn sẵn → tự đăng xuất,
+ * (8) tải file đính kèm bằng nút (gửi token).
  * Ảnh chụp lưu ở Plan/reports/ui-*.png.
  *
  * Biến môi trường: WEB_URL (mặc định http://localhost:5175), PASSWORD (123456), EDGE_PATH, PW_MODULE, SHOT_DIR.
@@ -76,6 +77,27 @@ try {
       await page.goto(`${WEB}${route}`, { waitUntil: "networkidle" });
     }
     report(problems.length === 0, "Các trang sinh viên: không vi phạm CSP / lỗi script", problems.join(" | "));
+    await ctx.close();
+  }
+
+  // 8 (P2-03): tải file đính kèm bằng nút (gửi kèm token) — thẻ <a href> trước đây bị 401
+  {
+    const { ctx, page } = await freshPage();
+    await page.goto(`${WEB}/login`, { waitUntil: "networkidle" });
+    await page.fill("input >> nth=0", "student");
+    await page.fill("input[type=password]", PASSWORD);
+    await page.click("button[type=submit]");
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 15000 });
+    await page.goto(`${WEB}/progress`, { waitUntil: "networkidle" });
+    const btn = page.locator("button[title='Tài liệu đính kèm']").first();
+    if ((await btn.count()) === 0) {
+      report(false, "Tải file đính kèm", "không có báo cáo nào kèm file (chạy smoke-test.mjs trước để tạo dữ liệu)");
+    } else {
+      const [download] = await Promise.all([page.waitForEvent("download", { timeout: 10000 }), btn.click()]);
+      const failure = await download.failure();
+      report(!failure && !!download.suggestedFilename(), "Tải file đính kèm bằng nút (có token) thành công",
+        failure || `tên file: ${download.suggestedFilename()}`);
+    }
     await ctx.close();
   }
 
