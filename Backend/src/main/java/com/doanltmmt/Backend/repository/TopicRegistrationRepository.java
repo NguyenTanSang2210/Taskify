@@ -2,11 +2,27 @@ package com.doanltmmt.Backend.repository;
 
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface TopicRegistrationRepository extends JpaRepository<TopicRegistration, Long> {
+
+    /** SV đã được duyệt, workspace đang thực hiện, chưa gửi báo cáo tiến độ nào kể từ {@code since}. */
+    @Query("""
+            select r from TopicRegistration r
+              join fetch r.student s join fetch s.user join fetch r.topic t
+            where r.approved = true and t.workspace.status = 'IN_PROGRESS'
+              and not exists (select p.id from ProgressReport p
+                              where p.student = r.student and p.topic = r.topic and p.createdAt >= :since)
+            """)
+    List<TopicRegistration> findApprovedWithoutProgressSince(@Param("since") LocalDateTime since);
+
+    List<TopicRegistration> findByTopic_IdAndApprovedTrue(Long topicId);
 
     List<TopicRegistration> findByTopic_Id(Long topicId);
 

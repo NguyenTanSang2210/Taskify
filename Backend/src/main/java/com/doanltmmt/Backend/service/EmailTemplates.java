@@ -109,6 +109,22 @@ public final class EmailTemplates {
                 p("Đề tài <b>" + esc(topicTitle) + "</b> của bạn đã được chấm: <b>" + formatScore(score) + "</b> điểm.") + fb));
     }
 
+    // ------------------------------------------------------------------ nhắc việc
+
+    public static Mail progressReminder(String topicTitle, int days) {
+        return new Mail("Taskify - Nhắc gửi báo cáo tiến độ", layout("Nhắc gửi báo cáo tiến độ",
+                p("Bạn chưa gửi báo cáo tiến độ nào trong <b>" + days + " ngày</b> gần đây cho đề tài <b>"
+                        + esc(topicTitle) + "</b>.")
+                        + p("Vào mục <b>Tiến độ</b> trên Taskify để cập nhật cho giảng viên hướng dẫn.")));
+    }
+
+    public static Mail milestoneReminder(String milestoneTitle, String topicTitle, String deadline, boolean dueToday) {
+        String when = dueToday ? "<b>hết hạn hôm nay</b>" : "sẽ hết hạn vào <b>" + esc(deadline) + "</b>";
+        return new Mail("Taskify - Nhắc hạn mốc " + (dueToday ? "(hôm nay)" : "sắp tới"), layout("Nhắc hạn mốc tiến độ",
+                p("Mốc <b>" + esc(milestoneTitle) + "</b> của đề tài <b>" + esc(topicTitle) + "</b> " + when + ".")
+                        + p("Hãy nộp báo cáo cho mốc này trước hạn để giảng viên kịp nhận xét.")));
+    }
+
     static String formatScore(Double score) {
         if (score == null) return "—";
         return score % 1 == 0 ? String.valueOf(score.intValue()) : String.format(Locale.ROOT, "%.2f", score).replaceAll("0+$", "");
