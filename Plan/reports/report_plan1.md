@@ -17,6 +17,9 @@
 7. ["claude" trong commit: nguyên nhân & cách gỡ](#7-claude-trong-commit-nguyên-nhân--cách-gỡ)
 8. [Việc cần chủ dự án làm để đóng Giai đoạn 1](#8-việc-cần-chủ-dự-án-làm-để-đóng-giai-đoạn-1)
 9. [Phụ lục — môi trường & cách chạy lại](#9-phụ-lục--môi-trường--cách-chạy-lại)
+10. [Kiểm tra lại lần 2 — 22/10/2026](#10-kiểm-tra-lại-lần-2--22102026-rà-soát-code-sạch--xác-nhận-hoàn-thành)
+11. [Đóng Giai đoạn 0 & 1 — 22/10/2026](#11-đóng-giai-đoạn-0--1--22102026)
+12. [Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng (hoàn thành 13/13)](#12-giai-đoạn-2--sửa-lỗi-nghiệp-vụ--chức-năng-hoàn-thành-1313)
 
 ---
 
@@ -389,3 +392,93 @@ Chạy lại toàn bộ trên máy sạch, code tại commit `faf48ad`:
 - **10 PR của Dependabot** (#4–#13) đang nhắm vào `main`, trái quy trình `develop` → `main`. Đề xuất: thêm `target-branch: develop` vào `.github/dependabot.yml`; gộp các bản vá nhỏ (nhóm *minor-and-patch*, `actions/*`); **không** gộp vội các bản nâng **major** — `springdoc-openapi` 3.x (yêu cầu Spring Boot 4), `eslint` 10, `@vitejs/plugin-react` 6, `globals` 17 — cần thử riêng.
 - Xóa `D:\Taskify-old` sau 1–2 tuần và backup `D:\taskify-rewrite` sau ~30 ngày.
 
+---
+
+## 12. Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng (hoàn thành 13/13)
+
+> Thực hiện 22/10/2026 trên nhánh `develop` (`a60693b` → `ea56b02`, đã push). Chờ chủ dự án merge `develop` → `main` và tạo tag `v0.3.0-business`.
+
+### 12.1. Thứ tự ưu tiên: 10 PR Dependabot hay P2-01 trước?
+
+| Tiêu chí | 10 PR Dependabot (#4–#13) | P2-01 |
+|---|---|---|
+| Có lỗ hổng bảo mật đang mở? | **Không** — đều là nâng phiên bản thường kỳ (`npm audit` = 0, không có Dependabot security alert) | — |
+| Chặn người dùng? | Không | **Có** — giảng viên không tạo được đề tài (smoke #5) |
+| Rủi ro khi gộp | 4 bản **major** có thể làm hỏng build | Thấp |
+
+**Quyết định:** làm **P2-01 trước** (`e465e30`), sau đó xử lý Dependabot (`a60693b`) trước khi sửa tiếp frontend — để mọi task sau được kiểm thử trên thư viện mới.
+
+| PR | Nâng cấp | Kết quả |
+|---|---|---|
+| #4, #5, #6 | `actions/checkout` 7, `setup-java` 6, `setup-node` 7 | ✅ Áp dụng |
+| #8 | Maven wrapper 3.10.0 | ✅ Áp dụng |
+| #9 | `jjwt` 0.13.0 | ✅ Áp dụng — 0 thay đổi API, test JWT đạt |
+| #10, #11, #12 | Nhóm npm *minor/patch*, `eslint` 10 + `@eslint/js` 10, `globals` 17 | ✅ Áp dụng — sửa 1 lỗi lint mới (`preserve-caught-error`); 34 cảnh báo mới của React Compiler để mức *warn*, xử lý ở **P3-11** |
+| #7 | `springdoc-openapi` 3.x | ❌ Từ chối — yêu cầu Spring Boot 4 (dự án dùng 3.5) |
+| #13 | `@vitejs/plugin-react` 6 | ❌ Từ chối — yêu cầu Vite 8 (dự án dùng rolldown-vite 7) |
+
+Đồng thời `.github/dependabot.yml`: thêm `target-branch: develop` cho cả 3 hệ sinh thái và bỏ qua bản major của 2 gói trên → PR sau này đi đúng quy trình `develop` → `main`.
+
+### 12.2. Kết quả từng task
+
+| Task | Đã làm | Commit | Kiểm thử |
+|---|---|---|---|
+| **P2-01** | Quyền `TOPIC_MANAGE` cho giảng viên; initializer chỉ gán quyền mặc định khi tạo vai trò lần đầu (không ghi đè chỉnh sửa của Admin); bước dữ liệu một lần cho DB cũ; người hướng dẫn phải là tài khoản giảng viên | `e465e30` | `TopicManagementIT` (8) |
+| **P2-02** | 401 → về đăng nhập kèm "phiên hết hạn"; 403 → chỉ thông báo, giữ đăng nhập; toast lỗi toàn cục (mạng, 5xx); tự đăng xuất đúng lúc JWT hết hạn | `e9fe4a9` | `ui-check` mục 6–7 |
+| **P2-03** | Nộp báo cáo kèm file đúng `fileUrl`; tải file bằng nút có token (thay 5 thẻ `<a href>`); nginx nhận file tới 25 MB; bỏ proxy `/uploads` | `33d2cac` | smoke #11, #12, #13, #21; `ui-check` mục 8 |
+| **P2-04** | Nhiều SV/đề tài theo `capacity` (D-01 = B): khóa dòng đề tài khi duyệt (không vượt chỗ khi duyệt đồng thời), `OPEN ⇄ FULL` tự cập nhật, `COMPLETED` khi mọi SV có điểm, unique `(student_id, topic_id)`; thẻ đề tài hiện "2/3 chỗ" | `90ba967` | `TopicCapacityIT` (6), smoke #9b |
+| **P2-05** | Quên mật khẩu 3 bước, mã 10 phút qua email, không dò được tài khoản, giới hạn 3 lần/15 phút/tài khoản + 10 lần/IP; đặt lại xong thu hồi mọi phiên cũ; audit | `50024ce`, `65bbbf0` | `PasswordResetIT` (7), smoke #20 |
+| **P2-06** | Email gửi **sau khi giao dịch commit**, bất đồng bộ (pool `mail-`), thử lại 3 lần; mẫu HTML tiếng Việt cho mọi email (escape dữ liệu người dùng) + bản văn bản thuần | `f812ea1` | `EmailDispatchIT` (5), `EmailTemplatesTest` (4); đăng nhập vẫn 0,13–0,39 s khi SMTP treo |
+| **P2-07** | Nhắc tiến độ bằng **một** truy vấn (thay `findAll` + N+1), chống trùng 7 ngày, giờ Việt Nam; **mới:** nhắc hạn mốc còn 2 ngày (WARNING) và ngày cuối (CRITICAL), mỗi mức 1 lần; kèm email | `1668ce9` | `ReminderServiceIT` (4) |
+| **P2-08** | So trùng lặp giữ chữ có dấu (NFC, `\p{L}`), bỏ hư từ, tính cả cặp tiếng; so với mọi báo cáo trong cùng đợt; lưu `similarity_score`, `similar_to_report_id`; GV thấy badge "Trùng lặp X% với báo cáo #…", SV không thấy | `5cc8832` | `SimilarityServiceTest` (6), `ProgressSimilarityIT` |
+| **P2-09** | 12 ràng buộc: điểm 0–10 lẻ 0,25; không ghi đè `status` khi sửa đề tài; `capacity` 1–10 (không nhỏ hơn số SV đã duyệt); deadline sai → 400 (trước đây bị bỏ qua); milestone/đợt kiểm tra ngày; tin nhắn/thảo luận/lịch/thông báo kiểm tra id + độ dài; form frontend kiểm tra sớm | `7ef3e3f` | `BusinessValidationIT` (10) |
+| **P2-10** | Route `/admin/roles` + mục sidebar; không xóa 4 vai trò hệ thống; vai trò còn người dùng → 400 kèm số người | `5936d04`, `78dad5e` | `RoleServiceTest` (+4), `ui-check-gd2` |
+| **P2-11** | Xóa ProjectPermission (D-07): entity/repo/controller/DTO; bảng `project_permissions` tự xóa nếu rỗng (DB dev + Docker đều 0 dòng) | `16aa680` | `RemovedFeaturesIT` (2) — `/api/permissions` → 404 |
+| **P2-13** | Khóa điểm khi đợt `CLOSED` (D-08); yêu cầu chấm lại → quản trị khoa/Admin duyệt (mở khóa 1–168 giờ) → GV sửa **một lần** (bắt buộc lý do) → khóa lại; quá hạn → `EXPIRED` (job mỗi giờ); lịch sử điểm; thông báo + email + audit; Excel thêm cột "Đã chấm lại"; giao diện: badge 🔒, nút yêu cầu, tab duyệt, modal lịch sử | `d2c279b` | `GradeRevisionIT` (7), `ui-check-gd2` (11 mục) |
+| **P2-12** | `FullLifecycleIT`: toàn bộ vòng đời qua API (tạo đợt → … → chấm lại); chặn 500 ở các API quản trị còn lại | `ea56b02` | 1 test end-to-end, `BusinessValidationIT` (+1) |
+
+### 12.3. Lỗi phát hiện thêm khi kiểm thử giao diện — đã sửa
+
+| # | Lỗi | Mức độ | Sửa trong |
+|---|---|---|---|
+| 1 | Form tạo đề tài của giảng viên **không gửi đợt (workspace)** → luôn 400; cũng không có ô số SV | 🔴 Chặn chức năng | P2-09: thêm chọn đợt (`GET /api/workspaces/open-for-topics`) + số SV |
+| 2 | Tạo đề tài nhận nguyên entity từ body: gửi kèm `id` sẽ **ghi đè đề tài khác** | 🟠 Toàn vẹn dữ liệu | P2-09: luôn tạo mới |
+| 3 | Trang Vai trò dùng `axios` trần — không gửi token → luôn 401 | 🔴 | `78dad5e` |
+| 4 | Trang Duyệt đăng ký không tự tải dữ liệu (phải bấm "Làm mới"), ô chọn đề tài là ô nhập mã mặc định "1"; tên SV / người duyệt hiển thị trống, tìm kiếm không hoạt động (đọc sai trường DTO) | 🟠 | P2-13 |
+| 5 | Trang Đăng ký của tôi (SV): tên GV trống, **không hiển thị điểm** | 🟡 | P2-13 |
+| 6 | Gán lớp, phân công GV, tạo user/lớp: id thiếu/sai → 500 (`Long.valueOf("null")`) | 🟡 | P2-12 |
+| 7 | Thông báo tiến độ/điểm viết không dấu ("Sinh vien gui bao cao") | 🟢 | P2-08, P2-09 |
+
+### 12.4. Kết quả kiểm thử cuối (code `ea56b02`)
+
+| Hạng mục | Kết quả |
+|---|---|
+| Test backend | **267/267** đạt (đầu GĐ2: 202) — 0 cảnh báo `javac` |
+| Phân tích mã thừa (ECJ: import/biến/hàm không dùng, dead code) | **0** cảnh báo (main + test) |
+| Smoke test toàn luồng (`scripts/smoke-test.mjs`) | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** (29 kịch bản; 6 BUG của GĐ2 → FIXED) |
+| Giao diện (`ui-check.mjs`) | 13/13 đạt |
+| Giao diện GĐ2 (`ui-check-gd2.mjs`, mới) | **18/18** đạt — tạo đề tài, trang vai trò, toàn bộ luồng khóa điểm/chấm lại |
+| WebSocket (`ws-check.mjs`) | Đạt |
+| ESLint | 0 lỗi · 34 cảnh báo (quy tắc mới React Compiler — P3-11) · build Vite đạt |
+
+Ảnh chụp: `scripts/ui-check-gd2.mjs` lưu `Plan/reports/ui-gd2-*.png` khi chạy trên máy bạn (cần chạy `smoke-test.mjs` trước).
+
+### 12.5. Còn tồn tại — đề xuất
+
+| # | Vấn đề | Mức độ | Đề xuất |
+|---|---|---|---|
+| 1 | Container backend chạy múi giờ **UTC**: thời gian lưu và hiển thị lệch 7 giờ so với giờ Việt Nam (ví dụ lịch sử điểm ghi 09:38 thay vì 16:38). Lịch nhắc việc đã chạy đúng giờ Việt Nam | 🟡 | Quyết định trước P3-01: đặt `TZ=Asia/Ho_Chi_Minh` cho backend (+ chuyển dữ liệu cũ) **hoặc** trả thời gian kèm múi giờ cho frontend. Đề xuất đưa vào P3-08/P3-12 |
+| 2 | Bảng/cột mới tạo bằng `ddl-auto` (`grade_revision_requests`, `grade_history`, `data_migrations`, 2 cột trùng lặp) và 3 bước dữ liệu trong `DataMigrationRunner` | 🟡 | Chuyển hết sang Flyway ở **P3-01** |
+| 3 | 34 cảnh báo lint React Compiler | 🟢 | **P3-11** (tách trang lớn) |
+| 4 | Chưa có giao diện tạo/sửa milestone (chỉ có API) | 🟢 | **P4-05** |
+| 5 | Tab "Báo cáo số liệu" của quản trị khoa còn số liệu cứng (84,2%, "06") | 🟢 | **P4-01** |
+| 6 | PR Dependabot #7, #13 (major không tương thích) và các PR cũ nhắm `main` | 🟢 | Sau khi merge `develop` → `main`: PR đã có bản mới hơn sẽ tự đóng; PR nào còn mở thì đóng thủ công kèm lý do ở 12.1 |
+
+### 12.6. Việc chủ dự án cần làm để đóng Giai đoạn 2
+
+1. Trên GitHub: tạo PR `develop` → `main`, chờ CI xanh (backend test, frontend lint/build, CodeQL), **merge bằng merge commit**.
+2. Tạo tag: `git fetch origin && git tag -a v0.3.0-business origin/main -m "Giai đoạn 2: sửa lỗi nghiệp vụ & chức năng" && git push origin v0.3.0-business`.
+3. Trên máy: `git checkout develop && git pull` — DB cũ được tự nâng cấp khi khởi động (thêm bảng mới, xóa `project_permissions` nếu rỗng, tính lại trạng thái đề tài).
+4. Đóng các PR Dependabot còn mở (mục 12.5 #6).
+
+**Bước tiếp theo sau đó: Giai đoạn 3 — Củng cố kỹ thuật**, bắt đầu bằng **P3-01 Flyway** (gom mọi thay đổi schema của GĐ1–GĐ2 vào migration, bỏ `ddl-auto`).

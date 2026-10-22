@@ -1,6 +1,6 @@
 # KẾ HOẠCH PHÁT TRIỂN TASKIFY — GIAI ĐOẠN 0 → 4
 
-> **Phiên bản kế hoạch:** 1.5 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 22/10/2026 (**đóng Giai đoạn 0 và 1**; bước tiếp theo: Giai đoạn 2 — xem `Plan/reports/report_plan1.md` mục 11) · **Người thực hiện:** NguyenTanSang2210
+> **Phiên bản kế hoạch:** 1.6 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 22/10/2026 (**hoàn thành 13/13 task Giai đoạn 2** trên `develop` — chờ merge `develop` → `main` + tag `v0.3.0-business`; báo cáo: `Plan/reports/report_plan1.md` mục 12) · **Người thực hiện:** NguyenTanSang2210
 > **Căn cứ:** Báo cáo phân tích hiện trạng mã nguồn ngày 25/09/2026 (commit `b2646d7` trên `main`).
 > **Mục tiêu tổng:** Đưa Taskify từ trạng thái "đồ án chạy demo được" lên "sản phẩm an toàn, ổn định, có thể triển khai thật", sau đó mới mở rộng tính năng.
 
@@ -74,7 +74,7 @@
 |---|---|:---:|:---:|:---:|---|---|---|
 | **0** | Khôi phục môi trường & baseline | 9 | 1,5–2 ngày | ✅ (9/9) | 25/09/2026 | 22/10/2026 | `v0.1.0-baseline` ✅ |
 | **1** | Vá bảo mật | 13 | 8–10 ngày | ✅ (13/13) | 30/09/2026 | 22/10/2026 | `v0.2.0-security` ✅ |
-| **2** | Sửa lỗi nghiệp vụ & chức năng | 13 | 8–10 ngày | ⬜ | | | `v0.3.0-business` |
+| **2** | Sửa lỗi nghiệp vụ & chức năng | 13 | 8–10 ngày | ✅ (13/13) | 22/10/2026 | 22/10/2026 | `v0.3.0-business` ⏳ (chờ merge) |
 | **3** | Củng cố kỹ thuật | 14 | 12–15 ngày | ⬜ | | | `v0.4.0-hardening` |
 | **4** | Tính năng mới & triển khai | 11 (2 task 🕒 để sau v1.0) | Theo backlog | ⬜ | | | `v1.0.0` |
 | | **Tổng** | **60** (58 task cho v1.0 + 2 task 🕒 sau v1.0) | **~31–37 ngày công** (chưa gồm GĐ4) | | | | |
@@ -119,19 +119,19 @@
 | P1-11 | Security headers, tắt Swagger ở prod | P1 | 2h | ✅ |
 | P1-12 | Bộ test hồi quy phân quyền | P0 | 1 ngày | ✅ |
 | P1-13 | Nâng cấp dependency backend + Dependabot | P1 | 0,5 ngày | ✅ |
-| P2-01 | Cấp quyền TOPIC_MANAGE cho giảng viên + sửa initializer | P0 | 2h | ⬜ |
-| P2-02 | Tách xử lý 401/403 ở frontend + toast lỗi | P0 | 0,5 ngày | ⬜ |
-| P2-03 | Sửa lỗi upload/tải file đính kèm | P0 | 0,5 ngày | ⬜ |
-| P2-04 | Mô hình nhiều sinh viên/đề tài (capacity) | P1 | 1,5 ngày | ⬜ |
-| P2-05 | Chức năng Quên mật khẩu | P1 | 1 ngày | ⬜ |
-| P2-06 | Gửi email bất đồng bộ + template tiếng Việt | P1 | 0,5 ngày | ⬜ |
-| P2-07 | Sửa scheduler nhắc nhở + nhắc hạn milestone | P1 | 0,5 ngày | ⬜ |
-| P2-08 | Kiểm tra trùng lặp hỗ trợ tiếng Việt | P2 | 0,5 ngày | ⬜ |
-| P2-09 | Ràng buộc nghiệp vụ (điểm, trạng thái, ngày) | P1 | 0,5 ngày | ⬜ |
-| P2-10 | Route cho RoleManagementPage + chặn xóa role đang dùng | P2 | 2h | ⬜ |
-| P2-11 | Xóa tính năng ProjectPermission | P2 | 1h | ⬜ |
-| P2-12 | Kiểm thử hồi quy nghiệp vụ toàn luồng | P0 | 0,5 ngày | ⬜ |
-| P2-13 | Khóa điểm & quy trình chấm lại | P1 | 1 ngày | ⬜ |
+| P2-01 | Cấp quyền TOPIC_MANAGE cho giảng viên + sửa initializer | P0 | 2h | ✅ |
+| P2-02 | Tách xử lý 401/403 ở frontend + toast lỗi | P0 | 0,5 ngày | ✅ |
+| P2-03 | Sửa lỗi upload/tải file đính kèm | P0 | 0,5 ngày | ✅ |
+| P2-04 | Mô hình nhiều sinh viên/đề tài (capacity) | P1 | 1,5 ngày | ✅ |
+| P2-05 | Chức năng Quên mật khẩu | P1 | 1 ngày | ✅ |
+| P2-06 | Gửi email bất đồng bộ + template tiếng Việt | P1 | 0,5 ngày | ✅ |
+| P2-07 | Sửa scheduler nhắc nhở + nhắc hạn milestone | P1 | 0,5 ngày | ✅ |
+| P2-08 | Kiểm tra trùng lặp hỗ trợ tiếng Việt | P2 | 0,5 ngày | ✅ |
+| P2-09 | Ràng buộc nghiệp vụ (điểm, trạng thái, ngày) | P1 | 0,5 ngày | ✅ |
+| P2-10 | Route cho RoleManagementPage + chặn xóa role đang dùng | P2 | 2h | ✅ |
+| P2-11 | Xóa tính năng ProjectPermission | P2 | 1h | ✅ |
+| P2-12 | Kiểm thử hồi quy nghiệp vụ toàn luồng | P0 | 0,5 ngày | ✅ |
+| P2-13 | Khóa điểm & quy trình chấm lại | P1 | 1 ngày | ✅ |
 | P3-01 | Flyway migration, bỏ ddl-auto & SchemaFixer | P1 | 1 ngày | ⬜ |
 | P3-02 | Request DTO + Bean Validation | P1 | 1,5 ngày | ⬜ |
 | P3-03 | Global exception handler + chuẩn hóa lỗi | P1 | 0,5 ngày | ⬜ |
@@ -960,7 +960,7 @@ Admin có nút "Gửi lại email kích hoạt"
 
 ---
 
-### ⬜ P2-01 — Cấp quyền TOPIC_MANAGE cho giảng viên + sửa initializer
+### ✅ P2-01 — Cấp quyền TOPIC_MANAGE cho giảng viên + sửa initializer
 
 **Mức độ:** 🔴 Chặn chức năng
 **Vấn đề:**
@@ -969,37 +969,37 @@ Admin có nút "Gửi lại email kích hoạt"
 3. Initializer gọi `setPrivileges(...)` **mỗi lần khởi động** → mọi chỉnh sửa quyền qua trang quản lý vai trò **bị ghi đè khi restart**.
 
 **Các bước:**
-- [ ] Xác nhận lỗi bằng kịch bản #5 ở P0-05.
-- [ ] Thêm `TOPIC_MANAGE` vào quyền mặc định của LECTURER (logic chỉ sửa đề tài của mình đã có ở `TopicService.canModifyTopic`).
-- [ ] Sửa initializer: **chỉ gán privileges mặc định khi role được tạo mới lần đầu**; role đã tồn tại → giữ nguyên (chỉ bổ sung privilege mới nếu cần qua migration).
+- [x] Xác nhận lỗi bằng kịch bản #5 ở P0-05.
+- [x] Thêm `TOPIC_MANAGE` vào quyền mặc định của LECTURER (logic chỉ sửa đề tài của mình đã có ở `TopicService.canModifyTopic`).
+- [x] Sửa initializer: **chỉ gán privileges mặc định khi role được tạo mới lần đầu**; role đã tồn tại → giữ nguyên (chỉ bổ sung privilege mới nếu cần qua migration).
   > Về lâu dài chuyển sang Flyway seed ở P3-01 và xóa initializer.
-- [ ] Với DB đang có: viết script/migration thêm `TOPIC_MANAGE` cho LECTURER một lần.
-- [ ] Test: LECTURER tạo đề tài trong workspace `OPEN_TOPIC` → 200; LECTURER sửa đề tài của GV khác → 403.
+- [x] Với DB đang có: viết script/migration thêm `TOPIC_MANAGE` cho LECTURER một lần.
+- [x] Test: LECTURER tạo đề tài trong workspace `OPEN_TOPIC` → 200; LECTURER sửa đề tài của GV khác → 403.
 
 **✅ Nghiệm thu:** Giảng viên tạo/sửa/đóng/mở đề tài được; đổi quyền qua trang Role → restart → quyền vẫn giữ.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `e465e30`
 
 ---
 
-### ⬜ P2-02 — Tách xử lý 401/403 ở frontend + toast lỗi
+### ✅ P2-02 — Tách xử lý 401/403 ở frontend + toast lỗi
 
 **Mức độ:** 🔴 Trải nghiệm nghiêm trọng
 **Vấn đề:** `FE/api.js:57` — mọi 401 **và 403** đều xóa token và chuyển về `/login`. Bất kỳ thao tác nào bị từ chối quyền (kể cả "Out of scope" hợp lệ) đều đá người dùng ra. Commit `3dc87b8` đã phải vá cục bộ lỗi này cho Kanban.
 
 **Các bước:**
-- [ ] `api.js`: **401** → logout + redirect login (kèm `?reason=expired`); **403** → chỉ reject lỗi với message "Bạn không có quyền thực hiện thao tác này".
-- [ ] Xóa cơ chế "retry direct backend" phức tạp (`canRetryDirect`) nếu không còn cần — dev đã có Vite proxy; kiểm tra kỹ trước khi xóa.
-- [ ] Tạo `FE/components/Toast.jsx` + `ToastContext` hiển thị lỗi toàn cục (hoặc dùng thư viện `sonner`/`react-hot-toast`).
-- [ ] Trang login: hiển thị "Phiên đăng nhập đã hết hạn" khi `reason=expired`.
-- [ ] Tự động logout khi token hết hạn: decode `exp` trong JWT, đặt timer.
-- [ ] Rà các trang đang tự bắt 403 riêng (Kanban) → dùng cơ chế chung.
+- [x] `api.js`: **401** → logout + redirect login (kèm `?reason=expired`); **403** → chỉ reject lỗi với message "Bạn không có quyền thực hiện thao tác này".
+- [x] Xóa cơ chế "retry direct backend" phức tạp (`canRetryDirect`) nếu không còn cần — dev đã có Vite proxy; kiểm tra kỹ trước khi xóa.
+- [x] Tạo `FE/components/Toast.jsx` + `ToastContext` hiển thị lỗi toàn cục (hoặc dùng thư viện `sonner`/`react-hot-toast`).
+- [x] Trang login: hiển thị "Phiên đăng nhập đã hết hạn" khi `reason=expired`.
+- [x] Tự động logout khi token hết hạn: decode `exp` trong JWT, đặt timer.
+- [x] Rà các trang đang tự bắt 403 riêng (Kanban) → dùng cơ chế chung.
 
 **✅ Nghiệm thu:** SV cố truy cập tài nguyên không có quyền → thấy thông báo lỗi, **vẫn đăng nhập**.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `e9fe4a9`
 
 ---
 
-### ⬜ P2-03 — Sửa lỗi upload/tải file đính kèm
+### ✅ P2-03 — Sửa lỗi upload/tải file đính kèm
 
 **Mức độ:** 🔴 Chặn chức năng
 **Vấn đề (phát hiện khi đối chiếu code):**
@@ -1009,19 +1009,19 @@ Admin có nút "Gửi lại email kích hoạt"
 4. Vite proxy `/uploads` thừa (backend đã chặn truy cập trực tiếp).
 
 **Các bước:**
-- [ ] Sửa `ProjectSpacePage.jsx`: `const up = await fileApi.upload(file); fileUrl = up.fileUrl;` (hoặc dùng `fileId` sau P1-07).
-- [ ] Tạo `fileApi.download(fileUrl, fileName)`: gọi axios với `responseType: 'blob'` → tạo `URL.createObjectURL` → tự click tải.
-- [ ] Thay mọi `<a href={fileUrl}>` bằng nút gọi `fileApi.download`.
-- [ ] `nginx.conf`: thêm `client_max_body_size 25m;` (khớp giới hạn backend ở P1-07).
-- [ ] Xóa proxy `/uploads` trong `vite.config.js`.
-- [ ] Test thủ công kịch bản #11, #12, #13, #21 ở P0-05.
+- [x] Sửa `ProjectSpacePage.jsx`: `const up = await fileApi.upload(file); fileUrl = up.fileUrl;` (hoặc dùng `fileId` sau P1-07).
+- [x] Tạo `fileApi.download(fileUrl, fileName)`: gọi axios với `responseType: 'blob'` → tạo `URL.createObjectURL` → tự click tải.
+- [x] Thay mọi `<a href={fileUrl}>` bằng nút gọi `fileApi.download`.
+- [x] `nginx.conf`: thêm `client_max_body_size 25m;` (khớp giới hạn backend ở P1-07).
+- [x] Xóa proxy `/uploads` trong `vite.config.js`.
+- [x] Test thủ công kịch bản #11, #12, #13, #21 ở P0-05.
 
 **✅ Nghiệm thu:** Nộp báo cáo kèm file 10MB từ **cả hai trang** qua Docker thành công; GV tải được file, tên file đúng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `33d2cac`
 
 ---
 
-### ⬜ P2-04 — Mô hình nhiều sinh viên/đề tài (capacity)
+### ✅ P2-04 — Mô hình nhiều sinh viên/đề tài (capacity)
 
 **Mức độ:** 🟠 Cao
 **Vấn đề:** `BE/service/TopicRegistrationService.java:158` — nếu đề tài đã có 1 đăng ký được duyệt thì từ chối duyệt thêm; đồng thời set `topic.status = "REGISTERED"` khiến SV khác không đăng ký được. Trường `capacity` gần như vô nghĩa. Mâu thuẫn với mục tiêu "quản lý công việc nhóm".
@@ -1038,20 +1038,20 @@ Admin có nút "Gửi lại email kích hoạt"
 - Báo cáo tiến độ vẫn theo từng SV; GV xem theo đề tài (đã có). Kanban nhóm: hiển thị báo cáo của cả nhóm (tùy chọn).
 
 **Các bước:**
-- [ ] Bỏ điều kiện `existsByTopic_IdAndApprovedTrue` trong `approve()`.
-- [ ] Chống vượt capacity khi 2 GV/2 request duyệt đồng thời: thêm `TopicRepository.findByIdForUpdate` với `@Lock(PESSIMISTIC_WRITE)`.
-- [ ] Cập nhật trạng thái `FULL`/`OPEN` sau approve/cancel/reject.
-- [ ] `grade()`: chỉ đặt `COMPLETED` khi **tất cả** SV đã duyệt đều có điểm.
-- [ ] Thêm unique constraint `(student_id, topic_id)` cho `topic_registration`.
-- [ ] Frontend: hiển thị "2/3 chỗ" trên `TopicCard`, trạng thái "Đã đủ" ; trang GV hiển thị danh sách thành viên.
-- [ ] Cập nhật test `TopicRegistrationServiceTest` (hiện có thể đang test hành vi 1 SV).
+- [x] Bỏ điều kiện `existsByTopic_IdAndApprovedTrue` trong `approve()`.
+- [x] Chống vượt capacity khi 2 GV/2 request duyệt đồng thời: thêm `TopicRepository.findByIdForUpdate` với `@Lock(PESSIMISTIC_WRITE)`.
+- [x] Cập nhật trạng thái `FULL`/`OPEN` sau approve/cancel/reject.
+- [x] `grade()`: chỉ đặt `COMPLETED` khi **tất cả** SV đã duyệt đều có điểm.
+- [x] Thêm unique constraint `(student_id, topic_id)` cho `topic_registration`.
+- [x] Frontend: hiển thị "2/3 chỗ" trên `TopicCard`, trạng thái "Đã đủ" ; trang GV hiển thị danh sách thành viên.
+- [x] Cập nhật test `TopicRegistrationServiceTest` (hiện có thể đang test hành vi 1 SV).
 
 **✅ Nghiệm thu:** Đề tài capacity=3 duyệt được 3 SV, SV thứ 4 không đăng ký được; hủy 1 → mở lại.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `90ba967`
 
 ---
 
-### ⬜ P2-05 — Chức năng Quên mật khẩu
+### ✅ P2-05 — Chức năng Quên mật khẩu
 
 **Mức độ:** 🟠 Cao
 **Vấn đề:** Nút "Quên mật khẩu?" ở `FE/pages/LoginPage.jsx:175` không có chức năng; tài liệu vận hành mục 8 mô tả tính năng này.
@@ -1065,73 +1065,73 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 ```
 
 **Các bước:**
-- [ ] Backend: 2 endpoint trên, dùng lại `OtpService` với `purpose=RESET_PASSWORD` (đã chuẩn bị ở P1-01), OTP hạn 10 phút.
-- [ ] Rate limit (P1-10): 3 yêu cầu/15 phút/identifier.
-- [ ] Audit log `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_DONE`.
-- [ ] Email tiếng Việt có hướng dẫn.
-- [ ] Frontend: modal/trang 3 bước (nhập email → nhập mã + mật khẩu mới → thành công).
-- [ ] Test: reset thành công → token cũ vô hiệu; mã sai/hết hạn → 400.
+- [x] Backend: 2 endpoint trên, dùng lại `OtpService` với `purpose=RESET_PASSWORD` (đã chuẩn bị ở P1-01), OTP hạn 10 phút.
+- [x] Rate limit (P1-10): 3 yêu cầu/15 phút/identifier.
+- [x] Audit log `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_DONE`.
+- [x] Email tiếng Việt có hướng dẫn.
+- [x] Frontend: modal/trang 3 bước (nhập email → nhập mã + mật khẩu mới → thành công).
+- [x] Test: reset thành công → token cũ vô hiệu; mã sai/hết hạn → 400.
 
 **✅ Nghiệm thu:** Người dùng tự lấy lại mật khẩu qua email mà không cần admin.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `50024ce`, `65bbbf0`
 
 ---
 
-### ⬜ P2-06 — Gửi email bất đồng bộ + template tiếng Việt
+### ✅ P2-06 — Gửi email bất đồng bộ + template tiếng Việt
 
 **Mức độ:** 🟡 Trung bình
 **Vấn đề:** `EmailService.sendEmail` có `@Async` nhưng ứng dụng **không có `@EnableAsync`** → gửi đồng bộ → đăng nhập ADMIN/GV chờ SMTP (2–5 giây), duyệt đăng ký chậm. Email gửi **trong transaction** → transaction rollback thì email vẫn đi. Nội dung email tiếng Anh, text thô.
 
 **Các bước:**
-- [ ] Tạo `BE/config/AsyncConfig.java`: `@EnableAsync` + `ThreadPoolTaskExecutor` (core 2, max 5, queue 100, tên thread `mail-`).
-- [ ] Chuyển gửi email sang **domain event**: publish `RegistrationApprovedEvent`... → `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Async`.
-- [ ] Template HTML tiếng Việt (Thymeleaf hoặc chuỗi template đơn giản): OTP, duyệt/từ chối đăng ký, nhận xét báo cáo, chấm điểm, nhắc nhở, reset mật khẩu.
-- [ ] Thay `System.out/err` bằng SLF4J logger.
-- [ ] Retry 2 lần khi lỗi SMTP tạm thời (Spring Retry — tùy chọn).
-- [ ] Tắt gửi email thật trong test (mock `JavaMailSender`).
+- [x] Tạo `BE/config/AsyncConfig.java`: `@EnableAsync` + `ThreadPoolTaskExecutor` (core 2, max 5, queue 100, tên thread `mail-`).
+- [x] Chuyển gửi email sang **domain event**: publish `RegistrationApprovedEvent`... → `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Async`.
+- [x] Template HTML tiếng Việt (Thymeleaf hoặc chuỗi template đơn giản): OTP, duyệt/từ chối đăng ký, nhận xét báo cáo, chấm điểm, nhắc nhở, reset mật khẩu.
+- [x] Thay `System.out/err` bằng SLF4J logger.
+- [x] Retry 2 lần khi lỗi SMTP tạm thời (Spring Retry — tùy chọn).
+- [x] Tắt gửi email thật trong test (mock `JavaMailSender`).
 
 **✅ Nghiệm thu:** Đăng nhập ADMIN trả response < 500ms; email tiếng Việt có định dạng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `f812ea1`
 
 ---
 
-### ⬜ P2-07 — Sửa scheduler nhắc nhở + nhắc hạn milestone
+### ✅ P2-07 — Sửa scheduler nhắc nhở + nhắc hạn milestone
 
 **Mức độ:** 🟡 Trung bình
 **Vấn đề:** `BE/scheduler/ReminderScheduler.java:40` — `regRepo.findAll()` rồi truy vấn từng đăng ký (N+1); **gửi lặp lại mỗi ngày** cho cùng một SV; không lọc workspace đang `IN_PROGRESS`; múi giờ phụ thuộc server. Tài liệu hứa "nhắc khi sắp đến hạn milestone" nhưng chưa có.
 
 **Các bước:**
-- [ ] Viết query JPQL: các đăng ký `approved=true`, workspace `IN_PROGRESS`, báo cáo gần nhất > 7 ngày hoặc chưa có.
-- [ ] Chống trùng: bỏ qua nếu đã có notification `type=REMINDER, refType=TOPIC_REGISTRATION, refId=regId` trong 7 ngày gần nhất.
-- [ ] `@Scheduled(cron = "0 0 9 * * *", zone = "Asia/Ho_Chi_Minh")`.
-- [ ] Job mới: nhắc milestone còn **2 ngày** và **ngày cuối** tới hạn → gửi cho SV của đề tài (chống trùng theo `refType=MILESTONE`).
-- [ ] Tùy chọn: gửi kèm email (dùng P2-06).
-- [ ] Unit test logic chọn đối tượng nhắc.
+- [x] Viết query JPQL: các đăng ký `approved=true`, workspace `IN_PROGRESS`, báo cáo gần nhất > 7 ngày hoặc chưa có.
+- [x] Chống trùng: bỏ qua nếu đã có notification `type=REMINDER, refType=TOPIC_REGISTRATION, refId=regId` trong 7 ngày gần nhất.
+- [x] `@Scheduled(cron = "0 0 9 * * *", zone = "Asia/Ho_Chi_Minh")`.
+- [x] Job mới: nhắc milestone còn **2 ngày** và **ngày cuối** tới hạn → gửi cho SV của đề tài (chống trùng theo `refType=MILESTONE`).
+- [x] Tùy chọn: gửi kèm email (dùng P2-06).
+- [x] Unit test logic chọn đối tượng nhắc.
 
 **✅ Nghiệm thu:** Chạy job 2 lần liên tiếp → mỗi SV chỉ nhận 1 thông báo.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `1668ce9`
 
 ---
 
-### ⬜ P2-08 — Kiểm tra trùng lặp hỗ trợ tiếng Việt
+### ✅ P2-08 — Kiểm tra trùng lặp hỗ trợ tiếng Việt
 
 **Mức độ:** 🟢 Thấp
 **Vấn đề:** `BE/service/SimilarityService.java:30` dùng regex `[^a-z0-9\s]` → xóa mọi ký tự có dấu → "Xây dựng hệ thống" thành "x y d ng h th ng" → kết quả vô nghĩa. Chỉ so với báo cáo cũ **của chính SV đó**; kết quả chỉ ghi audit log, GV không thấy.
 
 **Các bước:**
-- [ ] Đổi regex thành `[^\p{L}\p{N}\s]` (giữ chữ Unicode) + chuẩn hóa `Normalizer.Form.NFC`.
-- [ ] Bỏ stopword tiếng Việt phổ biến (và, của, là, các, những…) — danh sách ngắn.
-- [ ] Mở rộng phạm vi so sánh: báo cáo của **SV khác trong cùng workspace**.
-- [ ] Thêm cột `similarity_score` + `similar_to_report_id` vào `progress_report`.
-- [ ] Frontend (trang GV): badge cảnh báo "Trùng lặp 85% với báo cáo #…".
-- [ ] Unit test với văn bản tiếng Việt.
+- [x] Đổi regex thành `[^\p{L}\p{N}\s]` (giữ chữ Unicode) + chuẩn hóa `Normalizer.Form.NFC`.
+- [x] Bỏ stopword tiếng Việt phổ biến (và, của, là, các, những…) — danh sách ngắn.
+- [x] Mở rộng phạm vi so sánh: báo cáo của **SV khác trong cùng workspace**.
+- [x] Thêm cột `similarity_score` + `similar_to_report_id` vào `progress_report`.
+- [x] Frontend (trang GV): badge cảnh báo "Trùng lặp 85% với báo cáo #…".
+- [x] Unit test với văn bản tiếng Việt.
 
 **✅ Nghiệm thu:** 2 báo cáo tiếng Việt gần giống → điểm ≥ 0,8 và GV thấy cảnh báo.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `5cc8832`
 
 ---
 
-### ⬜ P2-09 — Ràng buộc nghiệp vụ (điểm, trạng thái, ngày tháng)
+### ✅ P2-09 — Ràng buộc nghiệp vụ (điểm, trạng thái, ngày tháng)
 
 **Mức độ:** 🟡 Trung bình
 
@@ -1151,34 +1151,34 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 | 12 | Tạo user: email không đúng định dạng | `UserController.create` | Validate email |
 
 **Các bước:**
-- [ ] Sửa lần lượt 12 mục (tick trong bảng khi xong): 1 ⬜ 2 ⬜ 3 ⬜ 4 ⬜ 5 ⬜ 6 ⬜ 7 ⬜ 8 ⬜ 9 ⬜ 10 ⬜ 11 ⬜ 12 ✅
-- [ ] Mỗi mục có unit test.
-- [ ] Frontend: validate tương ứng ở form (min/max, required) để báo lỗi sớm.
+- [x] Sửa lần lượt 12 mục (tick trong bảng khi xong): 1 ✅ 2 ✅ 3 ✅ 4 ✅ 5 ✅ 6 ✅ 7 ✅ 8 ✅ 9 ✅ 10 ✅ 11 ✅ (cùng P2-13) 12 ✅
+- [x] Mỗi mục có unit test.
+- [x] Frontend: validate tương ứng ở form (min/max, required) để báo lỗi sớm.
 
 > Ghi chú: P3-02 sẽ chuẩn hóa bằng Bean Validation; ở đây sửa **logic** trước để người dùng không gặp lỗi 500.
 
 **✅ Nghiệm thu:** Không còn lỗi 500 do dữ liệu đầu vào ở các endpoint trên.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `7ef3e3f`
 
 ---
 
-### ⬜ P2-10 — Route cho RoleManagementPage + chặn xóa role đang dùng
+### ✅ P2-10 — Route cho RoleManagementPage + chặn xóa role đang dùng
 
 **Mức độ:** 🟢 Thấp
 **Vấn đề:** `FE/pages/RoleManagementPage.jsx` (314 dòng) được import trong `App.jsx` nhưng **không có route** → không truy cập được. `RoleService.deleteRole` không kiểm tra user đang dùng role → lỗi khóa ngoại 500; có thể xóa cả role hệ thống.
 
 **Các bước:**
-- [ ] Thêm route `/admin/roles` (`RequireRole role="ADMIN"`) + mục menu sidebar cho ADMIN.
-- [ ] Hiển thị `loading`/`error` state (đang bị lint báo không dùng).
-- [ ] `deleteRole`: chặn xóa 4 role hệ thống (`ADMIN`, `DEPARTMENT_ADMIN`, `LECTURER`, `STUDENT`); chặn xóa nếu `userRepo.existsByRole_Id(id)` → 400 kèm số user.
-- [ ] Test cho `deleteRole`.
+- [x] Thêm route `/admin/roles` (`RequireRole role="ADMIN"`) + mục menu sidebar cho ADMIN.
+- [x] Hiển thị `loading`/`error` state (đang bị lint báo không dùng).
+- [x] `deleteRole`: chặn xóa 4 role hệ thống (`ADMIN`, `DEPARTMENT_ADMIN`, `LECTURER`, `STUDENT`); chặn xóa nếu `userRepo.existsByRole_Id(id)` → 400 kèm số user.
+- [x] Test cho `deleteRole`.
 
 **✅ Nghiệm thu:** Admin vào được trang quản lý vai trò; xóa role đang dùng → thông báo rõ ràng.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `5936d04`, `78dad5e`
 
 ---
 
-### ⬜ P2-11 — Xóa tính năng ProjectPermission
+### ✅ P2-11 — Xóa tính năng ProjectPermission
 
 **Mức độ:** 🟢 Thấp
 **Vấn đề:** Entity `ProjectPermission` + API `/api/permissions` cho phép cấu hình quyền theo công cụ (MILESTONE, SUBMISSION, DISCUSSION…) **nhưng không nơi nào trong code áp dụng** các quyền này, và frontend không có giao diện. Đây là tính năng "treo".
@@ -1186,35 +1186,35 @@ POST /api/auth/password/reset   {identifier, code, newPassword}
 **✅ Quyết định D-07:** Xóa (hiện chưa có nhu cầu rõ ràng). Nếu sau này có nhu cầu, thiết kế lại từ đầu dựa trên `TopicAccessService` (P1-05).
 
 **Các bước:**
-- [ ] Xác nhận frontend không gọi `/api/permissions` (đã kiểm tra: không có).
-- [ ] Kiểm tra DB dev: bảng `project_permissions` có dữ liệu không → nếu có, export lưu lại trước khi xóa.
-- [ ] Xóa `BE/entity/ProjectPermission.java`, `BE/repository/ProjectPermissionRepository.java`, `BE/controller/ProjectPermissionController.java`.
-- [ ] Xóa bảng: trước P3-01 thì `DROP TABLE project_permissions` thủ công trên DB dev (vì `ddl-auto=update` không tự xóa bảng); sau P3-01 thì viết migration `DROP TABLE IF EXISTS project_permissions`.
-- [ ] Cập nhật tài liệu API/Swagger, xóa khỏi `TECHNICAL_REPORT.md` nếu có nhắc.
-- [ ] Build + test pass.
+- [x] Xác nhận frontend không gọi `/api/permissions` (đã kiểm tra: không có).
+- [x] Kiểm tra DB dev: bảng `project_permissions` có dữ liệu không → nếu có, export lưu lại trước khi xóa.
+- [x] Xóa `BE/entity/ProjectPermission.java`, `BE/repository/ProjectPermissionRepository.java`, `BE/controller/ProjectPermissionController.java`.
+- [x] Xóa bảng: trước P3-01 thì `DROP TABLE project_permissions` thủ công trên DB dev (vì `ddl-auto=update` không tự xóa bảng); sau P3-01 thì viết migration `DROP TABLE IF EXISTS project_permissions`.
+- [x] Cập nhật tài liệu API/Swagger, xóa khỏi `TECHNICAL_REPORT.md` nếu có nhắc.
+- [x] Build + test pass.
 
 **✅ Nghiệm thu:** Không còn class/bảng `ProjectPermission`; `/api/permissions` → 404.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `16aa680`
 
 ---
 
-### ⬜ P2-12 — Kiểm thử hồi quy nghiệp vụ toàn luồng
+### ✅ P2-12 — Kiểm thử hồi quy nghiệp vụ toàn luồng
 
 **Mức độ:** 🔴 Bắt buộc
 
 **Các bước:**
-- [ ] Viết test tích hợp `BE-TEST/flow/FullLifecycleIT.java` đi hết vòng đời: tạo workspace → OPEN_TOPIC → GV tạo đề tài → gán lớp → OPEN_REGISTRATION → 2 SV đăng ký → GV duyệt → LOCK → IN_PROGRESS → SV nộp báo cáo → GV nhận xét → GV chấm điểm → CLOSED.
-- [ ] Chạy lại toàn bộ bảng smoke test P0-05 → cột "Thực tế" phải khớp "Kỳ vọng" 21/21.
-- [ ] Ghi video demo ngắn (tùy chọn — hữu ích cho báo cáo).
+- [x] Viết test tích hợp `BE-TEST/flow/FullLifecycleIT.java` đi hết vòng đời: tạo workspace → OPEN_TOPIC → GV tạo đề tài → gán lớp → OPEN_REGISTRATION → 2 SV đăng ký → GV duyệt → LOCK → IN_PROGRESS → SV nộp báo cáo → GV nhận xét → GV chấm điểm → CLOSED.
+- [x] Chạy lại toàn bộ bảng smoke test P0-05 → cột "Thực tế" phải khớp "Kỳ vọng" 21/21 (bản tự động 29 kịch bản: OK=17 · FIXED=12 · BUG=0 · FAIL=0).
+- ⏭️ Ghi video demo ngắn (tùy chọn — chưa làm; ảnh chụp giao diện thay thế ở `scripts/ui-check-gd2.mjs`).
 
 **✅ Nghiệm thu:** Test vòng đời pass; smoke test 21/21.
-**Theo dõi:** Trạng thái: ⬜ · Kết quả smoke test: `__/21`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `ea56b02` · Kết quả smoke test: `21/21` (29/29 kịch bản, 0 BUG, 0 FAIL)
 
 > 📌 Nên làm P2-13 **trước** P2-12 để test vòng đời bao gồm cả khóa điểm và chấm lại.
 
 ---
 
-### ⬜ P2-13 — Khóa điểm & quy trình chấm lại
+### ✅ P2-13 — Khóa điểm & quy trình chấm lại
 
 **Mức độ:** 🟠 Cao
 **Căn cứ:** Quyết định **D-08** — khi workspace `CLOSED` thì **khóa điểm**; nhưng vẫn **có thể chấm lại/chỉnh sửa** khi nghiệp vụ yêu cầu, thông qua quy trình có kiểm soát.
@@ -1271,52 +1271,52 @@ grade_history(
 **Các bước:**
 
 *Backend:*
-- [ ] Entity + repository `GradeRevisionRequest`, `GradeHistory` + migration (hoặc tạo bằng `ddl-auto` nếu làm trước P3-01, rồi đưa vào migration ở P3-01).
-- [ ] `GradeService` (tách khỏi `TopicRegistrationService`): hàm `canEditGrade(registration)` theo bảng quy tắc trên.
-- [ ] Sửa `grade()`:
+- [x] Entity + repository `GradeRevisionRequest`, `GradeHistory` + migration (hoặc tạo bằng `ddl-auto` nếu làm trước P3-01, rồi đưa vào migration ở P3-01).
+- [x] `GradeService` (tách khỏi `TopicRegistrationService`): hàm `canEditGrade(registration)` theo bảng quy tắc trên.
+- [x] Sửa `grade()`:
   - `IN_PROGRESS` → cho phép; nếu đã có điểm thì bắt buộc `reason`.
   - `CLOSED` → chỉ cho phép khi có yêu cầu `APPROVED` và `now < unlock_until`; sau khi lưu → đặt yêu cầu thành `USED`.
   - Mọi lần lưu → ghi `grade_history`.
-- [ ] Không cho duyệt yêu cầu của chính mình (người duyệt ≠ người gửi — trường hợp Admin kiêm GV).
-- [ ] Job định kỳ (mỗi giờ): chuyển yêu cầu `APPROVED` quá `unlock_until` sang `EXPIRED`.
-- [ ] Thông báo + email: DeptAdmin nhận yêu cầu mới; GV nhận kết quả duyệt/từ chối; SV nhận thông báo khi điểm thay đổi (hiển thị điểm cũ → mới).
-- [ ] Audit log: `GRADE_REVISION_REQUESTED`, `GRADE_REVISION_APPROVED`, `GRADE_REVISION_REJECTED`, `GRADE_CHANGED`.
-- [ ] Xuất Excel (`ExportController`): thêm cột "Đã chấm lại (số lần)".
+- [x] Không cho duyệt yêu cầu của chính mình (người duyệt ≠ người gửi — trường hợp Admin kiêm GV).
+- [x] Job định kỳ (mỗi giờ): chuyển yêu cầu `APPROVED` quá `unlock_until` sang `EXPIRED`.
+- [x] Thông báo + email: DeptAdmin nhận yêu cầu mới; GV nhận kết quả duyệt/từ chối; SV nhận thông báo khi điểm thay đổi (hiển thị điểm cũ → mới).
+- [x] Audit log: `GRADE_REVISION_REQUESTED`, `GRADE_REVISION_APPROVED`, `GRADE_REVISION_REJECTED`, `GRADE_CHANGED`.
+- [x] Xuất Excel (`ExportController`): thêm cột "Đã chấm lại (số lần)".
 
 *Frontend:*
-- [ ] `LecturerRegistrationPage`: điểm của workspace đã đóng hiển thị badge 🔒 "Đã khóa"; nút "Yêu cầu chấm lại" → modal nhập lý do; hiển thị trạng thái yêu cầu (Chờ duyệt / Được mở đến hh:mm dd/MM / Bị từ chối + ghi chú).
-- [ ] Khi đang được mở khóa: cho sửa điểm, bắt buộc ô "Lý do chỉnh sửa".
-- [ ] `DepartmentAdminPage`: tab mới "Yêu cầu chấm lại" (danh sách chờ duyệt, xem lịch sử điểm, Duyệt/Từ chối).
-- [ ] Modal "Lịch sử điểm" (bảng: thời gian, người sửa, điểm cũ → mới, lý do).
-- [ ] `StudentMyRegistrationsPage`: hiển thị ghi chú "Điểm đã được cập nhật ngày …" nếu có thay đổi.
+- [x] `LecturerRegistrationPage`: điểm của workspace đã đóng hiển thị badge 🔒 "Đã khóa"; nút "Yêu cầu chấm lại" → modal nhập lý do; hiển thị trạng thái yêu cầu (Chờ duyệt / Được mở đến hh:mm dd/MM / Bị từ chối + ghi chú).
+- [x] Khi đang được mở khóa: cho sửa điểm, bắt buộc ô "Lý do chỉnh sửa".
+- [x] `DepartmentAdminPage`: tab mới "Yêu cầu chấm lại" (danh sách chờ duyệt, xem lịch sử điểm, Duyệt/Từ chối).
+- [x] Modal "Lịch sử điểm" (bảng: thời gian, người sửa, điểm cũ → mới, lý do).
+- [x] `StudentMyRegistrationsPage`: hiển thị ghi chú "Điểm đã được cập nhật ngày …" nếu có thay đổi.
 
 *Test:*
-- [ ] Chấm khi `IN_PROGRESS` → OK + có bản ghi lịch sử.
-- [ ] Chấm khi `CLOSED` không có yêu cầu → 400/403 "Điểm đã bị khóa".
-- [ ] Gửi yêu cầu → DeptAdmin khoa khác duyệt → 403.
-- [ ] Duyệt → sửa trong hạn → OK, yêu cầu thành `USED`, sửa lần 2 → bị khóa.
-- [ ] Duyệt → quá hạn → `EXPIRED`, sửa → bị khóa.
-- [ ] Gửi 2 yêu cầu PENDING cùng lúc cho 1 SV → yêu cầu thứ 2 bị từ chối.
+- [x] Chấm khi `IN_PROGRESS` → OK + có bản ghi lịch sử.
+- [x] Chấm khi `CLOSED` không có yêu cầu → 400/403 "Điểm đã bị khóa".
+- [x] Gửi yêu cầu → DeptAdmin khoa khác duyệt → 403.
+- [x] Duyệt → sửa trong hạn → OK, yêu cầu thành `USED`, sửa lần 2 → bị khóa.
+- [x] Duyệt → quá hạn → `EXPIRED`, sửa → bị khóa.
+- [x] Gửi 2 yêu cầu PENDING cùng lúc cho 1 SV → yêu cầu thứ 2 bị từ chối.
 
 **✅ Nghiệm thu:** Không thể sửa điểm ở workspace đã đóng nếu không có yêu cầu được duyệt; mọi thay đổi điểm đều truy vết được (ai, khi nào, lý do, ai duyệt).
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Commit: `d2c279b`
 
 ---
 
 ### 🏁 Tiêu chí hoàn thành Giai đoạn 2
 
-- [ ] Giảng viên tạo và quản lý đề tài bình thường.
-- [ ] 403 không còn đăng xuất người dùng.
-- [ ] Upload/tải file hoạt động qua Docker.
-- [ ] Nhiều SV/đề tài theo `capacity` đã triển khai (D-01 = B).
-- [ ] Điểm bị khóa khi workspace đóng; quy trình chấm lại hoạt động, có lịch sử điểm (D-08).
-- [ ] ProjectPermission đã được xóa (D-07).
-- [ ] Quên mật khẩu hoạt động.
-- [ ] Email bất đồng bộ, tiếng Việt.
-- [ ] Nhắc nhở không trùng lặp; có nhắc hạn milestone.
-- [ ] Không còn lỗi 500 do dữ liệu đầu vào ở luồng chính.
-- [ ] Smoke test 21/21, test vòng đời pass.
-- [ ] Tag `v0.3.0-business`.
+- [x] Giảng viên tạo và quản lý đề tài bình thường.
+- [x] 403 không còn đăng xuất người dùng.
+- [x] Upload/tải file hoạt động qua Docker.
+- [x] Nhiều SV/đề tài theo `capacity` đã triển khai (D-01 = B).
+- [x] Điểm bị khóa khi workspace đóng; quy trình chấm lại hoạt động, có lịch sử điểm (D-08).
+- [x] ProjectPermission đã được xóa (D-07).
+- [x] Quên mật khẩu hoạt động.
+- [x] Email bất đồng bộ, tiếng Việt.
+- [x] Nhắc nhở không trùng lặp; có nhắc hạn milestone.
+- [x] Không còn lỗi 500 do dữ liệu đầu vào ở luồng chính.
+- [x] Smoke test 21/21 (29/29 kịch bản tự động, 0 BUG), test vòng đời `FullLifecycleIT` pass.
+- [ ] Tag `v0.3.0-business` — ⏳ chủ repo merge `develop` → `main` rồi tạo tag.
 
 ---
 
@@ -2016,6 +2016,10 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 22/10/2026 | GĐ1-QA | Rà soát lại toàn bộ + dọn code: 0 cảnh báo javac/ECJ/khởi động; 202 test · smoke 0 FAIL · ws 12/12 · ui 8/8 | `faf48ad` | Báo cáo mục 10 |
 | 22/10/2026 | P1-08B | Viết lại lịch sử git: xóa `Backend/uploads` (3 file `.doc`), gỡ trailer `Co-Authored-By: Claude` (24 commit), chuẩn hóa tên tác giả; force push `main`/`develop` sau kiểm chứng 6/6 | — | Mọi mã commit trong tài liệu đã cập nhật theo lịch sử mới |
 | 22/10/2026 | GĐ1 | Merge PR #3 → `main` (`d7e9307`); tag `v0.1.0-baseline` (`f52e07d`), `v0.2.0-security` (`d7e9307`); **đóng Giai đoạn 0 và 1** | `d7e9307` | Dependabot mở 10 PR nâng cấp thư viện |
+| 22/10/2026 | Dependabot | Phân tích 10 PR: không PR nào là bản vá bảo mật → làm P2-01 trước; áp dụng 8 PR (actions, jjwt 0.13, Maven 3.10, nhóm npm minor, eslint 10…), từ chối 2 bản major chưa tương thích (springdoc 3 cần Spring Boot 4, plugin-react 6 cần Vite 8); Dependabot nhắm `develop` | `a60693b` | 34 cảnh báo lint mới của React Compiler → P3-11 |
+| 22/10/2026 | P2-01 → P2-06 | GV tự quản lý đề tài + initializer không ghi đè quyền; 401/403 + toast; upload/tải file; nhiều SV/đề tài theo capacity; quên mật khẩu; email bất đồng bộ tiếng Việt | `e465e30` → `f812ea1` | Xem báo cáo mục 12 |
+| 22/10/2026 | P2-07 → P2-11 | Nhắc nhở 1 truy vấn + chống trùng + nhắc hạn mốc; so trùng lặp tiếng Việt; ràng buộc nghiệp vụ (400 thay 500); trang Vai trò; xóa ProjectPermission | `1668ce9` → `78dad5e` | Phát hiện + sửa thêm: form tạo đề tài thiếu chọn đợt, trang vai trò không gửi token |
+| 22/10/2026 | P2-13, P2-12 | Khóa điểm khi đợt đóng + quy trình chấm lại có duyệt, lịch sử điểm; test vòng đời `FullLifecycleIT`; 267 test · smoke 0 BUG/0 FAIL · ui-check + ui-check-gd2 (18) + ws-check đạt | `d2c279b`, `ea56b02` | **Hoàn thành 13/13 task GĐ2** — chờ merge + tag `v0.3.0-business` |
 | | | | | |
 
 ---
@@ -2030,3 +2034,4 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 1.3 | 25/09/2026 | Hoàn thành Giai đoạn 0 (8/9 task; P0-09 chờ push lên GitHub); thêm hướng dẫn dùng môi trường + báo cáo smoke test baseline |
 | 1.4 | 21/10/2026 | Đồng bộ trạng thái GĐ1 (12/13 ✅, P1-08 🟨); cập nhật tiêu chí hoàn thành GĐ1; kiểm thử toàn diện — `Plan/reports/report_plan1.md` |
 | 1.5 | 22/10/2026 | Đóng GĐ0 + GĐ1: P1-08B (viết lại lịch sử), merge PR #3, tag `v0.1.0-baseline`, `v0.2.0-security`; cập nhật mã commit theo lịch sử mới |
+| 1.6 | 22/10/2026 | Hoàn thành 13/13 task GĐ2 trên `develop`; cập nhật trạng thái, commit, tiêu chí hoàn thành GĐ2; báo cáo mục 12 |
