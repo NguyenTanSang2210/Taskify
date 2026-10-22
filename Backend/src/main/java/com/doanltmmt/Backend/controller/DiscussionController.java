@@ -10,6 +10,7 @@ import com.doanltmmt.Backend.repository.DiscussionThreadRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,8 @@ import java.util.Map;
 @RequestMapping("/api/discuss")
 @SuppressWarnings("null")
 public class DiscussionController {
+
+    private static final int MAX_CONTENT_LENGTH = 5000;
 
     private final DiscussionThreadRepository threadRepo;
     private final DiscussionPostRepository postRepo;
@@ -53,16 +56,14 @@ public class DiscussionController {
     @PostMapping("/threads")
     @PreAuthorize("isAuthenticated()")
     public DiscussionThreadDTO createThread(@RequestBody Map<String, String> body) {
-        if (body.get("topicId") == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
-        }
-        Topic topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId")));
+        Topic topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
         topicAccess.requireMember(topic);
+        String title = Inputs.requiredText(body.get("title"), "Tiêu đề chủ đề", 255);
 
         User user = scope.requireCurrentUser();
         DiscussionThread t = new DiscussionThread();
         t.setTopic(topic);
-        t.setTitle(body.get("title"));
+        t.setTitle(title);
         t.setCreatedBy(user);
         DiscussionThread saved = threadRepo.save(t);
         auditLogService.log("CREATE_THREAD", "DiscussionThread", saved.getId().toString(), "Title: " + saved.getTitle());
@@ -82,12 +83,13 @@ public class DiscussionController {
     public DiscussionPostDTO addPost(@PathVariable Long threadId, @RequestBody Map<String, String> body) {
         DiscussionThread th = loadThread(threadId);
         topicAccess.requireMember(th.getTopic());
+        String content = Inputs.requiredText(body.get("content"), "Nội dung bài viết", MAX_CONTENT_LENGTH);
 
         User user = scope.requireCurrentUser();
         DiscussionPost p = new DiscussionPost();
         p.setThread(th);
         p.setAuthor(user);
-        p.setContent(body.get("content"));
+        p.setContent(content);
         DiscussionPost saved = postRepo.save(p);
         auditLogService.log("CREATE_POST", "DiscussionPost", saved.getId().toString(), "Thread " + th.getId());
         return DiscussionPostDTO.from(saved);

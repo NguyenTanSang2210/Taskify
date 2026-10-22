@@ -12,6 +12,7 @@ import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -90,8 +91,8 @@ public class MessageController {
     public MessageDTO send(@RequestBody Map<String, String> body) {
         User me = scope.requireCurrentUser();
 
-        Long recipientId = parseId(body.get("recipientId"), "recipientId");
-        Long topicId = parseId(body.get("topicId"), "topicId");
+        Long recipientId = Inputs.requiredId(body.get("recipientId"), "Người nhận (recipientId)");
+        Long topicId = Inputs.requiredId(body.get("topicId"), "topicId");
         String content = body.get("content") == null ? "" : body.get("content").trim();
         if (content.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nội dung tin nhắn không được để trống");
@@ -123,16 +124,5 @@ public class MessageController {
         events.messageCreated(saved);
         auditLogService.log("SEND_MESSAGE", "Message", saved.getId().toString(), "To: " + recipient.getUsername());
         return MessageDTO.from(saved);
-    }
-
-    private static Long parseId(String raw, String field) {
-        if (raw == null || raw.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, field + " là bắt buộc");
-        }
-        try {
-            return Long.valueOf(raw.trim());
-        } catch (NumberFormatException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, field + " không hợp lệ");
-        }
     }
 }

@@ -122,6 +122,10 @@ export default function DepartmentAdminPage() {
             setNotice({ type: 'warning', message: 'Vui lòng nhập tên cho Không gian làm việc.' });
             return;
         }
+        if (wsCreate.startAt && wsCreate.endAt && wsCreate.endAt < wsCreate.startAt) {
+            setNotice({ type: 'warning', message: 'Ngày kết thúc phải sau ngày bắt đầu.' });
+            return;
+        }
         setLoading(true);
         try {
             const payload = {

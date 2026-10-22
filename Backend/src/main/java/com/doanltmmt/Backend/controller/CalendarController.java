@@ -6,12 +6,12 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.repository.CalendarEventRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.TopicAccessService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -42,18 +42,18 @@ public class CalendarController {
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public CalendarEventDTO create(@RequestBody Map<String, String> body) {
-        if (body.get("topicId") == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
-        }
-        Topic topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId")));
+        Topic topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
         topicAccess.requireOwner(topic);
 
         CalendarEvent ev = new CalendarEvent();
         ev.setTopic(topic);
-        ev.setTitle(body.get("title"));
-        ev.setDescription(body.getOrDefault("description", ""));
-        if (body.get("startTime") != null) ev.setStartTime(LocalDateTime.parse(body.get("startTime")));
-        if (body.get("endTime") != null) ev.setEndTime(LocalDateTime.parse(body.get("endTime")));
+        ev.setTitle(Inputs.requiredText(body.get("title"), "Tiêu đề sự kiện", 255));
+        ev.setDescription(Inputs.optionalText(body.get("description"), "Mô tả", 5000));
+        ev.setStartTime(Inputs.dateTime(body.get("startTime"), "Thời gian bắt đầu"));
+        ev.setEndTime(Inputs.dateTime(body.get("endTime"), "Thời gian kết thúc"));
+        if (ev.getStartTime() != null && ev.getEndTime() != null && ev.getEndTime().isBefore(ev.getStartTime())) {
+            throw Inputs.badRequest("Thời gian kết thúc phải sau thời gian bắt đầu");
+        }
         ev.setType(body.getOrDefault("type", "MEETING"));
         CalendarEvent saved = repo.save(ev);
         auditLogService.log("CREATE_CAL_EVENT", "CalendarEvent", saved.getId().toString(), "Title: " + saved.getTitle());

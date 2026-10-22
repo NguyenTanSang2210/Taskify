@@ -44,6 +44,11 @@ public class TopicService {
         this.auditLogService = auditLogService;
     }
 
+    public static final int MIN_CAPACITY = 1;
+    public static final int MAX_CAPACITY = 10;
+    private static final int MAX_TITLE = 255;
+    private static final int MAX_DESCRIPTION = 10_000;
+
     @Transactional
     public TopicDTO createTopic(Long lecturerId, Topic topic) {
         if (scope.hasRole("LECTURER")) {
@@ -52,6 +57,13 @@ public class TopicService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
             }
         }
+        topic.setId(null); // luôn tạo mới — không cho ghi đè đề tài khác qua trường id trong body
+        if (topic.getTitle() == null || topic.getTitle().isBlank()) {
+            throw badRequest("Tên đề tài không được để trống");
+        }
+        if (topic.getCapacity() == null) topic.setCapacity(MIN_CAPACITY);
+        validateFields(topic.getTitle(), topic.getDescription(), topic.getCapacity());
+        topic.setTitle(topic.getTitle().trim());
         if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic must be assigned to a workspace");
         }
@@ -112,10 +124,18 @@ public class TopicService {
         
         requireWorkspaceAllowsTopicCreateOrEdit(topic.getWorkspace());
         
-        if (payload.getTitle() != null) topic.setTitle(payload.getTitle());
+        validateFields(payload.getTitle(), payload.getDescription(), payload.getCapacity());
+        if (payload.getTitle() != null) topic.setTitle(payload.getTitle().trim());
         if (payload.getDescription() != null) topic.setDescription(payload.getDescription());
-        if (payload.getCapacity() != null) topic.setCapacity(payload.getCapacity());
-        if (payload.getStatus() != null) topic.setStatus(payload.getStatus());
+        if (payload.getCapacity() != null) {
+            long approved = regRepo.countByTopic_IdAndApprovedTrue(topic.getId());
+            if (payload.getCapacity() < approved) {
+                throw badRequest("Số lượng sinh viên không được nhỏ hơn số sinh viên đã được duyệt (" + approved + ")");
+            }
+            topic.setCapacity(payload.getCapacity());
+            topic.refreshCapacityStatus(approved);
+        }
+        // Trạng thái chỉ đổi qua open/close và theo số chỗ — không nhận từ body
         
         Topic saved = topicRepo.save(topic);
         auditLogService.log("UPDATE_TOPIC", "Topic", saved.getId().toString(), "Updated topic details");
@@ -260,5 +280,22 @@ public class TopicService {
         if (!status.equals("OPEN_TOPIC") && !status.equals("OPEN_REGISTRATION")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in topic/registration phase");
         }
+    }
+
+    /** Kiểm tra các trường do người dùng nhập; trường {@code null} (không gửi khi sửa) được bỏ qua. */
+    private static void validateFields(String title, String description, Integer capacity) {
+        if (title != null && (title.isBlank() || title.trim().length() > MAX_TITLE)) {
+            throw badRequest("Tên đề tài phải từ 1 đến " + MAX_TITLE + " ký tự");
+        }
+        if (description != null && description.length() > MAX_DESCRIPTION) {
+            throw badRequest("Mô tả đề tài tối đa " + MAX_DESCRIPTION + " ký tự");
+        }
+        if (capacity != null && (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY)) {
+            throw badRequest("Số lượng sinh viên phải từ " + MIN_CAPACITY + " đến " + MAX_CAPACITY);
+        }
+    }
+
+    private static ResponseStatusException badRequest(String message) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
     }
 }

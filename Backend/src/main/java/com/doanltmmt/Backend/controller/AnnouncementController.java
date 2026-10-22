@@ -8,6 +8,7 @@ import com.doanltmmt.Backend.repository.AnnouncementRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -59,7 +60,7 @@ public class AnnouncementController {
     public AnnouncementDTO create(@RequestBody Map<String, String> body) {
         Topic topic = null;
         if (body.get("topicId") != null) {
-            topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId")));
+            topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
             topicAccess.requireOwner(topic);
         } else if (!scope.hasRole("ADMIN")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ quản trị viên hệ thống được đăng thông báo toàn hệ thống.");
@@ -67,8 +68,8 @@ public class AnnouncementController {
 
         User author = scope.requireCurrentUser();
         Announcement a = new Announcement();
-        a.setTitle(body.get("title"));
-        a.setContent(body.get("content"));
+        a.setTitle(Inputs.requiredText(body.get("title"), "Tiêu đề thông báo", 255));
+        a.setContent(Inputs.requiredText(body.get("content"), "Nội dung thông báo", 5000));
         a.setAuthor(author);
         a.setTopic(topic);
         Announcement saved = repo.save(a);

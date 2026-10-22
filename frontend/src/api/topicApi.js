@@ -22,6 +22,11 @@ export const topicApi = {
     const res = await api.post(`/topics/${id}/open`, null, { params: { lecturerId } });
     return res.data;
   },
+  // Các đợt đang mở nhận đề tài (để chọn khi tạo đề tài)
+  workspacesOpenForTopics: async () => {
+    const res = await api.get("/workspaces/open-for-topics");
+    return res.data;
+  },
   close: async (id, lecturerId) => {
     const res = await api.post(`/topics/${id}/close`, null, { params: { lecturerId } });
     return res.data;

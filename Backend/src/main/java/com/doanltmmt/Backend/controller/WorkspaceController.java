@@ -25,6 +25,13 @@ public class WorkspaceController {
         return service.list(departmentId);
     }
 
+    /** Các đợt đang mở nhận đề tài — để giảng viên chọn khi tạo đề tài. */
+    @GetMapping("/open-for-topics")
+    @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN','LECTURER')")
+    public List<WorkspaceDTO> openForTopics() {
+        return service.listOpenForTopics();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public WorkspaceDTO get(@PathVariable Long id) {

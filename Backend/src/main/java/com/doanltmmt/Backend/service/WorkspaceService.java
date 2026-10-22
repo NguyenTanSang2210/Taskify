@@ -7,12 +7,12 @@ import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +34,17 @@ public class WorkspaceService {
         this.workspaceClassRepo = workspaceClassRepo;
         this.scope = scope;
         this.auditLogService = auditLogService;
+    }
+
+    /** Đợt ở trạng thái OPEN_TOPIC của khoa người dùng (Admin: mọi khoa). */
+    public List<WorkspaceDTO> listOpenForTopics() {
+        List<String> open = List.of("OPEN_TOPIC", "OPEN");
+        if (scope.hasRole("ADMIN")) {
+            return repo.findByStatusInOrderByIdDesc(open).stream().map(WorkspaceDTO::new).toList();
+        }
+        var dept = scope.requireCurrentUser().getDepartment();
+        if (dept == null) return List.of();
+        return repo.findByDepartment_IdAndStatusInOrderByIdDesc(dept.getId(), open).stream().map(WorkspaceDTO::new).toList();
     }
 
     public List<WorkspaceDTO> list(Long departmentId) {
@@ -61,8 +72,10 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceDTO create(Map<String, Object> body) {
-        Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
-        if (!scope.hasRole("ADMIN")) {
+        Long departmentId;
+        if (scope.hasRole("ADMIN")) {
+            departmentId = Inputs.requiredId(body.get("departmentId"), "Khoa (departmentId)");
+        } else {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
@@ -76,8 +89,9 @@ public class WorkspaceService {
         if (body.get("type") != null) w.setType(String.valueOf(body.get("type")).trim());
         if (body.get("semester") != null) w.setSemester(String.valueOf(body.get("semester")).trim());
         if (body.get("active") != null) w.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        if (body.get("startAt") != null) w.setStartAt(LocalDateTime.parse(String.valueOf(body.get("startAt"))));
-        if (body.get("endAt") != null) w.setEndAt(LocalDateTime.parse(String.valueOf(body.get("endAt"))));
+        w.setStartAt(Inputs.dateTime(body.get("startAt"), "Ngày bắt đầu"));
+        w.setEndAt(Inputs.dateTime(body.get("endAt"), "Ngày kết thúc"));
+        validatePeriod(w);
         if (w.getStatus() == null || w.getStatus().isBlank()) w.setStatus("DRAFT");
         
         Workspace saved = repo.save(w);
@@ -103,9 +117,10 @@ public class WorkspaceService {
         if (body.get("type") != null) w.setType(String.valueOf(body.get("type")).trim());
         if (body.get("semester") != null) w.setSemester(String.valueOf(body.get("semester")).trim());
         if (body.get("active") != null) w.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        if (body.get("startAt") != null) w.setStartAt(LocalDateTime.parse(String.valueOf(body.get("startAt"))));
-        if (body.get("endAt") != null) w.setEndAt(LocalDateTime.parse(String.valueOf(body.get("endAt"))));
-        
+        if (body.get("startAt") != null) w.setStartAt(Inputs.dateTime(body.get("startAt"), "Ngày bắt đầu"));
+        if (body.get("endAt") != null) w.setEndAt(Inputs.dateTime(body.get("endAt"), "Ngày kết thúc"));
+        validatePeriod(w);
+
         Workspace saved = repo.save(w);
         auditLogService.log("UPDATE_WORKSPACE", "Workspace", saved.getId().toString(), "updated");
         return new WorkspaceDTO(saved);
@@ -172,6 +187,12 @@ public class WorkspaceService {
             if (topicCount <= 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace must have at least one topic before opening registration");
             }
+        }
+    }
+
+    private static void validatePeriod(Workspace w) {
+        if (w.getStartAt() != null && w.getEndAt() != null && w.getEndAt().isBefore(w.getStartAt())) {
+            throw Inputs.badRequest("Ngày kết thúc phải sau ngày bắt đầu");
         }
     }
 }

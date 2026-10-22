@@ -4,6 +4,10 @@ import { topicApi } from "../api/topicApi";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 
+const MIN_CAPACITY = 1;
+const MAX_CAPACITY = 10;
+const EMPTY_FORM = { title: "", description: "", capacity: 1, workspaceId: "" };
+
 export default function LecturerTopicsPage() {
   const { user } = useAuth();
   const lecturerId = user?.id;
@@ -19,7 +23,8 @@ export default function LecturerTopicsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // topic object or null
-  const [form, setForm] = useState({ title: "", description: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [openWorkspaces, setOpenWorkspaces] = useState([]);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [notice, setNotice] = useState(null);
 
@@ -60,14 +65,21 @@ export default function LecturerTopicsPage() {
     load();
   }, [load]);
 
-  const openCreate = () => {
+  const openCreate = async () => {
     setEditing(null);
-    setForm({ title: "", description: "" });
+    setForm(EMPTY_FORM);
     setModalOpen(true);
+    try {
+      const list = await topicApi.workspacesOpenForTopics();
+      setOpenWorkspaces(list || []);
+      if (list?.length === 1) setForm((f) => ({ ...f, workspaceId: String(list[0].id) }));
+    } catch {
+      setOpenWorkspaces([]);
+    }
   };
   const openEdit = (t) => {
     setEditing(t);
-    setForm({ title: t.title || "", description: t.description || "" });
+    setForm({ title: t.title || "", description: t.description || "", capacity: t.capacity || 1, workspaceId: "" });
     setModalOpen(true);
   };
   const closeModal = () => {
@@ -80,17 +92,21 @@ export default function LecturerTopicsPage() {
       setNotice({ type: "warning", message: "Vui lòng nhập tiêu đề đề tài." });
       return;
     }
+    const capacity = Number(form.capacity);
+    if (!Number.isInteger(capacity) || capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
+      setNotice({ type: "warning", message: `Số sinh viên phải là số nguyên từ ${MIN_CAPACITY} đến ${MAX_CAPACITY}.` });
+      return;
+    }
+    if (!editing && !form.workspaceId) {
+      setNotice({ type: "warning", message: "Vui lòng chọn đợt đồ án cho đề tài." });
+      return;
+    }
     try {
+      const payload = { title: form.title.trim(), description: form.description?.trim() || "", capacity };
       if (editing) {
-        await topicApi.update(editing.id, lecturerId, {
-          title: form.title.trim(),
-          description: form.description?.trim() || "",
-        });
+        await topicApi.update(editing.id, lecturerId, payload);
       } else {
-        await topicApi.create(lecturerId, {
-          title: form.title.trim(),
-          description: form.description?.trim() || "",
-        });
+        await topicApi.create(lecturerId, { ...payload, workspace: { id: Number(form.workspaceId) } });
       }
       await load();
       closeModal();
@@ -421,6 +437,41 @@ export default function LecturerTopicsPage() {
                     />
                  </div>
                  
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2 sm:col-span-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Đợt đồ án</label>
+                       {editing ? (
+                         <div className="w-full px-6 py-4 bg-surface-container-low rounded-2xl text-sm font-bold text-on-surface-variant">
+                           {editing.workspaceName || "—"}
+                         </div>
+                       ) : (
+                         <select
+                           className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-bold outline-none"
+                           value={form.workspaceId}
+                           onChange={(e) => setForm((f) => ({ ...f, workspaceId: e.target.value }))}
+                           required
+                         >
+                           <option value="">{openWorkspaces.length ? "— Chọn đợt —" : "Chưa có đợt nào đang mở nhận đề tài"}</option>
+                           {openWorkspaces.map((w) => (
+                             <option key={w.id} value={w.id}>{w.name}{w.semester ? ` (${w.semester})` : ""}</option>
+                           ))}
+                         </select>
+                       )}
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Số sinh viên tối đa</label>
+                       <input
+                         type="number"
+                         min={MIN_CAPACITY}
+                         max={MAX_CAPACITY}
+                         step={1}
+                         className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black outline-none"
+                         value={form.capacity}
+                         onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
+                       />
+                    </div>
+                 </div>
+
                  <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mô tả chi tiết & Yêu cầu</label>
                     <textarea
@@ -428,6 +479,7 @@ export default function LecturerTopicsPage() {
                       rows={6}
                       value={form.description}
                       onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                      maxLength={10000}
                       placeholder="Mô tả mục tiêu, công nghệ sử dụng, và các yêu cầu đối với sinh viên..."
                     />
                  </div>

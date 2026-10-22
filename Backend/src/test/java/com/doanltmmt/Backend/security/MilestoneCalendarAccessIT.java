@@ -81,7 +81,7 @@ class MilestoneCalendarAccessIT extends AbstractTopicScenarioIT {
 
     @Test
     void admin_canManageMilestoneOfAnyTopic() throws Exception {
-        post("/api/milestones", admin, Map.of("topicId", topicB.getId(), "title", "Do admin tạo")).andExpect(status().isOk());
+        post("/api/milestones", admin, Map.of("topicId", topicB.getId(), "title", "Do admin tạo", "deadline", "2030-03-01T23:59")).andExpect(status().isOk());
     }
 
     @Test

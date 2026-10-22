@@ -125,7 +125,7 @@ public final class EmailTemplates {
                         + p("Hãy nộp báo cáo cho mốc này trước hạn để giảng viên kịp nhận xét.")));
     }
 
-    static String formatScore(Double score) {
+    public static String formatScore(Double score) {
         if (score == null) return "—";
         return score % 1 == 0 ? String.valueOf(score.intValue()) : String.format(Locale.ROOT, "%.2f", score).replaceAll("0+$", "");
     }

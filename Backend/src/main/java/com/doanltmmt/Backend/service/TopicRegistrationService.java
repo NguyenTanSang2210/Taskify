@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.service;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -283,8 +284,8 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in grading phase");
         }
         
-        Double score = Double.valueOf(body.get("score").toString());
-        String feedback = (String) body.get("feedback");
+        Double score = parseScore(body.get("score"));
+        String feedback = Inputs.optionalText(body.get("feedback"), "Nhận xét", 5000);
 
         reg.setScore(score);
         reg.setFeedback(feedback);
@@ -296,12 +297,28 @@ public class TopicRegistrationService {
             topic.setStatus(Topic.COMPLETED);
             topicRepo.save(topic);
         }
-        sendNotification(saved.getStudent().getUser(), "De tai da co diem tong ket", 
-                "Diem so: " + score + ". Nhan xet: " + feedback, saved.getId());
+        sendNotification(saved.getStudent().getUser(), "Đề tài đã có điểm tổng kết",
+                "Điểm: " + EmailTemplates.formatScore(score) + (feedback == null ? "" : ". Nhận xét: " + feedback), saved.getId());
         
         auditLogService.log("GRADE_TOPIC", "TopicRegistration", saved.getId().toString(), "Graded topic " + topic.getId() + " with score " + score);
         sendMail(saved.getStudent().getUser(), EmailTemplates.graded(topic.getTitle(), score, feedback));
         return new TopicRegistrationDTO(saved);
+    }
+
+    /** Điểm thang 10, làm tròn đến 0,25; thiếu hoặc sai → 400. */
+    static Double parseScore(Object raw) {
+        if (raw == null || raw.toString().isBlank()) throw Inputs.badRequest("Vui lòng nhập điểm");
+        double score;
+        try {
+            score = Double.parseDouble(raw.toString().trim().replace(',', '.'));
+        } catch (NumberFormatException e) {
+            throw Inputs.badRequest("Điểm phải là một số");
+        }
+        if (Double.isNaN(score) || score < 0 || score > 10) throw Inputs.badRequest("Điểm phải từ 0 đến 10");
+        if (Math.abs(score * 4 - Math.round(score * 4)) > 1e-9) {
+            throw Inputs.badRequest("Điểm chỉ được lẻ đến 0,25 (ví dụ 7,25; 7,5; 7,75)");
+        }
+        return score;
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {

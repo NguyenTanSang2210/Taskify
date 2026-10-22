@@ -21,12 +21,15 @@ import com.doanltmmt.Backend.service.EmailTemplates;
 import com.doanltmmt.Backend.service.SimilarityService;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 @RestController
@@ -99,13 +102,10 @@ public class ProgressController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
         }
 
-        String title = (body.getOrDefault("title", "")).trim();
-        String content = (body.getOrDefault("content", "")).trim();
-        String fileUrl = (body.getOrDefault("fileUrl", ""));
-
-        if (title.isBlank() || content.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title and content are required");
-        }
+        String title = Inputs.requiredText(body.get("title"), "Tiêu đề báo cáo", 200);
+        String content = Inputs.requiredText(body.get("content"), "Nội dung báo cáo", 20_000);
+        String fileUrl = body.getOrDefault("fileUrl", "");
+        if (fileUrl == null) fileUrl = "";
 
         ProgressReport pr = new ProgressReport();
         pr.setStudent(student);
@@ -126,14 +126,7 @@ public class ProgressController {
             pr.setFileUrl(FileStorageService.urlFor(attachment));
         }
         
-        String deadlineStr = body.getOrDefault("deadline", "");
-        if (!deadlineStr.isBlank()) {
-            try {
-                pr.setDeadline(java.time.LocalDateTime.parse(deadlineStr));
-            } catch (Exception e) {
-                // Ignore invalid date format
-            }
-        }
+        pr.setDeadline(Inputs.dateTime(body.get("deadline"), "Hạn chót"));
 
         // Tùy chọn: gắn vào milestone. Milestone phải TỒN TẠI và thuộc đúng đề tài này
         // (trước đây tạo một Milestone "rỗng" chỉ có id: gây lỗi khóa ngoại 500 hoặc gắn nhầm milestone đề tài khác).
@@ -303,10 +296,10 @@ public class ProgressController {
         if (!wsStatus.equals("IN_PROGRESS")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
         }
-        String comment = (body.getOrDefault("lecturerComment", "")).trim();
-        String status = (body.getOrDefault("status", "")).trim();
-        if (comment.isBlank() && status.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nothing to update");
+        String comment = Objects.requireNonNullElse(Inputs.optionalText(body.get("lecturerComment"), "Nhận xét", 5000), "");
+        String status = Objects.requireNonNullElse(body.get("status"), "").trim();
+        if (comment.isBlank() && status.isBlank() && Inputs.dateTime(body.get("deadline"), "Hạn chót") == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không có nội dung nào để cập nhật");
         }
         if (!status.isBlank()) {
             String up = status.toUpperCase();
@@ -319,14 +312,8 @@ public class ProgressController {
             pr.setLecturerComment(comment);
         }
         
-        String deadlineStr = body.getOrDefault("deadline", "");
-        if (!deadlineStr.isBlank()) {
-            try {
-                pr.setDeadline(java.time.LocalDateTime.parse(deadlineStr));
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
+        LocalDateTime deadline = Inputs.dateTime(body.get("deadline"), "Hạn chót");
+        if (deadline != null) pr.setDeadline(deadline);
 
         ProgressReport saved = progressRepo.save(pr);
         auditLogService.log("UPDATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Comment added/Status updated");

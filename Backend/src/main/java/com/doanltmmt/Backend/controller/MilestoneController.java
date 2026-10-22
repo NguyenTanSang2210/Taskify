@@ -3,9 +3,11 @@ package com.doanltmmt.Backend.controller;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.TopicAccessService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,9 @@ import java.util.Map;
 @RequestMapping("/api/milestones")
 @SuppressWarnings("null")
 public class MilestoneController {
+
+    private static final int MAX_TITLE = 255;
+    private static final int MAX_DESCRIPTION = 5000;
 
     private final MilestoneRepository milestoneRepo;
     private final AuditLogService auditLogService;
@@ -53,22 +58,17 @@ public class MilestoneController {
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public MilestoneDTO createMilestone(@RequestBody Map<String, Object> body) {
-        if (body.get("topicId") == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
-        }
-        Topic topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId").toString()));
+        Topic topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
         topicAccess.requireOwner(topic);
 
         Milestone milestone = new Milestone();
         milestone.setTopic(topic);
-        milestone.setTitle((String) body.get("title"));
-        milestone.setDescription((String) body.getOrDefault("description", ""));
-        if (body.get("deadline") != null) {
-            milestone.setDeadline(LocalDateTime.parse((String) body.get("deadline")));
-        }
-        if (body.get("startDate") != null) {
-            milestone.setStartDate(LocalDateTime.parse((String) body.get("startDate")));
-        }
+        milestone.setTitle(Inputs.requiredText(body.get("title"), "Tên mốc", MAX_TITLE));
+        milestone.setDescription(Inputs.optionalText(body.get("description"), "Mô tả", MAX_DESCRIPTION));
+        milestone.setStartDate(Inputs.dateTime(body.get("startDate"), "Ngày bắt đầu"));
+        milestone.setDeadline(Inputs.dateTime(body.get("deadline"), "Hạn chót"));
+        if (milestone.getDeadline() == null) throw Inputs.badRequest("Hạn chót là bắt buộc");
+        validateDates(milestone);
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("CREATE_MILESTONE", "Milestone", saved.getId().toString(), "Created milestone: " + saved.getTitle());
         return MilestoneDTO.from(saved);
@@ -80,12 +80,17 @@ public class MilestoneController {
         Milestone milestone = loadMilestone(id);
         topicAccess.requireOwner(milestone.getTopic());
 
-        if (body.containsKey("title")) milestone.setTitle((String) body.get("title"));
-        if (body.containsKey("description")) milestone.setDescription((String) body.get("description"));
-        if (body.containsKey("deadline")) {
-            String dl = (String) body.get("deadline");
-            milestone.setDeadline(dl == null ? null : LocalDateTime.parse(dl));
+        if (body.containsKey("title")) milestone.setTitle(Inputs.requiredText(body.get("title"), "Tên mốc", MAX_TITLE));
+        if (body.containsKey("description")) {
+            milestone.setDescription(Inputs.optionalText(body.get("description"), "Mô tả", MAX_DESCRIPTION));
         }
+        if (body.containsKey("startDate")) milestone.setStartDate(Inputs.dateTime(body.get("startDate"), "Ngày bắt đầu"));
+        if (body.containsKey("deadline")) {
+            LocalDateTime deadline = Inputs.dateTime(body.get("deadline"), "Hạn chót");
+            if (deadline == null) throw Inputs.badRequest("Hạn chót là bắt buộc");
+            milestone.setDeadline(deadline);
+        }
+        validateDates(milestone);
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("UPDATE_MILESTONE", "Milestone", saved.getId().toString(), "Updated milestone");
         return MilestoneDTO.from(saved);
@@ -99,6 +104,23 @@ public class MilestoneController {
 
         milestoneRepo.delete(milestone);
         auditLogService.log("DELETE_MILESTONE", "Milestone", id.toString(), "Deleted milestone");
+    }
+
+    /** Bắt đầu ≤ hạn chót, và cả hai nằm trong thời gian của đợt (nếu đợt có đặt ngày). */
+    private static void validateDates(Milestone m) {
+        LocalDateTime start = m.getStartDate();
+        LocalDateTime deadline = m.getDeadline();
+        if (start != null && deadline != null && deadline.isBefore(start)) {
+            throw Inputs.badRequest("Hạn chót phải sau ngày bắt đầu");
+        }
+        Workspace ws = m.getTopic().getWorkspace();
+        if (ws == null) return;
+        if (ws.getStartAt() != null && start != null && start.isBefore(ws.getStartAt())) {
+            throw Inputs.badRequest("Ngày bắt đầu phải nằm trong thời gian của đợt");
+        }
+        if (ws.getEndAt() != null && deadline != null && deadline.isAfter(ws.getEndAt())) {
+            throw Inputs.badRequest("Hạn chót phải nằm trong thời gian của đợt");
+        }
     }
 
     private Milestone loadMilestone(Long id) {
