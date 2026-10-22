@@ -948,7 +948,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [x] Không còn đăng ký công khai; tài khoản mới kích hoạt qua email (D-02).
 - [x] Bộ test bảo mật 18/18 pass trong CI (job `backend-test-and-build` xanh trên PR #3).
 - [x] Chạy lại smoke test P0-05 — không có hồi quy (21/10/2026: OK=18 · FIXED=6 · BUG đã biết thuộc GĐ2=6 · FAIL=0).
-- [ ] Check bảo mật trên PR #3 xanh: CodeQL (còn 4 cảnh báo cần đánh dấu trên GitHub — xem báo cáo mục 5) và GitGuardian (15 phát hiện là dữ liệu test, cần đánh dấu trên dashboard).
+- [ ] Check bảo mật trên PR #3 xanh: CodeQL ✅ (đã dismiss 4 cảnh báo có lý do, 21/10/2026) · GitGuardian ⬜ (15 phát hiện là dữ liệu test — cần Ignore trên dashboard).
 - [ ] Merge `develop` → `main`, tag `v0.2.0-security`.
 
 ---
@@ -2015,6 +2015,7 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 01/10/2026 | P1-05, P1-06, P1-04, P1-07 | `TopicAccessService` + 16 điểm IDOR; DTO phản hồi; bảo mật WebSocket; gia cố upload | `6e38226`, `765d542`, `590fb10`, `b57fdd8` | |
 | 01/10/2026 | P1-09, P1-11b, P1-13, P1-12 | Kích hoạt tài khoản + chính sách mật khẩu; header/CSP; nâng dependency + Dependabot + CodeQL; 18/18 test bắt buộc | `e5aa01f`, `f40369c`, `d982264`, `9ece91b` | 196 test |
 | 21/10/2026 | GĐ1-QA | Kiểm thử toàn diện + vá 5 lỗi phát hiện thêm (ReDoS email, username dài → 500 lộ SQL, InvalidPath tên file cũ, 2 lỗ hổng npm, lộ phiên bản nginx); tắt attribution Claude Code cho repo | xem `report_plan1.md` | 202 test · smoke 0 FAIL |
+| 22/10/2026 | GĐ1-QA | Rà soát lại toàn bộ + dọn code: 0 cảnh báo javac/ECJ/khởi động; 202 test · smoke 0 FAIL · ws 12/12 · ui 8/8 | `4eb5aae` | Báo cáo mục 10 |
 | | | | | |
 
 ---

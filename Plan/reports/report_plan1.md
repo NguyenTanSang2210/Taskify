@@ -325,3 +325,29 @@ cd frontend; npm ci; npm run lint; npm run build; npm audit
 Lưu ý khi chạy lại nhiều lần: kiểm thử chống dò mật khẩu khóa tài khoản demo 10 phút (bảng `login_throttle`, giữ qua lần khởi động lại) — nếu smoke test báo `429` hàng loạt thì chờ hết khóa hoặc xóa bảng `login_throttle` trên DB **dev**.
 
 Kiểm thử bổ sung đợt này (xử lý lỗi/bảo mật/hiệu năng/tương thích) là kịch bản tạm, không đưa vào repo; các lỗi tìm được đều đã có test hồi quy trong `Backend/src/test`.
+
+---
+
+## 10. Kiểm tra lại lần 2 — 22/10/2026 (rà soát "code sạch" + xác nhận hoàn thành)
+
+Chạy lại toàn bộ trên máy sạch, code tại commit `4eb5aae`:
+
+| Hạng mục | Kết quả |
+|---|---|
+| Backend `mvnw clean verify` | **202/202** test đạt |
+| Cảnh báo biên dịch Java (javac, bật deprecation) | **0** (trước: 5 — API lỗi thời) |
+| Phân tích code thừa (Eclipse ECJ: import/biến/field/hàm không dùng, code chết) | **0** (trước: 5) |
+| Cảnh báo khi khởi động backend | **0** ở profile `prod` (trước: 2 — dialect thừa, cấu hình AuthenticationProvider trùng) |
+| Frontend ESLint (`--max-warnings=0`) / build / `npm audit` | 0 lỗi · 0 cảnh báo / OK / 0 lỗ hổng |
+| Smoke toàn luồng | OK 18 · FIXED 6 · BUG đã biết (GĐ2) 6 · **FAIL 0** |
+| WebSocket / Giao diện / Kiểm thử lỗi-bảo mật-hiệu năng | 12/12 · 8/8 · 28/28 |
+| Profile `prod` | Swagger đóng; secret JWT yếu → **từ chối khởi động**; không seed dữ liệu demo |
+| CodeQL (chạy cục bộ) | Không có cảnh báo mới; 4 cảnh báo cũ đã được dismiss trên GitHub (CSRF: dương tính giả; localStorage: P3-14) |
+| CI trên PR #3 | 9/10 xanh; **GitGuardian còn đỏ** (15 dữ liệu test, cần Ignore trên dashboard — mục 5.2) |
+
+**Dọn code (commit `4eb5aae`):** bỏ API lỗi thời (`DaoAuthenticationProvider()`, `Specification.where`, `@MockBean`), tạo `AuthenticationManager` trực tiếp, bỏ `hibernate.dialect` thừa, xóa field `EventPublisher` không dùng ở 2 controller và 3 import thừa. Không đổi hành vi (toàn bộ test + smoke giữ nguyên kết quả).
+
+**Ghi nhận, không xóa:** `frontend/src/api/discussApi.js`, `calendarApi.js`, `announcementApi.js` chưa được trang nào dùng — backend của Thảo luận / Lịch / Thông báo chung đã có và đã bảo mật, nhưng **chưa có giao diện** (thuộc P4-11). Xóa đi sẽ mất phần nối API sẵn có, nên giữ lại.
+
+**Trạng thái Giai đoạn 1 tại thời điểm này:** toàn bộ phần **mã nguồn** đã xong và sạch. Còn 3 việc **chỉ chủ dự án làm được** (không phải lỗi code): (1) P1-08B viết lại lịch sử git, (2) Ignore 15 incident GitGuardian, (3) merge PR #3 + tag `v0.2.0-security`.
+
