@@ -13,6 +13,7 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -55,10 +56,10 @@ public class LecturerAssignmentController {
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     @Transactional
     public LecturerAssignmentDTO assign(@RequestBody Map<String, Object> body) {
-        Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
-        Long lecturerUserId = Long.valueOf(String.valueOf(body.get("lecturerId")));
+        Long workspaceId = Inputs.requiredId(body.get("workspaceId"), "workspaceId");
+        Long lecturerUserId = Inputs.requiredId(body.get("lecturerId"), "lecturerId");
         String type = String.valueOf(body.getOrDefault("type", "MAIN")).trim().toUpperCase();
-        int quotaMaxGroups = body.get("quotaMaxGroups") != null ? Integer.parseInt(String.valueOf(body.get("quotaMaxGroups"))) : 0;
+        int quotaMaxGroups = Inputs.optionalNonNegativeInt(body.get("quotaMaxGroups"), "Hạn mức nhóm", 0);
         String reason = body.get("reason") != null ? String.valueOf(body.get("reason")).trim() : null;
         if (!type.equals("MAIN") && !type.equals("ASSISTANT")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid type");
@@ -97,7 +98,7 @@ public class LecturerAssignmentController {
     @PostMapping("/revoke")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public LecturerAssignmentDTO revoke(@RequestBody Map<String, Object> body) {
-        Long assignmentId = Long.valueOf(String.valueOf(body.get("assignmentId")));
+        Long assignmentId = Inputs.requiredId(body.get("assignmentId"), "assignmentId");
         String reason = body.get("reason") != null ? String.valueOf(body.get("reason")).trim() : null;
         LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
         scope.requireDepartmentAccess(a.getWorkspace().getDepartment().getId());

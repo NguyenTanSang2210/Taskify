@@ -6,6 +6,7 @@ import com.doanltmmt.Backend.repository.AcademicClassRepository;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public class AcademicClassController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public AcademicClass create(@RequestBody Map<String, Object> body) {
-        Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
+        Long departmentId = Inputs.optionalId(body.get("departmentId"), "departmentId");
         if (!scope.hasRole("ADMIN")) {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }

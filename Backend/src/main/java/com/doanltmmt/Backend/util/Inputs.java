@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.util;
 
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -40,6 +41,23 @@ public final class Inputs {
             return id;
         } catch (NumberFormatException e) {
             throw badRequest(label + " không hợp lệ");
+        }
+    }
+
+    /** Mã định danh không bắt buộc: rỗng → {@code null}, sai định dạng → 400. */
+    public static Long optionalId(Object raw, String label) {
+        return raw == null || raw.toString().isBlank() ? null : requiredId(raw, label);
+    }
+
+    /** Số nguyên không âm không bắt buộc: rỗng → {@code defaultValue}, sai → 400. */
+    public static int optionalNonNegativeInt(Object raw, String label, int defaultValue) {
+        if (raw == null || raw.toString().isBlank()) return defaultValue;
+        try {
+            int value = Integer.parseInt(raw.toString().trim());
+            if (value < 0) throw badRequest(label + " không được âm");
+            return value;
+        } catch (NumberFormatException e) {
+            throw badRequest(label + " phải là số nguyên");
         }
     }
 

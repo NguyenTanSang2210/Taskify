@@ -8,6 +8,7 @@ import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -47,8 +48,8 @@ public class WorkspaceClassController {
     @PostMapping("/assign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public WorkspaceClass assign(@RequestBody Map<String, Object> body) {
-        Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
-        Long classId = Long.valueOf(String.valueOf(body.get("classId")));
+        Long workspaceId = Inputs.requiredId(body.get("workspaceId"), "workspaceId");
+        Long classId = Inputs.requiredId(body.get("classId"), "classId");
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         requireWorkspaceConfigurable(w);
@@ -72,8 +73,8 @@ public class WorkspaceClassController {
     @PostMapping("/unassign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public WorkspaceClass unassign(@RequestBody Map<String, Object> body) {
-        Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
-        Long classId = Long.valueOf(String.valueOf(body.get("classId")));
+        Long workspaceId = Inputs.requiredId(body.get("workspaceId"), "workspaceId");
+        Long classId = Inputs.requiredId(body.get("classId"), "classId");
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         requireWorkspaceConfigurable(w);

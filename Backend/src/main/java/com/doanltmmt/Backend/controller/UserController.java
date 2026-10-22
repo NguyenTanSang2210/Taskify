@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -189,8 +190,8 @@ public class UserController {
         String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
         String email = body.get("email") != null ? String.valueOf(body.get("email")).trim() : null;
         String phone = body.get("phone") != null ? String.valueOf(body.get("phone")).trim() : null;
-        Long roleId = body.get("roleId") != null ? Long.valueOf(String.valueOf(body.get("roleId"))) : null;
-        Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
+        Long roleId = Inputs.optionalId(body.get("roleId"), "roleId");
+        Long departmentId = Inputs.optionalId(body.get("departmentId"), "departmentId");
         boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
 
         if (username.isBlank() || fullName.isBlank()) {
@@ -237,7 +238,7 @@ public class UserController {
         if (roleName.equals("STUDENT")) {
             studentCode = String.valueOf(body.getOrDefault("studentCode", "")).trim();
             className = body.get("className") != null ? String.valueOf(body.get("className")).trim() : null;
-            academicClassId = body.get("academicClassId") != null ? Long.valueOf(String.valueOf(body.get("academicClassId"))) : null;
+            academicClassId = Inputs.optionalId(body.get("academicClassId"), "academicClassId");
 
             if (studentCode.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "studentCode is required for STUDENT");

@@ -189,4 +189,19 @@ class BusinessValidationIT extends AbstractSecurityIT {
         call(HttpMethod.POST, "/api/discuss/threads/{id}/posts", s, Map.of("content", ""), threadId)
                 .andExpect(status().isBadRequest());
     }
+
+    // ---------------------------------------------------------------- id thiếu/sai ở các API quản trị
+
+    @Test
+    void adminEndpoints_missingOrInvalidIds_are400_not500() throws Exception {
+        User deptAdmin = newUser("dval2", "DEPARTMENT_ADMIN", dept);
+        call(HttpMethod.POST, "/api/workspace-classes/assign", deptAdmin, Map.of())
+                .andExpect(status().isBadRequest()).andExpect(errorMessageContains("workspaceId là bắt buộc"));
+        call(HttpMethod.POST, "/api/assignments/assign", deptAdmin, Map.of("workspaceId", "abc", "lecturerId", 1))
+                .andExpect(status().isBadRequest()).andExpect(errorMessageContains("workspaceId không hợp lệ"));
+        call(HttpMethod.POST, "/api/assignments/assign", deptAdmin,
+                Map.of("workspaceId", wsOpenTopic.getId(), "lecturerId", lec().getId(), "quotaMaxGroups", -1))
+                .andExpect(status().isBadRequest()).andExpect(errorMessageContains("không được âm"));
+        call(HttpMethod.POST, "/api/assignments/revoke", deptAdmin, Map.of()).andExpect(status().isBadRequest());
+    }
 }
