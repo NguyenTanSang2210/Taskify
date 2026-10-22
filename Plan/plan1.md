@@ -948,7 +948,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [x] Không còn đăng ký công khai; tài khoản mới kích hoạt qua email (D-02).
 - [x] Bộ test bảo mật 18/18 pass trong CI (job `backend-test-and-build` xanh trên PR #3).
 - [x] Chạy lại smoke test P0-05 — không có hồi quy (21/10/2026: OK=18 · FIXED=6 · BUG đã biết thuộc GĐ2=6 · FAIL=0).
-- [ ] Check bảo mật trên PR #3 xanh: CodeQL ✅ (đã dismiss 4 cảnh báo có lý do, 21/10/2026) · GitGuardian ⬜ (15 phát hiện là dữ liệu test — cần Ignore trên dashboard).
+- [x] Check bảo mật trên PR #3 xanh: CodeQL ✅ (dismiss 4 cảnh báo có lý do, 21/10/2026) · GitGuardian ✅ (15 phát hiện dữ liệu test đã Ignore, 22/10/2026) — 10/10 check xanh trên `b409548`.
 - [ ] Merge `develop` → `main`, tag `v0.2.0-security`.
 
 ---
