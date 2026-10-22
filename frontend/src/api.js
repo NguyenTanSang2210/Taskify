@@ -1,5 +1,10 @@
 // src/api.js
 import axios from "axios";
+import { showToast } from "./toast";
+
+const FORBIDDEN_MESSAGE = "Bạn không có quyền thực hiện thao tác này.";
+// Thông báo lỗi tiếng Việt từ backend thì giữ nguyên; thông báo tiếng Anh chung chung thì thay bằng câu dễ hiểu
+const isVietnamese = (text) => /[À-ỹđĐ]/.test(text || "");
 
 // Luôn gọi API bằng đường dẫn tương đối "/api".
 //  - Chạy dev (npm run dev): Vite proxy /api và /ws sang backend (xem vite.config.js).
@@ -28,15 +33,23 @@ api.interceptors.response.use(
         localStorage.removeItem("user");
       } catch { void 0; }
       if (window.location?.pathname !== "/login") {
-        window.location.assign("/login");
+        window.location.assign("/login?reason=expired");
       }
     }
 
-    const message =
+    let message =
       error?.response?.data?.message ||
       error?.response?.data?.error ||
       error?.message ||
       "Yêu cầu thất bại";
+
+    if (status === 403) {
+      if (!isVietnamese(message)) message = FORBIDDEN_MESSAGE;
+      showToast("warning", message);
+    } else if (!isAuthEndpoint && !axios.isCancel(error) && (!status || status >= 500)) {
+      // Mất kết nối / lỗi máy chủ: báo chung cho mọi trang (trang có thể hiển thị thêm thông báo riêng)
+      showToast("danger", status ? "Máy chủ gặp lỗi, vui lòng thử lại sau." : "Không kết nối được máy chủ. Kiểm tra mạng và thử lại.");
+    }
     const normalizedError = new Error(message);
     normalizedError.status = status;
     normalizedError.url = (error?.config?.baseURL || "") + (error?.config?.url ?? url);

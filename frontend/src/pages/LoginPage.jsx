@@ -21,7 +21,12 @@ export default function LoginPage() {
   const [resendIn, setResendIn] = useState(0);
   const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Bị đưa về đây vì token hết hạn / bị thu hồi (api.js, AuthContext) → báo cho người dùng biết lý do
+  const [error, setError] = useState(() =>
+    new URLSearchParams(window.location.search).get("reason") === "expired"
+      ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+      : ""
+  );
   const [successMsg, setSuccessMsg] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();

@@ -7,7 +7,8 @@
  * Kiểm tra: (1) trang đăng nhập không có vi phạm CSP / lỗi console, (2) sinh viên đăng nhập → dashboard,
  * (3) vào các trang tiến độ / thông báo / chat / tài khoản không vi phạm CSP, (4) màn "Kích hoạt tài khoản" mở được
  * và không còn nút "Đăng ký ngay", (5) ADMIN: đăng nhập → bước OTP hiển thị (không vào thẳng hệ thống),
- * (6) ảnh chụp lưu ở Plan/reports/ui-*.png.
+ * (6) 403 chỉ hiện thông báo — vẫn đăng nhập; 401 → về trang đăng nhập kèm lý do, (7) token hết hạn sẵn → tự đăng xuất.
+ * Ảnh chụp lưu ở Plan/reports/ui-*.png.
  *
  * Biến môi trường: WEB_URL (mặc định http://localhost:5175), PASSWORD (123456), EDGE_PATH, PW_MODULE, SHOT_DIR.
  */
@@ -75,6 +76,55 @@ try {
       await page.goto(`${WEB}${route}`, { waitUntil: "networkidle" });
     }
     report(problems.length === 0, "Các trang sinh viên: không vi phạm CSP / lỗi script", problems.join(" | "));
+    await ctx.close();
+  }
+
+  // 6 (P2-02): 403 chỉ báo lỗi, KHÔNG đăng xuất; 401 / token hết hạn → về trang đăng nhập kèm lý do
+  {
+    const { ctx, page } = await freshPage();
+    await page.goto(`${WEB}/login`, { waitUntil: "networkidle" });
+    await page.fill("input >> nth=0", "student");
+    await page.fill("input[type=password]", PASSWORD);
+    await page.click("button[type=submit]");
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 15000 });
+
+    // Giả lập backend từ chối quyền (403) cho một API mà trang thông báo luôn gọi
+    await page.route("**/api/notifications**", (r) =>
+      r.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ status: 403, message: "Out of scope" }) }));
+    await page.goto(`${WEB}/notifications`, { waitUntil: "networkidle" });
+    const toast = page.getByRole("alert").filter({ hasText: "Bạn không có quyền thực hiện thao tác này" });
+    await toast.first().waitFor({ timeout: 5000 }).catch(() => {});
+    report((await toast.count()) > 0, "403: hiện thông báo 'Bạn không có quyền…'");
+    report(!page.url().includes("/login") && !!(await page.evaluate(() => localStorage.getItem("token"))),
+      "403: vẫn giữ đăng nhập (không bị đá ra màn hình đăng nhập)");
+    await page.screenshot({ path: path.join(SHOTS, "ui-403-toast.png") });
+
+    // 401 (token bị thu hồi) → đăng xuất, về /login?reason=expired và báo lý do
+    await page.unroute("**/api/notifications**");
+    await page.route("**/api/notifications**", (r) =>
+      r.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ status: 401, message: "Unauthorized" }) }));
+    await page.goto(`${WEB}/notifications`);
+    await page.waitForURL((u) => u.pathname.startsWith("/login"), { timeout: 10000 }).catch(() => {});
+    await page.waitForSelector("text=Phiên đăng nhập đã hết hạn", { timeout: 5000 }).catch(() => {});
+    report(page.url().includes("reason=expired") && (await page.getByText("Phiên đăng nhập đã hết hạn").count()) > 0,
+      "401: về trang đăng nhập và báo 'Phiên đăng nhập đã hết hạn'");
+    await ctx.close();
+  }
+
+  // 7 (P2-02): token đã hết hạn sẵn trong trình duyệt → tự đăng xuất ngay, không đợi request lỗi
+  {
+    const { ctx, page } = await freshPage();
+    await page.goto(`${WEB}/login`, { waitUntil: "networkidle" });
+    await page.evaluate(() => {
+      const b64 = (o) => btoa(JSON.stringify(o)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+      const expired = `${b64({ alg: "HS256" })}.${b64({ sub: "student", exp: Math.floor(Date.now() / 1000) - 60 })}.x`;
+      localStorage.setItem("token", expired);
+      localStorage.setItem("user", JSON.stringify({ id: 1, username: "student", role: "STUDENT" }));
+    });
+    await page.goto(`${WEB}/`);
+    await page.waitForSelector("text=Phiên đăng nhập đã hết hạn", { timeout: 10000 }).catch(() => {});
+    report(page.url().includes("/login") && !(await page.evaluate(() => localStorage.getItem("token"))),
+      "Token hết hạn: tự đăng xuất và về trang đăng nhập");
     await ctx.close();
   }
 

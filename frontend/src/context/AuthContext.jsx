@@ -2,6 +2,25 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
+/** Thời điểm hết hạn (ms) đọc từ claim `exp` của JWT; null nếu không đọc được. */
+const tokenExpiresAt = (jwt) => {
+    try {
+        const payload = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const exp = JSON.parse(atob(payload)).exp;
+        return typeof exp === "number" ? exp * 1000 : null;
+    } catch {
+        return null;
+    }
+};
+
+const expireSession = () => {
+    try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+    } catch { void 0; }
+    window.location.assign("/login?reason=expired");
+};
+
 export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(() => {
         try {
@@ -48,6 +67,21 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("token", newToken);
         setToken(newToken);
     };
+
+    // Tự đăng xuất đúng lúc token hết hạn (không đợi tới request kế tiếp bị 401)
+    useEffect(() => {
+        if (!token) return undefined;
+        const expiresAt = tokenExpiresAt(token);
+        if (!expiresAt) return undefined;
+        const remaining = expiresAt - Date.now();
+        if (remaining <= 0) {
+            expireSession();
+            return undefined;
+        }
+        // setTimeout chỉ nhận tối đa ~24,8 ngày
+        const timer = setTimeout(expireSession, Math.min(remaining, 2147483647));
+        return () => clearTimeout(timer);
+    }, [token]);
 
     // Listen for storage events (other tabs)
     useEffect(() => {
