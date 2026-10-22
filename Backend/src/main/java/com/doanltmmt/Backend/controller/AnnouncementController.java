@@ -6,7 +6,6 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.AnnouncementRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
-import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
 import org.springframework.http.HttpStatus;
@@ -31,18 +30,15 @@ public class AnnouncementController {
 
     private final AnnouncementRepository repo;
     private final AuditLogService auditLogService;
-    private final EventPublisher events;
     private final SecurityScopeService scope;
     private final TopicAccessService topicAccess;
 
     public AnnouncementController(AnnouncementRepository repo,
                                   AuditLogService auditLogService,
-                                  EventPublisher events,
                                   SecurityScopeService scope,
                                   TopicAccessService topicAccess) {
         this.repo = repo;
         this.auditLogService = auditLogService;
-        this.events = events;
         this.scope = scope;
         this.topicAccess = topicAccess;
     }

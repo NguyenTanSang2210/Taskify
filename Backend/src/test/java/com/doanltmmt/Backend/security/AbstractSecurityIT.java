@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,7 +46,7 @@ import java.time.LocalDateTime;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@SuppressWarnings({"removal", "null"})
+@SuppressWarnings("null")
 public abstract class AbstractSecurityIT {
 
     /** Thư mục upload tạm: test không ghi rác vào Backend/uploads. */
@@ -88,7 +88,7 @@ public abstract class AbstractSecurityIT {
     @Autowired protected JwtTokenProvider tokens;
     @Autowired protected RateLimiter rateLimiter;
 
-    @MockBean protected EmailService emailService;
+    @MockitoBean protected EmailService emailService;
 
     private final String run = Long.toString(System.nanoTime(), 36);
     private int seq = 0;

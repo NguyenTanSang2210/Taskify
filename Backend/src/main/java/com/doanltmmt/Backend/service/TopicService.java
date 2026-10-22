@@ -161,7 +161,7 @@ public class TopicService {
     }
 
     public Map<String, Object> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
-        Specification<Topic> spec = Specification.where(null);
+        Specification<Topic> spec = Specification.allOf(List.<Specification<Topic>>of());
 
         if (status != null && !status.isBlank()) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), status));

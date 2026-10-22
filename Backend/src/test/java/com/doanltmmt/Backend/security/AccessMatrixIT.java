@@ -2,7 +2,6 @@ package com.doanltmmt.Backend.security;
 
 import com.doanltmmt.Backend.entity.User;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

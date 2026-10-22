@@ -8,7 +8,6 @@ import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.DiscussionPostRepository;
 import com.doanltmmt.Backend.repository.DiscussionThreadRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
-import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
 import org.springframework.http.HttpStatus;
@@ -28,20 +27,17 @@ public class DiscussionController {
     private final DiscussionThreadRepository threadRepo;
     private final DiscussionPostRepository postRepo;
     private final AuditLogService auditLogService;
-    private final EventPublisher events;
     private final SecurityScopeService scope;
     private final TopicAccessService topicAccess;
 
     public DiscussionController(DiscussionThreadRepository threadRepo,
                                 DiscussionPostRepository postRepo,
                                 AuditLogService auditLogService,
-                                EventPublisher events,
                                 SecurityScopeService scope,
                                 TopicAccessService topicAccess) {
         this.threadRepo = threadRepo;
         this.postRepo = postRepo;
         this.auditLogService = auditLogService;
-        this.events = events;
         this.scope = scope;
         this.topicAccess = topicAccess;
     }
