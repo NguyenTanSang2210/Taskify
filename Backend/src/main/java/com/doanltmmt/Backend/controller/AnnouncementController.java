@@ -1,14 +1,13 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Announcement;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.AnnouncementRepository;
-import com.doanltmmt.Backend.repository.TopicRepository;
-import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
-import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.service.TopicAccessService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,60 +16,63 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Thông báo. Có hai loại:
+ * <ul>
+ *   <li><b>Theo đề tài</b> (có topicId): thành viên đề tài xem; người quản lý đề tài đó đăng.</li>
+ *   <li><b>Toàn hệ thống</b> (không topicId): mọi người đã đăng nhập xem; CHỈ quản trị viên hệ thống đăng.</li>
+ * </ul>
+ */
 @RestController
 @RequestMapping("/api/announcements")
-
 @SuppressWarnings("null")
 public class AnnouncementController {
 
     private final AnnouncementRepository repo;
-    private final TopicRepository topicRepo;
-    private final UserRepository userRepo;
     private final AuditLogService auditLogService;
-    private final EventPublisher events;
     private final SecurityScopeService scope;
+    private final TopicAccessService topicAccess;
 
-    public AnnouncementController(AnnouncementRepository repo, TopicRepository topicRepo, UserRepository userRepo, AuditLogService auditLogService, EventPublisher events, SecurityScopeService scope) {
+    public AnnouncementController(AnnouncementRepository repo,
+                                  AuditLogService auditLogService,
+                                  SecurityScopeService scope,
+                                  TopicAccessService topicAccess) {
         this.repo = repo;
-        this.topicRepo = topicRepo;
-        this.userRepo = userRepo;
         this.auditLogService = auditLogService;
-        this.events = events;
         this.scope = scope;
+        this.topicAccess = topicAccess;
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<Announcement> list(@RequestParam(required = false) Long topicId) {
-        if (topicId == null) return repo.findByTopicIsNullOrderByCreatedAtDesc();
-        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            Topic topic = topicRepo.findById(topicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-            if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
-            }
-            scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
+    public List<AnnouncementDTO> list(@RequestParam(required = false) Long topicId) {
+        if (topicId == null) {
+            return repo.findByTopicIsNullOrderByCreatedAtDesc().stream().map(AnnouncementDTO::from).toList();
         }
-        return repo.findByTopic_IdOrderByCreatedAtDesc(topicId);
+        Topic topic = topicAccess.loadTopicOr404(topicId);
+        topicAccess.requireMember(topic);
+        return repo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(AnnouncementDTO::from).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public Announcement create(@RequestBody Map<String, String> body) {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-        User author = userRepo.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    public AnnouncementDTO create(@RequestBody Map<String, String> body) {
+        Topic topic = null;
+        if (body.get("topicId") != null) {
+            topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId")));
+            topicAccess.requireOwner(topic);
+        } else if (!scope.hasRole("ADMIN")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ quản trị viên hệ thống được đăng thông báo toàn hệ thống.");
+        }
+
+        User author = scope.requireCurrentUser();
         Announcement a = new Announcement();
         a.setTitle(body.get("title"));
         a.setContent(body.get("content"));
         a.setAuthor(author);
-        if (body.get("topicId") != null) {
-            Topic topic = topicRepo.findById(Long.valueOf(body.get("topicId")))
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-            a.setTopic(topic);
-        }
+        a.setTopic(topic);
         Announcement saved = repo.save(a);
         auditLogService.log("CREATE_ANNOUNCEMENT", "Announcement", saved.getId().toString(), saved.getTitle());
-        events.genericEvent("ANNOUNCEMENT_CREATED", saved.getId());
-        return saved;
+        return AnnouncementDTO.from(saved);
     }
 }

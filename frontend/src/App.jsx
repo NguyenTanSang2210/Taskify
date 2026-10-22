@@ -29,9 +29,7 @@ export default function App() {
 
   const roleName = typeof user?.role === "object" && user?.role ? user.role.name : user?.role;
   const isDepartmentAdmin = roleName === "DEPARTMENT_ADMIN";
-  
-  // Logic for desktop margin
-  const mainMarginLeft = window.innerWidth >= 768 ? (collapsed ? 76 : 284) : 0;
+
   const portalTitle = useMemo(() => {
     if (roleName === "STUDENT") return "Cổng học tập sinh viên";
     if (roleName === "LECTURER") return "Cổng học thuật giảng viên";

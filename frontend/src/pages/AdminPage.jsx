@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from "react-router-dom";
 import api from '../api';
 import userApi from '../api/userApi';
+import PasswordChecklist, { isPasswordValid } from '../components/PasswordChecklist';
 import InlineNotice from '../components/InlineNotice';
 
 const normalizeKey = (value) => String(value ?? '').trim().toUpperCase();
@@ -141,7 +142,7 @@ export default function AdminPage() {
             await userApi.updateStatus(u.id, !u.active);
             setNotice({ type: 'success', message: `Đã cập nhật trạng thái tài khoản ${u.username}.` });
             loadUsers();
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Không thể cập nhật trạng thái người dùng.' });
         }
     };
@@ -152,8 +153,17 @@ export default function AdminPage() {
             await userApi.updateRole(u.id, newRoleId);
             setNotice({ type: 'success', message: `Đã cập nhật vai trò mới cho ${u.username}.` });
             loadUsers();
-        } catch (error) {
+        } catch {
             setNotice({ type: 'danger', message: 'Không thể thay đổi vai trò.' });
+        }
+    };
+
+    const resendActivation = async (u) => {
+        try {
+            await userApi.resendActivation(u.id);
+            setNotice({ type: 'success', message: `Đã gửi lại mã kích hoạt tới email của ${u.username}.` });
+        } catch (err) {
+            setNotice({ type: 'danger', message: err.message || 'Không gửi lại được mã kích hoạt.' });
         }
     };
 
@@ -164,8 +174,16 @@ export default function AdminPage() {
         const fullName = userCreate.fullName.trim();
         const roleId = userCreate.roleId ? Number(userCreate.roleId) : null;
 
-        if (!username || !password || !fullName || !roleId) {
+        if (!username || !fullName || !roleId) {
             setNotice({ type: 'warning', message: 'Vui lòng điền đầy đủ các thông tin bắt buộc.' });
+            return;
+        }
+        if (!password && !userCreate.email.trim()) {
+            setNotice({ type: 'warning', message: 'Để trống mật khẩu thì cần nhập email: hệ thống sẽ gửi mã kích hoạt để người dùng tự đặt mật khẩu.' });
+            return;
+        }
+        if (password && !isPasswordValid(password, username)) {
+            setNotice({ type: 'warning', message: 'Mật khẩu tạm chưa đạt yêu cầu: 8–64 ký tự, có chữ cái và chữ số, không chứa tên đăng nhập.' });
             return;
         }
 
@@ -175,7 +193,7 @@ export default function AdminPage() {
 
         const payload = {
             username,
-            password,
+            ...(password ? { password } : {}),
             fullName,
             roleId,
             active: !!userCreate.active,
@@ -358,8 +376,14 @@ export default function AdminPage() {
                                     <input className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" value={userCreate.username} onChange={(e) => setUserCreate(s => ({ ...s, username: e.target.value }))} placeholder="VD: 202160...." required />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mật khẩu khởi tạo</label>
-                                    <input type="password" className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" value={userCreate.password} onChange={(e) => setUserCreate(s => ({ ...s, password: e.target.value }))} placeholder="••••••••" required />
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mật khẩu tạm (không bắt buộc)</label>
+                                    <input type="password" autoComplete="new-password" className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" value={userCreate.password} onChange={(e) => setUserCreate(s => ({ ...s, password: e.target.value }))} placeholder="Để trống = gửi mã kích hoạt qua email" />
+                                    <p className="text-[10px] text-outline font-bold ml-1 leading-snug">
+                                        {userCreate.password
+                                            ? 'Người dùng sẽ bị buộc đổi mật khẩu ở lần đăng nhập đầu.'
+                                            : 'Người dùng nhận mã kích hoạt qua email (cần nhập email) rồi tự đặt mật khẩu.'}
+                                    </p>
+                                    {userCreate.password && <PasswordChecklist password={userCreate.password} username={userCreate.username} />}
                                 </div>
                                 <div className="space-y-1.5 lg:col-span-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Họ và tên đầy đủ</label>
@@ -514,8 +538,22 @@ export default function AdminPage() {
                                                   <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                                   {u.active ? 'Hoạt động' : 'Tạm khóa'}
                                                </div>
+                                               {u.activated === false && (
+                                                  <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-700 block w-fit">
+                                                     Chưa kích hoạt
+                                                  </div>
+                                               )}
                                             </td>
                                             <td className="px-6 py-5 text-right">
+                                               {u.activated === false && (
+                                                 <button
+                                                    onClick={() => resendActivation(u)}
+                                                    className="p-2.5 mr-2 rounded-xl transition-all shadow-sm bg-amber-500/10 text-amber-700 hover:bg-amber-600 hover:text-white"
+                                                    title="Gửi lại email kích hoạt"
+                                                 >
+                                                    <span className="material-symbols-outlined text-lg">forward_to_inbox</span>
+                                                 </button>
+                                               )}
                                                {u.role && u.role.name !== 'ADMIN' && (
                                                  <button 
                                                     onClick={() => toggleUserStatus(u)}

@@ -1,9 +1,15 @@
 package com.doanltmmt.Backend.controller;
 
-import com.doanltmmt.Backend.entity.*;
-import com.doanltmmt.Backend.repository.*;
-import com.doanltmmt.Backend.service.EventPublisher;
+import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.entity.DiscussionPost;
+import com.doanltmmt.Backend.entity.DiscussionThread;
+import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.entity.User;
+import com.doanltmmt.Backend.repository.DiscussionPostRepository;
+import com.doanltmmt.Backend.repository.DiscussionThreadRepository;
+import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.service.TopicAccessService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -12,111 +18,83 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 
+/** Thảo luận theo đề tài: chỉ thành viên đề tài (đã được duyệt / giảng viên hướng dẫn / quản trị) xem và đăng bài. */
 @RestController
 @RequestMapping("/api/discuss")
-
 @SuppressWarnings("null")
 public class DiscussionController {
 
     private final DiscussionThreadRepository threadRepo;
     private final DiscussionPostRepository postRepo;
-    private final TopicRepository topicRepo;
-    private final UserRepository userRepo;
-    private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
-    private final EventPublisher events;
+    private final AuditLogService auditLogService;
     private final SecurityScopeService scope;
+    private final TopicAccessService topicAccess;
 
     public DiscussionController(DiscussionThreadRepository threadRepo,
                                 DiscussionPostRepository postRepo,
-                                TopicRepository topicRepo,
-                                UserRepository userRepo,
-                                com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                                EventPublisher events,
-                                SecurityScopeService scope) {
+                                AuditLogService auditLogService,
+                                SecurityScopeService scope,
+                                TopicAccessService topicAccess) {
         this.threadRepo = threadRepo;
         this.postRepo = postRepo;
-        this.topicRepo = topicRepo;
-        this.userRepo = userRepo;
         this.auditLogService = auditLogService;
-        this.events = events;
         this.scope = scope;
+        this.topicAccess = topicAccess;
     }
 
     @GetMapping("/threads")
     @PreAuthorize("isAuthenticated()")
-    public List<DiscussionThread> listThreads(@RequestParam Long topicId) {
-        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            Topic topic = topicRepo.findById(topicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-            if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
-            }
-            scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
-        }
-        return threadRepo.findByTopic_IdOrderByCreatedAtDesc(topicId);
+    public List<DiscussionThreadDTO> listThreads(@RequestParam Long topicId) {
+        Topic topic = topicAccess.loadTopicOr404(topicId);
+        topicAccess.requireMember(topic);
+        return threadRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(DiscussionThreadDTO::from).toList();
     }
 
     @PostMapping("/threads")
     @PreAuthorize("isAuthenticated()")
-    public DiscussionThread createThread(@RequestBody Map<String, String> body) {
-        Long topicId = Long.valueOf(body.get("topicId"));
-        Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
-            }
-            scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
+    public DiscussionThreadDTO createThread(@RequestBody Map<String, String> body) {
+        if (body.get("topicId") == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId là bắt buộc");
         }
-        User user = userRepo.findByUsername(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        Topic topic = topicAccess.loadTopicOr404(Long.valueOf(body.get("topicId")));
+        topicAccess.requireMember(topic);
 
+        User user = scope.requireCurrentUser();
         DiscussionThread t = new DiscussionThread();
         t.setTopic(topic);
         t.setTitle(body.get("title"));
         t.setCreatedBy(user);
         DiscussionThread saved = threadRepo.save(t);
         auditLogService.log("CREATE_THREAD", "DiscussionThread", saved.getId().toString(), "Title: " + saved.getTitle());
-        events.genericEvent("THREAD_CREATED", saved.getId());
-        return saved;
+        return DiscussionThreadDTO.from(saved);
     }
 
     @GetMapping("/threads/{threadId}/posts")
     @PreAuthorize("isAuthenticated()")
-    public List<DiscussionPost> listPosts(@PathVariable Long threadId) {
-        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            DiscussionThread th = threadRepo.findById(threadId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Thread not found"));
-            if (th.getTopic() == null || th.getTopic().getWorkspace() == null || th.getTopic().getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thread has no topic/workspace/department");
-            }
-            scope.requireDepartmentAccess(th.getTopic().getWorkspace().getDepartment().getId());
-        }
-        return postRepo.findByThread_IdOrderByCreatedAtAsc(threadId);
+    public List<DiscussionPostDTO> listPosts(@PathVariable Long threadId) {
+        DiscussionThread th = loadThread(threadId);
+        topicAccess.requireMember(th.getTopic());
+        return postRepo.findByThread_IdOrderByCreatedAtAsc(threadId).stream().map(DiscussionPostDTO::from).toList();
     }
 
     @PostMapping("/threads/{threadId}/posts")
     @PreAuthorize("isAuthenticated()")
-    public DiscussionPost addPost(@PathVariable Long threadId, @RequestBody Map<String, String> body) {
-        DiscussionThread th = threadRepo.findById(threadId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Thread not found"));
-        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            if (th.getTopic() == null || th.getTopic().getWorkspace() == null || th.getTopic().getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thread has no topic/workspace/department");
-            }
-            scope.requireDepartmentAccess(th.getTopic().getWorkspace().getDepartment().getId());
-        }
-        User user = userRepo.findByUsername(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    public DiscussionPostDTO addPost(@PathVariable Long threadId, @RequestBody Map<String, String> body) {
+        DiscussionThread th = loadThread(threadId);
+        topicAccess.requireMember(th.getTopic());
+
+        User user = scope.requireCurrentUser();
         DiscussionPost p = new DiscussionPost();
         p.setThread(th);
         p.setAuthor(user);
         p.setContent(body.get("content"));
         DiscussionPost saved = postRepo.save(p);
         auditLogService.log("CREATE_POST", "DiscussionPost", saved.getId().toString(), "Thread " + th.getId());
-        events.genericEvent("POST_ADDED", saved.getId());
-        return saved;
+        return DiscussionPostDTO.from(saved);
+    }
+
+    private DiscussionThread loadThread(Long threadId) {
+        return threadRepo.findById(threadId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ đề thảo luận"));
     }
 }
-
-

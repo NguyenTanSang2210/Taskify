@@ -67,10 +67,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies and Build
+      - name: Install dependencies, Lint and Build
         run: |
           cd frontend
           npm ci
+          npm run lint
           npm run build
 
   # Job 3: Đảm bảo Docker Compose hoạt động trơn tru
@@ -82,4 +83,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Test Docker Build
+        env:
+          # docker compose BẮT BUỘC các biến này (không có giá trị mặc định); bước build không dùng giá trị thật
+          MYSQL_PASSWORD: ci-build-only
+          MYSQL_ROOT_PASSWORD: ci-build-only
+          JWT_SECRET: ci-build-only
         run: docker compose build

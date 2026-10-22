@@ -1,5 +1,8 @@
 package com.doanltmmt.Backend.controller;
 
+import org.springframework.transaction.annotation.Transactional;
+
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.LecturerAssignment;
 import com.doanltmmt.Backend.entity.User;
@@ -42,15 +45,16 @@ public class LecturerAssignmentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public List<LecturerAssignment> list(@RequestParam Long workspaceId) {
+    public List<LecturerAssignmentDTO> list(@RequestParam Long workspaceId) {
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
-        return repo.findByWorkspace_IdOrderByIdDesc(workspaceId);
+        return repo.findByWorkspace_IdOrderByIdDesc(workspaceId).stream().map(LecturerAssignmentDTO::from).toList();
     }
 
     @PostMapping("/assign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public LecturerAssignment assign(@RequestBody Map<String, Object> body) {
+    @Transactional
+    public LecturerAssignmentDTO assign(@RequestBody Map<String, Object> body) {
         Long workspaceId = Long.valueOf(String.valueOf(body.get("workspaceId")));
         Long lecturerUserId = Long.valueOf(String.valueOf(body.get("lecturerId")));
         String type = String.valueOf(body.getOrDefault("type", "MAIN")).trim().toUpperCase();
@@ -87,12 +91,12 @@ public class LecturerAssignmentController {
         a.setReason(reason);
         LecturerAssignment saved = repo.save(a);
         auditLogService.log("ASSIGN_LECTURER", "LecturerAssignment", saved.getId().toString(), "workspace=" + workspaceId + ",lecturer=" + lecturerUserId + ",type=" + type);
-        return saved;
+        return LecturerAssignmentDTO.from(saved);
     }
 
     @PostMapping("/revoke")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public LecturerAssignment revoke(@RequestBody Map<String, Object> body) {
+    public LecturerAssignmentDTO revoke(@RequestBody Map<String, Object> body) {
         Long assignmentId = Long.valueOf(String.valueOf(body.get("assignmentId")));
         String reason = body.get("reason") != null ? String.valueOf(body.get("reason")).trim() : null;
         LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
@@ -102,7 +106,7 @@ public class LecturerAssignmentController {
         a.setReason(reason);
         LecturerAssignment saved = repo.save(a);
         auditLogService.log("REVOKE_LECTURER_ASSIGNMENT", "LecturerAssignment", saved.getId().toString(), "reason=" + (reason == null ? "" : reason));
-        return saved;
+        return LecturerAssignmentDTO.from(saved);
     }
 
     private static void requireWorkspaceConfigurable(Workspace w) {

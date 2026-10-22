@@ -42,6 +42,13 @@ export const AuthProvider = ({ children }) => {
         setUser(newUserData);
     };
 
+    // Thay token của phiên hiện tại (ví dụ sau khi đổi mật khẩu, token cũ bị vô hiệu và server cấp token mới)
+    const updateToken = (newToken) => {
+        if (!newToken) return;
+        localStorage.setItem("token", newToken);
+        setToken(newToken);
+    };
+
     // Listen for storage events (other tabs)
     useEffect(() => {
         const handleStorageChange = (e) => {
@@ -65,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, token, login, logout, updateUser, updateToken }}>
             {children}
         </AuthContext.Provider>
     );

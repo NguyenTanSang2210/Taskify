@@ -1,8 +1,13 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.entity.StoredFile;
+import com.doanltmmt.Backend.repository.StoredFileRepository;
+import com.doanltmmt.Backend.service.FileStorageService;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.repository.ProgressReportRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
@@ -30,27 +35,33 @@ public class ProgressController {
     private final StudentRepository studentRepo;
     private final TopicRepository topicRepo;
     private final TopicRegistrationRepository regRepo;
+    private final MilestoneRepository milestoneRepo;
     private final EventPublisher eventPublisher;
     private final NotificationRepository notificationRepo;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
     private final com.doanltmmt.Backend.service.EmailService emailService;
     private final com.doanltmmt.Backend.service.SimilarityService similarityService;
     private final SecurityScopeService scope;
+    private final StoredFileRepository storedFileRepo;
 
     public ProgressController(ProgressReportRepository progressRepo,
                               StudentRepository studentRepo,
                               TopicRepository topicRepo,
                               TopicRegistrationRepository regRepo,
+                              MilestoneRepository milestoneRepo,
                               EventPublisher eventPublisher,
                               NotificationRepository notificationRepo,
                               com.doanltmmt.Backend.service.AuditLogService auditLogService,
                               com.doanltmmt.Backend.service.EmailService emailService,
                               com.doanltmmt.Backend.service.SimilarityService similarityService,
-                              SecurityScopeService scope) {
+                              SecurityScopeService scope,
+                              StoredFileRepository storedFileRepo) {
+        this.storedFileRepo = storedFileRepo;
         this.progressRepo = progressRepo;
         this.studentRepo = studentRepo;
         this.topicRepo = topicRepo;
         this.regRepo = regRepo;
+        this.milestoneRepo = milestoneRepo;
         this.eventPublisher = eventPublisher;
         this.notificationRepo = notificationRepo;
         this.auditLogService = auditLogService;
@@ -61,7 +72,7 @@ public class ProgressController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('STUDENT')")
-    public ProgressReport create(@RequestParam Long studentId,
+    public ProgressReportDTO create(@RequestParam Long studentId,
                                  @RequestParam Long topicId,
                                  @Valid @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
@@ -97,8 +108,18 @@ public class ProgressController {
         pr.setTopic(topic);
         pr.setTitle(title);
         pr.setContent(content);
+        // File đính kèm phải là file CỦA CHÍNH sinh viên này (đã tải lên qua /api/upload) và chưa gắn vào báo cáo nào.
+        StoredFile attachment = null;
         if (!fileUrl.isBlank()) {
-            pr.setFileUrl(fileUrl);
+            attachment = storedFileRepo.findByStoredName(FileStorageService.storedNameFromUrl(fileUrl))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "File đính kèm không hợp lệ."));
+            if (!attachment.getOwnerId().equals(currentUserId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể đính kèm file của người khác.");
+            }
+            if (attachment.getRefType() != null) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
+            }
+            pr.setFileUrl(FileStorageService.urlFor(attachment));
         }
         
         String deadlineStr = body.getOrDefault("deadline", "");
@@ -110,17 +131,23 @@ public class ProgressController {
             }
         }
 
-        // Optional: link to milestone if provided
+        // Tùy chọn: gắn vào milestone. Milestone phải TỒN TẠI và thuộc đúng đề tài này
+        // (trước đây tạo một Milestone "rỗng" chỉ có id: gây lỗi khóa ngoại 500 hoặc gắn nhầm milestone đề tài khác).
         String milestoneIdStr = body.getOrDefault("milestoneId", "");
-        if (!milestoneIdStr.isBlank()) {
+        if (milestoneIdStr != null && !milestoneIdStr.isBlank()) {
+            Long milestoneId;
             try {
-                Long milestoneId = Long.parseLong(milestoneIdStr);
-                com.doanltmmt.Backend.entity.Milestone ms = new com.doanltmmt.Backend.entity.Milestone();
-                ms.setId(milestoneId);
-                pr.setMilestone(ms);
-            } catch (Exception ignored) {}
+                milestoneId = Long.parseLong(milestoneIdStr.trim());
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milestoneId không hợp lệ");
+            }
+            com.doanltmmt.Backend.entity.Milestone ms = milestoneRepo.findById(milestoneId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy milestone"));
+            if (ms.getTopic() == null || !ms.getTopic().getId().equals(topicId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Milestone không thuộc đề tài này");
+            }
+            pr.setMilestone(ms);
         }
-
         pr.setStatus("TODO");
         // Similarity check (simple)
         List<ProgressReport> previous = progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId);
@@ -131,6 +158,11 @@ public class ProgressController {
             } catch (Exception ignored) {}
         }
         ProgressReport saved = progressRepo.save(pr);
+        if (attachment != null && storedFileRepo.claim(attachment.getId(), StoredFile.REF_PROGRESS_REPORT, saved.getId()) == 0) {
+            // Có request khác vừa gắn cùng file này (đua nhau): hoàn tác báo cáo vừa tạo
+            progressRepo.delete(saved);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
+        }
         auditLogService.log("CREATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Title: " + saved.getTitle());
         if (maxSim >= 0.8) {
             auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(), "Similarity >= 0.8 with previous submissions");
@@ -166,18 +198,26 @@ public class ProgressController {
         nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
         Notification savedStudent = notificationRepo.save(nStudent);
         eventPublisher.notificationCreated(savedStudent);
-        return saved;
+        return ProgressReportDTO.from(saved);
     }
 
     @GetMapping("/student/{studentId}")
-    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN')")
-    public List<ProgressReport> listByStudent(@PathVariable Long studentId,
+    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    public List<ProgressReportDTO> listByStudent(@PathVariable Long studentId,
                                               @RequestParam(required = false) Long topicId) {
         if (scope.hasRole("STUDENT")) {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (!currentUserId.equals(studentId)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
             }
+        } else if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
+            // Quản trị khoa chỉ xem tiến độ của sinh viên thuộc KHOA MÌNH
+            Student student = studentRepo.findById(studentId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+            if (student.getUser() == null || student.getUser().getDepartment() == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            }
+            scope.requireDepartmentAccess(student.getUser().getDepartment().getId());
         } else if (scope.hasRole("LECTURER")) {
             if (topicId == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId is required");
@@ -190,14 +230,14 @@ public class ProgressController {
             }
         }
         if (topicId != null) {
-            return progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId);
+            return progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId).stream().map(ProgressReportDTO::from).toList();
         }
-        return progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId);
+        return progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId).stream().map(ProgressReportDTO::from).toList();
     }
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<ProgressReport> listByTopic(@PathVariable Long topicId) {
+    public List<ProgressReportDTO> listByTopic(@PathVariable Long topicId) {
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
         if (!scope.hasRole("ADMIN")) {
@@ -213,12 +253,12 @@ public class ProgressController {
                 }
             }
         }
-        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId);
+        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::from).toList();
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STUDENT')")
-    public ProgressReport updateStatus(@PathVariable Long id,
+    public ProgressReportDTO updateStatus(@PathVariable Long id,
                                        @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         ProgressReport pr = progressRepo.findById(id)
@@ -235,12 +275,12 @@ public class ProgressController {
         ProgressReport saved = progressRepo.save(pr);
         auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
         eventPublisher.progressUpdated(saved);
-        return saved;
+        return ProgressReportDTO.from(saved);
     }
 
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public ProgressReport addComment(@PathVariable Long id,
+    public ProgressReportDTO addComment(@PathVariable Long id,
                                      @RequestBody Map<String, String> body) {
         ProgressReport pr = progressRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
@@ -298,7 +338,7 @@ public class ProgressController {
         Notification savedN = notificationRepo.save(nStudent);
         eventPublisher.notificationCreated(savedN);
         emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Progress Report Feedback", "Lecturer commented on your report: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "Status updated"));
-        return saved;
+        return ProgressReportDTO.from(saved);
     }
 }
 

@@ -13,6 +13,10 @@ import com.doanltmmt.Backend.repository.LecturerRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.entity.OtpPurpose;
+import com.doanltmmt.Backend.security.JwtTokenProvider;
+import com.doanltmmt.Backend.security.PasswordPolicy;
+import com.doanltmmt.Backend.service.OtpService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +42,8 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
     private final SecurityScopeService scope;
+    private final JwtTokenProvider tokenProvider;
+    private final OtpService otpService;
 
     public UserController(UserRepository userRepository,
                           RoleRepository roleRepository,
@@ -47,7 +53,10 @@ public class UserController {
                           AcademicClassRepository classRepository,
                           PasswordEncoder passwordEncoder,
                           com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                          SecurityScopeService scope) {
+                          SecurityScopeService scope,
+                          JwtTokenProvider tokenProvider,
+                          OtpService otpService) {
+        this.otpService = otpService;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.studentRepository = studentRepository;
@@ -57,6 +66,14 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
         this.scope = scope;
+        this.tokenProvider = tokenProvider;
+    }
+
+    // Tên miền tách theo dấu chấm (mỗi phần không chứa '.') để regex không quay lui đa thức (ReDoS)
+    private static final java.util.regex.Pattern EMAIL = java.util.regex.Pattern.compile("^[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)+$");
+
+    static boolean isValidEmail(String email) {
+        return email != null && email.length() <= 254 && EMAIL.matcher(email).matches();
     }
 
     @PutMapping("/{id}/profile")
@@ -72,8 +89,28 @@ public class UserController {
              throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to update other user's profile");
         }
 
-        if (body.containsKey("fullName")) user.setFullName(body.get("fullName"));
-        if (body.containsKey("email")) user.setEmail(body.get("email"));
+        if (body.containsKey("fullName")) {
+            String fullName = body.get("fullName") == null ? "" : body.get("fullName").trim();
+            if (fullName.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Họ tên không được để trống");
+            }
+            user.setFullName(fullName);
+        }
+        if (body.containsKey("email")) {
+            String email = body.get("email") == null ? "" : body.get("email").trim();
+            if (email.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không được để trống");
+            }
+            if (!isValidEmail(email)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
+            }
+            boolean usedByAnother = userRepository.findByEmail(email)
+                    .filter(other -> !other.getId().equals(user.getId())).isPresent();
+            if (usedByAnother) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email đã được sử dụng bởi tài khoản khác");
+            }
+            user.setEmail(email);
+        }
         
         User saved = userRepository.save(user);
         auditLogService.log("UPDATE_PROFILE", "User", saved.getId().toString(), "Updated profile info");
@@ -82,7 +119,7 @@ public class UserController {
 
     @PutMapping("/{id}/password")
     @PreAuthorize("isAuthenticated()")
-    public void changePassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+    public Map<String, String> changePassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
@@ -94,13 +131,22 @@ public class UserController {
         String oldPass = body.get("oldPassword");
         String newPass = body.get("newPassword");
         
-        if (!passwordEncoder.matches(oldPass, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect old password");
+        if (oldPass == null || !passwordEncoder.matches(oldPass, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không đúng");
+        }
+        PasswordPolicy.requireValid(newPass, user.getUsername());
+        if (passwordEncoder.matches(newPass, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới không được trùng mật khẩu hiện tại");
         }
         
         user.setPassword(passwordEncoder.encode(newPass));
-        userRepository.save(user);
-        auditLogService.log("CHANGE_PASSWORD", "User", user.getId().toString(), "Password changed");
+        // Vô hiệu MỌI token cũ (kể cả token của phiên đang gọi API này)
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        User saved = userRepository.save(user);
+        auditLogService.log("CHANGE_PASSWORD", "User", saved.getId().toString(), "Password changed");
+        // ... nên cấp token mới cho chính phiên hiện tại để người dùng không bị đăng xuất giữa chừng
+        String roleName = saved.getRole() != null ? saved.getRole().getName() : "STUDENT";
+        return Map.of("token", tokenProvider.generateAccessToken(saved.getUsername(), saved.getId(), roleName, saved.getTokenVersion()));
     }
 
     @GetMapping("/{id}")
@@ -108,16 +154,23 @@ public class UserController {
     public UserDTO getUser(@PathVariable Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return new UserDTO(user);
+
+        // Hồ sơ ĐẦY ĐỦ (email, SĐT, vai trò, khoa) chỉ cho: chính chủ, quản trị hệ thống, quản trị khoa CÙNG khoa.
+        // Người khác chỉ thấy id + họ tên.
+        User me = scope.requireCurrentUser();
+        boolean self = me.getId().equals(user.getId());
+        boolean admin = scope.hasRole("ADMIN");
+        boolean sameDepartmentAdmin = scope.hasRole("DEPARTMENT_ADMIN")
+                && me.getDepartment() != null && user.getDepartment() != null
+                && me.getDepartment().getId().equals(user.getDepartment().getId());
+        if (self || admin || sameDepartmentAdmin) {
+            return new UserDTO(user);
+        }
+        return UserDTO.limited(user);
     }
 
 
 
-    @GetMapping("/test")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String test() {
-        return "Backend OK";
-    }
 
 
 
@@ -132,7 +185,7 @@ public class UserController {
     @Transactional
     public UserDTO create(@RequestBody Map<String, Object> body) {
         String username = String.valueOf(body.getOrDefault("username", "")).trim();
-        String password = String.valueOf(body.getOrDefault("password", "")).trim();
+        String password = body.get("password") == null ? "" : String.valueOf(body.get("password")).trim();
         String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
         String email = body.get("email") != null ? String.valueOf(body.get("email")).trim() : null;
         String phone = body.get("phone") != null ? String.valueOf(body.get("phone")).trim() : null;
@@ -140,8 +193,18 @@ public class UserController {
         Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
         boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
 
-        if (username.isBlank() || password.isBlank() || fullName.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username, password, fullName are required");
+        if (username.isBlank() || fullName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username, fullName are required");
+        }
+        // Có mật khẩu tạm: bắt buộc đổi ở lần đăng nhập đầu. Không có: gửi mã kích hoạt qua email để người dùng tự đặt.
+        boolean sendActivation = password.isBlank();
+        if (sendActivation) {
+            if (email == null || email.isBlank() || !email.contains("@")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Cần nhập email hợp lệ để gửi mã kích hoạt (hoặc đặt mật khẩu tạm cho người dùng)");
+            }
+        } else {
+            PasswordPolicy.requireValid(password, username);
         }
         if (roleId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "roleId is required");
@@ -194,7 +257,10 @@ public class UserController {
 
         User u = new User();
         u.setUsername(username);
-        u.setPassword(passwordEncoder.encode(password));
+        // Chưa kích hoạt: mật khẩu ngẫu nhiên không ai biết (đăng nhập bị chặn cho tới khi kích hoạt)
+        u.setPassword(passwordEncoder.encode(sendActivation ? java.util.UUID.randomUUID().toString() : password));
+        u.setActivated(!sendActivation);
+        u.setMustChangePassword(!sendActivation);
         u.setFullName(fullName);
         if (email != null && !email.isBlank()) u.setEmail(email);
         if (phone != null && !phone.isBlank()) u.setPhone(phone);
@@ -224,7 +290,27 @@ public class UserController {
         }
 
         auditLogService.log("CREATE_USER", "User", saved.getId().toString(), "username=" + saved.getUsername());
+        if (sendActivation) {
+            otpService.issue(saved, OtpPurpose.ACTIVATION);
+        }
         return new UserDTO(saved);
+    }
+
+    /** Gửi lại mã kích hoạt cho tài khoản chưa kích hoạt (cách nhau tối thiểu 60 giây). */
+    @PostMapping("/{id}/resend-activation")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> resendActivation(@PathVariable Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.isActivated()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản này đã được kích hoạt");
+        }
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản chưa có email để gửi mã kích hoạt");
+        }
+        otpService.issueWithCooldown(user, OtpPurpose.ACTIVATION);
+        auditLogService.log("RESEND_ACTIVATION", "User", user.getId().toString(), "username=" + user.getUsername());
+        return Map.of("sent", true, "cooldownSeconds", OtpService.RESEND_COOLDOWN_SECONDS);
     }
 
     @GetMapping("/by-department")
@@ -257,6 +343,7 @@ public class UserController {
         
         String oldRole = user.getRole() != null ? user.getRole().getName() : "None";
         user.setRole(role);
+        user.setTokenVersion(user.getTokenVersion() + 1); // quyền đổi → token cũ (mang role cũ) không còn hiệu lực
         User saved = userRepository.save(user);
         
         auditLogService.log("UPDATE_USER_ROLE", "User", saved.getId().toString(), "Changed role from " + oldRole + " to " + role.getName());
@@ -269,6 +356,9 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.setActive(active);
+        if (!active) {
+            user.setTokenVersion(user.getTokenVersion() + 1); // khóa tài khoản → token đang dùng chết ngay
+        }
         User saved = userRepository.save(user);
         auditLogService.log(active ? "UNLOCK_USER" : "LOCK_USER", "User", saved.getId().toString(), "Updated active status to " + active);
         return new UserDTO(saved);

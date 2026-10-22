@@ -9,5 +9,4 @@ public interface ProgressReportRepository extends JpaRepository<ProgressReport, 
     List<ProgressReport> findByStudent_IdOrderByCreatedAtDesc(Long studentId);
     List<ProgressReport> findByTopic_IdOrderByCreatedAtDesc(Long topicId);
     List<ProgressReport> findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(Long studentId, Long topicId);
-    ProgressReport findByFileUrlEndingWith(String filename);
 }

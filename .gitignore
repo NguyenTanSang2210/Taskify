@@ -3,3 +3,9 @@
 .env.*
 !.env.example
 !.env.*.example
+
+# IDE
+.idea/
+
+# Uploaded files (runtime data). The app / docker volume create this folder on demand.
+Backend/uploads/

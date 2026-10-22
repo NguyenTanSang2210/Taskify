@@ -1,8 +1,10 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.NotificationRepository;
+import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
@@ -25,22 +27,24 @@ public class NotificationController {
     private final EventPublisher events;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
     private final SecurityScopeService scope;
+    private final TopicRegistrationRepository regRepo;
 
-    public NotificationController(NotificationRepository notificationRepo, UserRepository userRepo, EventPublisher events, com.doanltmmt.Backend.service.AuditLogService auditLogService, SecurityScopeService scope) {
+    public NotificationController(NotificationRepository notificationRepo, UserRepository userRepo, EventPublisher events, com.doanltmmt.Backend.service.AuditLogService auditLogService, SecurityScopeService scope, TopicRegistrationRepository regRepo) {
         this.notificationRepo = notificationRepo;
         this.userRepo = userRepo;
         this.events = events;
         this.auditLogService = auditLogService;
         this.scope = scope;
+        this.regRepo = regRepo;
     }
 
     @GetMapping("/mine")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<Notification> mine(@RequestParam Long userId) {
+    public List<NotificationDTO> mine(@RequestParam Long userId) {
         if (!scope.hasRole("ADMIN")) {
             userId = scope.requireCurrentUser().getId();
         }
-        return notificationRepo.findByUser_IdOrderByCreatedAtDesc(userId);
+        return notificationRepo.findByUser_IdOrderByCreatedAtDesc(userId).stream().map(NotificationDTO::from).toList();
     }
 
     @GetMapping("/count")
@@ -54,17 +58,17 @@ public class NotificationController {
 
     @GetMapping("/recent")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<Notification> recent(@RequestParam Long userId, @RequestParam(defaultValue = "5") int limit) {
+    public List<NotificationDTO> recent(@RequestParam Long userId, @RequestParam(defaultValue = "5") int limit) {
         if (!scope.hasRole("ADMIN")) {
             userId = scope.requireCurrentUser().getId();
         }
         List<Notification> all = notificationRepo.findByUser_IdOrderByCreatedAtDesc(userId);
-        return all.stream().limit(Math.max(1, limit)).toList();
+        return all.stream().limit(Math.max(1, limit)).map(NotificationDTO::from).toList();
     }
 
     @PostMapping("/read/{id}")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public Notification markRead(@PathVariable Long id) {
+    public NotificationDTO markRead(@PathVariable Long id) {
         Notification n = notificationRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
         if (!scope.hasRole("ADMIN")) {
             Long currentUserId = scope.requireCurrentUser().getId();
@@ -73,7 +77,7 @@ public class NotificationController {
             }
         }
         n.setReadAt(LocalDateTime.now());
-        return notificationRepo.save(n);
+        return NotificationDTO.from(notificationRepo.save(n));
     }
 
     @PostMapping("/read-all")
@@ -92,11 +96,20 @@ public class NotificationController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public Notification create(@RequestParam Long userId,
+    public NotificationDTO create(@RequestParam Long userId,
                                @RequestParam String title,
                                @RequestParam(required = false) String content,
                                @RequestParam(defaultValue = "INFO") String type) {
-        User u = userRepo.findById(userId).orElseThrow();
+        User u = userRepo.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người nhận"));
+        // ADMIN gửi cho bất kỳ ai; giảng viên CHỈ gửi cho sinh viên đã đăng ký đề tài do mình hướng dẫn
+        if (!scope.hasRole("ADMIN")) {
+            User me = scope.requireCurrentUser();
+            if (!regRepo.existsByTopic_Lecturer_IdAndStudent_Id(me.getId(), u.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Bạn chỉ được gửi thông báo cho sinh viên đã đăng ký đề tài do bạn hướng dẫn.");
+            }
+        }
         Notification n = new Notification();
         n.setUser(u);
         n.setTitle(title);
@@ -105,7 +118,7 @@ public class NotificationController {
         Notification saved = notificationRepo.save(n);
         events.notificationCreated(saved);
         auditLogService.log("CREATE_NOTIFICATION", "Notification", saved.getId().toString(), "Manual notification to user " + userId);
-        return saved;
+        return NotificationDTO.from(saved);
     }
 }
 

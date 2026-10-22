@@ -106,8 +106,9 @@ export default function ProjectChatPage() {
 
       if (isLecturer && topicId) {
         const regs = await registrationApi.getByTopic(topicId);
+        // Chỉ sinh viên ĐÃ ĐƯỢC DUYỆT mới là thành viên đề tài; backend từ chối tin nhắn tới người ngoài đề tài
         (regs || []).forEach((r) => {
-          if (r?.studentId) pushCandidate(r.studentId, r.studentName || "Sinh viên");
+          if (r?.approved === true && r?.studentId) pushCandidate(r.studentId, r.studentName || "Sinh viên");
         });
       }
     } catch (e) {
@@ -129,7 +130,7 @@ export default function ProjectChatPage() {
   useEffect(() => {
     if (!user?.id) return;
     const client = connectAndSubscribe({
-      destination: `/topic/messages/${user.id}`,
+      destination: "/user/queue/messages",
       onMessage: (payload) => {
         if (payload?.type !== "MESSAGE_CREATED") return;
         const msg = payload?.message;

@@ -1,0 +1,30 @@
+# Dependabot: mỗi tuần kiểm tra bản cập nhật (đặc biệt là bản vá bảo mật) cho 3 hệ sinh thái.
+# Gộp các bản vá/phụ vào một PR cho mỗi hệ sinh thái để không ngập PR.
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/Backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Spring Boot 4.x (Spring Framework 7, Jackson 3) là nâng cấp lớn — làm thành task riêng sau v1.0
+      - dependency-name: "org.springframework.boot:*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

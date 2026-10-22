@@ -27,4 +27,9 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    // File cấu hình chạy trong Node (dùng process.env...), không phải trong trình duyệt
+    files: ['*.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

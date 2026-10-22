@@ -6,14 +6,16 @@ services:
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-doan_ltmmt}
       MYSQL_USER: ${MYSQL_USER:-ktpm}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ktpm123}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      # Mật khẩu KHÔNG có giá trị mặc định: thiếu là compose báo lỗi (tạo bằng .\scripts\init-env.ps1)
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Thiếu MYSQL_PASSWORD trong .env — chạy .\scripts\init-env.ps1}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Thiếu MYSQL_ROOT_PASSWORD trong .env — chạy .\scripts\init-env.ps1}
     ports:
       - "${MYSQL_HOST_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root123}"]
+      # Mật khẩu đọc từ biến môi trường TRONG container (MYSQL_PWD), không nằm trên dòng lệnh
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -h localhost -uroot"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -30,10 +32,14 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: 8080
+      # Seed dữ liệu demo chỉ có tác dụng với profile dev
+      APP_SEED_ENABLED: ${APP_SEED_ENABLED:-false}
+      APP_SEED_OTP_EMAIL: ${APP_SEED_OTP_EMAIL:-}
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-doan_ltmmt}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-ktpm}
-      DB_PASSWORD: ${MYSQL_PASSWORD:-ktpm123}
-      JWT_SECRET: ${JWT_SECRET:-ZGV2LW9ubHktand0LXNlY3JldC1jaGFuZ2UtbWUtMjAyNg==}
+      DB_PASSWORD: ${MYSQL_PASSWORD:?Thiếu MYSQL_PASSWORD trong .env — chạy .\scripts\init-env.ps1}
+      # Secret ký JWT: BẮT BUỘC, không có giá trị mặc định (secret mặc định công khai = ai cũng giả mạo được token ADMIN)
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env — chạy .\scripts\init-env.ps1}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:${FRONTEND_HOST_PORT:-5175}}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}

@@ -60,6 +60,12 @@ public class TopicService {
         
         requireWorkspaceAllowsTopicCreateOrEdit(w);
 
+        // Quản trị khoa chỉ được tạo đề tài trong workspace của KHOA MÌNH
+        // (trước đây chỉ kiểm tra giảng viên thuộc khoa của workspace, không kiểm tra chính quản trị khoa)
+        if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN") && w.getDepartment() != null) {
+            scope.requireDepartmentAccess(w.getDepartment().getId());
+        }
+
         Lecturer lecturer = lecturerRepo.findById(lecturerId).orElseGet(() -> {
             User user = userRepo.findById(lecturerId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found for lecturerId"));
@@ -155,7 +161,7 @@ public class TopicService {
     }
 
     public Map<String, Object> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
-        Specification<Topic> spec = Specification.where(null);
+        Specification<Topic> spec = Specification.allOf(List.<Specification<Topic>>of());
 
         if (status != null && !status.isBlank()) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), status));

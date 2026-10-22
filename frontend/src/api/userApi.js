@@ -28,6 +28,10 @@ const userApi = {
         const response = await api.get('/users/roles');
         return response.data;
     },
+    resendActivation: async (id) => {
+        const response = await api.post(`/users/${id}/resend-activation`);
+        return response.data;
+    },
     updateRole: async (id, roleId) => {
         const response = await api.put(`/users/${id}/role`, null, { params: { roleId } });
         return response.data;

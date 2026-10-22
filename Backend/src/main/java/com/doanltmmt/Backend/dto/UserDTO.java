@@ -19,6 +19,8 @@ public class UserDTO {
     private Role role;
     private Department department;
     private boolean active;
+    private boolean activated;
+    private boolean mustChangePassword;
 
     public UserDTO(User user) {
         if (user == null) return;
@@ -30,5 +32,19 @@ public class UserDTO {
         this.role = user.getRole();
         this.department = user.getDepartment();
         this.active = user.isActive();
+        this.activated = user.isActivated();
+        this.mustChangePassword = user.isMustChangePassword();
+    }
+
+    /**
+     * Hồ sơ rút gọn để người khác xem: CHỈ id và họ tên — không có email, số điện thoại, vai trò, khoa.
+     * Dùng khi người gọi không phải chính chủ / quản trị hệ thống / quản trị khoa cùng khoa.
+     */
+    public static UserDTO limited(User user) {
+        UserDTO dto = new UserDTO();
+        if (user == null) return dto;
+        dto.id = user.getId();
+        dto.fullName = user.getFullName();
+        return dto;
     }
 }

@@ -12,13 +12,14 @@ import com.doanltmmt.Backend.repository.RoleRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.security.JwtAuthenticationFilter;
+import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.CustomUserDetailsService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,47 +41,53 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(SecurityConfig.class)
-@SuppressWarnings({"removal", "null"})
+@SuppressWarnings("null")
 public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
-    @MockBean
+    @MockitoBean
     private RoleRepository roleRepository;
     
-    @MockBean
+    @MockitoBean
     private StudentRepository studentRepository;
 
-    @MockBean
+    @MockitoBean
     private LecturerRepository lecturerRepository;
 
-    @MockBean
+    @MockitoBean
     private DepartmentRepository departmentRepository;
 
-    @MockBean
+    @MockitoBean
     private AcademicClassRepository academicClassRepository;
     
-    @MockBean
+    @MockitoBean
     private PasswordEncoder passwordEncoder;
 
-    @MockBean
+    @MockitoBean
     private AuditLogService auditLogService;
 
-    @MockBean
+    @MockitoBean
     private SecurityScopeService scope;
 
-    @MockBean
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @MockBean
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
     private CustomUserDetailsService userDetailsService;
 
-    @MockBean
+    @MockitoBean
     private DataSeeder dataSeeder;
+
+    @MockitoBean
+    private com.doanltmmt.Backend.service.OtpService otpService;
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
@@ -121,7 +128,7 @@ public class UserControllerTest {
         given(userRepository.findByEmail("newlecturer@example.com")).willReturn(Optional.empty());
         given(roleRepository.findById(2L)).willReturn(Optional.of(lecturerRole));
         given(departmentRepository.findById(10L)).willReturn(Optional.of(dept));
-        given(passwordEncoder.encode("123456")).willReturn("ENC");
+        given(passwordEncoder.encode("Matkhau2026")).willReturn("ENC");
         given(userRepository.save(any(User.class))).willAnswer(invocation -> {
             User arg = invocation.getArgument(0);
             arg.setId(1L);
@@ -137,7 +144,7 @@ public class UserControllerTest {
         String payload = """
                 {
                   "username": "newlecturer",
-                  "password": "123456",
+                  "password": "Matkhau2026",
                   "fullName": "New Lecturer",
                   "email": "newlecturer@example.com",
                   "phone": "0123456789",

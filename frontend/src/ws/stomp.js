@@ -1,12 +1,8 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client/dist/sockjs";
 
-const IS_BROWSER = typeof window !== "undefined";
-const IS_LOCALHOST = IS_BROWSER
-  ? window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  : false;
-const IS_FRONTEND_DEV_PORT = IS_BROWSER && window.location.port === "5175";
-const WS_ENDPOINT = IS_LOCALHOST && IS_FRONTEND_DEV_PORT ? "http://localhost:8080/ws" : "/ws";
+// Luôn dùng đường dẫn tương đối "/ws" (Vite proxy khi dev, nginx khi chạy Docker).
+const WS_ENDPOINT = "/ws";
 
 export function createStompClient() {
   const token = (() => {
@@ -40,8 +36,11 @@ export function connectAndSubscribe({ destination, onMessage, onStatus }) {
       }
     });
   };
+  // Máy chủ từ chối (token sai/hết hạn, không đủ quyền subscribe): kết nối lại cũng vô ích,
+  // nên dừng hẳn thay vì thử lại mỗi 3 giây. Mất mạng (onWebSocketClose) vẫn tự kết nối lại.
   client.onStompError = () => {
     if (typeof onStatus === "function") onStatus("error");
+    client.deactivate();
   };
   client.onWebSocketClose = () => {
     if (typeof onStatus === "function") onStatus("disconnected");
