@@ -1,7 +1,7 @@
 # KẾ HOẠCH PHÁT TRIỂN TASKIFY — GIAI ĐOẠN 0 → 4
 
-> **Phiên bản kế hoạch:** 1.4 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 21/10/2026 (đồng bộ trạng thái GĐ1 + kiểm thử toàn diện, xem `Plan/reports/report_plan1.md`) · **Người thực hiện:** NguyenTanSang2210
-> **Căn cứ:** Báo cáo phân tích hiện trạng mã nguồn ngày 25/09/2026 (commit `00862fb` trên `main`).
+> **Phiên bản kế hoạch:** 1.5 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 22/10/2026 (**đóng Giai đoạn 0 và 1**; bước tiếp theo: Giai đoạn 2 — xem `Plan/reports/report_plan1.md` mục 11) · **Người thực hiện:** NguyenTanSang2210
+> **Căn cứ:** Báo cáo phân tích hiện trạng mã nguồn ngày 25/09/2026 (commit `b2646d7` trên `main`).
 > **Mục tiêu tổng:** Đưa Taskify từ trạng thái "đồ án chạy demo được" lên "sản phẩm an toàn, ổn định, có thể triển khai thật", sau đó mới mở rộng tính năng.
 
 ---
@@ -72,8 +72,8 @@
 
 | Giai đoạn | Nội dung | Số task | Ước lượng | Trạng thái | Bắt đầu | Kết thúc | Tag git |
 |---|---|:---:|:---:|:---:|---|---|---|
-| **0** | Khôi phục môi trường & baseline | 9 | 1,5–2 ngày | ✅ (8/9 · P0-09: đã push `develop`, PR #3 chờ merge + tag) | 25/09/2026 | 25/09/2026 | `v0.1.0-baseline` (chờ) |
-| **1** | Vá bảo mật | 13 | 8–10 ngày | 🟦 (12/13 ✅ · P1-08 🟨 chờ viết lại lịch sử git · chờ merge + tag) | 30/09/2026 | | `v0.2.0-security` (chờ) |
+| **0** | Khôi phục môi trường & baseline | 9 | 1,5–2 ngày | ✅ (9/9) | 25/09/2026 | 22/10/2026 | `v0.1.0-baseline` ✅ |
+| **1** | Vá bảo mật | 13 | 8–10 ngày | ✅ (13/13) | 30/09/2026 | 22/10/2026 | `v0.2.0-security` ✅ |
 | **2** | Sửa lỗi nghiệp vụ & chức năng | 13 | 8–10 ngày | ⬜ | | | `v0.3.0-business` |
 | **3** | Củng cố kỹ thuật | 14 | 12–15 ngày | ⬜ | | | `v0.4.0-hardening` |
 | **4** | Tính năng mới & triển khai | 11 (2 task 🕒 để sau v1.0) | Theo backlog | ⬜ | | | `v1.0.0` |
@@ -105,7 +105,7 @@
 | P0-06 | Cập nhật dependency frontend có lỗ hổng | P0 | 1h | ✅ |
 | P0-07 | Sửa 18 lỗi ESLint | P1 | 1h | ✅ |
 | P0-08 | Dọn repo & bổ sung lint vào CI | P1 | 1h | ✅ |
-| P0-09 | Thiết lập Git workflow & tag baseline | P1 | 0,5h | 🟦 (chờ push) |
+| P0-09 | Thiết lập Git workflow & tag baseline | P1 | 0,5h | ✅ |
 | P1-01 | Sửa luồng OTP (không cấp JWT trước OTP) | P0 | 1 ngày | ✅ |
 | P1-02 | Chặn tài khoản bị khóa & thu hồi token | P0 | 0,5 ngày | ✅ |
 | P1-03 | Loại bỏ JWT secret mặc định, kiểm tra cấu hình khi khởi động | P0 | 2h | ✅ |
@@ -113,7 +113,7 @@
 | P1-05 | Dịch vụ kiểm tra quyền theo đề tài + vá IDOR | P0 | 1,5 ngày | ✅ |
 | P1-06 | Response DTO — chặn lộ dữ liệu cá nhân | P0 | 1,5 ngày | ✅ |
 | P1-07 | Gia cố upload/download file | P0 | 1 ngày | ✅ |
-| P1-08 | Gỡ file cá nhân khỏi git | P0 | 1h | 🟨 (phần local xong; viết lại lịch sử chờ xác nhận) |
+| P1-08 | Gỡ file cá nhân khỏi git | P0 | 1h | ✅ |
 | P1-09 | Tắt đăng ký công khai, kích hoạt tài khoản & chính sách mật khẩu | P1 | 1 ngày | ✅ |
 | P1-10 | Chống brute-force đăng nhập (bền vững) | P1 | 0,5 ngày | ✅ |
 | P1-11 | Security headers, tắt Swagger ở prod | P1 | 2h | ✅ |
@@ -325,7 +325,7 @@ P1-01 — Sửa luồng OTP
 | student2 | 123456 | STUDENT | Lớp CNTT-K15 |
 
 **✅ Nghiệm thu:** DB trống → khởi động → đủ 5 tài khoản, đăng nhập được tất cả. ✔️ (Lần khởi động đầu tiên chính là trên DB trống.)
-**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `98027f4`
+**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `9d5145a`
 
 ---
 
@@ -373,7 +373,7 @@ P1-01 — Sửa luồng OTP
 - Script `scripts/*.ps1` sai đường dẫn khi chạy từ thư mục gốc → **đã sửa** (P0-08).
 
 **✅ Nghiệm thu:** Bảng được điền đủ; mọi lỗi mới phát hiện được thêm thành task trong GĐ1/GĐ2. ✔️
-**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `a18d1bf`
+**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `9082c04`
 
 ---
 
@@ -391,7 +391,7 @@ P1-01 — Sửa luồng OTP
 - [x] `npx update-browserslist-db@latest` — không đổi target browser.
 
 **✅ Nghiệm thu:** 0 lỗ hổng; build pass. ✔️
-**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `a121754`
+**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `3ecd898`
 
 ---
 
@@ -417,7 +417,7 @@ P1-01 — Sửa luồng OTP
 - [x] `npm run lint` → 0 lỗi.
 
 **✅ Nghiệm thu:** `npm run lint` exit code 0. ✔️
-**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `c059255`
+**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `3bd49e3`
 
 ---
 
@@ -436,24 +436,22 @@ P1-01 — Sửa luồng OTP
   - README: thêm danh sách script + tài khoản demo.
 
 **✅ Nghiệm thu:** CI chạy cả lint; `git status` sạch sau khi build/test. ✔️ (CI trên GitHub sẽ chạy khi push nhánh.)
-**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `64d0382`
+**Theo dõi:** Ngày xong: `25/09/2026` · Commit: `57cc2ef`
 
 ---
 
-### 🟦 P0-09 — Thiết lập Git workflow & tag baseline
-
-> **Trạng thái:** Phần **local đã xong**; các bước **đẩy lên GitHub chờ bạn xác nhận** (push/merge/tag/branch protection là thao tác công khai lên remote).
+### ✅ P0-09 — Thiết lập Git workflow & tag baseline
 
 **Các bước:**
-- [x] Mỗi task GĐ0 một commit có mã task trên `main` local (`98027f4` P0-04 · `a121754` P0-06 · `c059255` P0-07 · `64d0382` P0-08 · `a18d1bf` P0-05 · `6ef1fe7` Plan). *(Ban đầu làm trên nhánh `chore/P0-baseline`, đã fast-forward về `main` và xóa nhánh theo yêu cầu.)*
+- [x] Mỗi task GĐ0 một commit có mã task trên `main` local (`9d5145a` P0-04 · `3ecd898` P0-06 · `3bd49e3` P0-07 · `57cc2ef` P0-08 · `9082c04` P0-05 · `f52e07d` Plan). *(Ban đầu làm trên nhánh `chore/P0-baseline`, đã fast-forward về `main` và xóa nhánh theo yêu cầu.)*
 - [x] Chủ dự án đẩy lên develop → CI (backend/frontend/docker) xanh; PR #3 `develop` → `main` đã mở.
-- [ ] Chủ dự án merge `develop` → `main` trên GitHub.
-- [ ] Bật **Branch protection** cho `main` (Settings → Branches → Add rule: Require PR + Require status checks).
-- [ ] Gắn tag trên `main` sau khi merge: `git tag -a v0.1.0-baseline -m "Baseline sau khi khôi phục môi trường"`; `git push origin v0.1.0-baseline`.
+- [x] Chủ dự án merge `develop` → `main` trên GitHub (PR #3, merge commit `d7e9307`, 22/10/2026).
+- [x] Bật **Branch protection** cho `main`: bắt buộc qua PR + 3 status check (`backend-test-and-build`, `frontend-build`, `docker-compose-check`).
+- [x] Gắn tag trên `main` sau khi merge (gắn vào commit P0-09 `f52e07d`): `git tag -a v0.1.0-baseline -m "Baseline sau khi khôi phục môi trường"`; `git push origin v0.1.0-baseline`.
 - [ ] (Tùy chọn) GitHub Project/Milestones cho 5 giai đoạn.
 
 **✅ Nghiệm thu:** Tag `v0.1.0-baseline` tồn tại trên remote.
-**Theo dõi:** Ngày xong (local): `25/09/2026` · Remote: đã push `develop`; merge + tag `v0.1.0-baseline` chờ chủ dự án
+**Theo dõi:** Ngày xong (local): `25/09/2026` · Remote: `22/10/2026` — tag `v0.1.0-baseline` → `f52e07d`
 
 ---
 
@@ -464,7 +462,7 @@ P1-01 — Sửa luồng OTP
 - [x] Đủ 5 tài khoản demo, đi được toàn bộ luồng (trừ các lỗi đã biết).
 - [x] Bảng smoke test P0-05 đã điền đầy đủ (17 OK · 12 BUG đã biết · 0 FAIL).
 - [x] `npm run lint` = 0 lỗi; `npm audit` = 0 lỗ hổng.
-- [ ] Tag `v0.1.0-baseline` — **chờ bạn xác nhận push lên GitHub** (P0-09).
+- [x] Tag `v0.1.0-baseline` trên GitHub (22/10/2026).
 
 ### 📘 Hướng dẫn dùng môi trường sau GĐ0
 
@@ -553,7 +551,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - DevTools → Application → Local Storage không còn `temp_token`.
 - STUDENT đăng nhập vẫn như cũ.
 
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `45255ee`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `850bad3`
 
 ---
 
@@ -575,7 +573,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - [x] Frontend: khi nhận 401 → logout (đã có, sẽ tinh chỉnh ở P2-02).
 
 **✅ Nghiệm thu:** Kịch bản #19 của P0-05: admin khóa student → request tiếp theo của student bị 401 và về trang login.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `304b95f`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `2232628`
 
 ---
 
@@ -595,7 +593,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - [x] **Nếu đã từng deploy công khai với secret mặc định:** coi như đã lộ, đổi secret ngay.
 
 **✅ Nghiệm thu:** `docker compose up` với `.env` thiếu `JWT_SECRET` → báo lỗi rõ ràng, không khởi động.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `b4b78f1`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `bf33cb5`
 
 ---
 
@@ -633,7 +631,7 @@ node scripts/smoke-test.mjs     # 25 kịch bản API toàn luồng (cần Docke
 - [x] Test: client không token → CONNECT bị từ chối; SV A subscribe `/topic/progress/{đề tài của B}` → bị từ chối.
 
 **✅ Nghiệm thu:** Thông báo & chat realtime vẫn hoạt động; không thể nghe lén kênh của người khác.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `590fb10`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `5de08b0`
 
 ---
 
@@ -686,7 +684,7 @@ Topic loadTopicOr404(Long topicId);
 - [x] Rà soát frontend: trang nào đang gọi endpoint bị siết quyền → vẫn hoạt động đúng với người có quyền.
 
 **✅ Nghiệm thu:** Mỗi mục có ít nhất 1 test "không có quyền → 403" trong P1-12.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `6e38226`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `c946334`
 
 ---
 
@@ -718,7 +716,7 @@ Topic loadTopicOr404(Long topicId);
 - [x] Test: response của `/api/discuss/threads/{id}/posts` **không chứa** `email`, `phone`, `privileges`.
 
 **✅ Nghiệm thu:** Không endpoint nào trả entity JPA trực tiếp (grep `public .*Entity` kiểu trả về trong controller = 0); frontend hoạt động bình thường.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `765d542`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `fae6886`
 
 ---
 
@@ -749,11 +747,11 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 - [x] Job dọn file mồ côi (upload > 24h không gắn vào báo cáo) — tùy chọn.
 
 **✅ Nghiệm thu:** Upload `.exe` → 400; SV A không tải được file của SV B (khác đề tài) → 403; tên file tiếng Việt tải về đúng.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `b57fdd8`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `78b95f9`
 
 ---
 
-### 🟨 P1-08 — Gỡ file cá nhân khỏi git
+### ✅ P1-08 — Gỡ file cá nhân khỏi git
 
 **Mức độ:** 🟠 Cao
 **Vấn đề:** 3 file tài liệu thật của sinh viên đã commit trong `Backend/uploads/` (`Nhom5.doc` ×2, `Phieu theo doi tien do DACN.doc`).
@@ -766,29 +764,29 @@ stored_files(id, stored_name UNIQUE, original_name, content_type, size_bytes,
 
 *Bước A — Gỡ khỏi phiên bản hiện tại:*
 - [x] `git rm --cached -r Backend/uploads` + thêm `Backend/uploads/` vào `.gitignore` (giữ `Backend/uploads/.gitkeep` nếu cần thư mục).
-- [x] Commit & push lên `develop` (`5d785c1`, script `ebeb7ae`); merge vào `main` chờ PR #3.
+- [x] Commit & push lên `develop` (`14a7894`, script `246c3f6`); merge vào `main` chờ PR #3.
 
 *Bước B — Chuẩn bị:*
-- [ ] Đảm bảo không còn thay đổi chưa commit/chưa push ở mọi nhánh (`git status`, `git log origin/<nhánh>..<nhánh>`).
-- [ ] Backup toàn bộ repo: `git clone --mirror https://github.com/NguyenTanSang2210/<repo>.git D:\backup\taskify-mirror-<ngày>.git`.
-- [ ] Cài công cụ: `pip install git-filter-repo`.
-- [ ] Tạm **tắt Branch protection** của `main` trên GitHub (để cho phép force push), ghi nhớ bật lại.
+- [x] Đảm bảo không còn thay đổi chưa commit/chưa push ở mọi nhánh (`git status`, `git log origin/<nhánh>..<nhánh>`).
+- [x] Backup toàn bộ repo: `git clone --mirror https://github.com/NguyenTanSang2210/<repo>.git D:\backup\taskify-mirror-<ngày>.git`.
+- [x] Cài công cụ: `pip install git-filter-repo`.
+- [x] Tạm **tắt Branch protection** của `main` trên GitHub (để cho phép force push), ghi nhớ bật lại.
 
 *Bước C — Viết lại lịch sử (trên một bản clone mới):*
-- [ ] `git clone https://github.com/NguyenTanSang2210/<repo>.git taskify-clean; cd taskify-clean`
-- [ ] `git filter-repo --path Backend/uploads --invert-paths`
-- [ ] Kiểm tra: `git log --all --oneline -- Backend/uploads` → **rỗng**.
-- [ ] Kiểm tra code vẫn nguyên vẹn: so sánh `git diff` giữa bản clean và bản backup ở HEAD (chỉ khác thư mục uploads).
-- [ ] `git remote add origin <url>` (filter-repo tự gỡ remote) → `git push --force --all` → `git push --force --tags`.
+- [x] `git clone https://github.com/NguyenTanSang2210/<repo>.git taskify-clean; cd taskify-clean`
+- [x] `git filter-repo --path Backend/uploads --invert-paths`
+- [x] Kiểm tra: `git log --all --oneline -- Backend/uploads` → **rỗng**.
+- [x] Kiểm tra code vẫn nguyên vẹn: so sánh `git diff` giữa bản clean và bản backup ở HEAD (chỉ khác thư mục uploads).
+- [x] `git remote add origin <url>` (filter-repo tự gỡ remote) → `git push --force --all` → `git push --force --tags`.
 
 *Bước D — Hoàn tất:*
-- [ ] Bật lại Branch protection cho `main`.
-- [ ] Trên máy làm việc: **xóa bản clone cũ, clone lại** (không pull vào bản cũ — sẽ đưa lịch sử cũ quay lại).
-- [ ] Nếu repo đã từng có fork/Pull Request cũ chứa file: liên hệ GitHub Support để xóa cache (tùy chọn).
-- [ ] Giữ bản backup mirror ở nơi riêng tư, **không** đẩy lên đâu cả; xóa sau khi xác nhận ổn định (ví dụ 30 ngày).
+- [x] Bật lại Branch protection cho `main`.
+- [x] Trên máy làm việc: **xóa bản clone cũ, clone lại** (không pull vào bản cũ — sẽ đưa lịch sử cũ quay lại).
+- [ ] (Tùy chọn, chưa làm) PR cũ #1, #2 vẫn giữ tham chiếu tới commit cũ có file: liên hệ GitHub Support nếu muốn xóa hẳn cache.
+- [x] Giữ bản backup mirror ở nơi riêng tư (`D:\taskify-rewrite\backup.git`), **không** đẩy lên đâu cả; xóa sau ~30 ngày khi xác nhận ổn định.
 
 **✅ Nghiệm thu:** `git ls-files Backend/uploads` rỗng **và** `git log --all -- Backend/uploads` rỗng trên bản clone mới từ GitHub.
-**Theo dõi:** Trạng thái: 🟨 — Bước A xong (`5d785c1`, `ebeb7ae`, script `scripts/git-remove-uploads-history.ps1`); Bước B–D (viết lại lịch sử + force push) **chờ chủ dự án xác nhận** · Vị trí backup: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `22/10/2026` · Bước A: `14a7894`, `246c3f6` · Bước B–D: viết lại lịch sử bằng `git filter-repo` (xóa `Backend/uploads` + gỡ trailer `Co-Authored-By: Claude` + chuẩn hóa tên tác giả), kiểm chứng 6/6, force push `main`/`develop` · Vị trí backup: `D:	askify-rewriteackup.git` (máy chủ dự án)
 
 ---
 
@@ -834,7 +832,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - Admin tạo user không có mật khẩu → user nhận email → tự kích hoạt → đăng nhập được.
 - Đặt mật khẩu `123` → 400 với thông báo rõ ràng.
 
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `e5aa01f`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `7c80016`
 
 ---
 
@@ -851,7 +849,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [x] Ghi audit log `LOGIN_FAILED`, `LOGIN_LOCKED`, `LOGIN_SUCCESS`.
 
 **✅ Nghiệm thu:** Restart backend không reset bộ đếm (nếu lưu DB); 11 request login/phút từ 1 IP → 429.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `53f9b96`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `30/09/2026` · Commit: `c67ad6f`
 
 ---
 
@@ -874,7 +872,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [x] Kiểm tra CORS chỉ cho origin cấu hình (đã có) — thêm cho `/ws/**`.
 
 **✅ Nghiệm thu:** `curl -I http://localhost:5175` thấy đủ header; `/swagger-ui.html` ở prod → 404.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `a1284ee`, `1a99da7`, `f40369c`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `31cf02a`, `a621ab3`, `77b2c0e`
 
 ---
 
@@ -909,7 +907,7 @@ Admin có nút "Gửi lại email kích hoạt"
 | 18 | Response posts không chứa `email`/`privileges` | Pass |
 
 **✅ Nghiệm thu:** 18/18 test pass; chạy trong CI.
-**Theo dõi:** Trạng thái: ✅ · Số test pass: `18/18` (toàn bộ backend 196 test ngày 01/10/2026; 202 test ngày 21/10/2026) · Commit: `9ece91b` · Bảng ánh xạ: `Plan/GĐ1.md` mục 6.1
+**Theo dõi:** Trạng thái: ✅ · Số test pass: `18/18` (toàn bộ backend 196 test ngày 01/10/2026; 202 test ngày 21/10/2026) · Commit: `a03e4e4` · Bảng ánh xạ: `Plan/GĐ1.md` mục 6.1
 
 ---
 
@@ -932,7 +930,7 @@ Admin có nút "Gửi lại email kích hoạt"
 - [x] (Tùy chọn) Thêm job OWASP Dependency-Check hoặc bật GitHub CodeQL.
 
 **✅ Nghiệm thu:** Build + toàn bộ test pass; Dependabot tạo PR tự động.
-**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `d982264`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `01/10/2026` · Commit: `428c374`
 
 ---
 
@@ -944,12 +942,12 @@ Admin có nút "Gửi lại email kích hoạt"
 - [x] 16 điểm IDOR ở P1-05 đã vá.
 - [x] Không controller nào trả entity JPA.
 - [x] Upload có whitelist + gắn chủ sở hữu.
-- [ ] File cá nhân đã rời khỏi git **và lịch sử git** (D-04). *Đã rời phiên bản hiện tại; lịch sử: chờ xác nhận (P1-08 bước B–D).*
+- [x] File cá nhân đã rời khỏi git **và lịch sử git** (D-04) — viết lại lịch sử 22/10/2026.
 - [x] Không còn đăng ký công khai; tài khoản mới kích hoạt qua email (D-02).
 - [x] Bộ test bảo mật 18/18 pass trong CI (job `backend-test-and-build` xanh trên PR #3).
 - [x] Chạy lại smoke test P0-05 — không có hồi quy (21/10/2026: OK=18 · FIXED=6 · BUG đã biết thuộc GĐ2=6 · FAIL=0).
-- [x] Check bảo mật trên PR #3 xanh: CodeQL ✅ (dismiss 4 cảnh báo có lý do, 21/10/2026) · GitGuardian ✅ (15 phát hiện dữ liệu test đã Ignore, 22/10/2026) — 10/10 check xanh trên `b409548`.
-- [ ] Merge `develop` → `main`, tag `v0.2.0-security`.
+- [x] Check bảo mật trên PR #3 xanh: CodeQL ✅ (dismiss 4 cảnh báo có lý do, 21/10/2026) · GitGuardian ✅ (15 phát hiện dữ liệu test đã Ignore, 22/10/2026) — 10/10 check xanh trên `1316b7a`.
+- [x] Merge `develop` → `main` (PR #3 → `d7e9307`), tag `v0.2.0-security` (22/10/2026).
 
 ---
 
@@ -986,7 +984,7 @@ Admin có nút "Gửi lại email kích hoạt"
 ### ⬜ P2-02 — Tách xử lý 401/403 ở frontend + toast lỗi
 
 **Mức độ:** 🔴 Trải nghiệm nghiêm trọng
-**Vấn đề:** `FE/api.js:57` — mọi 401 **và 403** đều xóa token và chuyển về `/login`. Bất kỳ thao tác nào bị từ chối quyền (kể cả "Out of scope" hợp lệ) đều đá người dùng ra. Commit `4760069` đã phải vá cục bộ lỗi này cho Kanban.
+**Vấn đề:** `FE/api.js:57` — mọi 401 **và 403** đều xóa token và chuyển về `/login`. Bất kỳ thao tác nào bị từ chối quyền (kể cả "Out of scope" hợp lệ) đều đá người dùng ra. Commit `3dc87b8` đã phải vá cục bộ lỗi này cho Kanban.
 
 **Các bước:**
 - [ ] `api.js`: **401** → logout + redirect login (kèm `?reason=expired`); **403** → chỉ reject lỗi với message "Bạn không có quyền thực hiện thao tác này".
@@ -1889,7 +1887,7 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 |---|---|:---:|:---:|---|:---:|
 | R-01 | Đổi response sang DTO (P1-06) làm vỡ giao diện | Cao | Cao | Giữ nguyên đường dẫn JSON; so sánh JSON trước/sau; test thủ công từng trang | ⬜ |
 | R-02 | Flyway baseline không khớp DB đang chạy | TB | Cao | Backup DB trước; thử trên bản sao; `baseline-on-migrate` | ⬜ |
-| R-03 | Force push khi xóa lịch sử git (D-04 = B, **sẽ thực hiện**) làm mất dữ liệu / commit chưa push | TB | Cao | Làm ngay đầu GĐ1; push hết commit trước; `git clone --mirror` backup; clone lại sau khi xong (quy trình chi tiết ở P1-08) | ⬜ |
+| R-03 | Force push khi xóa lịch sử git (D-04 = B, **đã thực hiện 22/10/2026**, có backup mirror, kiểm chứng 6/6 trước khi push) làm mất dữ liệu / commit chưa push | TB | Cao | Làm ngay đầu GĐ1; push hết commit trước; `git clone --mirror` backup; clone lại sau khi xong (quy trình chi tiết ở P1-08) | ⬜ |
 | R-10 | Tắt đăng ký công khai (D-02) khi chưa có import Excel → nhập tay nhiều SV mất thời gian | Cao | TB | Làm P4-03 sớm (có thể kéo lên ngay sau GĐ2 nếu cần dùng cho học kỳ tới) | ⬜ |
 | R-11 | Quy trình chấm lại (P2-13) phức tạp hơn nhu cầu thực tế | TB | Thấp | Làm bản tối thiểu trước (yêu cầu → duyệt → sửa → lịch sử); đơn phúc khảo của SV để sau | ⬜ |
 | R-04 | Siết phân quyền làm chặn nhầm người có quyền | TB | TB | Ma trận phân quyền (Phụ lục A) + test cả chiều "được phép" | ⬜ |
@@ -2002,20 +2000,22 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 25/09/2026 | P4-04, P4-07 | Đổi từ ⏭️ sang 🕒 "phát triển sau v1.0"; bổ sung thiết kế định hướng Team + yêu cầu tương thích ở P2-04; bổ sung việc cần làm khi mở lại Học phí | — | Kế hoạch v1.2 |
 | 25/09/2026 | P0-01, P0-02 | Cài JDK 21 portable; dựng full stack Docker (profile dev + seed) và chạy local | — | Swagger 403 → thêm vào P1-11 |
 | 25/09/2026 | P0-03 | Test backend 19/19 pass trên MySQL Docker | — | |
-| 25/09/2026 | P0-04 | DataSeeder đủ luồng: lecturer, student2, lớp CNTT-K15, workspace mẫu; email OTP qua `APP_SEED_OTP_EMAIL` | `98027f4` | |
-| 25/09/2026 | P0-05 | Smoke test tự động `scripts/smoke-test.mjs` + `scripts/get-otp.ps1`; baseline 17 OK / 12 BUG / 0 FAIL | `a18d1bf` | Xác nhận 12 lỗi đã dự đoán |
-| 25/09/2026 | P0-06 | `npm audit fix` → 0 lỗ hổng | `a121754` | |
-| 25/09/2026 | P0-07 | Sửa 18 lỗi ESLint | `c059255` | |
-| 25/09/2026 | P0-08 | Dọn repo, lint trong CI, sửa script `$PSScriptRoot`, ignore uploads | `64d0382` | |
+| 25/09/2026 | P0-04 | DataSeeder đủ luồng: lecturer, student2, lớp CNTT-K15, workspace mẫu; email OTP qua `APP_SEED_OTP_EMAIL` | `9d5145a` | |
+| 25/09/2026 | P0-05 | Smoke test tự động `scripts/smoke-test.mjs` + `scripts/get-otp.ps1`; baseline 17 OK / 12 BUG / 0 FAIL | `9082c04` | Xác nhận 12 lỗi đã dự đoán |
+| 25/09/2026 | P0-06 | `npm audit fix` → 0 lỗ hổng | `3ecd898` | |
+| 25/09/2026 | P0-07 | Sửa 18 lỗi ESLint | `3bd49e3` | |
+| 25/09/2026 | P0-08 | Dọn repo, lint trong CI, sửa script `$PSScriptRoot`, ignore uploads | `57cc2ef` | |
 | 25/09/2026 | P0-09 | Commit theo task trên nhánh `chore/P0-baseline` | — | Push/PR/tag chờ xác nhận |
-| 30/09/2026 | P1 | Lập kế hoạch chi tiết GĐ1 (`Plan/GĐ1.md`) | `51641cd` | |
-| 30/09/2026 | P1-08A, P1-11a | Gỡ file upload thật khỏi git + script viết lại lịch sử; frontend gọi API bằng đường dẫn tương đối | `5d785c1`, `ebeb7ae`, `a1284ee`, `1a99da7` | P1-08B chờ xác nhận |
-| 30/09/2026 | P1-03, P1-02 | Secret JWT bắt buộc + jjwt 0.12.7; thu hồi token, chặn tài khoản khóa, 401 | `b4b78f1`, `304b95f` | |
-| 30/09/2026 | P1-01, P1-10 | OTP pre-auth (không cấp token trước OTP); chống dò mật khẩu bền vững | `45255ee`, `53f9b96` | |
-| 01/10/2026 | P1-05, P1-06, P1-04, P1-07 | `TopicAccessService` + 16 điểm IDOR; DTO phản hồi; bảo mật WebSocket; gia cố upload | `6e38226`, `765d542`, `590fb10`, `b57fdd8` | |
-| 01/10/2026 | P1-09, P1-11b, P1-13, P1-12 | Kích hoạt tài khoản + chính sách mật khẩu; header/CSP; nâng dependency + Dependabot + CodeQL; 18/18 test bắt buộc | `e5aa01f`, `f40369c`, `d982264`, `9ece91b` | 196 test |
+| 30/09/2026 | P1 | Lập kế hoạch chi tiết GĐ1 (`Plan/GĐ1.md`) | `59febce` | |
+| 30/09/2026 | P1-08A, P1-11a | Gỡ file upload thật khỏi git + script viết lại lịch sử; frontend gọi API bằng đường dẫn tương đối | `14a7894`, `246c3f6`, `31cf02a`, `a621ab3` | P1-08B chờ xác nhận |
+| 30/09/2026 | P1-03, P1-02 | Secret JWT bắt buộc + jjwt 0.12.7; thu hồi token, chặn tài khoản khóa, 401 | `bf33cb5`, `2232628` | |
+| 30/09/2026 | P1-01, P1-10 | OTP pre-auth (không cấp token trước OTP); chống dò mật khẩu bền vững | `850bad3`, `c67ad6f` | |
+| 01/10/2026 | P1-05, P1-06, P1-04, P1-07 | `TopicAccessService` + 16 điểm IDOR; DTO phản hồi; bảo mật WebSocket; gia cố upload | `c946334`, `fae6886`, `5de08b0`, `78b95f9` | |
+| 01/10/2026 | P1-09, P1-11b, P1-13, P1-12 | Kích hoạt tài khoản + chính sách mật khẩu; header/CSP; nâng dependency + Dependabot + CodeQL; 18/18 test bắt buộc | `7c80016`, `77b2c0e`, `428c374`, `a03e4e4` | 196 test |
 | 21/10/2026 | GĐ1-QA | Kiểm thử toàn diện + vá 5 lỗi phát hiện thêm (ReDoS email, username dài → 500 lộ SQL, InvalidPath tên file cũ, 2 lỗ hổng npm, lộ phiên bản nginx); tắt attribution Claude Code cho repo | xem `report_plan1.md` | 202 test · smoke 0 FAIL |
-| 22/10/2026 | GĐ1-QA | Rà soát lại toàn bộ + dọn code: 0 cảnh báo javac/ECJ/khởi động; 202 test · smoke 0 FAIL · ws 12/12 · ui 8/8 | `4eb5aae` | Báo cáo mục 10 |
+| 22/10/2026 | GĐ1-QA | Rà soát lại toàn bộ + dọn code: 0 cảnh báo javac/ECJ/khởi động; 202 test · smoke 0 FAIL · ws 12/12 · ui 8/8 | `faf48ad` | Báo cáo mục 10 |
+| 22/10/2026 | P1-08B | Viết lại lịch sử git: xóa `Backend/uploads` (3 file `.doc`), gỡ trailer `Co-Authored-By: Claude` (24 commit), chuẩn hóa tên tác giả; force push `main`/`develop` sau kiểm chứng 6/6 | — | Mọi mã commit trong tài liệu đã cập nhật theo lịch sử mới |
+| 22/10/2026 | GĐ1 | Merge PR #3 → `main` (`d7e9307`); tag `v0.1.0-baseline` (`f52e07d`), `v0.2.0-security` (`d7e9307`); **đóng Giai đoạn 0 và 1** | `d7e9307` | Dependabot mở 10 PR nâng cấp thư viện |
 | | | | | |
 
 ---
@@ -2029,3 +2029,4 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 1.2 | 25/09/2026 | P4-04 (Team) và P4-07 (Học phí) giữ lại trong lộ trình, trạng thái 🕒 "phát triển sau v1.0" |
 | 1.3 | 25/09/2026 | Hoàn thành Giai đoạn 0 (8/9 task; P0-09 chờ push lên GitHub); thêm hướng dẫn dùng môi trường + báo cáo smoke test baseline |
 | 1.4 | 21/10/2026 | Đồng bộ trạng thái GĐ1 (12/13 ✅, P1-08 🟨); cập nhật tiêu chí hoàn thành GĐ1; kiểm thử toàn diện — `Plan/reports/report_plan1.md` |
+| 1.5 | 22/10/2026 | Đóng GĐ0 + GĐ1: P1-08B (viết lại lịch sử), merge PR #3, tag `v0.1.0-baseline`, `v0.2.0-security`; cập nhật mã commit theo lịch sử mới |

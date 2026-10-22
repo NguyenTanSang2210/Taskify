@@ -1,6 +1,6 @@
 # BÁO CÁO ĐỐI CHIẾU KẾ HOẠCH & KIỂM THỬ TOÀN DIỆN — TASKIFY
 
-> **Ngày:** 21/10/2026 · **Nhánh:** `develop` (đối chiếu với `origin/develop` = `9ece91b`, PR #3 `develop` → `main`)
+> **Ngày:** 21/10/2026 · **Nhánh:** `develop` (đối chiếu với `origin/develop` = `a03e4e4`, PR #3 `develop` → `main`)
 > **Căn cứ:** `Plan/plan1.md` (v1.3 → v1.4), `Plan/GĐ1.md`, `Plan/reports/GĐ1-smoke.md`, toàn bộ mã nguồn + lịch sử git.
 > **Phạm vi báo cáo:** (1) xác định giai đoạn hiện tại; (2) các task còn dở và việc đã làm; (3) kiểm thử toàn diện (chức năng, xử lý lỗi, hiệu năng, tương thích, bảo mật); (4) vấn đề phát hiện, mức độ, đề xuất; (5) giải thích "claude" trong lịch sử commit.
 
@@ -47,19 +47,19 @@
 
 | Task | Bằng chứng trong mã | Commit | Kiểm chứng đợt này |
 |---|---|---|---|
-| P1-01 OTP pre-auth | `JwtTokenProvider.Scope`, `AuthController` trả `preAuthToken` | `45255ee` | `AuthFlowIT` 19 test; smoke 1a FIXED; UI: ADMIN dừng ở bước OTP, localStorage không có token |
-| P1-02 Thu hồi token | `TokenAuthenticator`, `tokenVersion` | `304b95f` | `TokenRevocationIT` 15; smoke 19 FIXED |
-| P1-03 Secret bắt buộc | `jwt.secret=${JWT_SECRET:}` + kiểm tra khi khởi động; compose `:?` | `b4b78f1` | `JwtTokenProviderTest` 18; JWT `alg=none` / secret yếu → 401 |
-| P1-04 WebSocket | `WebSocketAuthChannelInterceptor` | `590fb10` | `WebSocketSecurityIT` 13; `ws-check.mjs` 12/12 |
-| P1-05 IDOR | `TopicAccessService`, `SecurityScopeService` | `6e38226` | `TopicAccessServiceTest` 16, `MilestoneCalendarAccessIT` 12, `TopicCollaborationAccessIT` 9; smoke S1–S3 FIXED |
-| P1-06 DTO | `dto/response/*`, `open-in-view=false` | `765d542` | `DtoNoLeakIT` 3 |
-| P1-07 Upload | `FileStorageService`, `FileContentValidator`, `StoredFile` | `b57fdd8` | `FileAccessIT` 16; .exe giả .pdf → 400; SVG → 400; 21 MB → 413; path traversal → 400 |
-| P1-08 Gỡ file | `.gitignore` có `Backend/uploads/`; `git ls-files Backend/uploads` rỗng | `5d785c1`, `ebeb7ae` | **Lịch sử vẫn còn** ở 3 commit (`bdd6470`, `58161d6`, `5d785c1`) → 🟨 |
-| P1-09 Kích hoạt | `AuthService`, `PasswordPolicy`, bỏ `/auth/register` | `e5aa01f` | `AccountActivationIT` 10, `PasswordPolicyTest` 7; smoke S4 FIXED; UI không còn "Đăng ký ngay" |
-| P1-10 Brute-force | `LoginThrottleService` (bảng `login_throttle`), `RateLimiter` | `53f9b96` | `LoginThrottleIT` 9, `RateLimitIT` 4; khóa **vẫn giữ sau khi khởi động lại backend** |
-| P1-11 Header/Swagger | `nginx.conf` CSP…, `app.swagger.public` | `a1284ee`, `1a99da7`, `f40369c` | `SecurityEndpointsIT`, `SwaggerClosedIT`; header có đủ trên nginx + API |
-| P1-12 Test hồi quy | `AccessMatrixIT` + bảng ánh xạ ở `GĐ1.md` 6.1 | `9ece91b` | 18/18 pass (trong 202 test) |
-| P1-13 Dependency | Boot 3.5.16, jjwt 0.12.7, POI 5.5.1, springdoc 2.8.17; `dependabot.yml`, `codeql.yml` | `d982264` | Build + test xanh |
+| P1-01 OTP pre-auth | `JwtTokenProvider.Scope`, `AuthController` trả `preAuthToken` | `850bad3` | `AuthFlowIT` 19 test; smoke 1a FIXED; UI: ADMIN dừng ở bước OTP, localStorage không có token |
+| P1-02 Thu hồi token | `TokenAuthenticator`, `tokenVersion` | `2232628` | `TokenRevocationIT` 15; smoke 19 FIXED |
+| P1-03 Secret bắt buộc | `jwt.secret=${JWT_SECRET:}` + kiểm tra khi khởi động; compose `:?` | `bf33cb5` | `JwtTokenProviderTest` 18; JWT `alg=none` / secret yếu → 401 |
+| P1-04 WebSocket | `WebSocketAuthChannelInterceptor` | `5de08b0` | `WebSocketSecurityIT` 13; `ws-check.mjs` 12/12 |
+| P1-05 IDOR | `TopicAccessService`, `SecurityScopeService` | `c946334` | `TopicAccessServiceTest` 16, `MilestoneCalendarAccessIT` 12, `TopicCollaborationAccessIT` 9; smoke S1–S3 FIXED |
+| P1-06 DTO | `dto/response/*`, `open-in-view=false` | `fae6886` | `DtoNoLeakIT` 3 |
+| P1-07 Upload | `FileStorageService`, `FileContentValidator`, `StoredFile` | `78b95f9` | `FileAccessIT` 16; .exe giả .pdf → 400; SVG → 400; 21 MB → 413; path traversal → 400 |
+| P1-08 Gỡ file | `.gitignore` có `Backend/uploads/`; `git ls-files Backend/uploads` rỗng | `14a7894`, `246c3f6` | **Lịch sử vẫn còn** ở 3 commit (`59344f7`, `2426753`, `14a7894`) → 🟨 |
+| P1-09 Kích hoạt | `AuthService`, `PasswordPolicy`, bỏ `/auth/register` | `7c80016` | `AccountActivationIT` 10, `PasswordPolicyTest` 7; smoke S4 FIXED; UI không còn "Đăng ký ngay" |
+| P1-10 Brute-force | `LoginThrottleService` (bảng `login_throttle`), `RateLimiter` | `c67ad6f` | `LoginThrottleIT` 9, `RateLimitIT` 4; khóa **vẫn giữ sau khi khởi động lại backend** |
+| P1-11 Header/Swagger | `nginx.conf` CSP…, `app.swagger.public` | `31cf02a`, `a621ab3`, `77b2c0e` | `SecurityEndpointsIT`, `SwaggerClosedIT`; header có đủ trên nginx + API |
+| P1-12 Test hồi quy | `AccessMatrixIT` + bảng ánh xạ ở `GĐ1.md` 6.1 | `a03e4e4` | 18/18 pass (trong 202 test) |
+| P1-13 Dependency | Boot 3.5.16, jjwt 0.12.7, POI 5.5.1, springdoc 2.8.17; `dependabot.yml`, `codeql.yml` | `428c374` | Build + test xanh |
 
 ---
 
@@ -69,11 +69,11 @@ Mọi commit đứng tên **NguyenTanSang2210** (không còn trailer Claude):
 
 | Commit | Nội dung | Test đi kèm |
 |---|---|---|
-| `011f82e` | **security(api):** vá ReDoS ở kiểm tra email khi sửa hồ sơ (`UserController.isValidEmail`) — regex cũ `^[^@\s]+@[^@\s]+\.[^@\s]+$` quay lui đa thức; regex mới tách tên miền theo dấu chấm + giới hạn 254 ký tự. Ghi chú lý do tắt CSRF. | `UserEmailValidationTest` (3 test, có test chuỗi độc hại < 1 giây) |
-| `d70dbc1` | **security(api):** `LoginRequest` giới hạn 255 ký tự; `DataAccessErrorHandler` — lỗi CSDL trả thông báo chung (409/500), **không còn lộ câu SQL / tên bảng / tên cột** | `AuthFlowIT.overlongUsername_*`, `DataAccessErrorHandlerTest` (2) |
-| `2d13cff` | **fix(files):** `FileStorageService.resolve` bắt `InvalidPathException` (tên file tiếng Việt cũ trên máy chủ locale không phải UTF-8) | Tái hiện bằng `FileAccessIT.backfill_*` khi `LANG=POSIX` |
-| `d340f26` | **chore(security):** `npm audit fix` (follow-redirects, source-map-js — 2 High); `server_tokens off` cho nginx; escape `\` trong báo cáo smoke (CodeQL) | lint + build + audit |
-| `a9ff390` | **chore(claude):** `.claude/settings.json` tắt `Co-Authored-By` / link phiên của Claude Code cho repo này | — |
+| `9541d43` | **security(api):** vá ReDoS ở kiểm tra email khi sửa hồ sơ (`UserController.isValidEmail`) — regex cũ `^[^@\s]+@[^@\s]+\.[^@\s]+$` quay lui đa thức; regex mới tách tên miền theo dấu chấm + giới hạn 254 ký tự. Ghi chú lý do tắt CSRF. | `UserEmailValidationTest` (3 test, có test chuỗi độc hại < 1 giây) |
+| `cfb55aa` | **security(api):** `LoginRequest` giới hạn 255 ký tự; `DataAccessErrorHandler` — lỗi CSDL trả thông báo chung (409/500), **không còn lộ câu SQL / tên bảng / tên cột** | `AuthFlowIT.overlongUsername_*`, `DataAccessErrorHandlerTest` (2) |
+| `05c5df3` | **fix(files):** `FileStorageService.resolve` bắt `InvalidPathException` (tên file tiếng Việt cũ trên máy chủ locale không phải UTF-8) | Tái hiện bằng `FileAccessIT.backfill_*` khi `LANG=POSIX` |
+| `23e94df` | **chore(security):** `npm audit fix` (follow-redirects, source-map-js — 2 High); `server_tokens off` cho nginx; escape `\` trong báo cáo smoke (CodeQL) | lint + build + audit |
+| `985a121` | **chore(claude):** `.claude/settings.json` tắt `Co-Authored-By` / link phiên của Claude Code cho repo này | — |
 | (commit tài liệu) | Đồng bộ `plan1.md` → v1.4 (trạng thái 13 task P1, tiêu chí GĐ1, P0-09, Changelog), thêm nhật ký vào `GĐ1.md`, báo cáo này | — |
 
 **Không thực hiện** (cần chủ dự án xác nhận — thao tác công khai/không hoàn tác): viết lại lịch sử git (P1-08B + gỡ trailer Claude), force push, merge PR #3, gắn tag, đánh dấu cảnh báo CodeQL/GitGuardian trên GitHub.
@@ -171,8 +171,8 @@ Tái hiện cục bộ bằng CodeQL CLI cùng bộ truy vấn:
 
 | Cảnh báo | Vị trí | Mức | Xử lý |
 |---|---|:---:|---|
-| Polynomial ReDoS (`java/polynomial-redos`) | `UserController.java` (regex email) | High | ✅ **Đã vá** (`011f82e`) |
-| Incomplete string escaping | `scripts/smoke-test.mjs` | Medium | ✅ **Đã vá** (`d340f26`) |
+| Polynomial ReDoS (`java/polynomial-redos`) | `UserController.java` (regex email) | High | ✅ **Đã vá** (`9541d43`) |
+| Incomplete string escaping | `scripts/smoke-test.mjs` | Medium | ✅ **Đã vá** (`23e94df`) |
 | Disabled Spring CSRF protection | `SecurityConfig.java` | High | **Dương tính giả**: API xác thực bằng header `Authorization: Bearer`, không dùng cookie/session → CSRF không áp dụng. Đã ghi chú trong code. → Trên GitHub: *Security → Code scanning → alert → Dismiss → "False positive"*. Khi làm **P3-14** (refresh token trong cookie) phải bật bảo vệ CSRF cho endpoint đó. |
 | Clear-text storage of sensitive information ×3 | `frontend/src/context/AuthContext.jsx` (token trong `localStorage`) | High | **Đúng — đã có kế hoạch**: quyết định D-03 = B, làm ở **P3-14** (access token trong bộ nhớ + refresh token cookie HttpOnly). → Dismiss "Won't fix" kèm ghi chú "P3-14", hoặc làm sớm P3-14. |
 
@@ -185,7 +185,7 @@ Sau khi push các commit đợt này, CodeQL sẽ chạy lại: còn 4 cảnh b�
 - Mật khẩu **trong test** (`PasswordPolicyTest`, `AccountActivationIT`, `UserControllerTest`) — chính là các chuỗi dùng để kiểm tra chính sách mật khẩu.
 - Chuỗi base64 giả trong `JwtTokenProviderTest` (để kiểm tra việc *từ chối* secret công khai).
 - Mật khẩu demo `123456` của dữ liệu seed trong `scripts/smoke-test.mjs`.
-- Dòng `docker-compose.yml` ở commit `b4b78f1` (biến bắt buộc `:?`, không có giá trị).
+- Dòng `docker-compose.yml` ở commit `bf33cb5` (biến bắt buộc `:?`, không có giá trị).
 
 → Trên dashboard GitGuardian: đánh dấu các incident là **"Test credential / False positive"**. Không cần đổi mã.
 
@@ -199,11 +199,11 @@ Thang mức độ: 🔴 Nghiêm trọng · 🟠 Cao · 🟡 Trung bình · 🔵 
 
 | # | Vấn đề | Mức | Ảnh hưởng | Khắc phục |
 |:-:|---|:-:|---|---|
-| 1 | **Username/password rất dài ở `/api/auth/login` → HTTP 500 và phản hồi chứa nguyên câu `INSERT INTO audit_logs …`** (do `server.error.include-message=always`) | 🟠 | Lộ cấu trúc CSDL cho người chưa đăng nhập; tạo log lỗi hàng loạt (DoS log) | `@Size(max=255)` + `DataAccessErrorHandler` che mọi lỗi CSDL (`d70dbc1`) |
-| 2 | ReDoS ở regex email khi cập nhật hồ sơ | 🟠 | Người dùng đã đăng nhập gửi chuỗi đặc biệt làm treo luồng xử lý (CodeQL High) | Regex tuyến tính + giới hạn độ dài (`011f82e`) |
-| 3 | `FileStorageService.resolve` ném `InvalidPathException` với tên file tiếng Việt cũ khi máy chủ không chạy locale UTF-8 | 🟡 | Backfill hồ sơ file dừng giữa chừng; tải file cũ trả 500. (Image Docker `eclipse-temurin` mặc định UTF-8 nên production hiện không bị, nhưng chạy `java -jar` trên máy Linux locale POSIX thì bị) | Bắt ngoại lệ, coi như tên không hợp lệ (`2d13cff`) |
-| 4 | 2 lỗ hổng npm mức High (follow-redirects, source-map-js) | 🟡 | Phụ thuộc bắc cầu; follow-redirects có thể làm lộ header xác thực khi chuyển hướng | `npm audit fix` (`d340f26`) |
-| 5 | nginx trả `Server: nginx/1.27.5` | 🔵 | Lộ phiên bản giúp dò lỗ hổng | `server_tokens off` (`d340f26`) |
+| 1 | **Username/password rất dài ở `/api/auth/login` → HTTP 500 và phản hồi chứa nguyên câu `INSERT INTO audit_logs …`** (do `server.error.include-message=always`) | 🟠 | Lộ cấu trúc CSDL cho người chưa đăng nhập; tạo log lỗi hàng loạt (DoS log) | `@Size(max=255)` + `DataAccessErrorHandler` che mọi lỗi CSDL (`cfb55aa`) |
+| 2 | ReDoS ở regex email khi cập nhật hồ sơ | 🟠 | Người dùng đã đăng nhập gửi chuỗi đặc biệt làm treo luồng xử lý (CodeQL High) | Regex tuyến tính + giới hạn độ dài (`9541d43`) |
+| 3 | `FileStorageService.resolve` ném `InvalidPathException` với tên file tiếng Việt cũ khi máy chủ không chạy locale UTF-8 | 🟡 | Backfill hồ sơ file dừng giữa chừng; tải file cũ trả 500. (Image Docker `eclipse-temurin` mặc định UTF-8 nên production hiện không bị, nhưng chạy `java -jar` trên máy Linux locale POSIX thì bị) | Bắt ngoại lệ, coi như tên không hợp lệ (`05c5df3`) |
+| 4 | 2 lỗ hổng npm mức High (follow-redirects, source-map-js) | 🟡 | Phụ thuộc bắc cầu; follow-redirects có thể làm lộ header xác thực khi chuyển hướng | `npm audit fix` (`23e94df`) |
+| 5 | nginx trả `Server: nginx/1.27.5` | 🔵 | Lộ phiên bản giúp dò lỗ hổng | `server_tokens off` (`23e94df`) |
 
 ### 6.2. Còn tồn tại — đề xuất xử lý
 
@@ -223,18 +223,20 @@ Thang mức độ: 🔴 Nghiêm trọng · 🟠 Cao · 🟡 Trung bình · 🔵 
 
 ## 7. "claude" trong commit: nguyên nhân & cách gỡ
 
+> ✅ **Đã xử lý 22/10/2026** — lịch sử đã viết lại theo quy trình 7.4 (xem mục 11). Các mã commit trong báo cáo này đã được cập nhật theo lịch sử mới.
+
 ### 7.1. Vì sao GitHub hiện "NguyenTanSang2210 **and claude**"
 
 - Các phiên **Claude Code** (trên máy `DESKTOP-52AO7BE`) mặc định thêm dòng cuối vào thông điệp commit:
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (7 commit GĐ0) và `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` (17 commit GĐ1).
-- GitHub đọc trailer `Co-Authored-By`, thấy email `noreply@anthropic.com` gắn với tài khoản GitHub **claude** nên hiển thị đồng tác giả. Tổng **24 commit**, từ `98027f4` đến `9ece91b` — **chỉ trên `develop`** (chưa vào `main`).
+- GitHub đọc trailer `Co-Authored-By`, thấy email `noreply@anthropic.com` gắn với tài khoản GitHub **claude** nên hiển thị đồng tác giả. Tổng **24 commit**, từ `9d5145a` đến `a03e4e4` — **chỉ trên `develop`** (chưa vào `main`).
 - **Tác giả thật vẫn là bạn** (email `tansangnts2004@gmail.com`). Tên tác giả hiển thị `DESKTOP-52AO7BE\ADMIN` vì máy đó chưa đặt `git config user.name` — GitHub vẫn liên kết đúng tài khoản nhờ email.
 
 ### 7.2. Gỡ có ảnh hưởng đến dự án không?
 
 - Trailer chỉ nằm trong **thông điệp commit**; nội dung file của 24 commit này giống hệt nhau dù có hay không có trailer → **mã nguồn, cấu hình, test không thay đổi**.
-- Nhưng git không sửa được thông điệp commit cũ mà không **viết lại lịch sử**: mọi mã băm commit từ `98027f4` trở đi đổi → cần **force push** `develop`; mọi bản clone cũ phải **clone lại**; các mã commit ghi trong `Plan/*.md` (Changelog, "Theo dõi") sẽ lệch và cần cập nhật theo bảng ánh xạ `filter-repo` sinh ra (`.git/filter-repo/commit-map`).
-- P1-08 (D-04 = B) **vốn đã bắt buộc viết lại lịch sử** (xóa `Backend/uploads` từ commit thứ 2 `bdd6470`) → nên làm **cả hai trong một lần**: chỉ một lần force push, một lần clone lại.
+- Nhưng git không sửa được thông điệp commit cũ mà không **viết lại lịch sử**: mọi mã băm commit từ `9d5145a` trở đi đổi → cần **force push** `develop`; mọi bản clone cũ phải **clone lại**; các mã commit ghi trong `Plan/*.md` (Changelog, "Theo dõi") sẽ lệch và cần cập nhật theo bảng ánh xạ `filter-repo` sinh ra (`.git/filter-repo/commit-map`).
+- P1-08 (D-04 = B) **vốn đã bắt buộc viết lại lịch sử** (xóa `Backend/uploads` từ commit thứ 2 `59344f7`) → nên làm **cả hai trong một lần**: chỉ một lần force push, một lần clone lại.
 - Tôi **không tự thực hiện**: thao tác viết lại lịch sử (kể cả chạy thử trên bản clone tạm) bị chế độ phân quyền của phiên này chặn, và force push lên GitHub là thao tác không hoàn tác được — cần bạn quyết định.
 
 ### 7.3. Ngăn tái diễn (đã làm)
@@ -330,7 +332,7 @@ Kiểm thử bổ sung đợt này (xử lý lỗi/bảo mật/hiệu năng/tư�
 
 ## 10. Kiểm tra lại lần 2 — 22/10/2026 (rà soát "code sạch" + xác nhận hoàn thành)
 
-Chạy lại toàn bộ trên máy sạch, code tại commit `4eb5aae`:
+Chạy lại toàn bộ trên máy sạch, code tại commit `faf48ad`:
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -343,11 +345,47 @@ Chạy lại toàn bộ trên máy sạch, code tại commit `4eb5aae`:
 | WebSocket / Giao diện / Kiểm thử lỗi-bảo mật-hiệu năng | 12/12 · 8/8 · 28/28 |
 | Profile `prod` | Swagger đóng; secret JWT yếu → **từ chối khởi động**; không seed dữ liệu demo |
 | CodeQL (chạy cục bộ) | Không có cảnh báo mới; 4 cảnh báo cũ đã được dismiss trên GitHub (CSRF: dương tính giả; localStorage: P3-14) |
-| CI trên PR #3 | **10/10 xanh** trên `b409548` (GitGuardian xanh sau khi Ignore 15 dữ liệu test); PR mergeable |
+| CI trên PR #3 | **10/10 xanh** trên `1316b7a` (GitGuardian xanh sau khi Ignore 15 dữ liệu test); PR mergeable |
 
-**Dọn code (commit `4eb5aae`):** bỏ API lỗi thời (`DaoAuthenticationProvider()`, `Specification.where`, `@MockBean`), tạo `AuthenticationManager` trực tiếp, bỏ `hibernate.dialect` thừa, xóa field `EventPublisher` không dùng ở 2 controller và 3 import thừa. Không đổi hành vi (toàn bộ test + smoke giữ nguyên kết quả).
+**Dọn code (commit `faf48ad`):** bỏ API lỗi thời (`DaoAuthenticationProvider()`, `Specification.where`, `@MockBean`), tạo `AuthenticationManager` trực tiếp, bỏ `hibernate.dialect` thừa, xóa field `EventPublisher` không dùng ở 2 controller và 3 import thừa. Không đổi hành vi (toàn bộ test + smoke giữ nguyên kết quả).
 
 **Ghi nhận, không xóa:** `frontend/src/api/discussApi.js`, `calendarApi.js`, `announcementApi.js` chưa được trang nào dùng — backend của Thảo luận / Lịch / Thông báo chung đã có và đã bảo mật, nhưng **chưa có giao diện** (thuộc P4-11). Xóa đi sẽ mất phần nối API sẵn có, nên giữ lại.
 
 **Trạng thái Giai đoạn 1 tại thời điểm này:** toàn bộ phần **mã nguồn** đã xong và sạch. Còn 2 việc **chỉ chủ dự án làm được** (không phải lỗi code): (1) P1-08B viết lại lịch sử git, (2) merge PR #3 + tag `v0.2.0-security`.
+
+---
+
+## 11. Đóng Giai đoạn 0 & 1 — 22/10/2026
+
+### 11.1. Kiểm tra repo sau khi chủ dự án hoàn tất
+
+| Hạng mục | Kết quả kiểm tra trên GitHub |
+|---|---|
+| Lịch sử git | Viết lại thành công: **0** commit chứa `Backend/uploads`, **0** trailer `Co-Authored-By: Claude`, **0** tác giả `DESKTOP-52AO7BE\ADMIN`; 51/51 commit giữ nguyên nội dung (đối chiếu theo tiêu đề + thời gian) |
+| Mã nguồn | `develop` sau viết lại giống hệt trước khi viết lại (diff rỗng) |
+| PR #3 `develop` → `main` | **Đã merge** bằng merge commit `d7e9307`; CI 10/10 xanh trước khi merge |
+| Tag | `v0.1.0-baseline` → `f52e07d` (P0-09) · `v0.2.0-security` → `d7e9307` — đều là annotated tag |
+| Bảo vệ nhánh `main` | Có rule: bắt buộc qua PR + 3 status check |
+| Dependabot | Hoạt động — đã tự mở **10 PR** nâng cấp (PR #4 → #13) ngay sau khi `dependabot.yml` vào `main` → nghiệm thu P1-13 đạt |
+| Repo trên máy chủ dự án | Clone lại sạch ở `D:\Taskify`; bản cũ `D:\Taskify-old`, backup `D:\taskify-rewrite\backup.git` (xóa sau ~30 ngày) |
+
+**Kết luận:** Giai đoạn 0 (9/9) và Giai đoạn 1 (13/13) **đã hoàn thành**. Mọi mã commit trong `plan1.md`, `GĐ1.md` và báo cáo này đã cập nhật theo lịch sử mới.
+
+### 11.2. Việc tiếp theo
+
+**Bước kế tiếp: Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng** (13 task, ước lượng 7–9 ngày công).
+
+1. **Lập `Plan/GĐ2.md`** (kế hoạch chi tiết như đã làm với GĐ1): phân tích lại mã nguồn hiện tại, thiết kế, thứ tự, test cho từng task.
+2. **Thứ tự đề xuất** — ưu tiên 3 lỗi đang chặn luồng chính (smoke test vẫn báo BUG):
+   - **P2-01** Giảng viên tự tạo đề tài (thiếu quyền `TOPIC_MANAGE`) — smoke #5
+   - **P2-02** Tách 401/403 + toast lỗi (GĐ1 đã làm phần tối thiểu: chỉ 401 mới đăng xuất)
+   - **P2-03** Upload/tải file trên giao diện (gán object vào `fileUrl`, `<a href>` không gửi token, nginx giới hạn 1 MB) — smoke #11, #13a, #21
+   - **P2-04** Nhiều sinh viên/đề tài theo `capacity` (D-01 = B) — smoke #9b
+   - **P2-05** Quên mật khẩu — smoke #20
+   - Sau đó P2-06 → P2-11, **P2-13** (khóa điểm & chấm lại, D-08), cuối cùng **P2-12** kiểm thử hồi quy toàn luồng.
+3. **Mục tiêu đo được khi đóng GĐ2:** smoke test **0 BUG** (6 mục BUG hiện tại chuyển FIXED), test hồi quy nghiệp vụ trong CI, tag `v0.3.0-business`.
+
+**Việc phụ nên xử lý sớm (không chặn GĐ2):**
+- **10 PR của Dependabot** (#4–#13) đang nhắm vào `main`, trái quy trình `develop` → `main`. Đề xuất: thêm `target-branch: develop` vào `.github/dependabot.yml`; gộp các bản vá nhỏ (nhóm *minor-and-patch*, `actions/*`); **không** gộp vội các bản nâng **major** — `springdoc-openapi` 3.x (yêu cầu Spring Boot 4), `eslint` 10, `@vitejs/plugin-react` 6, `globals` 17 — cần thử riêng.
+- Xóa `D:\Taskify-old` sau 1–2 tuần và backup `D:\taskify-rewrite` sau ~30 ngày.
 
