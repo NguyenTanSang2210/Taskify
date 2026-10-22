@@ -231,6 +231,7 @@ export default function App() {
                 {!collapsed && <p className="text-[10px] uppercase font-bold tracking-widest text-outline mb-1 ml-4 italic">Quản trị</p>}
                 <NavLink
                   to="/admin"
+                  end
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out ${
                       isActive 
@@ -241,6 +242,19 @@ export default function App() {
                 >
                   <span className="material-symbols-outlined">shield_person</span>
                   {!collapsed && <span className="text-sm font-medium">Quản trị hệ thống</span>}
+                </NavLink>
+                <NavLink
+                  to="/admin/roles"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-out ${
+                      isActive
+                        ? "bg-primary/10 text-primary font-bold border-r-4 border-primary"
+                        : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                    }`
+                  }
+                >
+                  <span className="material-symbols-outlined">admin_panel_settings</span>
+                  {!collapsed && <span className="text-sm font-medium">Vai trò & quyền hạn</span>}
                 </NavLink>
               </div>
             )}
@@ -416,6 +430,14 @@ export default function App() {
               element={
                 <RequireRole role={["ADMIN", "DEPARTMENT_ADMIN"]}>
                   {roleName === "DEPARTMENT_ADMIN" ? <Navigate to="/department-admin" replace /> : <AdminPage />}
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin/roles"
+              element={
+                <RequireRole role="ADMIN">
+                  <RoleManagementPage />
                 </RequireRole>
               }
             />

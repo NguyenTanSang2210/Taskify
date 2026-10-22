@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { roleApi } from "../api/roleApi";
 import InlineNotice from "../components/InlineNotice";
 
+/** Vai trò hệ thống — backend không cho xóa (RoleService.SYSTEM_ROLES). */
+const SYSTEM_ROLES = ["ADMIN", "DEPARTMENT_ADMIN", "LECTURER", "STUDENT"];
+
 export default function RoleManagementPage() {
   const [roles, setRoles] = useState([]);
   const [privileges, setPrivileges] = useState([]);
@@ -79,7 +82,7 @@ export default function RoleManagementPage() {
       setShowRoleModal(false);
       await loadData();
     } catch (err) {
-      setNotice({ type: "danger", message: err.response?.data?.message || "Thao tác thất bại." });
+      setNotice({ type: "danger", message: err.message || "Thao tác thất bại." });
     } finally {
       setActionLoading(false);
     }
@@ -93,8 +96,9 @@ export default function RoleManagementPage() {
       setNotice({ type: "success", message: "Đã xóa vai trò thành công." });
       setShowConfirmDelete(null);
       await loadData();
-    } catch {
-      setNotice({ type: "danger", message: "Không thể xóa vai trò này." });
+    } catch (err) {
+      setShowConfirmDelete(null);
+      setNotice({ type: "danger", message: err.message || "Không thể xóa vai trò này." });
     } finally {
       setActionLoading(false);
     }
@@ -217,7 +221,7 @@ export default function RoleManagementPage() {
                           >
                              <span className="material-symbols-outlined text-lg">edit</span>
                           </button>
-                          {role.name !== 'ADMIN' && role.name !== 'STUDENT' && (
+                          {!SYSTEM_ROLES.includes(role.name) && (
                              <button 
                                onClick={() => setShowConfirmDelete(role.id)}
                                className="p-3 rounded-xl bg-surface-container hover:bg-error-container hover:text-error transition-all"
