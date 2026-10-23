@@ -14,7 +14,7 @@ public interface MilestoneRepository extends JpaRepository<Milestone, Long> {
     /** Milestone có hạn trong [from, to) của đề tài thuộc workspace đang thực hiện. */
     @Query("""
             select m from Milestone m join fetch m.topic t
-            where m.deadline >= :from and m.deadline < :to and t.workspace.status = 'IN_PROGRESS'
+            where m.deadline >= :from and m.deadline < :to and t.workspace.status = com.doanltmmt.Backend.entity.enums.WorkspaceStatus.IN_PROGRESS
             """)
     List<Milestone> findDueBetweenInActiveWorkspaces(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

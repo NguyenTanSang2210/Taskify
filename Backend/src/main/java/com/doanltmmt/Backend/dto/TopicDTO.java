@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.dto;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.Topic;
 import lombok.Data;
 
@@ -8,7 +9,7 @@ public class TopicDTO {
     private Long id;
     private String title;
     private String description;
-    private String status;
+    private TopicStatus status;
     private Integer capacity;
     private Long lecturerId;
     private String lecturerName;

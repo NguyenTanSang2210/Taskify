@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.repository;
 
+import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
 import com.doanltmmt.Backend.entity.GradeRevisionRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,13 +16,13 @@ public interface GradeRevisionRequestRepository extends JpaRepository<GradeRevis
 
     Optional<GradeRevisionRequest> findFirstByRegistration_IdOrderByIdDesc(Long registrationId);
 
-    boolean existsByRegistration_IdAndStatus(Long registrationId, String status);
+    boolean existsByRegistration_IdAndStatus(Long registrationId, GradeRevisionStatus status);
 
     /** Yêu cầu đã duyệt và còn trong thời gian mở khóa. */
     Optional<GradeRevisionRequest> findFirstByRegistration_IdAndStatusAndUnlockUntilAfterOrderByIdDesc(
-            Long registrationId, String status, LocalDateTime now);
+            Long registrationId, GradeRevisionStatus status, LocalDateTime now);
 
-    List<GradeRevisionRequest> findByStatusAndUnlockUntilBefore(String status, LocalDateTime now);
+    List<GradeRevisionRequest> findByStatusAndUnlockUntilBefore(GradeRevisionStatus status, LocalDateTime now);
 
     /** Danh sách cho người duyệt; {@code null} = không lọc theo trường đó. */
     @Query("""
@@ -29,6 +30,6 @@ public interface GradeRevisionRequestRepository extends JpaRepository<GradeRevis
             where (:status is null or r.status = :status)
               and (:departmentId is null or r.registration.topic.workspace.department.id = :departmentId)
             """)
-    Page<GradeRevisionRequest> search(@Param("status") String status, @Param("departmentId") Long departmentId,
+    Page<GradeRevisionRequest> search(@Param("status") GradeRevisionStatus status, @Param("departmentId") Long departmentId,
                                       Pageable pageable);
 }

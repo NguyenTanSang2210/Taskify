@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.grade;
 
+import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.GradeRevisionRequest;
@@ -77,7 +79,7 @@ class GradeRevisionIT extends AbstractSecurityIT {
     }
 
     private void closeWorkspace() {
-        ws.setStatus("CLOSED");
+        ws.setStatus(WorkspaceStatus.CLOSED);
         workspaceRepo.save(ws);
     }
 
@@ -129,7 +131,7 @@ class GradeRevisionIT extends AbstractSecurityIT {
         grade(8.5, null).andExpect(status().isBadRequest()).andExpect(errorMessageContains("lý do"));
         grade(8.5, "Sửa lỗi nhập điểm").andExpect(status().isOk()).andExpect(jsonPath("$.score").value(8.5));
 
-        assertEquals(GradeRevisionRequest.USED, revisionRepo.findById(id).orElseThrow().getStatus());
+        assertEquals(GradeRevisionStatus.USED, revisionRepo.findById(id).orElseThrow().getStatus());
         assertEquals(id, historyRepo.findByRegistration_IdOrderByChangedAtDescIdDesc(reg.getId()).get(0).getRevisionRequest().getId());
         grade(9, "Sửa thêm").andExpect(status().isBadRequest()).andExpect(errorMessageContains("Điểm đã bị khóa"));
 
@@ -147,7 +149,7 @@ class GradeRevisionIT extends AbstractSecurityIT {
         approve(id, deptAdmin).andExpect(status().isOk());
 
         assertTrue(gradeService.expireOverdue(LocalDateTime.now().plusHours(25)) >= 1);
-        assertEquals(GradeRevisionRequest.EXPIRED, revisionRepo.findById(id).orElseThrow().getStatus());
+        assertEquals(GradeRevisionStatus.EXPIRED, revisionRepo.findById(id).orElseThrow().getStatus());
         grade(8, "Quá hạn").andExpect(status().isBadRequest()).andExpect(errorMessageContains("Điểm đã bị khóa"));
     }
 

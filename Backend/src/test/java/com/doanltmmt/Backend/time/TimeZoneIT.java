@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.time;
 
+import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.config.AppTimeZone;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
@@ -49,7 +50,7 @@ class TimeZoneIT extends AbstractSecurityIT {
         Student s = newStudent("stz", newDepartment("TZ"), null);
         Notification n = new Notification();
         n.setUser(s.getUser());
-        n.setType("INFO");
+        n.setType(NotificationType.INFO);
         n.setTitle("Giờ");
         n.setContent("Kiểm tra múi giờ");
         n.setCreatedAt(VN_TIME);

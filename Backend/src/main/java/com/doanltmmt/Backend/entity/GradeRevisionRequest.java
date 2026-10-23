@@ -1,15 +1,16 @@
 package com.doanltmmt.Backend.entity;
 
+import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
 /**
- * P2-13 (D-08) — yêu cầu mở khóa điểm của một sinh viên khi đợt đã đóng.
- * {@link #PENDING} → {@link #APPROVED} (mở khóa đến {@code unlockUntil}) → {@link #USED} khi GV sửa điểm,
- * hoặc {@link #EXPIRED} khi hết hạn; {@link #REJECTED} nếu bị từ chối.
+ * P2-13 (D-08) — yêu cầu mở khóa điểm của một sinh viên khi đợt đã đóng (vòng đời: {@link GradeRevisionStatus}).
  */
 @Entity
 @Table(name = "grade_revision_requests",
@@ -17,12 +18,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class GradeRevisionRequest {
-
-    public static final String PENDING = "PENDING";
-    public static final String APPROVED = "APPROVED";
-    public static final String REJECTED = "REJECTED";
-    public static final String USED = "USED";
-    public static final String EXPIRED = "EXPIRED";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,8 +34,10 @@ public class GradeRevisionRequest {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String reason;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // cột varchar (không dùng kiểu ENUM của MySQL) để thêm giá trị mới không phải ALTER
     @Column(length = 20, nullable = false)
-    private String status = PENDING;
+    private GradeRevisionStatus status = GradeRevisionStatus.PENDING;
 
     @ManyToOne
     @JoinColumn(name = "reviewed_by")

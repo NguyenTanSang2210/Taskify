@@ -1,5 +1,8 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
@@ -66,18 +69,17 @@ public class TopicRegistrationService {
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài"));
 
-        if (Topic.FULL.equals(topic.getStatus())) {
+        if (topic.getStatus() == TopicStatus.FULL) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
         }
-        if (!Topic.OPEN.equalsIgnoreCase(topic.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not open for registration");
+        if (topic.getStatus() != TopicStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài không mở đăng ký");
         }
         if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
         }
         
-        String wsStatus = normalizeStatus(topic.getWorkspace().getStatus());
-        if (!wsStatus.equals("OPEN_REGISTRATION")) {
+        if (topic.getWorkspace().getStatus() != WorkspaceStatus.OPEN_REGISTRATION) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for registration");
         }
 
@@ -166,8 +168,7 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
         }
         
-        String wsStatus = normalizeStatus(reg.getTopic().getWorkspace().getStatus());
-        if (!wsStatus.equals("OPEN_REGISTRATION") && !wsStatus.equals("LOCK_REGISTRATION")) {
+        if (!reg.getTopic().getWorkspace().getStatus().allowsRegistrationReview()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in registration review phase");
         }
         
@@ -211,8 +212,7 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
         }
         
-        String wsStatus = normalizeStatus(reg.getTopic().getWorkspace().getStatus());
-        if (!wsStatus.equals("OPEN_REGISTRATION") && !wsStatus.equals("LOCK_REGISTRATION")) {
+        if (!reg.getTopic().getWorkspace().getStatus().allowsRegistrationReview()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in registration review phase");
         }
 
@@ -255,8 +255,7 @@ public class TopicRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
         }
         
-        String wsStatus = normalizeStatus(reg.getTopic().getWorkspace().getStatus());
-        if (!wsStatus.equals("OPEN_REGISTRATION")) {
+        if (reg.getTopic().getWorkspace().getStatus() != WorkspaceStatus.OPEN_REGISTRATION) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for registration");
         }
         
@@ -279,17 +278,10 @@ public class TopicRegistrationService {
         topicRepo.save(topic);
     }
 
-    private String normalizeStatus(String status) {
-        if (status == null) return "DRAFT";
-        String s = status.trim().toUpperCase();
-        if (s.equals("OPEN")) return "OPEN_TOPIC";
-        return s;
-    }
-
     private void sendNotification(User user, String title, String content, Long refId) {
         Notification n = new Notification();
         n.setUser(user);
-        n.setType("INFO");
+        n.setType(NotificationType.INFO);
         n.setTitle(title);
         n.setContent(content);
         n.setRefType("TOPIC_REGISTRATION");

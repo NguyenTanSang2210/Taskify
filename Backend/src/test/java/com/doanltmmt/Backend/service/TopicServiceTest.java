@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.TopicDTO;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
@@ -61,7 +62,7 @@ public class TopicServiceTest {
 
         workspace = new Workspace();
         workspace.setId(1L);
-        workspace.setStatus("OPEN_TOPIC");
+        workspace.setStatus(WorkspaceStatus.OPEN_TOPIC);
         workspace.setDepartment(dept);
     }
 

@@ -6,11 +6,12 @@ import FileDownloadButton from "../components/FileDownloadButton";
 import { connectAndSubscribe } from "../ws/stomp";
 import { useAuth } from "../context/AuthContext";
 import InlineNotice from "../components/InlineNotice";
+import { PROGRESS_STATUS } from "../constants/status";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   TODO: {
-    label: "Cần làm",
+    label: PROGRESS_STATUS.TODO,
     icon: "radio_button_unchecked",
     color: "text-outline",
     bg: "bg-surface-container",
@@ -20,7 +21,7 @@ const STATUS_CONFIG = {
     badge: "bg-outline/10 text-outline",
   },
   IN_PROGRESS: {
-    label: "Đang thực hiện",
+    label: PROGRESS_STATUS.IN_PROGRESS,
     icon: "autorenew",
     color: "text-secondary",
     bg: "bg-secondary-container/30",
@@ -30,7 +31,7 @@ const STATUS_CONFIG = {
     badge: "bg-secondary/15 text-secondary",
   },
   DONE: {
-    label: "Hoàn thành",
+    label: PROGRESS_STATUS.DONE,
     icon: "check_circle",
     color: "text-primary",
     bg: "bg-primary/5",

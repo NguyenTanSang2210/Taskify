@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -130,7 +131,7 @@ public class DataSeeder {
             w.setName(DEMO_WORKSPACE_NAME);
             w.setType("DO_AN");
             w.setSemester("HK1 2026-2027");
-            w.setStatus("DRAFT");
+            w.setStatus(WorkspaceStatus.DRAFT);
             w.setActive(true);
             workspaceRepo.save(w);
         }

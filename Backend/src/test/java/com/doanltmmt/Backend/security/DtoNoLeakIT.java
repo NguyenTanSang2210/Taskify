@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.entity.DiscussionPost;
 import com.doanltmmt.Backend.entity.DiscussionThread;
 import com.doanltmmt.Backend.entity.Milestone;
@@ -51,7 +53,7 @@ class DtoNoLeakIT extends AbstractTopicScenarioIT {
         ProgressReport pr = new ProgressReport();
         pr.setTitle("BC1");
         pr.setContent("nội dung");
-        pr.setStatus("TODO");
+        pr.setStatus(ProgressStatus.TODO);
         pr.setTopic(topicA);
         pr.setStudent(stuA1);
         progressRepo.saveAndFlush(pr);
@@ -98,7 +100,7 @@ class DtoNoLeakIT extends AbstractTopicScenarioIT {
     void notifications_haveNoUserObject() throws Exception {
         Notification n = new Notification();
         n.setUser(userOf(stuA1));
-        n.setType("INFO");
+        n.setType(NotificationType.INFO);
         n.setTitle("Tiêu đề");
         n.setContent("Nội dung");
         notificationRepo.saveAndFlush(n);

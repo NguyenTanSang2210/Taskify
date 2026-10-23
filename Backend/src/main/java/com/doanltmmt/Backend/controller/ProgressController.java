@@ -1,5 +1,8 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.StoredFile;
 import com.doanltmmt.Backend.repository.StoredFileRepository;
@@ -96,9 +99,7 @@ public class ProgressController {
         if (topic.getWorkspace() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
         }
-        String wsStatus = topic.getWorkspace().getStatus() == null ? "DRAFT" : topic.getWorkspace().getStatus().trim().toUpperCase();
-        if (wsStatus.equals("OPEN")) wsStatus = "OPEN_TOPIC";
-        if (!wsStatus.equals("IN_PROGRESS")) {
+        if (topic.getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
         }
 
@@ -145,7 +146,7 @@ public class ProgressController {
             }
             pr.setMilestone(ms);
         }
-        pr.setStatus("TODO");
+        pr.setStatus(ProgressStatus.TODO);
         // P2-08: so với mọi báo cáo trong cùng workspace (của chính SV và của SV khác)
         SimilarityService.Match match = similarityService.mostSimilar(content, topic.getWorkspace() != null
                 ? progressRepo.findSimilarityCandidatesInWorkspace(topic.getWorkspace().getId())
@@ -170,7 +171,7 @@ public class ProgressController {
         if (saved.getTopic().getLecturer() != null && saved.getTopic().getLecturer().getUser() != null) {
             Notification nLecturer = new Notification();
             nLecturer.setUser(saved.getTopic().getLecturer().getUser());
-            nLecturer.setType("INFO");
+            nLecturer.setType(NotificationType.INFO);
             nLecturer.setTitle("Sinh viên gửi báo cáo #" + saved.getId());
             nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
             nLecturer.setRefType("PROGRESS_REPORT");
@@ -186,7 +187,7 @@ public class ProgressController {
         }
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
-        nStudent.setType("INFO");
+        nStudent.setType(NotificationType.INFO);
         nStudent.setTitle("Đã gửi báo cáo #" + saved.getId());
         nStudent.setContent("Bạn đã gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
         nStudent.setRefType("PROGRESS_REPORT");
@@ -265,10 +266,7 @@ public class ProgressController {
         if (!currentUserId.equals(pr.getStudent().getUser().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
         }
-        String status = (body.getOrDefault("status", "")).trim().toUpperCase();
-        if (!status.equals("TODO") && !status.equals("IN_PROGRESS") && !status.equals("DONE")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status. Must be TODO, IN_PROGRESS, or DONE");
-        }
+        ProgressStatus status = ProgressStatus.parse(body.get("status"));
         pr.setStatus(status);
         ProgressReport saved = progressRepo.save(pr);
         auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
@@ -291,9 +289,7 @@ public class ProgressController {
         if (pr.getTopic() == null || pr.getTopic().getWorkspace() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
         }
-        String wsStatus = pr.getTopic().getWorkspace().getStatus() == null ? "DRAFT" : pr.getTopic().getWorkspace().getStatus().trim().toUpperCase();
-        if (wsStatus.equals("OPEN")) wsStatus = "OPEN_TOPIC";
-        if (!wsStatus.equals("IN_PROGRESS")) {
+        if (pr.getTopic().getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
         }
         String comment = Objects.requireNonNullElse(Inputs.optionalText(body.get("lecturerComment"), "Nhận xét", 5000), "");
@@ -302,11 +298,7 @@ public class ProgressController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không có nội dung nào để cập nhật");
         }
         if (!status.isBlank()) {
-            String up = status.toUpperCase();
-            if (!up.equals("TODO") && !up.equals("IN_PROGRESS") && !up.equals("DONE")) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status");
-            }
-            pr.setStatus(up);
+            pr.setStatus(ProgressStatus.parse(status));
         }
         if (!comment.isBlank()) {
             pr.setLecturerComment(comment);
@@ -320,7 +312,7 @@ public class ProgressController {
         eventPublisher.progressUpdated(saved);
         Notification nStudent = new Notification();
         nStudent.setUser(saved.getStudent().getUser());
-        nStudent.setType("INFO");
+        nStudent.setType(NotificationType.INFO);
         nStudent.setTitle("Giảng viên nhận xét báo cáo #" + saved.getId());
         String msg = "Nhận xét: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
         nStudent.setContent(msg.trim().isEmpty() ? "Báo cáo \"" + saved.getTitle() + "\" đã được cập nhật" : msg);

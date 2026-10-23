@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.WorkspaceDTO;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Workspace;
@@ -38,13 +39,12 @@ public class WorkspaceService {
 
     /** Đợt ở trạng thái OPEN_TOPIC của khoa người dùng (Admin: mọi khoa). */
     public List<WorkspaceDTO> listOpenForTopics() {
-        List<String> open = List.of("OPEN_TOPIC", "OPEN");
         if (scope.hasRole("ADMIN")) {
-            return repo.findByStatusInOrderByIdDesc(open).stream().map(WorkspaceDTO::new).toList();
+            return repo.findByStatusOrderByIdDesc(WorkspaceStatus.OPEN_TOPIC).stream().map(WorkspaceDTO::new).toList();
         }
         var dept = scope.requireCurrentUser().getDepartment();
         if (dept == null) return List.of();
-        return repo.findByDepartment_IdAndStatusInOrderByIdDesc(dept.getId(), open).stream().map(WorkspaceDTO::new).toList();
+        return repo.findByDepartment_IdAndStatusOrderByIdDesc(dept.getId(), WorkspaceStatus.OPEN_TOPIC).stream().map(WorkspaceDTO::new).toList();
     }
 
     public List<WorkspaceDTO> list(Long departmentId) {
@@ -92,7 +92,6 @@ public class WorkspaceService {
         w.setStartAt(Inputs.dateTime(body.get("startAt"), "Ngày bắt đầu"));
         w.setEndAt(Inputs.dateTime(body.get("endAt"), "Ngày kết thúc"));
         validatePeriod(w);
-        if (w.getStatus() == null || w.getStatus().isBlank()) w.setStatus("DRAFT");
         
         Workspace saved = repo.save(w);
         auditLogService.log("CREATE_WORKSPACE", "Workspace", saved.getId().toString(), "dept=" + dept.getId());
@@ -104,7 +103,7 @@ public class WorkspaceService {
         Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         
-        if (w.getStatus() != null && !w.getStatus().equalsIgnoreCase("DRAFT")) {
+        if (w.getStatus() != WorkspaceStatus.DRAFT) {
             if (body.get("name") != null || body.get("type") != null || body.get("semester") != null || body.get("startAt") != null || body.get("endAt") != null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not editable in current status");
             }
@@ -128,19 +127,18 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceDTO transition(Long id, String to) {
-        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
-        
-        String current = normalizeStatus(w.getStatus());
-        String target = normalizeStatus(to);
-        
-        if (!isValidTransition(current, target)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid transition: " + current + " -> " + target);
+
+        WorkspaceStatus current = w.getStatus();
+        WorkspaceStatus target = WorkspaceStatus.parse(to);
+        if (!current.canTransitionTo(target)) {
+            throw Inputs.badRequest("Không thể chuyển đợt từ \"" + current.label() + "\" sang \"" + target.label() + "\"");
         }
-        
+
         requireTransitionPreconditions(w, current, target);
         w.setStatus(target);
-        
+
         Workspace saved = repo.save(w);
         auditLogService.log("TRANSITION_WORKSPACE", "Workspace", saved.getId().toString(), current + " -> " + target);
         return new WorkspaceDTO(saved);
@@ -148,44 +146,24 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceDTO open(Long id) {
-        return transition(id, "OPEN_TOPIC");
+        return transition(id, WorkspaceStatus.OPEN_TOPIC.name());
     }
 
     @Transactional
     public WorkspaceDTO close(Long id) {
-        return transition(id, "CLOSED");
+        return transition(id, WorkspaceStatus.CLOSED.name());
     }
 
-    private String normalizeStatus(String status) {
-        if (status == null) return "DRAFT";
-        String s = status.trim().toUpperCase();
-        if (s.equals("OPEN")) return "OPEN_TOPIC";
-        return s;
-    }
-
-    private boolean isValidTransition(String from, String to) {
-        if (from.equals(to)) return true;
-        return switch (from) {
-            case "DRAFT" -> to.equals("OPEN_TOPIC");
-            case "OPEN_TOPIC" -> to.equals("OPEN_REGISTRATION") || to.equals("CLOSED");
-            case "OPEN_REGISTRATION" -> to.equals("LOCK_REGISTRATION") || to.equals("CLOSED");
-            case "LOCK_REGISTRATION" -> to.equals("IN_PROGRESS") || to.equals("CLOSED");
-            case "IN_PROGRESS" -> to.equals("CLOSED");
-            case "CLOSED" -> false;
-            default -> false;
-        };
-    }
-
-    private void requireTransitionPreconditions(Workspace w, String from, String to) {
-        if (from.equals(to)) return;
-        if (to.equals("OPEN_REGISTRATION")) {
+    private void requireTransitionPreconditions(Workspace w, WorkspaceStatus from, WorkspaceStatus to) {
+        if (from == to) return;
+        if (to == WorkspaceStatus.OPEN_REGISTRATION) {
             long activeClassCount = workspaceClassRepo.countByWorkspace_IdAndActiveTrue(w.getId());
             if (activeClassCount <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace must have at least one active class before opening registration");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần gán ít nhất một lớp cho đợt trước khi mở đăng ký");
             }
             long topicCount = topicRepo.countByWorkspace_Id(w.getId());
             if (topicCount <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace must have at least one topic before opening registration");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần có ít nhất một đề tài trong đợt trước khi mở đăng ký");
             }
         }
     }

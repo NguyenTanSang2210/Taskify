@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.entity.enums.CalendarEventType;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.CalendarEvent;
 import com.doanltmmt.Backend.entity.Topic;
@@ -54,7 +55,7 @@ public class CalendarController {
         if (ev.getStartTime() != null && ev.getEndTime() != null && ev.getEndTime().isBefore(ev.getStartTime())) {
             throw Inputs.badRequest("Thời gian kết thúc phải sau thời gian bắt đầu");
         }
-        ev.setType(body.getOrDefault("type", "MEETING"));
+        ev.setType(CalendarEventType.parseOrDefault(body.get("type")));
         CalendarEvent saved = repo.save(ev);
         auditLogService.log("CREATE_CAL_EVENT", "CalendarEvent", saved.getId().toString(), "Title: " + saved.getTitle());
         return CalendarEventDTO.from(saved);

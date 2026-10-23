@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.User;
@@ -99,7 +100,7 @@ public class NotificationController {
     public NotificationDTO create(@RequestParam Long userId,
                                @RequestParam String title,
                                @RequestParam(required = false) String content,
-                               @RequestParam(defaultValue = "INFO") String type) {
+                               @RequestParam(defaultValue = "INFO") NotificationType type) {
         User u = userRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người nhận"));
         // ADMIN gửi cho bất kỳ ai; giảng viên CHỈ gửi cho sinh viên đã đăng ký đề tài do mình hướng dẫn

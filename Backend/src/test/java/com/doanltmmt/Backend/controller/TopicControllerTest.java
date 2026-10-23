@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.DataSeeder;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.repository.LecturerRepository;
@@ -62,7 +63,7 @@ public class TopicControllerTest {
         Topic t = new Topic();
         t.setId(1L);
         t.setTitle("Test Topic");
-        t.setStatus("OPEN");
+        t.setStatus(TopicStatus.OPEN);
         
         given(topicRepo.findAll(any(Specification.class), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(t)));

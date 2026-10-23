@@ -1,5 +1,9 @@
 package com.doanltmmt.Backend.scheduler;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
+import com.doanltmmt.Backend.entity.enums.Severity;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -66,14 +70,14 @@ class ReminderServiceIT extends AbstractSecurityIT {
         recent.setStudent(active);
         recent.setTitle("Tuần 1");
         recent.setContent("Đã làm phần đặc tả");
-        recent.setStatus("IN_PROGRESS");
+        recent.setStatus(ProgressStatus.IN_PROGRESS);
         recent.setCreatedAt(now.minusDays(2));
         progressRepo.save(recent);
     }
 
     private List<Notification> remindersOf(Student s, String refType) {
         return notificationRepo.findByUser_IdOrderByCreatedAtDesc(s.getUser().getId()).stream()
-                .filter(n -> ReminderService.TYPE.equals(n.getType()) && refType.equals(n.getRefType())).toList();
+                .filter(n -> n.getType() == NotificationType.REMINDER && refType.equals(n.getRefType())).toList();
     }
 
     @Test
@@ -90,7 +94,7 @@ class ReminderServiceIT extends AbstractSecurityIT {
 
     @Test
     void progressReminder_skipsWorkspacesNotInProgress() {
-        ws.setStatus("COMPLETED");
+        ws.setStatus(WorkspaceStatus.CLOSED);
         workspaceRepo.save(ws);
         reminders.remindMissingProgress(now);
         assertTrue(remindersOf(idle, ReminderService.REF_REGISTRATION).isEmpty());
@@ -108,7 +112,7 @@ class ReminderServiceIT extends AbstractSecurityIT {
         reminders.remindMilestoneDeadlines(now.plusHours(3)); // chạy lại cùng ngày
         List<Notification> warn = remindersOf(idle, ReminderService.REF_MILESTONE);
         assertEquals(1, warn.size());
-        assertEquals("WARNING", warn.get(0).getSeverity());
+        assertEquals(Severity.WARNING, warn.get(0).getSeverity());
         assertEquals(1, remindersOf(active, ReminderService.REF_MILESTONE).size());
         assertTrue(remindersOf(pending, ReminderService.REF_MILESTONE).isEmpty());
 
@@ -119,7 +123,7 @@ class ReminderServiceIT extends AbstractSecurityIT {
         reminders.remindMilestoneDeadlines(now.plusDays(2).plusHours(1));
         List<Notification> all = remindersOf(idle, ReminderService.REF_MILESTONE);
         assertEquals(2, all.size());
-        assertTrue(all.stream().anyMatch(n -> "CRITICAL".equals(n.getSeverity())));
+        assertTrue(all.stream().anyMatch(n -> n.getSeverity() == Severity.CRITICAL));
     }
 
     @Test

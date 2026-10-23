@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
@@ -58,13 +60,13 @@ public class TopicRegistrationServiceTest {
 
         workspace = new Workspace();
         workspace.setId(1L);
-        workspace.setStatus("OPEN_REGISTRATION");
+        workspace.setStatus(WorkspaceStatus.OPEN_REGISTRATION);
 
         topic = new Topic();
         topic.setId(100L);
         topic.setWorkspace(workspace);
         topic.setCapacity(10);
-        topic.setStatus("OPEN");
+        topic.setStatus(TopicStatus.OPEN);
     }
 
     @Test

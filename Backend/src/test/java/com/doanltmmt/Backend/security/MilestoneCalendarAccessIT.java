@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.entity.enums.CalendarEventType;
 import com.doanltmmt.Backend.entity.CalendarEvent;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.User;
@@ -42,7 +43,7 @@ class MilestoneCalendarAccessIT extends AbstractTopicScenarioIT {
         e.setTopic(topic);
         e.setTitle("Buổi họp thử nghiệm");
         e.setStartTime(LocalDateTime.now().plusDays(1));
-        e.setType("MEETING");
+        e.setType(CalendarEventType.MEETING);
         return calendarRepo.saveAndFlush(e);
     }
 

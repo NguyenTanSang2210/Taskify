@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.repository.LecturerAssignmentRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
@@ -48,7 +49,7 @@ public class DashboardController {
         stats.put("totalUsers", userRepo.count());
         stats.put("totalTopics", topicRepo.count());
         stats.put("totalStudents", studentRepo.count());
-        stats.put("openTopics", topicRepo.countByStatus("OPEN"));
+        stats.put("openTopics", topicRepo.countByStatus(TopicStatus.OPEN));
         
         return stats;
     }
@@ -85,7 +86,7 @@ public class DashboardController {
         stats.put("totalUsers", userRepo.countByDepartment_Id(deptId));
         stats.put("totalStudents", studentRepo.countByUser_Department_Id(deptId));
         stats.put("totalTopics", topicRepo.countByWorkspace_Department_Id(deptId));
-        stats.put("openTopics", topicRepo.countByWorkspace_Department_IdAndStatus(deptId, "OPEN"));
+        stats.put("openTopics", topicRepo.countByWorkspace_Department_IdAndStatus(deptId, TopicStatus.OPEN));
         long capacity = topicRepo.sumCapacityByDepartment(deptId);
         long approved = regRepo.countByTopic_Workspace_Department_IdAndApprovedTrue(deptId);
         stats.put("capacityTotal", capacity);

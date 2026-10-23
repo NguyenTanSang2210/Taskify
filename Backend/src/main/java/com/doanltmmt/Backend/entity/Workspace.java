@@ -1,9 +1,12 @@
 package com.doanltmmt.Backend.entity;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -34,8 +37,10 @@ public class Workspace {
 
     private LocalDateTime endAt;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // cột varchar (không dùng kiểu ENUM của MySQL) để thêm giá trị mới không phải ALTER
     @Column(nullable = false, length = 30)
-    private String status = "DRAFT";
+    private WorkspaceStatus status = WorkspaceStatus.DRAFT;
 
     @Column(nullable = false)
     private boolean active = true;

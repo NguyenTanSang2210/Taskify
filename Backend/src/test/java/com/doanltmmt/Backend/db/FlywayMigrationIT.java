@@ -154,4 +154,21 @@ class FlywayMigrationIT {
 
         assertTrue(privilegesOf("LECTURER").isEmpty(), "không ghi đè quyền quản trị viên đã chỉnh");
     }
+
+    @Test
+    void legacyStatusValues_areNormalized_forEnums() throws SQLException {
+        flyway("3").migrate();
+        exec("SET FOREIGN_KEY_CHECKS = 0",
+                "INSERT INTO workspaces (id, name, status, active, department_id) VALUES "
+                        + "(1, 'cũ', 'open', 1, 1), (2, 'lạ', 'ACTIVE', 1, 1), (3, 'thường', ' in_progress ', 1, 1)",
+                "INSERT INTO topics (id, title, status, capacity) VALUES (1, 'a', 'APPROVED', 1), (2, 'b', 'closed', 1)",
+                "INSERT INTO notifications (user_id, type, title, created_at, severity) VALUES "
+                        + "(1, 'info', 'x', NOW(), NULL), (1, 'ALERT', 'y', NOW(), 'high')");
+
+        flyway(null).migrate();
+
+        assertEquals(List.of("OPEN_TOPIC", "DRAFT", "IN_PROGRESS"), query("select status from workspaces order by id"));
+        assertEquals(List.of("OPEN", "CLOSED"), query("select status from topics order by id"));
+        assertEquals(List.of("INFO:INFO", "INFO:INFO"), query("select concat(type, ':', severity) from notifications order by id"));
+    }
 }

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import FileDownloadButton from "./FileDownloadButton";
+import { PROGRESS_STATUS, statusOptions } from "../constants/status";
 
 /** Ngưỡng cảnh báo trùng lặp — khớp SimilarityService.ALERT_THRESHOLD ở backend. */
 export const SIMILARITY_ALERT = 0.8;
@@ -89,9 +90,9 @@ export default function ProgressRow({ item, loadingId, onSave }) {
             value={status} 
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="TODO">Chưa thực hiện</option>
-            <option value="IN_PROGRESS">Đang triển khai</option>
-            <option value="DONE">Đã hoàn thành</option>
+            {statusOptions(PROGRESS_STATUS).map((o) => (
+                   <option key={o.value} value={o.value}>{o.label}</option>
+                 ))}
           </select>
           <div className="flex flex-col gap-1">
              <div className="flex justify-between items-center px-1">

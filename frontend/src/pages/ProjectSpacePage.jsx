@@ -8,6 +8,7 @@ import { connectAndSubscribe } from "../ws/stomp";
 import ProgressRow, { mergeProgressUpdate } from "../components/ProgressRow";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
+import { PROGRESS_STATUS, statusOptions } from "../constants/status";
 
 export default function ProjectSpacePage() {
   const { user } = useAuth();
@@ -273,9 +274,9 @@ export default function ProjectSpacePage() {
                     onChange={(e) => setStatusFilter(e.target.value)}
                  >
                     <option value="">Tất cả</option>
-                    <option value="TODO">Việc cần làm (TODO)</option>
-                    <option value="IN_PROGRESS">Đang thực hiện</option>
-                    <option value="DONE">Đã hoàn thành</option>
+                    {statusOptions(PROGRESS_STATUS).map((o) => (
+                   <option key={o.value} value={o.value}>{o.label}</option>
+                 ))}
                  </select>
               </div>
            </div>

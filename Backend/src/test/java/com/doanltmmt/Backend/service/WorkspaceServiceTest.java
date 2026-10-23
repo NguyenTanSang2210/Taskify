@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.WorkspaceDTO;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Role;
@@ -77,7 +78,7 @@ public class WorkspaceServiceTest {
     void transition_InvalidFlow_ShouldThrowException() {
         Workspace w = new Workspace();
         w.setId(10L);
-        w.setStatus("DRAFT");
+        w.setStatus(WorkspaceStatus.DRAFT);
         w.setDepartment(dept);
 
         when(repo.findById(10L)).thenReturn(Optional.of(w));
@@ -92,7 +93,7 @@ public class WorkspaceServiceTest {
     void transition_ValidFlow_ShouldUpdateStatus() {
         Workspace w = new Workspace();
         w.setId(10L);
-        w.setStatus("DRAFT");
+        w.setStatus(WorkspaceStatus.DRAFT);
         w.setDepartment(dept);
 
         when(repo.findById(10L)).thenReturn(Optional.of(w));
@@ -100,7 +101,7 @@ public class WorkspaceServiceTest {
 
         WorkspaceDTO result = workspaceService.transition(10L, "OPEN_TOPIC");
 
-        assertEquals("OPEN_TOPIC", result.getStatus());
+        assertEquals(WorkspaceStatus.OPEN_TOPIC, result.getStatus());
         verify(auditLogService).log(eq("TRANSITION_WORKSPACE"), any(), eq("10"), any());
     }
 }

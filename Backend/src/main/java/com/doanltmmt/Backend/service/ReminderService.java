@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.Severity;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.TopicRegistration;
@@ -34,7 +36,6 @@ public class ReminderService {
 
     public static final int PROGRESS_GAP_DAYS = 7;
     public static final int MILESTONE_WARN_DAYS = 2;
-    public static final String TYPE = "REMINDER";
     public static final String REF_REGISTRATION = "TOPIC_REGISTRATION";
     public static final String REF_MILESTONE = "MILESTONE";
 
@@ -65,12 +66,12 @@ public class ReminderService {
         int sent = 0;
         for (TopicRegistration reg : regRepo.findApprovedWithoutProgressSince(since)) {
             User student = reg.getStudent().getUser();
-            if (alreadyReminded(student, REF_REGISTRATION, reg.getId(), "WARNING", since)) continue;
+            if (alreadyReminded(student, REF_REGISTRATION, reg.getId(), Severity.WARNING, since)) continue;
             String topicTitle = reg.getTopic().getTitle();
             notify(student, "Nhắc gửi báo cáo tiến độ",
                     "Bạn chưa gửi báo cáo tiến độ nào trong " + PROGRESS_GAP_DAYS + " ngày gần đây cho đề tài \""
                             + topicTitle + "\".",
-                    "WARNING", REF_REGISTRATION, reg.getId(), now.plusDays(1), now);
+                    Severity.WARNING, REF_REGISTRATION, reg.getId(), now.plusDays(1), now);
             sendMail(student, EmailTemplates.progressReminder(topicTitle, PROGRESS_GAP_DAYS));
             sent++;
         }
@@ -95,7 +96,7 @@ public class ReminderService {
     }
 
     private int remindMilestonesDueOn(LocalDate day, boolean dueToday, LocalDateTime now) {
-        String severity = dueToday ? "CRITICAL" : "WARNING";
+        Severity severity = dueToday ? Severity.CRITICAL : Severity.WARNING;
         // chống trùng trong suốt vòng đời mốc: mỗi mức chỉ nhắc một lần
         LocalDateTime dedupeSince = now.minusDays(MILESTONE_WARN_DAYS + 1L);
         int sent = 0;
@@ -116,17 +117,17 @@ public class ReminderService {
         return sent;
     }
 
-    private boolean alreadyReminded(User user, String refType, Long refId, String severity, LocalDateTime since) {
+    private boolean alreadyReminded(User user, String refType, Long refId, Severity severity, LocalDateTime since) {
         return notificationRepo.existsByUser_IdAndTypeAndRefTypeAndRefIdAndSeverityAndCreatedAtAfter(
-                user.getId(), TYPE, refType, refId, severity, since);
+                user.getId(), NotificationType.REMINDER, refType, refId, severity, since);
     }
 
-    private void notify(User user, String title, String content, String severity, String refType, Long refId,
+    private void notify(User user, String title, String content, Severity severity, String refType, Long refId,
                         LocalDateTime dueAt, LocalDateTime now) {
         Notification n = new Notification();
         n.setCreatedAt(now); // cùng mốc giờ với điều kiện chống trùng
         n.setUser(user);
-        n.setType(TYPE);
+        n.setType(NotificationType.REMINDER);
         n.setTitle(title);
         n.setContent(content);
         n.setSeverity(severity);

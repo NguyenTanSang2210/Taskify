@@ -1,5 +1,10 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.entity.enums.GradeState;
+import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.dto.response.GradeHistoryDTO;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
@@ -32,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.Locale;
 
 /**
  * P2-13 (D-08) — chấm điểm, khóa điểm khi đợt đóng và quy trình chấm lại có kiểm soát.
@@ -48,18 +53,11 @@ import java.util.Set;
 @SuppressWarnings("null")
 public class GradeService {
 
-    /** Trạng thái chấm điểm của một đăng ký, trả về cho giao diện. */
-    public static final String STATE_OPEN = "OPEN";
-    public static final String STATE_LOCKED = "LOCKED";
-    public static final String STATE_UNLOCKED = "UNLOCKED";
-    public static final String STATE_NOT_GRADING = "NOT_GRADING";
 
     public static final int DEFAULT_UNLOCK_HOURS = 72;
     public static final int MAX_UNLOCK_HOURS = 168;
     private static final int MAX_REASON = 2000;
     private static final int MAX_NOTE = 1000;
-    private static final Set<String> STATUSES = Set.of(GradeRevisionRequest.PENDING, GradeRevisionRequest.APPROVED,
-            GradeRevisionRequest.REJECTED, GradeRevisionRequest.USED, GradeRevisionRequest.EXPIRED);
     private static final DateTimeFormatter DATE_VN = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
 
     private final TopicRegistrationRepository regRepo;
@@ -92,17 +90,17 @@ public class GradeService {
     // ================================================================== trạng thái
 
     /** Trạng thái chấm điểm hiện tại của đăng ký (theo trạng thái đợt và yêu cầu chấm lại). */
-    public String gradeState(TopicRegistration reg, LocalDateTime now) {
+    public GradeState gradeState(TopicRegistration reg, LocalDateTime now) {
         Workspace ws = reg.getTopic().getWorkspace();
-        String status = ws == null || ws.getStatus() == null ? "" : ws.getStatus().trim().toUpperCase();
-        if (status.equals("IN_PROGRESS")) return STATE_OPEN;
-        if (!status.equals("CLOSED")) return STATE_NOT_GRADING;
-        return activeUnlock(reg.getId(), now).isPresent() ? STATE_UNLOCKED : STATE_LOCKED;
+        WorkspaceStatus status = ws == null ? null : ws.getStatus();
+        if (status == WorkspaceStatus.IN_PROGRESS) return GradeState.OPEN;
+        if (status != WorkspaceStatus.CLOSED) return GradeState.NOT_GRADING;
+        return activeUnlock(reg.getId(), now).isPresent() ? GradeState.UNLOCKED : GradeState.LOCKED;
     }
 
     private Optional<GradeRevisionRequest> activeUnlock(Long regId, LocalDateTime now) {
         return revisionRepo.findFirstByRegistration_IdAndStatusAndUnlockUntilAfterOrderByIdDesc(
-                regId, GradeRevisionRequest.APPROVED, now);
+                regId, GradeRevisionStatus.APPROVED, now);
     }
 
     /** Bổ sung trạng thái khóa điểm, yêu cầu chấm lại gần nhất và số lần sửa điểm cho DTO. */
@@ -137,16 +135,16 @@ public class GradeService {
         LocalDateTime now = LocalDateTime.now();
         GradeRevisionRequest unlock = null;
         switch (gradeState(reg, now)) {
-            case STATE_OPEN -> {
+            case OPEN -> {
                 if (reg.getScore() != null && reason == null) {
                     throw Inputs.badRequest("Vui lòng nêu lý do chỉnh sửa điểm");
                 }
             }
-            case STATE_UNLOCKED -> {
+            case UNLOCKED -> {
                 if (reason == null) throw Inputs.badRequest("Vui lòng nêu lý do chỉnh sửa điểm");
                 unlock = activeUnlock(reg.getId(), now).orElseThrow();
             }
-            case STATE_LOCKED -> throw Inputs.badRequest(
+            case LOCKED -> throw Inputs.badRequest(
                     "Điểm đã bị khóa vì đợt đã kết thúc. Hãy gửi yêu cầu chấm lại để được mở khóa.");
             default -> throw Inputs.badRequest("Đợt chưa đến giai đoạn chấm điểm");
         }
@@ -167,14 +165,14 @@ public class GradeService {
         reg.setFeedback(feedback);
         TopicRegistration saved = regRepo.save(reg);
         if (unlock != null) {
-            unlock.setStatus(GradeRevisionRequest.USED); // mỗi lần duyệt chỉ cho sửa một lần, điểm tự khóa lại
+            unlock.setStatus(GradeRevisionStatus.USED); // mỗi lần duyệt chỉ cho sửa một lần, điểm tự khóa lại
             revisionRepo.save(unlock);
         }
 
         Topic topic = saved.getTopic();
         // Đề tài chỉ hoàn thành khi MỌI sinh viên đã duyệt đều có điểm
-        if (!Topic.COMPLETED.equals(topic.getStatus()) && regRepo.countByTopic_IdAndApprovedTrueAndScoreIsNull(topic.getId()) == 0) {
-            topic.setStatus(Topic.COMPLETED);
+        if (topic.getStatus() != TopicStatus.COMPLETED && regRepo.countByTopic_IdAndApprovedTrueAndScoreIsNull(topic.getId()) == 0) {
+            topic.setStatus(TopicStatus.COMPLETED);
             topicRepo.save(topic);
         }
 
@@ -221,15 +219,15 @@ public class GradeService {
         User me = requireTopicLecturer(reg);
         String reason = Inputs.requiredText(body.get("reason"), "Lý do chấm lại", MAX_REASON);
         LocalDateTime now = LocalDateTime.now();
-        String state = gradeState(reg, now);
-        if (state.equals(STATE_UNLOCKED)) {
+        GradeState state = gradeState(reg, now);
+        if (state == GradeState.UNLOCKED) {
             throw Inputs.badRequest("Điểm đang được mở khóa — hãy sửa điểm trước khi gửi yêu cầu mới");
         }
-        if (!state.equals(STATE_LOCKED)) {
+        if (state != GradeState.LOCKED) {
             throw Inputs.badRequest("Chỉ gửi yêu cầu chấm lại khi đợt đã đóng; đợt đang thực hiện thì sửa điểm trực tiếp");
         }
         if (reg.getScore() == null) throw Inputs.badRequest("Sinh viên chưa có điểm để chấm lại");
-        if (revisionRepo.existsByRegistration_IdAndStatus(regId, GradeRevisionRequest.PENDING)) {
+        if (revisionRepo.existsByRegistration_IdAndStatus(regId, GradeRevisionStatus.PENDING)) {
             throw Inputs.badRequest("Đã có yêu cầu chấm lại đang chờ duyệt cho sinh viên này");
         }
 
@@ -256,8 +254,14 @@ public class GradeService {
     }
 
     public Map<String, Object> listRevisions(String status, int page, int size) {
-        String filter = status == null || status.isBlank() ? null : status.trim().toUpperCase();
-        if (filter != null && !STATUSES.contains(filter)) throw Inputs.badRequest("Trạng thái không hợp lệ");
+        GradeRevisionStatus filter = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                filter = GradeRevisionStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                throw Inputs.badRequest("Trạng thái không hợp lệ");
+            }
+        }
         Long departmentId = null;
         if (!scope.hasRole("ADMIN")) {
             var dept = scope.requireCurrentUser().getDepartment();
@@ -293,7 +297,7 @@ public class GradeService {
         }
         String note = Inputs.optionalText(body.get("note"), "Ghi chú", MAX_NOTE);
         LocalDateTime now = LocalDateTime.now();
-        request.setStatus(GradeRevisionRequest.APPROVED);
+        request.setStatus(GradeRevisionStatus.APPROVED);
         request.setReviewNote(note);
         request.setUnlockUntil(now.plusHours(hours));
         return finishReview(request, now, true);
@@ -303,7 +307,7 @@ public class GradeService {
     public GradeRevisionDTO reject(Long requestId, Map<String, Object> body) {
         GradeRevisionRequest request = loadForReview(requestId);
         String note = Inputs.requiredText(body.get("note"), "Lý do từ chối", MAX_NOTE); // kiểm tra trước khi đổi trạng thái
-        request.setStatus(GradeRevisionRequest.REJECTED);
+        request.setStatus(GradeRevisionStatus.REJECTED);
         request.setReviewNote(note);
         return finishReview(request, LocalDateTime.now(), false);
     }
@@ -313,7 +317,7 @@ public class GradeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu chấm lại"));
         Workspace ws = request.getRegistration().getTopic().getWorkspace();
         scope.requireDepartmentAccess(ws != null && ws.getDepartment() != null ? ws.getDepartment().getId() : null);
-        if (!GradeRevisionRequest.PENDING.equals(request.getStatus())) {
+        if (request.getStatus() != GradeRevisionStatus.PENDING) {
             throw Inputs.badRequest("Yêu cầu này đã được xử lý");
         }
         if (Objects.equals(scope.requireCurrentUser().getId(), request.getRequestedBy().getId())) {
@@ -346,9 +350,9 @@ public class GradeService {
     /** Job mỗi giờ: yêu cầu đã duyệt mà quá hạn mở khóa → EXPIRED. @return số yêu cầu đã chuyển */
     @Transactional
     public int expireOverdue(LocalDateTime now) {
-        List<GradeRevisionRequest> overdue = revisionRepo.findByStatusAndUnlockUntilBefore(GradeRevisionRequest.APPROVED, now);
+        List<GradeRevisionRequest> overdue = revisionRepo.findByStatusAndUnlockUntilBefore(GradeRevisionStatus.APPROVED, now);
         for (GradeRevisionRequest r : overdue) {
-            r.setStatus(GradeRevisionRequest.EXPIRED);
+            r.setStatus(GradeRevisionStatus.EXPIRED);
             revisionRepo.save(r);
             notify(r.getRequestedBy(), "Hết hạn mở khóa điểm", "Thời gian sửa điểm của "
                             + r.getRegistration().getStudent().getUser().getFullName() + " đã hết, điểm được khóa lại.",
@@ -391,7 +395,7 @@ public class GradeService {
     private void notify(User user, String title, String content, String refType, Long refId, String linkPath) {
         Notification n = new Notification();
         n.setUser(user);
-        n.setType("INFO");
+        n.setType(NotificationType.INFO);
         n.setTitle(title);
         n.setContent(content);
         n.setRefType(refType);

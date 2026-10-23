@@ -87,10 +87,9 @@ public class WorkspaceClassController {
     }
 
     private static void requireWorkspaceConfigurable(Workspace w) {
-        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
-        if (status.equals("OPEN")) status = "OPEN_TOPIC";
-        if (!status.equals("DRAFT") && !status.equals("OPEN_TOPIC")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not configurable in current status");
+        if (!w.getStatus().allowsConfiguration()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Chỉ gán lớp / phân công giảng viên khi đợt ở trạng thái Bản nháp hoặc Mở đề tài");
         }
     }
 }

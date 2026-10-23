@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { topicApi } from "../api/topicApi";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
+import { TOPIC_STATUS, statusOptions } from "../constants/status";
 
 const MIN_CAPACITY = 1;
 const MAX_CAPACITY = 10;
@@ -219,10 +220,9 @@ export default function LecturerTopicsPage() {
                  }}
                >
                  <option value="">Tất cả trạng thái</option>
-                 <option value="OPEN">Đang mở đăng ký</option>
-                 <option value="CLOSED">Đã đóng</option>
-                 <option value="FULL">Đã đủ sinh viên</option>
-                 <option value="COMPLETED">Hoàn thành</option>
+                 {statusOptions(TOPIC_STATUS).map((o) => (
+                   <option key={o.value} value={o.value}>{o.label}</option>
+                 ))}
                </select>
             </div>
             <div className="md:col-span-2 space-y-1.5">

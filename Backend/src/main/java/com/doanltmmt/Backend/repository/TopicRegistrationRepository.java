@@ -18,7 +18,7 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
     @Query("""
             select r from TopicRegistration r
               join fetch r.student s join fetch s.user join fetch r.topic t
-            where r.approved = true and t.workspace.status = 'IN_PROGRESS'
+            where r.approved = true and t.workspace.status = com.doanltmmt.Backend.entity.enums.WorkspaceStatus.IN_PROGRESS
               and not exists (select p.id from ProgressReport p
                               where p.student = r.student and p.topic = r.topic and p.createdAt >= :since)
             """)

@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -67,7 +69,7 @@ class TopicCapacityIT extends AbstractSecurityIT {
         return mvc.perform(post(url, regId).header(AUTH, bearer(lecturer.getUser())));
     }
 
-    private String topicStatus() {
+    private TopicStatus topicStatus() {
         return topicRepo.findById(topic.getId()).orElseThrow().getStatus();
     }
 
@@ -76,7 +78,7 @@ class TopicCapacityIT extends AbstractSecurityIT {
         for (int i = 0; i < 3; i++) {
             asLecturer("/api/registration/approve/{id}", registerOk(students.get(i))).andExpect(status().isOk());
         }
-        assertEquals(Topic.FULL, topicStatus());
+        assertEquals(TopicStatus.FULL, topicStatus());
         assertEquals(3, regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
 
         register(students.get(3)).andExpect(status().isBadRequest()).andExpect(errorMessageContains("đủ số sinh viên"));
@@ -101,10 +103,10 @@ class TopicCapacityIT extends AbstractSecurityIT {
             regs.add(id);
             asLecturer("/api/registration/approve/{id}", id).andExpect(status().isOk());
         }
-        assertEquals(Topic.FULL, topicStatus());
+        assertEquals(TopicStatus.FULL, topicStatus());
 
         asLecturer("/api/registration/reject/{id}", regs.get(0)).andExpect(status().isOk());
-        assertEquals(Topic.OPEN, topicStatus());
+        assertEquals(TopicStatus.OPEN, topicStatus());
         registerOk(students.get(3));
     }
 
@@ -112,13 +114,13 @@ class TopicCapacityIT extends AbstractSecurityIT {
     void topicCompletes_onlyWhenEveryApprovedStudentIsGraded() throws Exception {
         TopicRegistration r1 = newRegistration(students.get(0), topic, true);
         TopicRegistration r2 = newRegistration(students.get(1), topic, true);
-        ws.setStatus("IN_PROGRESS");
+        ws.setStatus(WorkspaceStatus.IN_PROGRESS);
         workspaceRepo.save(ws);
 
         grade(r1).andExpect(status().isOk());
-        assertEquals(Topic.OPEN, topicStatus(), "còn SV chưa có điểm thì đề tài chưa hoàn thành");
+        assertEquals(TopicStatus.OPEN, topicStatus(), "còn SV chưa có điểm thì đề tài chưa hoàn thành");
         grade(r2).andExpect(status().isOk());
-        assertEquals(Topic.COMPLETED, topicStatus());
+        assertEquals(TopicStatus.COMPLETED, topicStatus());
     }
 
     private ResultActions grade(TopicRegistration r) throws Exception {
@@ -128,14 +130,14 @@ class TopicCapacityIT extends AbstractSecurityIT {
 
     @Test
     void reopeningAFullTopic_keepsItFull() throws Exception {
-        ws.setStatus("OPEN_REGISTRATION");
+        ws.setStatus(WorkspaceStatus.OPEN_REGISTRATION);
         Topic small = newTopic(lecturer, ws, 1);
         newRegistration(students.get(0), small, true);
-        small.setStatus(Topic.CLOSED);
+        small.setStatus(TopicStatus.CLOSED);
         topicRepo.save(small);
         User lec = lecturer.getUser();
         mvc.perform(post("/api/topics/{id}/open", small.getId()).param("lecturerId", lec.getId().toString()).header(AUTH, bearer(lec)))
                 .andExpect(status().isOk());
-        assertEquals(Topic.FULL, topicRepo.findById(small.getId()).orElseThrow().getStatus());
+        assertEquals(TopicStatus.FULL, topicRepo.findById(small.getId()).orElseThrow().getStatus());
     }
 }

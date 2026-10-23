@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.flow;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -57,7 +58,7 @@ class FullLifecycleIT extends AbstractSecurityIT {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value(to));
     }
 
-    private String topicStatus(long topicId) {
+    private TopicStatus topicStatus(long topicId) {
         return topicRepo.findById(topicId).orElseThrow().getStatus();
     }
 
@@ -83,7 +84,7 @@ class FullLifecycleIT extends AbstractSecurityIT {
         long topicId = idOf(ok(HttpMethod.POST, "/api/topics/create?lecturerId={l}", lec,
                 Map.of("title", "Hệ thống quản lý đồ án", "description", "Spring Boot + React", "capacity", 2,
                         "workspace", Map.of("id", wsId)), lec.getId()));
-        assertEquals(Topic.OPEN, topicStatus(topicId));
+        assertEquals(TopicStatus.OPEN, topicStatus(topicId));
 
         // 3. Gán lớp, mở đăng ký, 2 SV đăng ký, GV duyệt cả hai → đề tài đủ chỗ
         ok(HttpMethod.POST, "/api/workspace-classes/assign", deptAdmin, Map.of("workspaceId", wsId, "classId", cls.getId()));
@@ -92,7 +93,7 @@ class FullLifecycleIT extends AbstractSecurityIT {
         long reg2 = idOf(ok(HttpMethod.POST, "/api/registration/register?studentId={s}&topicId={t}", s2.getUser(), null, s2.getId(), topicId));
         ok(HttpMethod.POST, "/api/registration/approve/{id}", lec, null, reg1);
         ok(HttpMethod.POST, "/api/registration/approve/{id}", lec, null, reg2);
-        assertEquals(Topic.FULL, topicStatus(topicId));
+        assertEquals(TopicStatus.FULL, topicStatus(topicId));
 
         // 4. Khóa đăng ký → thực hiện
         transition(wsId, "LOCK_REGISTRATION", deptAdmin);
@@ -109,9 +110,9 @@ class FullLifecycleIT extends AbstractSecurityIT {
         // 6. GV chấm điểm cả hai SV → đề tài hoàn thành
         call(HttpMethod.POST, "/api/registration/grade/{id}", lec, Map.of("score", 8.5, "feedback", "Tốt"), reg1)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.gradeState").value("OPEN"));
-        assertEquals(Topic.FULL, topicStatus(topicId), "còn SV chưa có điểm");
+        assertEquals(TopicStatus.FULL, topicStatus(topicId), "còn SV chưa có điểm");
         ok(HttpMethod.POST, "/api/registration/grade/{id}", lec, Map.of("score", 7.75, "feedback", "Khá"), reg2);
-        assertEquals(Topic.COMPLETED, topicStatus(topicId));
+        assertEquals(TopicStatus.COMPLETED, topicStatus(topicId));
 
         // 7. Đóng đợt → điểm bị khóa
         transition(wsId, "CLOSED", deptAdmin);

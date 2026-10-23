@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.dto.TopicDTO;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.repository.*;
@@ -101,7 +102,7 @@ public class TopicService {
         }
 
         topic.setLecturer(lecturer);
-        topic.setStatus("OPEN");
+        topic.setStatus(TopicStatus.OPEN);
         topic.setWorkspace(w);
 
         Topic saved = topicRepo.save(topic);
@@ -168,7 +169,7 @@ public class TopicService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to open topic");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
-        topic.setStatus(Topic.OPEN);
+        topic.setStatus(TopicStatus.OPEN);
         // Mở lại đề tài đã đủ SV được duyệt → FULL (không nhận thêm đăng ký)
         topic.refreshCapacityStatus(regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
         return new TopicDTO(topicRepo.save(topic));
@@ -182,7 +183,7 @@ public class TopicService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to close topic");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
-        topic.setStatus("CLOSED");
+        topic.setStatus(TopicStatus.CLOSED);
         return new TopicDTO(topicRepo.save(topic));
     }
 
@@ -190,7 +191,8 @@ public class TopicService {
         Specification<Topic> spec = Specification.allOf(List.<Specification<Topic>>of());
 
         if (status != null && !status.isBlank()) {
-            spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), status));
+            TopicStatus wanted = parseTopicStatus(status);
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), wanted));
         }
         if (lecturerId != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("lecturer").get("id"), lecturerId));
@@ -271,18 +273,22 @@ public class TopicService {
     }
 
     private void requireWorkspaceAllowsTopicCreateOrEdit(Workspace w) {
-        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
-        if (status.equals("OPEN")) status = "OPEN_TOPIC";
-        if (!status.equals("OPEN_TOPIC")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for topic creation");
+        if (!w.getStatus().allowsTopicEditing()) {
+            throw badRequest("Đợt \"" + w.getName() + "\" không còn nhận tạo/sửa đề tài (trạng thái: " + w.getStatus().label() + ")");
         }
     }
 
     private void requireWorkspaceAllowsTopicOpenClose(Workspace w) {
-        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
-        if (status.equals("OPEN")) status = "OPEN_TOPIC";
-        if (!status.equals("OPEN_TOPIC") && !status.equals("OPEN_REGISTRATION")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in topic/registration phase");
+        if (!w.getStatus().allowsTopicOpenClose()) {
+            throw badRequest("Chỉ đóng/mở đề tài khi đợt đang mở đề tài hoặc mở đăng ký");
+        }
+    }
+
+    private static TopicStatus parseTopicStatus(String raw) {
+        try {
+            return TopicStatus.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw badRequest("Trạng thái đề tài không hợp lệ: " + raw);
         }
     }
 

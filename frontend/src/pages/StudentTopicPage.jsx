@@ -4,6 +4,7 @@ import { registrationApi } from "../api/registrationApi";
 import TopicCard from "../components/TopicCard";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
+import { TOPIC_STATUS, statusOptions } from "../constants/status";
 
 export default function StudentTopicPage() {
   const { user } = useAuth();
@@ -133,9 +134,9 @@ export default function StudentTopicPage() {
               }}
             >
               <option value="">Tất cả trạng thái</option>
-              <option value="OPEN">Đang mở đăng ký</option>
-              <option value="CLOSED">Đã đóng đăng ký</option>
-              <option value="FULL">Đã đủ sinh viên</option>
+              {statusOptions(TOPIC_STATUS).filter((o) => o.value !== "COMPLETED").map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
           </div>
 

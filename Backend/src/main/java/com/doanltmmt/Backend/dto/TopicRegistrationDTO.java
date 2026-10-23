@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.dto;
 
+import com.doanltmmt.Backend.entity.enums.GradeState;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import lombok.Data;
@@ -24,7 +25,7 @@ public class TopicRegistrationDTO {
 
     // P2-13 — do GradeService điền (chỉ với đăng ký đã duyệt)
     /** OPEN | LOCKED | UNLOCKED | NOT_GRADING — xem {@link com.doanltmmt.Backend.service.GradeService}. */
-    private String gradeState;
+    private GradeState gradeState;
     /** Lần gần nhất điểm đã có bị sửa (null nếu chưa từng sửa). */
     private LocalDateTime scoreRevisedAt;
     /** Số lần sửa điểm đã có — chỉ người chấm thấy. */

@@ -5,27 +5,17 @@ import { topicApi } from '../api/topicApi';
 import { useLocation } from 'react-router-dom';
 import InlineNotice from '../components/InlineNotice';
 import GradeRevisionPanel from '../components/GradeRevisionPanel';
+import { TOPIC_STATUS, WORKSPACE_STATUS, statusLabel } from '../constants/status';
 
-const normalizeKey = (value) => String(value ?? '').trim().toUpperCase();
-const getWorkspaceStatusLabel = (status) => {
-    const s = normalizeKey(status);
-    if (s === 'DRAFT') return 'Bản nháp';
-    if (s === 'OPEN' || s === 'OPEN_TOPIC') return 'Mở đề tài';
-    if (s === 'OPEN_REGISTRATION') return 'Mở đăng ký';
-    if (s === 'LOCK_REGISTRATION') return 'Khóa đăng ký';
-    if (s === 'IN_PROGRESS') return 'Đang thực hiện';
-    if (s === 'CLOSED') return 'Đã kết thúc';
-    return status || '';
+const getWorkspaceStatusLabel = (status) => statusLabel(WORKSPACE_STATUS, status);
+const NEXT_WORKSPACE_STATUS = {
+    DRAFT: 'OPEN_TOPIC',
+    OPEN_TOPIC: 'OPEN_REGISTRATION',
+    OPEN_REGISTRATION: 'LOCK_REGISTRATION',
+    LOCK_REGISTRATION: 'IN_PROGRESS',
+    IN_PROGRESS: 'CLOSED',
 };
-
-const getTopicStatusLabel = (status) => {
-    const s = normalizeKey(status);
-    if (s === 'OPEN') return 'Đang mở';
-    if (s === 'FULL') return 'Đã đủ sinh viên';
-    if (s === 'CLOSED') return 'Đã đóng';
-    if (s === 'COMPLETED') return 'Hoàn thành';
-    return status || '';
-};
+const getTopicStatusLabel = (status) => statusLabel(TOPIC_STATUS, status);
 
 export default function DepartmentAdminPage() {
     const location = useLocation();
@@ -58,10 +48,7 @@ export default function DepartmentAdminPage() {
         return workspaces.find(w => w.id === id) || null;
     }, [selectedWorkspaceId, workspaces]);
 
-    const selectedWorkspaceStatus = useMemo(() => {
-        const s = normalizeKey(selectedWorkspace?.status);
-        return s === 'OPEN' ? 'OPEN_TOPIC' : s;
-    }, [selectedWorkspace]);
+    const selectedWorkspaceStatus = selectedWorkspace?.status ?? '';
 
     const canConfigureSelectedWorkspace = useMemo(() => {
         return selectedWorkspaceStatus === 'DRAFT' || selectedWorkspaceStatus === 'OPEN_TOPIC';
@@ -336,15 +323,8 @@ export default function DepartmentAdminPage() {
         return new Set((workspaceClasses || []).filter(x => x.active).map(x => x.academicClass?.id));
     }, [workspaceClasses]);
 
-    const nextWorkspaceStatus = (status) => {
-        const s = normalizeKey(status);
-        if (s === 'DRAFT') return 'OPEN_TOPIC';
-        if (s === 'OPEN_TOPIC' || s === 'OPEN') return 'OPEN_REGISTRATION';
-        if (s === 'OPEN_REGISTRATION') return 'LOCK_REGISTRATION';
-        if (s === 'LOCK_REGISTRATION') return 'IN_PROGRESS';
-        if (s === 'IN_PROGRESS') return 'CLOSED';
-        return null;
-    };
+    // Bước kế tiếp trong vòng đời đợt (khớp WorkspaceStatus.canTransitionTo ở backend)
+    const nextWorkspaceStatus = (status) => NEXT_WORKSPACE_STATUS[status] ?? null;
 
     const availableClassesToAssign = useMemo(() => {
         return classes.filter(c => c.active && !activeClassIds.has(c.id));
@@ -827,9 +807,9 @@ export default function DepartmentAdminPage() {
                                             <td className="px-8 py-6 text-right">
                                                <button 
                                                   onClick={() => toggleTopicStatus(t)}
-                                                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${t.status === 'OPEN' ? 'bg-error/5 text-error hover:bg-error hover:text-white' : 'bg-primary/5 text-primary hover:bg-primary hover:text-white'}`}
+                                                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${t.status === 'OPEN' || t.status === 'FULL' ? 'bg-error/5 text-error hover:bg-error hover:text-white' : 'bg-primary/5 text-primary hover:bg-primary hover:text-white'}`}
                                                >
-                                                  {t.status === 'OPEN' ? 'Khóa đề tài' : 'Mở đề tài'}
+                                                  {t.status === 'OPEN' || t.status === 'FULL' ? 'Đóng đề tài' : 'Mở đề tài'}
                                                </button>
                                             </td>
                                         </tr>
