@@ -20,6 +20,7 @@
 10. [Kiểm tra lại lần 2 — 22/10/2026](#10-kiểm-tra-lại-lần-2--22102026-rà-soát-code-sạch--xác-nhận-hoàn-thành)
 11. [Đóng Giai đoạn 0 & 1 — 22/10/2026](#11-đóng-giai-đoạn-0--1--22102026)
 12. [Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng (hoàn thành 13/13)](#12-giai-đoạn-2--sửa-lỗi-nghiệp-vụ--chức-năng-hoàn-thành-1313)
+13. [Rà soát giao diện, giờ Việt Nam, Flyway — 23/10/2026](#13-rà-soát-giao-diện-giờ-việt-nam-flyway--23102026)
 
 ---
 
@@ -482,3 +483,94 @@ Chạy lại toàn bộ trên máy sạch, code tại commit `faf48ad`:
 4. Đóng các PR Dependabot còn mở (mục 12.5 #6).
 
 **Bước tiếp theo sau đó: Giai đoạn 3 — Củng cố kỹ thuật**, bắt đầu bằng **P3-01 Flyway** (gom mọi thay đổi schema của GĐ1–GĐ2 vào migration, bỏ `ddl-auto`).
+
+---
+
+## 13. Rà soát giao diện, giờ Việt Nam, Flyway — 23/10/2026
+
+> Theo yêu cầu: kiểm tra và sửa triệt để các lỗi giao diện ở mục 12.3, xử lý 2 vấn đề còn tồn tại ở mục 12.5 (#1 múi giờ, #2 `ddl-auto`).
+> Commit trên `develop`: `d73b1e7` → `69a2f2e`.
+
+### 13.1. Rà soát lại 6 lỗi đã sửa + tìm lỗi cùng loại
+
+Cách làm: đối chiếu **mọi trường dữ liệu** mà từng trang/thành phần đọc với DTO backend thật sự trả về; tìm mọi chỗ gọi API không qua instance chung; mọi trang không tự tải dữ liệu; mọi `@RequestBody` bind thẳng entity; mọi chỗ đọc/ép kiểu dữ liệu thô từ request.
+
+| # | Lỗi đã sửa ở mục 12.3 | Kiểm tra lại |
+|---|---|---|
+| 1 | Form tạo đề tài thiếu chọn đợt | ✅ Đạt — `ui-check-gd2` tạo đề tài thật qua giao diện |
+| 2 | Gửi kèm `id` ghi đè đề tài khác | ✅ Triệt để hơn: tạo/sửa đề tài nhận `TopicRequest` (chỉ tên, mô tả, số SV, đợt) thay vì bind thẳng entity |
+| 3 | Trang Vai trò không gửi token | ✅ Không còn chỗ nào gọi API ngoài instance chung (`fetch`/`axios` trần) |
+| 4 | Trang Duyệt đăng ký không tự tải, tên SV trống | ✅ Mọi trang đều tự tải khi mở |
+| 5 | SV không thấy điểm | ✅ Đạt |
+| 6 | API quản trị trả 500 khi thiếu id | ✅ Triệt để hơn: thêm bộ xử lý lỗi chung (`InputErrorHandler`) cho mọi lỗi sai kiểu/định dạng chưa kiểm tra riêng → 400 tiếng Việt; lỗi lập trình → 500 thông báo chung, không lộ thông điệp nội bộ Java |
+
+**Lỗi cùng loại tìm thêm và đã sửa:**
+
+| # | Lỗi | Mức độ |
+|---|---|---|
+| 7 | Tab "Duyệt Đề tài" (quản trị khoa): cột giảng viên luôn trống (đọc `t.lecturer.user`, API trả `lecturerName`) | 🟠 |
+| 8 | Sửa đề tài: ô "Đợt đồ án" luôn hiện "—" (danh sách đề tài không trả tên đợt) | 🟡 |
+| 9 | Kênh trao đổi: tin nhắn của đề tài khác lẫn vào (API tin nhắn không trả đề tài nên bộ lọc luôn cho qua) | 🟠 |
+| 10 | Chuông thông báo: số chưa đọc luôn là 0 cho tới khi bấm mở | 🟡 |
+| 11 | Liên kết thông báo "Sinh viên gửi báo cáo" mở trang tiến độ nhưng không chọn đúng đề tài | 🟡 |
+| 12 | "Báo cáo số liệu" của khoa: **số liệu cứng** (84,2%, "06", "OK") → nay là tỉ lệ lấp đầy thật và số GV chưa được phân công | 🟠 |
+| 13 | API thống kê khoa trả **500** khi tài khoản chưa thuộc khoa (`Map.of` không nhận `null`) | 🟡 |
+| 14 | Hộp thư nuốt mọi lỗi CSDL và trả danh sách rỗng (che sự cố) | 🟢 |
+| 15 | Gửi JSON `null` cho tên/mã → lưu thành chữ `"null"`; `privilegeIds` sai kiểu → 500 | 🟢 |
+
+Test mới: `UiDataContractIT` (5), `InputErrorHandlerTest` (2); `ui-check-gd2.mjs` +8 kiểm tra.
+
+### 13.2. Đồng bộ giờ Việt Nam
+
+**Nguyên nhân thật:** chuỗi kết nối DB có `serverTimezone=UTC` nên driver MySQL **luôn lưu thời gian theo UTC**. Điều này đúng cho cả khi chạy bằng Docker lẫn chạy trên Windows bằng `run-backend.ps1`. Chỉ có container Docker chạy JVM theo UTC, nên giờ trả cho giao diện là giờ UTC (lệch 7 tiếng).
+
+**Cách sửa:**
+- `AppTimeZone`: JVM chạy `Asia/Ho_Chi_Minh` ngay khi khởi động. Đổi được bằng `APP_TIME_ZONE`.
+- Docker: thêm `APP_TIME_ZONE` + `TZ` cho backend, để log cũng theo giờ Việt Nam. Jackson và test cũng chạy cùng múi giờ.
+- Hộp thư chuyển từ SQL thuần sang JPQL, vì SQL thuần bỏ qua bước quy đổi giờ.
+- **Không cần chuyển dữ liệu cũ** (vốn đã lưu UTC). **Giữ nguyên** `serverTimezone=UTC` trong `DB_URL`.
+
+**Kiểm chứng:**
+- `TimeZoneIT`: 16:38 giờ Việt Nam được lưu thành 09:38 UTC và API trả lại đúng 16:38.
+- `ui-check-gd2`: giờ sửa điểm hiển thị đúng giờ Việt Nam.
+- Container: `date` → `+07`.
+
+### 13.3. P3-01 — Flyway thay `ddl-auto=update` (task đầu tiên của Giai đoạn 3)
+
+| Migration | Nội dung |
+|---|---|
+| `V1__baseline_schema.sql` | 28 bảng, sinh từ schema Hibernate của mã hiện tại. Viết dạng "chỉ tạo/thêm khi còn thiếu": DB trống thì tạo đủ; DB cũ thì bổ sung cột, chỉ mục, khóa ngoại, giá trị ENUM còn thiếu. Thay luôn `SchemaFixer` |
+| `V2__seed_roles_privileges.sql` | Quyền + 4 vai trò; quyền mặc định chỉ gán cho vai trò mới tạo (thay `RolePrivilegeInitializer`) |
+| `V3__data_fixes_gd2.sql` | 3 bước dữ liệu của GĐ2 (thay `DataMigrationRunner`). Bước đã chạy trước đây được bỏ qua nhờ mốc trong `data_migrations` |
+
+- Hibernate nay chỉ **kiểm tra** schema (`ddl-auto=validate`). DB chưa có Flyway được đánh dấu version 0 rồi chạy V1 → V3.
+- Đã thử nâng cấp thật DB tạo bởi **`v0.1.0-baseline`**, **`v0.2.0-security`** (bản đang ở `main`) và DB Docker có dữ liệu. Ở cả 3, schema sau nâng cấp **giống hệt** DB tạo mới. Các thay đổi dữ liệu đi kèm:
+  - đề tài `REGISTERED` được tính lại theo số chỗ;
+  - giảng viên được thêm quyền `TOPIC_MANAGE`;
+  - bảng ProjectPermission rỗng bị xóa;
+  - tài khoản cũ được kích hoạt sẵn.
+- Test: `FlywayMigrationIT` (3), chạy trên CSDL thử nghiệm riêng. CI dùng tài khoản root để tạo CSDL này.
+- **Quy tắc từ nay:** muốn thay đổi schema thì viết migration mới (V4, V5…). Không sửa V1–V3, không bật lại `ddl-auto=update`.
+
+### 13.4. Kết quả kiểm thử cuối (code `69a2f2e`)
+
+| Hạng mục | Kết quả |
+|---|---|
+| Test backend | **278/278** — 0 cảnh báo `javac`, ECJ 0 cảnh báo (main + test) |
+| Smoke test | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** (29 kịch bản) |
+| Giao diện | `ui-check` 13/13 · `ui-check-gd2` **26/26** · `ws-check` đạt |
+| ESLint / build | 0 lỗi · 34 cảnh báo (P3-11) · build đạt |
+
+### 13.5. Còn lại
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| 1 | Flyway 11.7 (theo Spring Boot 3.5) cảnh báo "MySQL 8.4 mới hơn phiên bản Flyway hỗ trợ" — chỉ là cảnh báo, migration chạy đúng | Nâng khi Spring Boot đưa Flyway mới (Dependabot sẽ báo) |
+| 2 | MySQL cảnh báo `tinyint(1)` (độ rộng hiển thị) khi chạy V1 lần đầu — cố ý giữ để cột `approved` vẫn là kiểu boolean | Không cần xử lý |
+| 3 | 34 cảnh báo lint React Compiler; milestone chưa có giao diện tạo | P3-11, P4-05 |
+
+**Việc của bạn** (thay mục 12.6):
+1. Merge `develop` → `main`, tạo tag `v0.3.0-business`.
+2. Lần đầu chạy code mới trên máy, Flyway tự nâng cấp DB; nên **sao lưu DB trước**:
+   `docker exec ktpm-db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" doan_ltmmt' > backup.sql`
+3. Nếu `Backend/.env` có `DB_URL` thì giữ nguyên `serverTimezone=UTC` (mặc định của `init-env.ps1`).

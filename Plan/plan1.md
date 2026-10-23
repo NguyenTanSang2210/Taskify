@@ -1,6 +1,6 @@
 # KẾ HOẠCH PHÁT TRIỂN TASKIFY — GIAI ĐOẠN 0 → 4
 
-> **Phiên bản kế hoạch:** 1.6 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 22/10/2026 (**hoàn thành 13/13 task Giai đoạn 2** trên `develop` — chờ merge `develop` → `main` + tag `v0.3.0-business`; báo cáo: `Plan/reports/report_plan1.md` mục 12) · **Người thực hiện:** NguyenTanSang2210
+> **Phiên bản kế hoạch:** 1.7 · **Ngày lập:** 25/09/2026 · **Cập nhật:** 23/10/2026 (**hoàn thành 13/13 task Giai đoạn 2** + rà soát giao diện, đồng bộ giờ Việt Nam, **P3-01 Flyway** trên `develop` — chờ merge `develop` → `main` + tag `v0.3.0-business`; báo cáo: `Plan/reports/report_plan1.md` mục 12–13) · **Người thực hiện:** NguyenTanSang2210
 > **Căn cứ:** Báo cáo phân tích hiện trạng mã nguồn ngày 25/09/2026 (commit `b2646d7` trên `main`).
 > **Mục tiêu tổng:** Đưa Taskify từ trạng thái "đồ án chạy demo được" lên "sản phẩm an toàn, ổn định, có thể triển khai thật", sau đó mới mở rộng tính năng.
 
@@ -75,7 +75,7 @@
 | **0** | Khôi phục môi trường & baseline | 9 | 1,5–2 ngày | ✅ (9/9) | 25/09/2026 | 22/10/2026 | `v0.1.0-baseline` ✅ |
 | **1** | Vá bảo mật | 13 | 8–10 ngày | ✅ (13/13) | 30/09/2026 | 22/10/2026 | `v0.2.0-security` ✅ |
 | **2** | Sửa lỗi nghiệp vụ & chức năng | 13 | 8–10 ngày | ✅ (13/13) | 22/10/2026 | 22/10/2026 | `v0.3.0-business` ⏳ (chờ merge) |
-| **3** | Củng cố kỹ thuật | 14 | 12–15 ngày | ⬜ | | | `v0.4.0-hardening` |
+| **3** | Củng cố kỹ thuật | 14 | 12–15 ngày | 🟨 (1/14 — P3-01) | 23/10/2026 | | `v0.4.0-hardening` |
 | **4** | Tính năng mới & triển khai | 11 (2 task 🕒 để sau v1.0) | Theo backlog | ⬜ | | | `v1.0.0` |
 | | **Tổng** | **60** (58 task cho v1.0 + 2 task 🕒 sau v1.0) | **~31–37 ngày công** (chưa gồm GĐ4) | | | | |
 
@@ -132,7 +132,7 @@
 | P2-11 | Xóa tính năng ProjectPermission | P2 | 1h | ✅ |
 | P2-12 | Kiểm thử hồi quy nghiệp vụ toàn luồng | P0 | 0,5 ngày | ✅ |
 | P2-13 | Khóa điểm & quy trình chấm lại | P1 | 1 ngày | ✅ |
-| P3-01 | Flyway migration, bỏ ddl-auto & SchemaFixer | P1 | 1 ngày | ⬜ |
+| P3-01 | Flyway migration, bỏ ddl-auto & SchemaFixer | P1 | 1 ngày | ✅ |
 | P3-02 | Request DTO + Bean Validation | P1 | 1,5 ngày | ⬜ |
 | P3-03 | Global exception handler + chuẩn hóa lỗi | P1 | 0,5 ngày | ⬜ |
 | P3-04 | Chuyển trạng thái sang Enum | P1 | 1 ngày | ⬜ |
@@ -1332,22 +1332,22 @@ grade_history(
 
 ---
 
-### ⬜ P3-01 — Flyway migration, bỏ ddl-auto & SchemaFixer
+### ✅ P3-01 — Flyway migration, bỏ ddl-auto & SchemaFixer
 
 **Vấn đề:** `spring.jpa.hibernate.ddl-auto=update` (`BE-RES/application.properties:6`) — schema thay đổi ngầm, không thể rollback, không có lịch sử. `BE/SchemaFixer.java` chạy `ALTER TABLE` ở **mọi profile** mỗi lần khởi động. `RolePrivilegeInitializer` ghi dữ liệu mỗi lần khởi động.
 
 **Các bước:**
-- [ ] Thêm `flyway-core` + `flyway-mysql`.
-- [ ] Xuất schema hiện tại từ DB dev: `mysqldump --no-data doan_ltmmt > V1__baseline.sql` → làm sạch → `BE-RES/db/migration/V1__baseline.sql`.
-- [ ] `spring.flyway.baseline-on-migrate=true`, `baseline-version=1` (cho DB đang chạy).
-- [ ] `V2__topic_registration_approved_nullable.sql` (thay SchemaFixer) → xóa `SchemaFixer.java`.
-- [ ] `V3__seed_roles_privileges.sql` (INSERT IGNORE) → xóa/đơn giản hóa `RolePrivilegeInitializer`.
-- [ ] Các thay đổi schema từ GĐ1–2 (`token_version`, `stored_files`, `similarity_score`, `attempts`, `purpose`, unique constraint…) viết thành migration V4, V5….
-- [ ] `ddl-auto=validate` cho mọi profile.
-- [ ] Test: DB trống → Flyway tạo đủ bảng → app khởi động; DB cũ → baseline → migrate OK.
+- [x] Thêm `flyway-core` + `flyway-mysql`.
+- [x] Xuất schema hiện tại → `BE-RES/db/migration/V1__baseline_schema.sql` (sinh từ schema Hibernate của mã GĐ2 trên DB trống, không lấy DB dev để tránh mang theo cột thừa). V1 viết dạng **chỉ tạo/thêm khi còn thiếu** (`CREATE TABLE IF NOT EXISTS` + bổ sung cột/chỉ mục/khóa ngoại) nên chạy được cả trên DB cũ.
+- [x] `spring.flyway.baseline-on-migrate=true`, `baseline-version=0` (khác dự kiến `1`: để V1 vẫn chạy trên DB cũ và bổ sung phần còn thiếu).
+- [x] `approved` cho phép NULL gộp vào cuối V1 → đã xóa `SchemaFixer.java`.
+- [x] `V2__seed_roles_privileges.sql` (quyền mặc định chỉ cho vai trò mới tạo) → đã xóa `RolePrivilegeInitializer`; `V3__data_fixes_gd2.sql` thay `DataMigrationRunner` (đã xóa).
+- [x] Các thay đổi schema từ GĐ1–2 nằm sẵn trong V1 (baseline lấy từ mã hiện tại; phần 2–5 của V1 bổ sung cho DB cũ). Thay đổi schema từ nay: **migration mới V4, V5…**, không sửa V1–V3.
+- [x] `ddl-auto=validate` cho mọi profile.
+- [x] Test: `FlywayMigrationIT` (DB trống; DB cũ thiếu cột/bảng/khóa; bước dữ liệu không chạy lại) + thử thật DB tạo bởi `v0.1.0-baseline`, `v0.2.0-security` và DB Docker có dữ liệu → schema sau nâng cấp giống hệt DB mới.
 
 **✅ Nghiệm thu:** Không còn `ddl-auto=update`, `SchemaFixer`; `flyway_schema_history` có đủ bản ghi.
-**Theo dõi:** Trạng thái: ⬜ · Ngày xong: `____` · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: `fa28d7f`
 
 ---
 
@@ -2020,6 +2020,9 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 22/10/2026 | P2-01 → P2-06 | GV tự quản lý đề tài + initializer không ghi đè quyền; 401/403 + toast; upload/tải file; nhiều SV/đề tài theo capacity; quên mật khẩu; email bất đồng bộ tiếng Việt | `e465e30` → `f812ea1` | Xem báo cáo mục 12 |
 | 22/10/2026 | P2-07 → P2-11 | Nhắc nhở 1 truy vấn + chống trùng + nhắc hạn mốc; so trùng lặp tiếng Việt; ràng buộc nghiệp vụ (400 thay 500); trang Vai trò; xóa ProjectPermission | `1668ce9` → `78dad5e` | Phát hiện + sửa thêm: form tạo đề tài thiếu chọn đợt, trang vai trò không gửi token |
 | 22/10/2026 | P2-13, P2-12 | Khóa điểm khi đợt đóng + quy trình chấm lại có duyệt, lịch sử điểm; test vòng đời `FullLifecycleIT`; 267 test · smoke 0 BUG/0 FAIL · ui-check + ui-check-gd2 (18) + ws-check đạt | `d2c279b`, `ea56b02` | **Hoàn thành 13/13 task GĐ2** — chờ merge + tag `v0.3.0-business` |
+| 23/10/2026 | GĐ2-QA | Rà soát triệt để lỗi giao diện cùng loại: tên GV/đợt trống, tin nhắn lẫn đề tài, chuông thông báo, `?topicId`, số liệu khoa cứng; `TopicRequest` thay bind entity; bộ xử lý lỗi đầu vào chung | `d73b1e7`, `69a2f2e` | Báo cáo mục 13 |
+| 23/10/2026 | GĐ2-QA | Đồng bộ giờ Việt Nam: JVM `Asia/Ho_Chi_Minh` (`APP_TIME_ZONE`), CSDL vẫn lưu UTC — không cần chuyển dữ liệu cũ | `b88a0b2` | |
+| 23/10/2026 | P3-01 | Flyway thay `ddl-auto=update`; V1 schema nền (chạy được trên DB cũ), V2 vai trò/quyền, V3 dữ liệu GĐ2; xóa SchemaFixer, RolePrivilegeInitializer, DataMigrationRunner | `fa28d7f` | 278 test · smoke 0 BUG/0 FAIL · ui 13 + 26 · ws đạt |
 | | | | | |
 
 ---
@@ -2035,3 +2038,4 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 1.4 | 21/10/2026 | Đồng bộ trạng thái GĐ1 (12/13 ✅, P1-08 🟨); cập nhật tiêu chí hoàn thành GĐ1; kiểm thử toàn diện — `Plan/reports/report_plan1.md` |
 | 1.5 | 22/10/2026 | Đóng GĐ0 + GĐ1: P1-08B (viết lại lịch sử), merge PR #3, tag `v0.1.0-baseline`, `v0.2.0-security`; cập nhật mã commit theo lịch sử mới |
 | 1.6 | 22/10/2026 | Hoàn thành 13/13 task GĐ2 trên `develop`; cập nhật trạng thái, commit, tiêu chí hoàn thành GĐ2; báo cáo mục 12 |
+| 1.7 | 23/10/2026 | Rà soát giao diện, đồng bộ giờ Việt Nam, hoàn thành P3-01 (Flyway); báo cáo mục 13 |
