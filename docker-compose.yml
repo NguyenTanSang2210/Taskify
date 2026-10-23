@@ -55,6 +55,15 @@ services:
       - "${BACKEND_HOST_PORT:-8080}:8080"
     volumes:
       - ./Backend/uploads:/app/uploads
+      # Log JSON xoay vòng (profile prod, P3-08): /app/logs/taskify.log
+      - backend_logs:/app/logs
+    # P3-08: "healthy" khi ứng dụng sẵn sàng phục vụ và kết nối được CSDL (readiness)
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/readiness > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
 
   frontend:
     build:
@@ -63,9 +72,11 @@ services:
     container_name: taskify-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "${FRONTEND_HOST_PORT:-5175}:80"
 
 volumes:
   mysql_data:
+  backend_logs:

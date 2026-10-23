@@ -1,8 +1,14 @@
 package com.doanltmmt.Backend.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -12,12 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Mặc định TỪ CHỐI: duyệt MỌI endpoint đã đăng ký trong ứng dụng và khẳng định rằng, khi không có token,
@@ -36,7 +36,7 @@ class SecurityEndpointsIT extends AbstractSecurityIT {
             "/api/auth/password/forgot",   // P2-05
             "/api/auth/password/reset");   // P2-05
 
-    @Autowired private RequestMappingHandlerMapping mapping;
+    @Autowired @Qualifier("requestMappingHandlerMapping") private RequestMappingHandlerMapping mapping;
 
     @Test
     void everyRegisteredEndpoint_requiresAuthentication_exceptTheExplicitPublicList() throws Exception {

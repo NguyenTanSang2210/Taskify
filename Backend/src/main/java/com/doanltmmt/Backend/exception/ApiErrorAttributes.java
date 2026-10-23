@@ -1,9 +1,11 @@
 package com.doanltmmt.Backend.exception;
 
+import com.doanltmmt.Backend.config.RequestIdFilter;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.Map;
@@ -26,6 +28,8 @@ public class ApiErrorAttributes extends DefaultErrorAttributes {
         if (message == null || message.toString().isBlank() || status.is5xxServerError() || "No message available".equals(message)) {
             attrs.put("message", ErrorCodes.defaultMessage(status));
         }
+        Object requestId = webRequest.getAttribute(RequestIdFilter.MDC_KEY, RequestAttributes.SCOPE_REQUEST);
+        if (requestId != null) attrs.put("requestId", requestId);
         attrs.remove("trace");
         attrs.remove("exception");
         return attrs;

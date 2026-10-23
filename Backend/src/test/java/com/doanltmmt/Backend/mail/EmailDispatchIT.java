@@ -29,7 +29,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /** P2-06 — email gửi bất đồng bộ, chỉ sau khi transaction commit, có thử lại khi lỗi SMTP. */
-@SpringBootTest(properties = "app.mail.retry-delay-ms=10")
+// JavaMailSender bị mock (không phải JavaMailSenderImpl) → tắt chỉ báo sức khỏe email của Actuator
+@SpringBootTest(properties = {"app.mail.retry-delay-ms=10", "management.health.mail.enabled=false"})
 class EmailDispatchIT {
 
     @MockitoBean private JavaMailSender mailSender;

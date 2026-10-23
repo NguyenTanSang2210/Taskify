@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.exception;
 
+import com.doanltmmt.Backend.config.RequestIdFilter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -12,8 +13,8 @@ import java.util.Map;
 
 /**
  * Định dạng lỗi thống nhất của API (P3-03):
- * <pre>{"timestamp", "status", "code", "error", "message", "path", "errors": [{"field", "message"}]}</pre>
- * {@code errors} chỉ có khi lỗi theo từng trường (VALIDATION_FAILED).
+ * <pre>{"timestamp", "status", "code", "error", "message", "path", "requestId", "errors": [{"field", "message"}]}</pre>
+ * {@code errors} chỉ có khi lỗi theo từng trường (VALIDATION_FAILED); {@code requestId} (P3-08) để tra log.
  */
 public final class ErrorBodies {
 
@@ -32,6 +33,8 @@ public final class ErrorBodies {
         b.put("error", status instanceof HttpStatus hs ? hs.getReasonPhrase() : String.valueOf(status.value()));
         b.put("message", message);
         b.put("path", path);
+        String requestId = RequestIdFilter.current();
+        if (requestId != null) b.put("requestId", requestId);
         if (errors != null && !errors.isEmpty()) b.put("errors", errors);
         return b;
     }
