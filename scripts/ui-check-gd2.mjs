@@ -5,6 +5,8 @@
  *   (P2-10) Admin mở trang Vai trò & quyền hạn, vai trò hệ thống không có nút xóa
  *   (P2-13) đợt đóng → điểm khóa → GV gửi yêu cầu chấm lại → quản trị khoa duyệt → GV sửa một lần
  *           (bắt buộc lý do, bước 0,25) → điểm khóa lại, lịch sử điểm hiển thị đúng
+ *   (rà soát) giờ hiển thị đúng giờ Việt Nam; tên GV/đợt không trống; số liệu khoa không còn số cứng;
+ *           huy hiệu chuông thông báo có ngay khi đăng nhập; SV thấy điểm; trang tiến độ GV mở đúng ?topicId=
  * Cần chạy scripts/smoke-test.mjs TRƯỚC (để có một sinh viên đã được chấm điểm trong đợt đang thực hiện).
  * Đọc mã OTP từ container DB (dev chưa gửi email thật).
  *
@@ -38,7 +40,7 @@ async function login(username) {
 }
 const browser = await chromium.launch({ executablePath: EDGE });
 async function pageAs(session) {
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: "Asia/Ho_Chi_Minh", locale: "vi-VN" });
   await ctx.addInitScript(([t, u]) => { localStorage.setItem("token", t); localStorage.setItem("user", u); },
     [session.token, JSON.stringify({ id: session.userId, username: session.username, fullName: session.fullName, role: session.role })]);
   const page = await ctx.newPage();
@@ -141,6 +143,48 @@ await page.locator('button[title="Lịch sử điểm"]').first().click();
 await page.waitForTimeout(800);
 check(await page.getByText(/→/).first().isVisible() && await page.getByText("Sửa lỗi nhập điểm").isVisible(), "P2-13: modal lịch sử điểm hiện điểm cũ → mới và lý do");
 await page.screenshot({ path: path.join(SHOTS, "ui-gd2-grade-history.png") });
+// Giờ hiển thị phải là giờ Việt Nam (trước đây container chạy UTC → lệch 7 tiếng)
+const shown = (await page.locator("div.fixed", { hasText: "Lịch sử điểm" }).locator("tbody tr td").first().textContent()).trim();
+const vnNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+const m = shown.match(/(\d{2}):(\d{2})/);
+const diffMin = m ? Math.abs(vnNow.getHours() * 60 + vnNow.getMinutes() - (Number(m[1]) * 60 + Number(m[2]))) : 999;
+check(diffMin <= 3 || diffMin >= 1437, "Múi giờ: thời điểm sửa điểm hiển thị đúng giờ Việt Nam", `hiển thị ${shown}`);
+await page.context().close();
+
+// ---------- Rà soát: dữ liệu giao diện đọc đúng trường ----------
+page = await pageAs(lec);
+await page.goto(`${WEB}/lecturer-progress?topicId=${topicId}`);
+await page.waitForTimeout(1200);
+check(await page.locator("select").first().inputValue() === String(topicId), "Tiến độ GV: mở đúng đề tài theo ?topicId= (liên kết thông báo)");
+await page.goto(WEB + "/lecturer-topics");
+await page.waitForTimeout(1200);
+await page.locator('button[title="Chỉnh sửa đề tài"]').first().click();
+await page.waitForTimeout(500);
+const wsShown = (await page.locator("text=Đợt đồ án").locator("..").textContent()) || "";
+check(!/—\s*$/.test(wsShown.trim()) && wsShown.replace("Đợt đồ án", "").trim().length > 0, "Sửa đề tài: hiện tên đợt (không còn '—')", wsShown.replace("Đợt đồ án", "").trim());
+await page.context().close();
+
+page = await pageAs(dept);
+await page.goto(WEB + "/department-admin");
+await page.getByRole("button", { name: /Duyệt Đề tài/ }).click();
+await page.waitForTimeout(1200);
+check(await page.getByText(lec.fullName).first().isVisible(), "Tab Duyệt đề tài: hiện tên giảng viên", lec.fullName);
+await page.getByRole("button", { name: /Báo cáo số liệu/ }).click();
+await page.waitForTimeout(1200);
+const statsText = await page.locator("body").textContent();
+check(!statsText.includes("84.2%") && /TỈ LỆ LẤP ĐẦY/.test(statsText) && /GIẢNG VIÊN CHƯA ĐƯỢC PHÂN CÔNG/.test(statsText),
+  "Báo cáo số liệu khoa: số liệu thật, không còn 84.2% / '06' cố định");
+await page.screenshot({ path: path.join(SHOTS, "ui-gd2-dept-stats.png") });
+await page.context().close();
+
+const stu = await login("student");
+page = await pageAs(stu);
+await page.goto(WEB + "/my-registrations");
+await page.waitForTimeout(1500);
+const badge = page.locator('button[title="Thông báo hệ thống"] span.bg-error');
+check(await badge.count() > 0 && /\d|9\+/.test(await badge.textContent()), "Chuông thông báo: có số chưa đọc ngay khi đăng nhập");
+check(await page.getByText(/Điểm:/).first().isVisible(), "Đăng ký của tôi: sinh viên thấy điểm");
+check(await page.getByText(lec.fullName, { exact: false }).first().isVisible(), "Đăng ký của tôi: hiện tên giảng viên hướng dẫn");
 await page.context().close();
 await browser.close();
 console.log(fails ? `\n${fails} kiểm tra KHÔNG đạt` : "\nTất cả kiểm tra giao diện GĐ2 đều đạt.");
