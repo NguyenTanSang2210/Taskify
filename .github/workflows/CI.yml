@@ -67,14 +67,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Start the stack (waits for healthchecks)
-        env:
-          MYSQL_PASSWORD: ci-db-password
-          MYSQL_ROOT_PASSWORD: ci-root-password
+      # .env cho MỌI lệnh docker compose của job (không chỉ bước khởi động): ps / logs / down cũng cần nội suy biến
+      - name: Prepare .env
         run: |
-          # Khóa JWT ngẫu nhiên cho lượt chạy (profile prod từ chối khóa dev công khai)
-          export JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
-          docker compose up -d --build --wait --wait-timeout 300
+          {
+            echo "MYSQL_PASSWORD=ci-db-password"
+            echo "MYSQL_ROOT_PASSWORD=ci-root-password"
+            # khóa JWT ngẫu nhiên cho lượt chạy (profile prod từ chối khóa dev công khai)
+            echo "JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')"
+          } > .env
+
+      - name: Start the stack (waits for healthchecks)
+        run: docker compose up -d --build --wait --wait-timeout 300
 
       - name: Smoke check
         run: |
