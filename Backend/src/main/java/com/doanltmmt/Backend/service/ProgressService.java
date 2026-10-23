@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Function;
 
@@ -258,7 +259,10 @@ public class ProgressService {
             throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
         }
         if (body.status() != null) pr.setStatus(ProgressStatus.parse(body.status()));
-        if (body.lecturerComment() != null) pr.setLecturerComment(body.lecturerComment());
+        if (body.lecturerComment() != null) {
+            pr.setLecturerComment(body.lecturerComment());
+            if (pr.getCommentedAt() == null && !body.lecturerComment().isBlank()) pr.setCommentedAt(LocalDateTime.now());
+        }
         if (body.deadline() != null) pr.setDeadline(body.deadline());
 
         ProgressReport saved = progressRepo.save(pr);

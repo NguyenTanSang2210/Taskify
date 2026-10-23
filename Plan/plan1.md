@@ -146,7 +146,7 @@
 | P3-12 | Thống nhất tên dự án & cấu hình | P3 | 2h | ✅ |
 | P3-13 | Viết lại tài liệu | P2 | 0,5 ngày | ✅ |
 | P3-14 | Access token ngắn hạn + Refresh token | P1 | 1,5 ngày | ✅ |
-| P4-01 | Dashboard thống kê nâng cao | P1 | 3 ngày | ⬜ |
+| P4-01 | Dashboard thống kê nâng cao | P1 | 3 ngày | ✅ |
 | P4-02 | Giao diện Audit Log cho Admin | P2 | 1 ngày | ✅ |
 | P4-03 | Import người dùng/lớp từ Excel | P1 | 2 ngày | ✅ |
 | P4-04 | Quản lý nhóm (Team) — phát triển sau v1.0 | P3 | 3–4 ngày | 🕒 |
@@ -1730,7 +1730,7 @@ Số truy vấn đo bằng Hibernate statistics trong `QueryCountIT` (không ch�
 
 ---
 
-### ⬜ P4-01 — Dashboard thống kê nâng cao
+### ✅ P4-01 — Dashboard thống kê nâng cao
 
 **Nội dung:**
 - **Admin/DeptAdmin:** số đề tài theo trạng thái; tỉ lệ SV đã có đề tài; tỉ lệ hoàn thành; phân bố điểm (histogram); số SV mỗi GV hướng dẫn; **thời gian phản hồi trung bình của GV** (từ lúc SV nộp đến lúc GV nhận xét) — khớp tiêu chí đánh giá ở tài liệu vận hành mục 9.
@@ -1738,11 +1738,13 @@ Số truy vấn đo bằng Hibernate statistics trong `QueryCountIT` (không ch�
 - **Sinh viên:** tiến độ Kanban (% DONE); milestone sắp tới; điểm.
 
 **Các bước:**
-- [ ] Backend: `DashboardService` với truy vấn tổng hợp (GROUP BY), lọc theo workspace/khoảng thời gian; cache 5 phút (Caffeine).
-- [ ] Frontend: thư viện biểu đồ **Recharts**; bộ lọc workspace.
-- [ ] Xuất báo cáo thống kê ra Excel/PDF.
+- [x] Backend: truy vấn tổng hợp (GROUP BY) trong `DashboardQueryRepository`, lọc theo khoa/workspace. **Không cache** (mỗi số liệu một câu GROUP BY có index — chưa cần; cache 5 phút sẽ làm số liệu lệch ngay sau thao tác). Lọc theo khoảng thời gian: chưa làm (lọc theo đợt đã bao phần lớn nhu cầu).
+- [x] Frontend: bộ lọc khoa (Admin) + đợt. Biểu đồ vẽ bằng HTML/CSS (cột ngang, histogram một màu, nhãn giá trị trực tiếp, tooltip) thay cho Recharts — không thêm ~100 KB thư viện cho vài biểu đồ một chuỗi.
+- [x] Xuất báo cáo thống kê ra **Excel** (3 sheet: Tổng quan, Phân bố điểm, Giảng viên). PDF: chưa làm.
 
-**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: xem Changelog
+
+**Kết quả:** `GET /api/dashboard/overview` (+ `/export`) cho ADMIN/quản trị khoa: đề tài theo trạng thái, tỉ lệ SV có đề tài được duyệt (theo lớp gán vào đợt khi lọc đợt), đăng ký chờ/duyệt/từ chối, tỉ lệ hoàn thành (đã có điểm/được duyệt), điểm trung bình + histogram 10 khoảng, số SV mỗi GV, **thời gian phản hồi trung bình** (V8: cột `progress_report.commented_at` ghi lần nhận xét đầu; báo cáo cũ không tính). `GET /api/dashboard/lecturer`: đăng ký chờ duyệt, báo cáo chưa nhận xét, SV không nộp > 7 ngày (kèm lần nộp gần nhất), mốc 14 ngày tới — trước đây ô "Sinh viên hướng dẫn" luôn 0. `GET /api/dashboard/student` (mới): đề tài + trạng thái, % báo cáo DONE, mốc sắp tới, điểm — thay khối giả "Tiến độ 0%" và "Gợi ý từ AI". Quản trị khoa trước đây không có số liệu nào trên trang tổng quan. Test: `DashboardIT` (5), `ui-check-gd4.mjs`.
 
 ---
 

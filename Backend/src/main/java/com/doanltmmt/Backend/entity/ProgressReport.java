@@ -43,6 +43,10 @@ public class ProgressReport {
     @Column(columnDefinition = "TEXT")
     private String lecturerComment;
 
+    /** P4-01: lúc giảng viên nhận xét lần đầu (đo thời gian phản hồi); null = chưa nhận xét / nhận xét trước V8. */
+    @Column(name = "commented_at")
+    private java.time.LocalDateTime commentedAt;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR) // cột varchar (không dùng kiểu ENUM của MySQL) để thêm giá trị mới không phải ALTER
     @Column(length = 20, nullable = false)

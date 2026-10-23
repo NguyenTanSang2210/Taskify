@@ -2,6 +2,7 @@
 /**
  * Kiểm tra giao diện các tính năng Giai đoạn 4 (Playwright, giống ui-check-gd3.mjs):
  *   (P4-03) nhập sinh viên từ Excel: file mẫu, kiểm tra báo lỗi từng dòng, tải danh sách lỗi, nhập dòng hợp lệ
+ *   (P4-01) dashboard theo vai trò: thống kê khoa/đợt (Admin, quản trị khoa), việc cần làm (GV), tiến độ (SV)
  *   (P4-02) nhật ký hệ thống: lọc nhanh "Thay đổi điểm", lọc người thực hiện, xem chi tiết, IP, xuất CSV
  * Chạy trên stack Docker profile dev có dữ liệu demo (DataSeeder).
  *
@@ -103,6 +104,59 @@ let page;
   sql(`DELETE o FROM otp_tokens o JOIN users u ON u.id = o.user_id WHERE u.username LIKE '${tag}%'`);
   sql(`DELETE s FROM students s JOIN users u ON u.id = s.id WHERE u.username LIKE '${tag}%'`);
   sql(`DELETE FROM users WHERE username LIKE '${tag}%'`);
+}
+
+// ---------- P4-01: dashboard theo vai trò ----------
+{
+  page = await pageAs(dept);
+  await page.goto(WEB + "/dashboard");
+  await page.getByRole("region", { name: "Thống kê" }).waitFor();
+  const overview = await page.getByRole("region", { name: "Thống kê" }).innerText();
+  check(/sinh viên đã có đề tài/i.test(overview) && /phân bố điểm/i.test(overview) && /số sinh viên mỗi giảng viên/i.test(overview),
+    "P4-01: quản trị khoa thấy thống kê của khoa (tỉ lệ có đề tài, phân bố điểm, tải giảng viên)");
+  const apiOverview = (await call("GET", "/dashboard/overview", dept.token)).data;
+  check(overview.includes(`${apiOverview.students.withTopic}/${apiOverview.students.total}`), "P4-01: số liệu trên trang khớp API",
+    `${apiOverview.students.withTopic}/${apiOverview.students.total} SV có đề tài`);
+  const wsOption = apiOverview.workspaces[0];
+  if (wsOption) {
+    await page.locator("select").filter({ hasText: "Tất cả các đợt" }).selectOption(String(wsOption.id));
+    await page.waitForTimeout(1200);
+    const filtered = (await call("GET", `/dashboard/overview?workspaceId=${wsOption.id}`, dept.token)).data;
+    const t = await page.getByRole("region", { name: "Thống kê" }).innerText();
+    check(t.includes(`${filtered.registrations.graded}/${filtered.registrations.approved}`), "P4-01: lọc theo đợt cập nhật số liệu", wsOption.name);
+  }
+  const [xlsxFile] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Xuất Excel" }).click()]);
+  check(xlsxFile.suggestedFilename() === "thong-ke.xlsx", "P4-01: xuất thống kê ra Excel", xlsxFile.suggestedFilename());
+  await page.screenshot({ path: path.join(SHOTS, "ui-gd4-dashboard-dept.png"), fullPage: true });
+  await page.context().close();
+
+  page = await pageAs(admin);
+  await page.goto(WEB + "/dashboard");
+  await page.getByRole("region", { name: "Thống kê" }).waitFor();
+  check(await page.locator("select").filter({ hasText: "Toàn hệ thống" }).isVisible(), "P4-01: Admin chọn được khoa (mặc định toàn hệ thống)");
+  await page.context().close();
+
+  const lecturer = await login("lecturer");
+  page = await pageAs(lecturer);
+  await page.goto(WEB + "/dashboard");
+  await page.getByRole("region", { name: "Việc cần làm" }).waitFor();
+  const lec = (await call("GET", "/dashboard/lecturer", lecturer.token)).data;
+  const lecText = await page.getByRole("region", { name: "Việc cần làm" }).innerText();
+  check(/đăng ký chờ duyệt/i.test(lecText) && /chưa nộp tiến độ hơn 7 ngày/i.test(lecText) && lecText.includes(String(lec.pendingRegistrations)),
+    "P4-01: giảng viên thấy việc cần làm", `chờ duyệt ${lec.pendingRegistrations}, chưa nhận xét ${lec.uncommentedReports}, SV im lặng ${lec.silentStudents.length}`);
+  await page.screenshot({ path: path.join(SHOTS, "ui-gd4-dashboard-lecturer.png"), fullPage: true });
+  await page.context().close();
+
+  page = await pageAs(student);
+  await page.goto(WEB + "/dashboard");
+  await page.getByRole("region", { name: "Đề tài của tôi" }).waitFor();
+  const st = (await call("GET", "/dashboard/student", student.token)).data;
+  const stText = await page.getByRole("region", { name: "Đề tài của tôi" }).innerText();
+  check(st.registration ? stText.includes(st.registration.topicTitle) : /chưa đăng ký đề tài/i.test(stText), "P4-01: sinh viên thấy đề tài + tiến độ thật",
+    st.registration ? `${st.registration.status}, tiến độ ${st.progress.percent ?? "—"}%` : "chưa có đề tài");
+  check(!(await page.getByText("Gợi ý từ AI").count()), "P4-01: bỏ khối giả lập \"Gợi ý từ AI\" / \"Tiến độ 0%\"");
+  await page.screenshot({ path: path.join(SHOTS, "ui-gd4-dashboard-student.png"), fullPage: true });
+  await page.context().close();
 }
 
 // ---------- P4-02: nhật ký hệ thống ----------

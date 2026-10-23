@@ -106,7 +106,10 @@ Khi đợt **Đã kết thúc**, điểm bị khóa để bảo đảm kết qu�
 - **Thông báo realtime** (chuông góc trên): đăng ký mới, kết quả duyệt, báo cáo/nhận xét mới, tin nhắn, kết quả yêu cầu chấm lại. Trang *Thông báo* xem toàn bộ (tải thêm theo trang), đánh dấu đã đọc. Một số sự kiện (kết quả duyệt đăng ký, báo cáo tiến độ mới, nhận xét, chấm/sửa điểm, yêu cầu chấm lại, nhắc hạn) được gửi thêm qua email.
 - **Nhắc tự động** (giờ Việt Nam): 08:00 hằng ngày nhắc sinh viên có **mốc đến hạn trong 2 ngày**; 09:00 hằng ngày nhắc sinh viên **chưa nộp báo cáo tiến độ trong 7 ngày** (chỉ trong đợt đang thực hiện).
 - **Thông báo chung**: Admin gửi toàn hệ thống; giảng viên/khoa gửi theo đề tài.
-- **Tổng quan (Dashboard)**: số liệu theo vai trò — Admin toàn hệ thống, khoa theo khoa, giảng viên theo đề tài của mình.
+- **Tổng quan (Dashboard)** — số liệu thật theo vai trò:
+  - *Admin / Quản trị khoa*: tỉ lệ sinh viên đã có đề tài, tỉ lệ hoàn thành (đã có điểm), điểm trung bình và phân bố điểm, đề tài theo trạng thái, đăng ký chờ/duyệt/từ chối, số sinh viên mỗi giảng viên, thời gian phản hồi tiến độ trung bình của giảng viên. Lọc theo đợt (Admin chọn thêm khoa); *Xuất Excel*.
+  - *Giảng viên*: đăng ký chờ duyệt, báo cáo chưa nhận xét, sinh viên chưa nộp tiến độ hơn 7 ngày, mốc đến hạn trong 14 ngày.
+  - *Sinh viên*: đề tài và trạng thái đăng ký, % báo cáo đã hoàn thành, điểm, các mốc sắp tới.
 - **Học phí**: **Tạm hoãn — sẽ phát triển sau phiên bản 1.0** (xem [ADR-0005](docs/adr/0005-hoan-tinh-nang-hoc-phi.md)).
 
 ---

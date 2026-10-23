@@ -26,7 +26,7 @@ flowchart TB
     ACT["Actuator health · info"]
   end
 
-  DB[("MySQL 8.4<br/>Flyway V1–V7")]
+  DB[("MySQL 8.4<br/>Flyway V1–V8")]
   MAIL["SMTP (email bất đồng bộ)"]
 
   SPA -->|HTTPS| STATIC
@@ -103,7 +103,7 @@ Bảng không có khóa ngoại: `audit_logs` (ghi tên người thực hiện),
 Ghi chú:
 - `topic_registration.approved`: `NULL` = chờ duyệt, `1` = đã duyệt, `0` = từ chối. Một đề tài nhận nhiều sinh viên độc lập theo `capacity`, mỗi sinh viên chấm điểm riêng ([ADR-0001](adr/0001-nhieu-sinh-vien-moi-de-tai.md)).
 - Thời gian lưu **UTC** trong CSDL, ứng dụng chạy giờ Việt Nam (`Asia/Ho_Chi_Minh`) và trả về giao diện theo giờ Việt Nam.
-- Schema chỉ thay đổi qua Flyway (`Backend/src/main/resources/db/migration`): V1 baseline, V2 vai trò/quyền mặc định, V3 sửa dữ liệu GĐ2, V4 enum trạng thái, V5 index truy vấn, V6 refresh token, V7 IP/trình duyệt trong nhật ký hệ thống.
+- Schema chỉ thay đổi qua Flyway (`Backend/src/main/resources/db/migration`): V1 baseline, V2 vai trò/quyền mặc định, V3 sửa dữ liệu GĐ2, V4 enum trạng thái, V5 index truy vấn, V6 refresh token, V7 IP/trình duyệt trong nhật ký hệ thống, V8 thời điểm nhận xét tiến độ.
 
 ## 3. Vòng đời trạng thái
 
