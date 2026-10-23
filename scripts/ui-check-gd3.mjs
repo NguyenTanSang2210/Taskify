@@ -25,7 +25,11 @@ const check = (ok, name, detail = "") => { if (!ok) fails++; console.log(`${ok ?
 const sql = (q) => execSync(`docker exec -i ${DB} sh -c 'MYSQL_PWD=$MYSQL_ROOT_PASSWORD mysql --default-character-set=utf8mb4 -uroot doan_ltmmt -N -B'`, { input: q }).toString().trim();
 async function call(method, path, token, body) {
   const r = await fetch(API + path, { method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
-  const t = await r.text(); let d; try { d = JSON.parse(t); } catch { d = t; } return { status: r.status, data: d };
+  const t = await r.text(); let d; try { d = JSON.parse(t); } catch { d = t; }
+  // P3-14: cookie refresh token (HttpOnly) để mở trình duyệt đã đăng nhập sẵn
+  const refresh = r.headers.getSetCookie().map((c) => /^taskify_refresh=([^;]+)/.exec(c)?.[1]).find(Boolean);
+  if (refresh && d && typeof d === "object") d.refreshCookie = refresh;
+  return { status: r.status, data: d };
 }
 async function login(username) {
   const d = (await call("POST", "/auth/login", null, { username, password: PASSWORD })).data;
@@ -34,10 +38,11 @@ async function login(username) {
   return (await call("POST", "/auth/otp/verify", null, { preAuthToken: d.preAuthToken, code })).data;
 }
 const browser = await chromium.launch({ executablePath: EDGE });
+// Mỗi trang một phiên mới (refresh token xoay vòng mỗi lần dùng — dùng lại cookie cũ sẽ bị coi là đánh cắp)
 async function pageAs(session) {
+  const fresh = await login(session.username);
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: "Asia/Ho_Chi_Minh", locale: "vi-VN" });
-  await ctx.addInitScript(([t, u]) => { localStorage.setItem("token", t); localStorage.setItem("user", u); },
-    [session.token, JSON.stringify({ id: session.userId, username: session.username, fullName: session.fullName, role: session.role })]);
+  await ctx.addCookies([{ name: "taskify_refresh", value: fresh.refreshCookie, url: new URL("/api/auth", WEB).href, httpOnly: true, sameSite: "Strict" }]);
   const page = await ctx.newPage();
   page.on("pageerror", (e) => { fails++; console.log("❌ pageerror", e.message); });
   return page;

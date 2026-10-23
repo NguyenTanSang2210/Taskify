@@ -1,25 +1,23 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client/dist/sockjs";
+import { getAccessToken, refreshSession } from "../auth/session";
 
 // Luôn dùng đường dẫn tương đối "/ws" (Vite proxy khi dev, nginx khi chạy Docker).
 const WS_ENDPOINT = "/ws";
 
 export function createStompClient() {
-  const token = (() => {
-    try {
-      return localStorage.getItem("token");
-    } catch {
-      return null;
-    }
-  })();
   const client = new Client({
     webSocketFactory: () => new SockJS(WS_ENDPOINT),
     reconnectDelay: 3000,
     debug: () => {},
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
-    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
   });
+  // Mỗi lần (kết nối lại) lấy access token MỚI NHẤT trong bộ nhớ (token 15 phút được làm mới định kỳ — P3-14)
+  client.beforeConnect = () => {
+    const token = getAccessToken();
+    client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  };
   return client;
 }
 
@@ -36,11 +34,18 @@ export function connectAndSubscribe({ destination, onMessage, onStatus }) {
       }
     });
   };
-  // Máy chủ từ chối (token sai/hết hạn, không đủ quyền subscribe): kết nối lại cũng vô ích,
-  // nên dừng hẳn thay vì thử lại mỗi 3 giây. Mất mạng (onWebSocketClose) vẫn tự kết nối lại.
-  client.onStompError = () => {
+  // Máy chủ từ chối: có thể do access token vừa hết hạn → làm mới phiên và thử lại MỘT lần; vẫn lỗi (không đủ quyền
+  // subscribe...) thì dừng hẳn thay vì thử lại mỗi 3 giây. Mất mạng (onWebSocketClose) vẫn tự kết nối lại.
+  let retriedAfterRefresh = false;
+  client.onStompError = async () => {
     if (typeof onStatus === "function") onStatus("error");
-    client.deactivate();
+    await client.deactivate();
+    if (retriedAfterRefresh) return;
+    retriedAfterRefresh = true;
+    try {
+      await refreshSession();
+      client.activate();
+    } catch { /* phiên hết hạn: api.js sẽ đưa về trang đăng nhập ở request kế tiếp */ }
   };
   client.onWebSocketClose = () => {
     if (typeof onStatus === "function") onStatus("disconnected");

@@ -6,8 +6,11 @@ import com.doanltmmt.Backend.dto.request.ProfileUpdateRequest;
 import com.doanltmmt.Backend.dto.request.UserCreateRequest;
 import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.Role;
+import com.doanltmmt.Backend.security.SessionCookies;
 import com.doanltmmt.Backend.service.UserService;
 import com.doanltmmt.Backend.util.Pages;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +23,11 @@ import java.util.Map;
 public class UserController {
 
     private final UserService service;
+    private final SessionCookies sessions;
 
-    public UserController(UserService service) {
+    public UserController(UserService service, SessionCookies sessions) {
         this.service = service;
+        this.sessions = sessions;
     }
 
     @PutMapping("/{id}/profile")
@@ -33,8 +38,11 @@ public class UserController {
 
     @PutMapping("/{id}/password")
     @PreAuthorize("isAuthenticated()")
-    public Map<String, String> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest body) {
-        return service.changePassword(id, body);
+    public Map<String, String> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest body,
+                                              HttpServletRequest http, HttpServletResponse res) {
+        Map<String, String> result = service.changePassword(id, body);
+        sessions.restart(id, http, res); // mọi phiên cũ bị thu hồi; thiết bị đang dùng nhận phiên mới
+        return result;
     }
 
     @GetMapping("/{id}")

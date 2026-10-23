@@ -43,7 +43,11 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD:?Thiếu MYSQL_PASSWORD trong .env — chạy .\scripts\init-env.ps1}
       # Secret ký JWT: BẮT BUỘC, không có giá trị mặc định (secret mặc định công khai = ai cũng giả mạo được token ADMIN)
       JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env — chạy .\scripts\init-env.ps1}
-      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      # P3-14: access token 15 phút (giữ trong bộ nhớ trình duyệt), làm mới bằng refresh token 7 ngày trong cookie HttpOnly
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-900000}
+      APP_AUTH_REFRESH_TTL_DAYS: ${APP_AUTH_REFRESH_TTL_DAYS:-7}
+      # Cookie Secure cần HTTPS khi truy cập bằng tên miền/IP; http://localhost vẫn hoạt động. Không có TLS → đặt false
+      APP_AUTH_REFRESH_COOKIE_SECURE: ${APP_AUTH_REFRESH_COOKIE_SECURE:-true}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:${FRONTEND_HOST_PORT:-5175}}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}

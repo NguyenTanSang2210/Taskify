@@ -89,6 +89,12 @@ public class UserControllerTest {
     @MockitoBean
     private com.doanltmmt.Backend.service.OtpService otpService;
 
+    @MockitoBean
+    private com.doanltmmt.Backend.service.RefreshTokenService refreshTokenService;
+
+    @MockitoBean
+    private com.doanltmmt.Backend.security.SessionCookies sessionCookies;
+
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void getAllRoles_ShouldReturnRoles() throws Exception {

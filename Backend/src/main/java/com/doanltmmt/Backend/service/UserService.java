@@ -57,12 +57,13 @@ public class UserService {
     private final SecurityScopeService scope;
     private final JwtTokenProvider tokenProvider;
     private final OtpService otpService;
+    private final RefreshTokenService refreshTokens;
 
     public UserService(UserRepository userRepository, RoleRepository roleRepository, StudentRepository studentRepository,
                        LecturerRepository lecturerRepository, DepartmentRepository departmentRepository,
                        AcademicClassRepository classRepository, PasswordEncoder passwordEncoder,
                        AuditLogService auditLogService, SecurityScopeService scope, JwtTokenProvider tokenProvider,
-                       OtpService otpService) {
+                       OtpService otpService, RefreshTokenService refreshTokens) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.studentRepository = studentRepository;
@@ -74,6 +75,7 @@ public class UserService {
         this.scope = scope;
         this.tokenProvider = tokenProvider;
         this.otpService = otpService;
+        this.refreshTokens = refreshTokens;
     }
 
     public static boolean isValidEmail(String email) {
@@ -130,6 +132,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPass));
         user.setTokenVersion(user.getTokenVersion() + 1);
         User saved = userRepository.save(user);
+        refreshTokens.revokeAll(saved.getId()); // controller mở phiên refresh mới cho chính thiết bị này
         auditLogService.log("CHANGE_PASSWORD", "User", saved.getId().toString(), "Đổi mật khẩu");
         String roleName = saved.getRole() != null ? saved.getRole().getName() : "STUDENT";
         return Map.of("token", tokenProvider.generateAccessToken(saved.getUsername(), saved.getId(), roleName, saved.getTokenVersion()));

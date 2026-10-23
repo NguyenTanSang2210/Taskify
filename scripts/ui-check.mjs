@@ -117,11 +117,11 @@ try {
     const toast = page.getByRole("alert").filter({ hasText: "Bạn không có quyền thực hiện thao tác này" });
     await toast.first().waitFor({ timeout: 5000 }).catch(() => {});
     report((await toast.count()) > 0, "403: hiện thông báo 'Bạn không có quyền…'");
-    report(!page.url().includes("/login") && !!(await page.evaluate(() => localStorage.getItem("token"))),
+    report(!page.url().includes("/login") && !!(await page.evaluate(() => localStorage.getItem("user"))),
       "403: vẫn giữ đăng nhập (không bị đá ra màn hình đăng nhập)");
     await page.screenshot({ path: path.join(SHOTS, "ui-403-toast.png") });
 
-    // 401 (token bị thu hồi) → đăng xuất, về /login?reason=expired và báo lý do
+    // 401 dù đã làm mới phiên (token bị thu hồi) → đăng xuất, về /login?reason=expired và báo lý do
     await page.unroute("**/api/notifications**");
     await page.route("**/api/notifications**", (r) =>
       r.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ status: 401, message: "Unauthorized" }) }));
@@ -133,20 +133,37 @@ try {
     await ctx.close();
   }
 
-  // 7 (P2-02): token đã hết hạn sẵn trong trình duyệt → tự đăng xuất ngay, không đợi request lỗi
+  // 7 (P3-14): access token chỉ trong bộ nhớ, refresh token trong cookie HttpOnly; hết hạn → tự làm mới trong suốt
   {
     const { ctx, page } = await freshPage();
     await page.goto(`${WEB}/login`, { waitUntil: "networkidle" });
-    await page.evaluate(() => {
-      const b64 = (o) => btoa(JSON.stringify(o)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
-      const expired = `${b64({ alg: "HS256" })}.${b64({ sub: "student", exp: Math.floor(Date.now() / 1000) - 60 })}.x`;
-      localStorage.setItem("token", expired);
-      localStorage.setItem("user", JSON.stringify({ id: 1, username: "student", role: "STUDENT" }));
+    await page.fill("input >> nth=0", "student");
+    await page.fill("input[type=password]", PASSWORD);
+    await page.click("button[type=submit]");
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 15000 });
+    const stored = await page.evaluate(() => Object.keys(localStorage).filter((k) => /token/i.test(k) || /eyJ/.test(localStorage.getItem(k))));
+    report(stored.length === 0, "P3-14: không còn token nào trong localStorage", stored.join(", "));
+    const cookie = (await ctx.cookies()).find((c) => c.name === "taskify_refresh");
+    report(!!cookie && cookie.httpOnly && cookie.sameSite === "Strict" && cookie.path === "/api/auth",
+      "P3-14: refresh token nằm trong cookie HttpOnly; SameSite=Strict; Path=/api/auth");
+    await page.reload({ waitUntil: "networkidle" });
+    report(!page.url().includes("/login"), "P3-14: tải lại trang vẫn đăng nhập (khôi phục phiên qua /auth/refresh)");
+    // giả lập access token hết hạn: request đầu tiên bị 401 → tự làm mới phiên rồi gửi lại, người dùng không thấy gì
+    let first = true, refreshed = 0;
+    page.on("request", (r) => { if (r.url().includes("/api/auth/refresh")) refreshed++; });
+    await page.route("**/api/notifications/count**", (r) => {
+      if (first) { first = false; return r.fulfill({ status: 401, contentType: "application/json", body: "{}" }); }
+      return r.continue();
     });
-    await page.goto(`${WEB}/`);
-    await page.waitForSelector("text=Phiên đăng nhập đã hết hạn", { timeout: 10000 }).catch(() => {});
-    report(page.url().includes("/login") && !(await page.evaluate(() => localStorage.getItem("token"))),
-      "Token hết hạn: tự đăng xuất và về trang đăng nhập");
+    await page.goto(`${WEB}/notifications`, { waitUntil: "networkidle" });
+    report(!page.url().includes("/login") && refreshed >= 1, "P3-14: access token hết hạn → tự làm mới, không bị đăng xuất", `${refreshed} lần refresh`);
+    await page.unroute("**/api/notifications/count**");
+    // đăng xuất thật sự: cookie bị xóa, tải lại không vào được nữa
+    await page.getByRole("button", { name: /đăng xuất/i }).first().click().catch(() => {});
+    await page.waitForURL((u) => u.pathname.startsWith("/login"), { timeout: 10000 }).catch(() => {});
+    await page.reload({ waitUntil: "networkidle" });
+    report(page.url().includes("/login") && !(await ctx.cookies()).some((c) => c.name === "taskify_refresh" && c.value),
+      "P3-14: đăng xuất thu hồi phiên (cookie bị xóa, tải lại về trang đăng nhập)");
     await ctx.close();
   }
 
@@ -160,7 +177,8 @@ try {
     await page.waitForSelector("text=Xác thực OTP", { timeout: 15000 });
     report(page.url().includes("/login"), "ADMIN đăng nhập → dừng ở bước OTP (chưa vào hệ thống)");
     const stored = await page.evaluate(() => ({ token: localStorage.getItem("token"), temp: localStorage.getItem("temp_token") }));
-    report(!stored.token && !stored.temp, "Chưa có token nào trong localStorage trước khi nhập OTP");
+    report(!stored.token && !stored.temp && !(await ctx.cookies()).some((c) => c.name === "taskify_refresh"),
+      "Chưa có token / cookie phiên nào trước khi nhập OTP");
     await page.screenshot({ path: path.join(SHOTS, "ui-admin-otp.png") });
     report(problems.length === 0, "Bước OTP: không vi phạm CSP", problems.join(" | "));
     await ctx.close();

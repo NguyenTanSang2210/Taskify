@@ -34,7 +34,9 @@ class SecurityEndpointsIT extends AbstractSecurityIT {
             "/api/auth/activate",
             "/api/auth/password/initial",
             "/api/auth/password/forgot",   // P2-05
-            "/api/auth/password/reset");   // P2-05
+            "/api/auth/password/reset",    // P2-05
+            "/api/auth/refresh",           // P3-14: xác thực bằng cookie refresh token
+            "/api/auth/logout");           // P3-14
 
     @Autowired @Qualifier("requestMappingHandlerMapping") private RequestMappingHandlerMapping mapping;
 
@@ -57,7 +59,10 @@ class SecurityEndpointsIT extends AbstractSecurityIT {
                     checked++;
                     int s = mvc.perform(request(m, url)).andReturn().getResponse().getStatus();
                     boolean isPublic = m == HttpMethod.POST && PUBLIC_POST.contains(url);
-                    if (isPublic) {
+                    if (isPublic && url.equals("/api/auth/refresh")) {
+                        // không có cookie refresh → 401 là đúng nghiệp vụ; RefreshTokenIT kiểm tra gọi được không cần access token
+                        assertEquals(401, s);
+                    } else if (isPublic) {
                         assertTrue(s != 401 && s != 403, "Endpoint công khai bị chặn nhầm: " + m + " " + url + " → " + s);
                     } else if (s != 401) {
                         openEndpoints.add(m + " " + url + " → " + s);

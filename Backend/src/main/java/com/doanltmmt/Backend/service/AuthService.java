@@ -61,6 +61,7 @@ public class AuthService {
     private final RateLimiter rateLimiter;
     private final SecurityProperties props;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokens;
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtTokenProvider tokenProvider,
@@ -70,8 +71,10 @@ public class AuthService {
                        LoginThrottleService throttle,
                        RateLimiter rateLimiter,
                        SecurityProperties props,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       RefreshTokenService refreshTokens) {
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokens = refreshTokens;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userRepository = userRepository;
@@ -227,6 +230,7 @@ public class AuthService {
         user.setMustChangePassword(false);
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
+        refreshTokens.revokeAll(user.getId());
         auditLogService.log("PASSWORD_RESET_DONE", "User", user.getId().toString(), "ip=" + clientIp, user.getUsername());
     }
 
@@ -304,6 +308,22 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
+        refreshTokens.revokeAll(user.getId());
         auditLogService.log("LOGOUT_ALL", "User", user.getId().toString(), "Đăng xuất mọi thiết bị");
+    }
+
+    // ------------------------------------------------------------------ P3-14: làm mới phiên
+
+    /** Access token mới + refresh token mới (đã xoay vòng) cho phiên đang có. */
+    public record Refreshed(LoginResponse response, String refreshToken) {
+    }
+
+    public Refreshed refresh(String refreshToken, String userAgent, String clientIp) {
+        rateLimiter.check("refresh", clientIp, props.getRate().getRefreshPerMinute(), Duration.ofMinutes(1));
+        RefreshTokenService.Issued next = refreshTokens.rotate(refreshToken, userAgent, clientIp);
+        User user = next.user();
+        String role = roleName(user);
+        String access = tokenProvider.generateAccessToken(user.getUsername(), user.getId(), role, user.getTokenVersion());
+        return new Refreshed(LoginResponse.authenticated(access, user, role), next.rawToken());
     }
 }

@@ -23,7 +23,7 @@ import StudentProgressDetailPage from "./pages/StudentProgressDetailPage";
 import RoleManagementPage from "./pages/RoleManagementPage";
 
 export default function App() {
-  const { user, token, logout } = useAuth();
+  const { user, token, ready, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1200);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -42,6 +42,15 @@ export default function App() {
     logout();
     // window.location.assign("/login"); // No longer needed with context state change
   };
+
+  // Đang khôi phục phiên từ cookie refresh (tải lại trang): chưa biết đăng nhập hay chưa
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface" role="status" aria-label="Đang tải phiên đăng nhập">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
   if (!user || !token) {
     return (

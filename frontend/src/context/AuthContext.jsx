@@ -1,104 +1,111 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { getAccessToken, onAccessTokenChange, refreshSession, revokeSession, setAccessToken, tokenExpiresAt } from '../auth/session';
 
 const AuthContext = createContext(null);
 
-/** Thời điểm hết hạn (ms) đọc từ claim `exp` của JWT; null nếu không đọc được. */
-const tokenExpiresAt = (jwt) => {
+// Chỉ lưu thông tin hiển thị (không nhạy cảm) để các tab đồng bộ đăng nhập/đăng xuất; token KHÔNG nằm ở đây (P3-14)
+const USER_KEY = "user";
+const LEGACY_KEYS = ["token", "temp_user", "temp_token"];
+
+const toUser = (data) => ({ id: data.userId, username: data.username, fullName: data.fullName, role: data.role });
+
+const readStoredUser = () => {
     try {
-        const payload = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const exp = JSON.parse(atob(payload)).exp;
-        return typeof exp === "number" ? exp * 1000 : null;
+        const raw = localStorage.getItem(USER_KEY);
+        return raw ? JSON.parse(raw) : null;
     } catch {
         return null;
     }
 };
 
-const expireSession = () => {
+const storeUser = (u) => {
     try {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
+        else localStorage.removeItem(USER_KEY);
     } catch { void 0; }
-    window.location.assign("/login?reason=expired");
 };
 
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(() => {
-        try {
-            return localStorage.getItem("token");
-        } catch {
-            return null;
-        }
-    });
-    const [user, setUser] = useState(() => {
-        try {
-            const rawToken = localStorage.getItem("token");
-            if (!rawToken) return null;
-            const raw = localStorage.getItem("user");
-            return raw ? JSON.parse(raw) : null;
-        } catch {
-            return null;
-        }
-    });
+    const [token, setToken] = useState(getAccessToken);
+    const [user, setUser] = useState(null);
+    // false cho tới khi biết có phiên hay không (tải lại trang → hỏi /auth/refresh)
+    const [ready, setReady] = useState(false);
 
-    const login = (userData, token) => {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(userData));
-        setToken(token);
+    useEffect(() => onAccessTokenChange(setToken), []);
+
+    const clearLocal = useCallback(() => {
+        setAccessToken(null);
+        storeUser(null);
+        setUser(null);
+    }, []);
+
+    // Khởi động: dọn token cũ trong localStorage (trước P3-14) và khôi phục phiên từ cookie refresh
+    useEffect(() => {
+        try { LEGACY_KEYS.forEach((k) => localStorage.removeItem(k)); } catch { void 0; }
+        let cancelled = false;
+        refreshSession()
+            .then((data) => {
+                if (cancelled) return;
+                const u = { ...readStoredUser(), ...toUser(data) };
+                storeUser(u);
+                setUser(u);
+            })
+            .catch(() => {
+                if (!cancelled) clearLocal();
+            })
+            .finally(() => {
+                if (!cancelled) setReady(true);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [clearLocal]);
+
+    const login = (userData, newToken) => {
+        setAccessToken(newToken);
+        storeUser(userData);
         setUser(userData);
     };
 
-    const logout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("temp_user");
-        localStorage.removeItem("temp_token");
-        setToken(null);
-        setUser(null);
-    };
+    const logout = useCallback(() => {
+        revokeSession();
+        clearLocal();
+    }, [clearLocal]);
 
     const updateUser = (newUserData) => {
-        localStorage.setItem("user", JSON.stringify(newUserData));
+        storeUser(newUserData);
         setUser(newUserData);
     };
 
-    // Thay token của phiên hiện tại (ví dụ sau khi đổi mật khẩu, token cũ bị vô hiệu và server cấp token mới)
+    // Thay access token của phiên hiện tại (vd. sau khi đổi mật khẩu: server cấp token + cookie refresh mới)
     const updateToken = (newToken) => {
-        if (!newToken) return;
-        localStorage.setItem("token", newToken);
-        setToken(newToken);
+        if (newToken) setAccessToken(newToken);
     };
 
-    // Tự đăng xuất đúng lúc token hết hạn (không đợi tới request kế tiếp bị 401)
+    // Làm mới chủ động ~1 phút trước khi access token hết hạn (không đợi request kế tiếp bị 401)
     useEffect(() => {
         if (!token) return undefined;
         const expiresAt = tokenExpiresAt(token);
         if (!expiresAt) return undefined;
-        const remaining = expiresAt - Date.now();
-        if (remaining <= 0) {
-            expireSession();
-            return undefined;
-        }
-        // setTimeout chỉ nhận tối đa ~24,8 ngày
-        const timer = setTimeout(expireSession, Math.min(remaining, 2147483647));
+        const delay = Math.max(expiresAt - Date.now() - 60_000, 5_000);
+        const timer = setTimeout(() => {
+            refreshSession().catch(() => {
+                clearLocal();
+                window.location.assign("/login?reason=expired");
+            });
+        }, Math.min(delay, 2147483647));
         return () => clearTimeout(timer);
-    }, [token]);
+    }, [token, clearLocal]);
 
-    // Listen for storage events (other tabs)
+    // Đồng bộ giữa các tab: tab khác đăng xuất → tab này cũng đăng xuất; tab khác đăng nhập → nhận phiên qua cookie
     useEffect(() => {
         const handleStorageChange = (e) => {
-            if (e.key === 'user') {
-                try {
-                    if (!localStorage.getItem("token")) {
-                        setUser(null);
-                        return;
-                    }
-                    setUser(e.newValue ? JSON.parse(e.newValue) : null);
-                } catch {
-                    setUser(null);
-                }
-            } else if (e.key === 'token') {
-                setToken(e.newValue);
-                if (!e.newValue) setUser(null);
+            if (e.key !== USER_KEY) return;
+            if (!e.newValue) {
+                setAccessToken(null);
+                setUser(null);
+            } else if (!getAccessToken()) {
+                refreshSession().then((data) => setUser({ ...JSON.parse(e.newValue), ...toUser(data) })).catch(() => {});
             }
         };
         window.addEventListener('storage', handleStorageChange);
@@ -106,7 +113,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, updateUser, updateToken }}>
+        <AuthContext.Provider value={{ user, token, ready, login, logout, updateUser, updateToken }}>
             {children}
         </AuthContext.Provider>
     );
