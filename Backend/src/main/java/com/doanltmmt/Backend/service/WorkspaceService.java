@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.WorkspaceDTO;
 import com.doanltmmt.Backend.entity.Department;
@@ -65,7 +67,7 @@ public class WorkspaceService {
     }
 
     public WorkspaceDTO get(Long id) {
-        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         return new WorkspaceDTO(w);
     }
@@ -79,9 +81,9 @@ public class WorkspaceService {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
-        Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+        Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
         String name = Inputs.trimmed(body.get("name"));
-        if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
+        if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên là bắt buộc.");
         
         Workspace w = new Workspace();
         w.setDepartment(dept);
@@ -100,12 +102,12 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceDTO update(Long id, Map<String, Object> body) {
-        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         
         if (w.getStatus() != WorkspaceStatus.DRAFT) {
             if (body.get("name") != null || body.get("type") != null || body.get("semester") != null || body.get("startAt") != null || body.get("endAt") != null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not editable in current status");
+                throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Chỉ sửa thông tin đợt khi đợt còn là bản nháp.");
             }
         }
         
@@ -133,7 +135,7 @@ public class WorkspaceService {
         WorkspaceStatus current = w.getStatus();
         WorkspaceStatus target = WorkspaceStatus.parse(to);
         if (!current.canTransitionTo(target)) {
-            throw Inputs.badRequest("Không thể chuyển đợt từ \"" + current.label() + "\" sang \"" + target.label() + "\"");
+            throw ApiException.badRequest(ErrorCodes.INVALID_TRANSITION, "Không thể chuyển đợt từ \"" + current.label() + "\" sang \"" + target.label() + "\"");
         }
 
         requireTransitionPreconditions(w, current, target);

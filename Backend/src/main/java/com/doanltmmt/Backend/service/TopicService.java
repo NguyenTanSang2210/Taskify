@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.dto.TopicDTO;
 import com.doanltmmt.Backend.entity.*;
@@ -55,7 +57,7 @@ public class TopicService {
         if (scope.hasRole("LECTURER")) {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (!Objects.equals(currentUserId, lecturerId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
         }
         topic.setId(null); // luôn tạo mới — không cho ghi đè đề tài khác qua trường id trong body
@@ -66,10 +68,10 @@ public class TopicService {
         validateFields(topic.getTitle(), topic.getDescription(), topic.getCapacity());
         topic.setTitle(topic.getTitle().trim());
         if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic must be assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn đợt cho đề tài.");
         }
         Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         
         requireWorkspaceAllowsTopicCreateOrEdit(w);
 
@@ -81,7 +83,7 @@ public class TopicService {
 
         Lecturer lecturer = lecturerRepo.findById(lecturerId).orElseGet(() -> {
             User user = userRepo.findById(lecturerId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found for lecturerId"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giảng viên."));
             // Chỉ tài khoản giảng viên mới được làm người hướng dẫn (trước đây có thể gán đề tài cho bất kỳ tài khoản nào)
             if (user.getRole() == null || !"LECTURER".equals(user.getRole().getName())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Người hướng dẫn phải là tài khoản giảng viên");
@@ -94,10 +96,10 @@ public class TopicService {
 
         if (!scope.hasRole("ADMIN")) {
             if (lecturer.getUser() == null || lecturer.getUser().getDepartment() == null || w.getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing department");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu thông tin khoa.");
             }
             if (!lecturer.getUser().getDepartment().getId().equals(w.getDepartment().getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecturer is not in workspace department");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Giảng viên không thuộc khoa của đợt.");
             }
         }
 
@@ -113,14 +115,14 @@ public class TopicService {
     @Transactional
     public TopicDTO updateTopic(Long id, Long lecturerId, Topic payload) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền sửa đề tài này.");
         }
         
         if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         requireWorkspaceAllowsTopicCreateOrEdit(topic.getWorkspace());
@@ -146,14 +148,14 @@ public class TopicService {
     @Transactional
     public void deleteTopic(Long id, Long lecturerId) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xóa đề tài này.");
         }
         
         if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         requireWorkspaceAllowsTopicCreateOrEdit(topic.getWorkspace());
@@ -164,9 +166,9 @@ public class TopicService {
     @Transactional
     public TopicDTO openTopic(Long id, Long lecturerId) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to open topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền mở đề tài này.");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
         topic.setStatus(TopicStatus.OPEN);
@@ -178,9 +180,9 @@ public class TopicService {
     @Transactional
     public TopicDTO closeTopic(Long id, Long lecturerId) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to close topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền đóng đề tài này.");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
         topic.setStatus(TopicStatus.CLOSED);
@@ -274,13 +276,13 @@ public class TopicService {
 
     private void requireWorkspaceAllowsTopicCreateOrEdit(Workspace w) {
         if (!w.getStatus().allowsTopicEditing()) {
-            throw badRequest("Đợt \"" + w.getName() + "\" không còn nhận tạo/sửa đề tài (trạng thái: " + w.getStatus().label() + ")");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt \"" + w.getName() + "\" không còn nhận tạo/sửa đề tài (trạng thái: " + w.getStatus().label() + ")");
         }
     }
 
     private void requireWorkspaceAllowsTopicOpenClose(Workspace w) {
         if (!w.getStatus().allowsTopicOpenClose()) {
-            throw badRequest("Chỉ đóng/mở đề tài khi đợt đang mở đề tài hoặc mở đăng ký");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Chỉ đóng/mở đề tài khi đợt đang mở đề tài hoặc mở đăng ký");
         }
     }
 

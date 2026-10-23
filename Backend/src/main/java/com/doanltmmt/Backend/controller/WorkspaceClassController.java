@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.entity.WorkspaceClass;
@@ -40,7 +42,7 @@ public class WorkspaceClassController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public List<WorkspaceClass> list(@RequestParam Long workspaceId) {
-        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         return repo.findByWorkspace_IdOrderByIdDesc(workspaceId);
     }
@@ -50,12 +52,12 @@ public class WorkspaceClassController {
     public WorkspaceClass assign(@RequestBody Map<String, Object> body) {
         Long workspaceId = Inputs.requiredId(body.get("workspaceId"), "workspaceId");
         Long classId = Inputs.requiredId(body.get("classId"), "classId");
-        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         requireWorkspaceConfigurable(w);
-        AcademicClass c = classRepo.findById(classId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+        AcademicClass c = classRepo.findById(classId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lớp."));
         if (!c.getDepartment().getId().equals(w.getDepartment().getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Class is not in workspace department");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lớp không thuộc khoa của đợt.");
         }
         WorkspaceClass link = repo.findByWorkspace_IdAndAcademicClass_Id(workspaceId, classId).orElseGet(() -> {
             WorkspaceClass wc = new WorkspaceClass();
@@ -75,11 +77,11 @@ public class WorkspaceClassController {
     public WorkspaceClass unassign(@RequestBody Map<String, Object> body) {
         Long workspaceId = Inputs.requiredId(body.get("workspaceId"), "workspaceId");
         Long classId = Inputs.requiredId(body.get("classId"), "classId");
-        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         requireWorkspaceConfigurable(w);
         WorkspaceClass link = repo.findByWorkspace_IdAndAcademicClass_Id(workspaceId, classId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Link not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lớp chưa được gán cho đợt này."));
         link.setActive(false);
         WorkspaceClass saved = repo.save(link);
         auditLogService.log("UNASSIGN_CLASS_FROM_WORKSPACE", "WorkspaceClass", saved.getId().toString(), "workspace=" + workspaceId + ",class=" + classId);
@@ -88,7 +90,7 @@ public class WorkspaceClassController {
 
     private static void requireWorkspaceConfigurable(Workspace w) {
         if (!w.getStatus().allowsConfiguration()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE,
                     "Chỉ gán lớp / phân công giảng viên khi đợt ở trạng thái Bản nháp hoặc Mở đề tài");
         }
     }

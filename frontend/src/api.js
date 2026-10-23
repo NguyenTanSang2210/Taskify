@@ -54,6 +54,11 @@ api.interceptors.response.use(
     normalizedError.status = status;
     normalizedError.url = (error?.config?.baseURL || "") + (error?.config?.url ?? url);
     normalizedError.data = error?.response?.data;
+    // P3-03: mã lỗi ổn định (vd. TOPIC_FULL) và lỗi theo trường {field: message} để form hiển thị cạnh ô nhập
+    normalizedError.code = error?.response?.data?.code;
+    normalizedError.fieldErrors = Object.fromEntries(
+      (error?.response?.data?.errors || []).map((e) => [e.field, e.message])
+    );
     return Promise.reject(normalizedError);
   }
 );

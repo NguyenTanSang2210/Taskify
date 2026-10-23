@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doanltmmt.Backend.dto.response.*;
@@ -47,7 +49,7 @@ public class LecturerAssignmentController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public List<LecturerAssignmentDTO> list(@RequestParam Long workspaceId) {
-        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         return repo.findByWorkspace_IdOrderByIdDesc(workspaceId).stream().map(LecturerAssignmentDTO::from).toList();
     }
@@ -62,15 +64,15 @@ public class LecturerAssignmentController {
         int quotaMaxGroups = Inputs.optionalNonNegativeInt(body.get("quotaMaxGroups"), "Hạn mức nhóm", 0);
         String reason = Inputs.trimmedOrNull(body.get("reason"));
         if (!type.equals("MAIN") && !type.equals("ASSISTANT")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid type");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại không hợp lệ.");
         }
-        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         requireWorkspaceConfigurable(w);
 
-        User lecturerUser = userRepo.findById(lecturerUserId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        User lecturerUser = userRepo.findById(lecturerUserId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         if (lecturerUser.getDepartment() != null && !lecturerUser.getDepartment().getId().equals(w.getDepartment().getId()) && !scope.hasRole("ADMIN")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecturer is not in workspace department");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Giảng viên không thuộc khoa của đợt.");
         }
 
         Lecturer lecturer = lecturerRepo.findById(lecturerUserId).orElseGet(() -> {
@@ -100,7 +102,7 @@ public class LecturerAssignmentController {
     public LecturerAssignmentDTO revoke(@RequestBody Map<String, Object> body) {
         Long assignmentId = Inputs.requiredId(body.get("assignmentId"), "assignmentId");
         String reason = Inputs.trimmedOrNull(body.get("reason"));
-        LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
+        LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy phân công."));
         scope.requireDepartmentAccess(a.getWorkspace().getDepartment().getId());
         requireWorkspaceConfigurable(a.getWorkspace());
         a.setActive(false);
@@ -112,7 +114,7 @@ public class LecturerAssignmentController {
 
     private static void requireWorkspaceConfigurable(Workspace w) {
         if (!w.getStatus().allowsConfiguration()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE,
                     "Chỉ gán lớp / phân công giảng viên khi đợt ở trạng thái Bản nháp hoặc Mở đề tài");
         }
     }

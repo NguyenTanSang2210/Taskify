@@ -70,11 +70,11 @@ public class NotificationController {
     @PostMapping("/read/{id}")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public NotificationDTO markRead(@PathVariable Long id) {
-        Notification n = notificationRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
+        Notification n = notificationRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo."));
         if (!scope.hasRole("ADMIN")) {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (n.getUser() == null || n.getUser().getId() == null || !currentUserId.equals(n.getUser().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
         }
         n.setReadAt(LocalDateTime.now());

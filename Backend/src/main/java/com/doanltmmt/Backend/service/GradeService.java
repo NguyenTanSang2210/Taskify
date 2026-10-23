@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
@@ -144,9 +146,9 @@ public class GradeService {
                 if (reason == null) throw Inputs.badRequest("Vui lòng nêu lý do chỉnh sửa điểm");
                 unlock = activeUnlock(reg.getId(), now).orElseThrow();
             }
-            case LOCKED -> throw Inputs.badRequest(
+            case LOCKED -> throw ApiException.badRequest(ErrorCodes.GRADE_LOCKED,
                     "Điểm đã bị khóa vì đợt đã kết thúc. Hãy gửi yêu cầu chấm lại để được mở khóa.");
-            default -> throw Inputs.badRequest("Đợt chưa đến giai đoạn chấm điểm");
+            default -> throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt chưa đến giai đoạn chấm điểm");
         }
 
         Double oldScore = reg.getScore();
@@ -383,7 +385,7 @@ public class GradeService {
         User me = scope.requireCurrentUser();
         var lecturer = reg.getTopic().getLecturer();
         if (lecturer == null || !Objects.equals(lecturer.getId(), me.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
         return me;
     }

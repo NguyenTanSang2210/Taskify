@@ -54,10 +54,10 @@ public class AcademicClassController {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
-        Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+        Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
         String code = Inputs.trimmed(body.get("code"));
         String name = Inputs.trimmed(body.get("name"));
-        if (code.isBlank() || name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "code and name are required");
+        if (code.isBlank() || name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã và tên là bắt buộc.");
         AcademicClass c = new AcademicClass();
         c.setDepartment(dept);
         c.setCode(code);
@@ -71,7 +71,7 @@ public class AcademicClassController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public AcademicClass update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        AcademicClass c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
+        AcademicClass c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lớp."));
         scope.requireDepartmentAccess(c.getDepartment().getId());
         String code = Inputs.trimmedOrNull(body.get("code"));
         String name = Inputs.trimmedOrNull(body.get("name"));

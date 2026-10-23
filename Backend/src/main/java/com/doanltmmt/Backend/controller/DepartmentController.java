@@ -44,7 +44,7 @@ public class DepartmentController {
         String code = Inputs.trimmed(body.get("code"));
         String name = Inputs.trimmed(body.get("name"));
         if (code.isBlank() || name.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "code and name are required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã và tên là bắt buộc.");
         }
         Department d = new Department();
         d.setCode(code);
@@ -60,7 +60,7 @@ public class DepartmentController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Department update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+        Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
         String code = Inputs.trimmedOrNull(body.get("code"));
         String name = Inputs.trimmedOrNull(body.get("name"));
         if (code != null && !code.isBlank()) d.setCode(code);
@@ -74,7 +74,7 @@ public class DepartmentController {
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public Department updateStatus(@PathVariable Long id, @RequestParam boolean active) {
-        Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+        Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
         d.setActive(active);
         Department saved = repo.save(d);
         auditLogService.log(active ? "ENABLE_DEPARTMENT" : "DISABLE_DEPARTMENT", "Department", saved.getId().toString(), "active=" + active);

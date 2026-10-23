@@ -81,13 +81,13 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public UserDTO updateProfile(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         
         String currentUsername = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         boolean isAdmin = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         
         if (!user.getUsername().equals(currentUsername) && !isAdmin) {
-             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to update other user's profile");
+             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể sửa hồ sơ của người khác.");
         }
 
         if (body.containsKey("fullName")) {
@@ -122,11 +122,11 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public Map<String, String> changePassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         
         String currentUsername = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         if (!user.getUsername().equals(currentUsername)) {
-             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to change other user's password");
+             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể đổi mật khẩu của người khác.");
         }
         
         String oldPass = body.get("oldPassword");
@@ -154,7 +154,7 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public UserDTO getUser(@PathVariable Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
 
         // Hồ sơ ĐẦY ĐỦ (email, SĐT, vai trò, khoa) chỉ cho: chính chủ, quản trị hệ thống, quản trị khoa CÙNG khoa.
         // Người khác chỉ thấy id + họ tên.
@@ -195,7 +195,7 @@ public class UserController {
         boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
 
         if (username.isBlank() || fullName.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username, fullName are required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập và họ tên là bắt buộc.");
         }
         // Có mật khẩu tạm: bắt buộc đổi ở lần đăng nhập đầu. Không có: gửi mã kích hoạt qua email để người dùng tự đặt.
         boolean sendActivation = password.isBlank();
@@ -208,26 +208,26 @@ public class UserController {
             PasswordPolicy.requireValid(password, username);
         }
         if (roleId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "roleId is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn vai trò.");
         }
         if (userRepository.findByUsername(username).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập đã tồn tại.");
         }
         if (email != null && !email.isBlank() && userRepository.findByEmail(email).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email đã được sử dụng.");
         }
 
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy vai trò."));
         String roleName = role.getName() != null ? role.getName().trim().toUpperCase() : "";
 
         Department dept = null;
         if (departmentId != null) {
             dept = departmentRepository.findById(departmentId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
         }
         if (dept == null && !roleName.equals("ADMIN")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "departmentId is required for non-admin user");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản không phải quản trị hệ thống phải thuộc một khoa (departmentId).");
         }
 
         String studentCode = null;
@@ -241,17 +241,17 @@ public class UserController {
             academicClassId = Inputs.optionalId(body.get("academicClassId"), "academicClassId");
 
             if (studentCode.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "studentCode is required for STUDENT");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên phải có mã sinh viên.");
             }
             if ((className == null || className.isBlank()) && academicClassId == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "className or academicClassId is required for STUDENT");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên phải thuộc một lớp.");
             }
 
             if (academicClassId != null) {
                 academicClass = classRepository.findById(academicClassId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "AcademicClass not found"));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lớp."));
                 if (dept != null && academicClass.getDepartment() != null && !dept.getId().equals(academicClass.getDepartment().getId())) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "AcademicClass is not in user's department");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lớp không thuộc khoa của người dùng.");
                 }
             }
         }
@@ -302,7 +302,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> resendActivation(@PathVariable Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         if (user.isActivated()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản này đã được kích hoạt");
         }
@@ -338,9 +338,9 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public UserDTO updateRole(@PathVariable Long id, @RequestParam Long roleId) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy vai trò."));
         
         String oldRole = user.getRole() != null ? user.getRole().getName() : "None";
         user.setRole(role);
@@ -355,7 +355,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public UserDTO updateStatus(@PathVariable Long id, @RequestParam Boolean active) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         user.setActive(active);
         if (!active) {
             user.setTokenVersion(user.getTokenVersion() + 1); // khóa tài khoản → token đang dùng chết ngay

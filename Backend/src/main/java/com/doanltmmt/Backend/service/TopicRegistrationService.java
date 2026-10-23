@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.service;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
@@ -63,47 +65,47 @@ public class TopicRegistrationService {
     public TopicRegistrationDTO registerTopic(Long studentId, Long topicId) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
 
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài"));
 
         if (topic.getStatus() == TopicStatus.FULL) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
+            throw ApiException.badRequest(ErrorCodes.TOPIC_FULL, "Đề tài đã đủ số sinh viên");
         }
         if (topic.getStatus() != TopicStatus.OPEN) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài không mở đăng ký");
         }
         if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         if (topic.getWorkspace().getStatus() != WorkspaceStatus.OPEN_REGISTRATION) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for registration");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt chưa mở đăng ký.");
         }
 
         Student student = studentRepo.findById(studentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên"));
         
         if (student.getAcademicClass() == null || student.getAcademicClass().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student must be assigned to a class");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên chưa được xếp lớp.");
         }
         if (!workspaceClassRepo.existsByWorkspace_IdAndAcademicClass_IdAndActiveTrue(topic.getWorkspace().getId(), student.getAcademicClass().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Student's class is not assigned to the topic's workspace");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Lớp của bạn không thuộc đợt của đề tài này.");
         }
         if (regRepo.existsByStudent_IdAndTopic_Workspace_IdAndApprovedTrue(studentId, topic.getWorkspace().getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student already has an approved topic in this workspace");
+            throw ApiException.badRequest(ErrorCodes.DUPLICATE_REGISTRATION, "Bạn đã có đề tài được duyệt trong đợt này.");
         }
         if (regRepo.existsByStudent_IdAndTopic_Workspace_IdAndApprovedIsNull(studentId, topic.getWorkspace().getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student already has a pending registration in this workspace");
+            throw ApiException.badRequest(ErrorCodes.DUPLICATE_REGISTRATION, "Bạn đang có một đăng ký chờ duyệt trong đợt này.");
         }
         if (regRepo.findTopByStudent_IdAndTopic_IdOrderByRegisteredAtDesc(studentId, topicId).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student already registered this topic");
+            throw ApiException.badRequest(ErrorCodes.DUPLICATE_REGISTRATION, "Bạn đã đăng ký đề tài này rồi.");
         }
         
         if (regRepo.countByTopic_IdAndApprovedTrue(topicId) >= topic.effectiveCapacity()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
+            throw ApiException.badRequest(ErrorCodes.TOPIC_FULL, "Đề tài đã đủ số sinh viên");
         }
 
         TopicRegistration reg = new TopicRegistration();
@@ -119,20 +121,20 @@ public class TopicRegistrationService {
     }
 
     public List<TopicRegistrationDTO> getRegistrations(Long topicId) {
-        Topic topic = topicRepo.findById(topicId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+        Topic topic = topicRepo.findById(topicId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         List<TopicRegistration> list;
         if (scope.hasRole("ADMIN")) {
             list = regRepo.findByTopic_Id(topicId);
         } else if (scope.hasRole("DEPARTMENT_ADMIN")) {
             if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt/khoa nào.");
             }
             scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
             list = regRepo.findByTopic_Id(topicId);
         } else {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
             list = regRepo.findByTopic_Id(topicId);
         }
@@ -142,7 +144,7 @@ public class TopicRegistrationService {
     public List<TopicRegistrationDTO> myRegistrations(Long studentId) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
         return regRepo.findByStudent_IdOrderByRegisteredAtDesc(studentId).stream()
                 .map(reg -> gradeService.describe(reg, false))
@@ -154,7 +156,7 @@ public class TopicRegistrationService {
         TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getTopic() == null || reg.getTopic().getLecturer() == null || reg.getTopic().getLecturer().getId() == null || !currentUserId.equals(reg.getTopic().getLecturer().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
         if (Boolean.TRUE.equals(reg.getApproved())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đăng ký này đã được duyệt");
@@ -165,15 +167,15 @@ public class TopicRegistrationService {
         Topic topic = topicRepo.findByIdForUpdate(topicId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài"));
         if (reg.getTopic().getWorkspace() == null || reg.getTopic().getWorkspace().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         if (!reg.getTopic().getWorkspace().getStatus().allowsRegistrationReview()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in registration review phase");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn duyệt đăng ký.");
         }
         
         if (regRepo.countByTopic_IdAndApprovedTrue(topicId) >= topic.effectiveCapacity()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài đã đủ số sinh viên");
+            throw ApiException.badRequest(ErrorCodes.TOPIC_FULL, "Đề tài đã đủ số sinh viên");
         }
 
         reg.setApproved(true);
@@ -192,8 +194,8 @@ public class TopicRegistrationService {
         refreshCapacityStatus(topic);
         eventPublisher.registrationChanged(saved, "REGISTRATION_UPDATED");
         
-        sendNotification(saved.getStudent().getUser(), "Dang ky de tai da duoc duyet", 
-                "De tai #" + topic.getId() + " - \"" + topic.getTitle() + "\" da duoc duyet", saved.getId());
+        sendNotification(saved.getStudent().getUser(), "Đăng ký đề tài đã được duyệt",
+                "Đề tài \"" + topic.getTitle() + "\" đã được giảng viên duyệt.", saved.getId());
         
         auditLogService.log("APPROVE_REGISTRATION", "TopicRegistration", saved.getId().toString(), "Approved registration for topic " + topic.getId());
         sendMail(saved.getStudent().getUser(), EmailTemplates.registrationApproved(topic.getTitle()));
@@ -205,15 +207,15 @@ public class TopicRegistrationService {
         TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getTopic() == null || reg.getTopic().getLecturer() == null || reg.getTopic().getLecturer().getId() == null || !currentUserId.equals(reg.getTopic().getLecturer().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
         
         if (reg.getTopic().getWorkspace() == null || reg.getTopic().getWorkspace().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         if (!reg.getTopic().getWorkspace().getStatus().allowsRegistrationReview()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in registration review phase");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn duyệt đăng ký.");
         }
 
         reg.setApproved(false);
@@ -232,8 +234,8 @@ public class TopicRegistrationService {
         TopicRegistration saved = regRepo.save(reg);
         // Từ chối một SV đã được duyệt trước đó → đề tài có thể còn chỗ trở lại
         refreshCapacityStatus(reg.getTopic());
-        String msg = (reason != null && !reason.isBlank()) ? ("Ly do: " + reason) : "No reason provided";
-        sendNotification(saved.getStudent().getUser(), "Dang ky de tai bi tu choi", msg, saved.getId());
+        String msg = (reason != null && !reason.isBlank()) ? ("Lý do: " + reason) : "Giảng viên không ghi lý do.";
+        sendNotification(saved.getStudent().getUser(), "Đăng ký đề tài bị từ chối", msg, saved.getId());
         
         auditLogService.log("REJECT_REGISTRATION", "TopicRegistration", saved.getId().toString(), "Rejected registration for topic " + reg.getTopic().getId() + (reason != null ? ". Reason: " + reason : ""));
         sendMail(saved.getStudent().getUser(), EmailTemplates.registrationRejected(reg.getTopic().getTitle(), reason));
@@ -245,18 +247,18 @@ public class TopicRegistrationService {
         TopicRegistration reg = findRegistration(regId);
         Long currentUserId = scope.requireCurrentUser().getId();
         if (reg.getStudent() == null || reg.getStudent().getId() == null || !currentUserId.equals(reg.getStudent().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
 
         if (reg.getApproved() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể hủy đăng ký đã được giảng viên xử lý");
         }
         if (reg.getTopic() == null || reg.getTopic().getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         if (reg.getTopic().getWorkspace().getStatus() != WorkspaceStatus.OPEN_REGISTRATION) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for registration");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt chưa mở đăng ký.");
         }
         
         regRepo.deleteById(regId);

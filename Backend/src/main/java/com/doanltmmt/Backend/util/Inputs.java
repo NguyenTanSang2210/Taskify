@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.util;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,7 +20,7 @@ public final class Inputs {
     }
 
     public static ResponseStatusException badRequest(String message) {
-        return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        return ApiException.badRequest(ErrorCodes.INVALID_INPUT, message);
     }
 
     /** Ngày giờ dạng {@code yyyy-MM-ddTHH:mm[:ss]} hoặc ngày {@code yyyy-MM-dd} (đầu ngày); rỗng → {@code null}. */

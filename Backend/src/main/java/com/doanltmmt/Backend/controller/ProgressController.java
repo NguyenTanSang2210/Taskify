@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.exception.ErrorCodes;
+import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
@@ -87,20 +89,20 @@ public class ProgressController {
                                  @Valid @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
         Student student = studentRepo.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên."));
         Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!regRepo.existsByStudent_IdAndTopic_IdAndApprovedTrue(studentId, topicId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Student is not approved for this topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chưa được duyệt vào đề tài này.");
         }
         if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         if (topic.getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
         }
 
         String title = Inputs.requiredText(body.get("title"), "Tiêu đề báo cáo", 200);
@@ -205,25 +207,25 @@ public class ProgressController {
         if (scope.hasRole("STUDENT")) {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (!currentUserId.equals(studentId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
         } else if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
             // Quản trị khoa chỉ xem tiến độ của sinh viên thuộc KHOA MÌNH
             Student student = studentRepo.findById(studentId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên."));
             if (student.getUser() == null || student.getUser().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
             scope.requireDepartmentAccess(student.getUser().getDepartment().getId());
         } else if (scope.hasRole("LECTURER")) {
             if (topicId == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId is required");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu mã đề tài (topicId).");
             }
             Topic topic = topicRepo.findById(topicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
             Long currentUserId = scope.requireCurrentUser().getId();
             if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
         }
         Function<ProgressReport, ProgressReportDTO> view =
@@ -238,17 +240,17 @@ public class ProgressController {
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public List<ProgressReportDTO> listByTopic(@PathVariable Long topicId) {
         Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!scope.hasRole("ADMIN")) {
             if (scope.hasRole("DEPARTMENT_ADMIN")) {
                 if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt/khoa nào.");
                 }
                 scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
             } else {
                 Long currentUserId = scope.requireCurrentUser().getId();
                 if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
                 }
             }
         }
@@ -261,10 +263,10 @@ public class ProgressController {
                                        @RequestBody Map<String, String> body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         ProgressReport pr = progressRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy báo cáo tiến độ."));
         // Chỉ cho phép sinh viên sở hữu báo cáo này mới được đổi trạng thái
         if (!currentUserId.equals(pr.getStudent().getUser().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
         ProgressStatus status = ProgressStatus.parse(body.get("status"));
         pr.setStatus(status);
@@ -279,18 +281,18 @@ public class ProgressController {
     public ProgressReportDTO addComment(@PathVariable Long id,
                                      @RequestBody Map<String, String> body) {
         ProgressReport pr = progressRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy báo cáo tiến độ."));
         if (!scope.hasRole("ADMIN")) {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (pr.getTopic() == null || pr.getTopic().getLecturer() == null || pr.getTopic().getLecturer().getId() == null || !currentUserId.equals(pr.getTopic().getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
         }
         if (pr.getTopic() == null || pr.getTopic().getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         if (pr.getTopic().getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
         }
         String comment = Objects.requireNonNullElse(Inputs.optionalText(body.get("lecturerComment"), "Nhận xét", 5000), "");
         String status = Objects.requireNonNullElse(body.get("status"), "").trim();

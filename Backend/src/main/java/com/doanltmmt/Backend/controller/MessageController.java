@@ -96,10 +96,10 @@ public class MessageController {
 
         Topic topic = topicAccess.loadTopicOr404(topicId);
         if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         User recipient = userRepo.findById(recipientId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người nhận."));
 
         // Cả hai đầu đều phải thuộc đề tài: chặn nhắn tin cho người ngoài đề tài
         topicAccess.requireMember(topic);
