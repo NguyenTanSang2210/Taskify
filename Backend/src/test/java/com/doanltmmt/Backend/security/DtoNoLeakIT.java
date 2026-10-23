@@ -1,27 +1,26 @@
 package com.doanltmmt.Backend.security;
 
-import com.doanltmmt.Backend.entity.enums.NotificationType;
-import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.entity.DiscussionPost;
 import com.doanltmmt.Backend.entity.DiscussionThread;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.ProgressReport;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.repository.DiscussionPostRepository;
 import com.doanltmmt.Backend.repository.DiscussionThreadRepository;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.repository.ProgressReportRepository;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
-
-import java.time.LocalDateTime;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDateTime;
 
 /**
  * Test bắt buộc #18: phản hồi không còn rò email / SĐT / quyền / mật khẩu của người dùng,
@@ -62,10 +61,10 @@ class DtoNoLeakIT extends AbstractTopicScenarioIT {
         String json = body(r);
         assertClean(json);
         get("/api/progress/topic/{id}", userOf(lecA), topicA.getId())
-                .andExpect(jsonPath("$[0].student.user.fullName").exists())
-                .andExpect(jsonPath("$[0].student.studentCode").exists())
-                .andExpect(jsonPath("$[0].topic.id").value(topicA.getId()))
-                .andExpect(jsonPath("$[0].topic.lecturer").doesNotExist());
+                .andExpect(jsonPath("$.items[0].student.user.fullName").exists())
+                .andExpect(jsonPath("$.items[0].student.studentCode").exists())
+                .andExpect(jsonPath("$.items[0].topic.id").value(topicA.getId()))
+                .andExpect(jsonPath("$.items[0].topic.lecturer").doesNotExist());
     }
 
     @Test
@@ -90,7 +89,7 @@ class DtoNoLeakIT extends AbstractTopicScenarioIT {
         assertClean(body(get("/api/discuss/threads/{id}/posts", userOf(stuA1), t.getId())));
         assertClean(body(get("/api/milestones?topicId={id}", userOf(stuA1), topicA.getId())));
         get("/api/discuss/threads/{id}/posts", userOf(stuA1), t.getId())
-                .andExpect(jsonPath("$[0].author.fullName").exists());
+                .andExpect(jsonPath("$.items[0].author.fullName").exists());
         get("/api/milestones/{id}", userOf(stuA1), m.getId())
                 .andExpect(jsonPath("$.topic.id").value(topicA.getId()))
                 .andExpect(jsonPath("$.topic.title").exists());

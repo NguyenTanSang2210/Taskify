@@ -4,6 +4,7 @@ import com.doanltmmt.Backend.dto.request.GradeRevisionRequestBody;
 import com.doanltmmt.Backend.dto.request.GradeRevisionReviewRequest;
 import com.doanltmmt.Backend.dto.response.GradeHistoryDTO;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.service.GradeService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,7 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /** P2-13 — yêu cầu chấm lại điểm và lịch sử điểm. */
 @RestController
@@ -38,7 +38,7 @@ public class GradeRevisionController {
 
     @GetMapping("/grade-revisions")
     @PreAuthorize("hasAnyRole('DEPARTMENT_ADMIN','ADMIN')")
-    public Map<String, Object> list(@RequestParam(required = false) String status,
+    public PageResponse<GradeRevisionDTO> list(@RequestParam(required = false) String status,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "20") int size) {
         return gradeService.listRevisions(status, page, size);

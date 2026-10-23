@@ -34,12 +34,12 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
     @Query("select r from TopicRegistration r where r.id = :id")
     Optional<TopicRegistration> findByIdForUpdate(@Param("id") Long id);
 
-    @EntityGraph(attributePaths = {"student", "student.user", "topic", "topic.lecturer", "topic.lecturer.user", "topic.workspace", "reviewer", "reviewer.user"})
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = {"student", "student.user", "topic", "topic.lecturer", "topic.lecturer.user", "topic.workspace", "reviewer", "reviewer.user"})
     List<TopicRegistration> findByTopic_Id(Long topicId);
 
     Optional<TopicRegistration> findTopByStudent_IdAndTopic_IdOrderByRegisteredAtDesc(Long studentId, Long topicId);
 
-    @EntityGraph(attributePaths = {"student", "student.user", "topic", "topic.lecturer", "topic.lecturer.user", "topic.workspace", "reviewer", "reviewer.user"})
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = {"student", "student.user", "topic", "topic.lecturer", "topic.lecturer.user", "topic.workspace", "reviewer", "reviewer.user"})
     List<TopicRegistration> findByStudent_IdOrderByRegisteredAtDesc(Long studentId);
 
     boolean existsByTopic_IdAndApprovedTrue(Long topicId);

@@ -1,39 +1,38 @@
 package com.doanltmmt.Backend.grade;
 
-import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
-import com.doanltmmt.Backend.entity.GradeRevisionRequest;
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.repository.GradeHistoryRepository;
 import com.doanltmmt.Backend.repository.GradeRevisionRequestRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
 import com.doanltmmt.Backend.service.GradeService;
-import com.jayway.jsonpath.JsonPath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.jayway.jsonpath.JsonPath;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** P2-13 (D-08) — khóa điểm khi đợt đóng, quy trình chấm lại có duyệt, mọi thay đổi điểm đều có lịch sử. */
 @SuppressWarnings("null")
@@ -124,7 +123,7 @@ class GradeRevisionIT extends AbstractSecurityIT {
         grade(6, null).andExpect(status().isOk());
         closeWorkspace();
         long id = requestRevision();
-        assertTrue(notificationRepo.findByUser_IdOrderByCreatedAtDesc(deptAdmin.getId()).stream()
+        assertTrue(notificationRepo.findByUser_Id(deptAdmin.getId(), Pageable.unpaged()).stream()
                 .anyMatch(n -> "GRADE_REVISION".equals(n.getRefType()) && n.getRefId() == id), "quản trị khoa được báo");
 
         approve(id, deptAdmin).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("APPROVED"));
@@ -183,7 +182,7 @@ class GradeRevisionIT extends AbstractSecurityIT {
         call(HttpMethod.POST, "/api/grade-revisions/{id}/reject", deptAdmin, Map.of("note", "Không đủ căn cứ"), id)
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("REJECTED"));
         approve(id, deptAdmin).andExpect(status().isBadRequest()).andExpect(errorMessageContains("đã được xử lý"));
-        assertTrue(notificationRepo.findByUser_IdOrderByCreatedAtDesc(lecturer.getUser().getId()).stream()
+        assertTrue(notificationRepo.findByUser_Id(lecturer.getUser().getId(), Pageable.unpaged()).stream()
                 .anyMatch(n -> n.getTitle().contains("bị từ chối")));
     }
 

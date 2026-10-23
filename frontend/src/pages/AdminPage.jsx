@@ -5,6 +5,7 @@ import userApi from '../api/userApi';
 import PasswordChecklist, { isPasswordValid } from '../components/PasswordChecklist';
 import InlineNotice from '../components/InlineNotice';
 import GradeRevisionPanel from '../components/GradeRevisionPanel';
+import Pagination from '../components/Pagination';
 
 const normalizeKey = (value) => String(value ?? '').trim().toUpperCase();
 const getRoleLabel = (roleName) => {
@@ -22,6 +23,10 @@ export default function AdminPage() {
     const [notice, setNotice] = useState(null);
 
     const [users, setUsers] = useState([]);
+    const [userPage, setUserPage] = useState(0);
+    const [userPageInfo, setUserPageInfo] = useState({ totalPages: 0, totalElements: 0 });
+    const [userQuery, setUserQuery] = useState('');
+    const [userQueryInput, setUserQueryInput] = useState('');
     const [roles, setRoles] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [departmentCreate, setDepartmentCreate] = useState({ code: '', name: '', active: true });
@@ -114,28 +119,27 @@ export default function AdminPage() {
     const loadUsers = useCallback(async () => {
         setLoading(true);
         try {
+            const paging = { page: userPage, size: 20, q: userQuery || undefined };
+            let data;
             if (selectedUserRole === 'ADMIN') {
-                const data = await userApi.getAll();
-                const items = (data || []).filter(u => (u.role?.name || u.role) === 'ADMIN');
-                setUsers(items);
-                return;
+                data = await userApi.getAll({ ...paging, role: 'ADMIN' });
+            } else {
+                const departmentId = selectedDepartmentId ? Number(selectedDepartmentId) : null;
+                if (!departmentId) {
+                    setUsers([]);
+                    setUserPageInfo({ totalPages: 0, totalElements: 0 });
+                    return;
+                }
+                data = await userApi.getByDepartment({ ...paging, departmentId, role: selectedUserRole || undefined });
             }
-
-            const departmentId = selectedDepartmentId ? Number(selectedDepartmentId) : null;
-            if (!departmentId) {
-                setUsers([]);
-                return;
-            }
-            const params = { departmentId };
-            if (selectedUserRole) params.role = selectedUserRole;
-            const data = await userApi.getByDepartment(params);
-            setUsers(data || []);
+            setUsers(data?.items || []);
+            setUserPageInfo({ totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
         } catch (error) {
             console.error('Failed to load users', error);
         } finally {
             setLoading(false);
         }
-    }, [selectedDepartmentId, selectedUserRole]);
+    }, [selectedDepartmentId, selectedUserRole, userPage, userQuery]);
 
     const toggleUserStatus = async (u) => {
         if (!window.confirm(`Bạn có chắc muốn ${u.active ? 'khóa' : 'mở khóa'} tài khoản ${u.username}?`)) return;
@@ -480,18 +484,22 @@ export default function AdminPage() {
                         <div className="flex flex-col md:flex-row gap-6 items-end bg-surface-container-low/20 p-6 rounded-[2rem]">
                             <div className="flex-grow space-y-1.5">
                                <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc theo Khoa/Viện</label>
-                               <select className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={selectedDepartmentId} onChange={(e) => setSelectedDepartmentId(e.target.value)}>
+                               <select className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={selectedDepartmentId} onChange={(e) => { setSelectedDepartmentId(e.target.value); setUserPage(0); }}>
                                   <option value="">Chọn khoa...</option>
                                   {departments.map(d => <option key={d.id} value={String(d.id)}>{d.code} - {d.name}</option>)}
                                </select>
                             </div>
                             <div className="flex-grow space-y-1.5">
                                <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc theo vai trò</label>
-                               <select className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-xs font-black uppercase tracking-widest outline-none" value={selectedUserRole} onChange={(e) => setSelectedUserRole(e.target.value)}>
+                               <select className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-xs font-black uppercase tracking-widest outline-none" value={selectedUserRole} onChange={(e) => { setSelectedUserRole(e.target.value); setUserPage(0); }}>
                                   <option value="">Tất cả vai trò</option>
                                   {roles.map(r => <option key={r.id} value={r.name}>{getRoleLabel(r.name)}</option>)}
                                </select>
                             </div>
+                            <form className="flex-grow space-y-1.5" onSubmit={(e) => { e.preventDefault(); setUserQuery(userQueryInput.trim()); setUserPage(0); }}>
+                               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm</label>
+                               <input className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-bold transition-all outline-none" value={userQueryInput} onChange={(e) => setUserQueryInput(e.target.value)} placeholder="Tên đăng nhập, họ tên, email… (Enter)" />
+                            </form>
                             <button onClick={loadUsers} className="px-8 py-3 bg-white border border-outline-variant/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-surface-container transition-all flex items-center gap-2">
                                <span className="material-symbols-outlined text-lg">refresh</span> Làm mới
                             </button>
@@ -579,6 +587,8 @@ export default function AdminPage() {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination page={userPage} totalPages={userPageInfo.totalPages} totalElements={userPageInfo.totalElements}
+                                    onChange={setUserPage} disabled={loading} />
                     </div>
                 )}
 

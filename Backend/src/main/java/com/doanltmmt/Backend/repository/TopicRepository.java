@@ -25,7 +25,7 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
 
     /** Trang danh sách đề tài: nạp giảng viên + đợt cùng một câu (tránh N+1 khi dựng DTO). */
     @Override
-    @EntityGraph(attributePaths = {"lecturer", "lecturer.user", "workspace"})
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = {"lecturer", "lecturer.user", "workspace"})
     Page<Topic> findAll(Specification<Topic> spec, Pageable pageable);
 
     List<Topic> findByStatus(TopicStatus status);

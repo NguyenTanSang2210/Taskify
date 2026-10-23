@@ -16,7 +16,9 @@ export default function LecturerProgressPage() {
   const [topicId, setTopicId] = useState(() => new URLSearchParams(location.search).get("topicId") || "");
   const [topics, setTopics] = useState([]);
   const [items, setItems] = useState([]);
+  const [pageInfo, setPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0 });
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [notice, setNotice] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -48,8 +50,9 @@ export default function LecturerProgressPage() {
     }
     setLoading(true);
     try {
-      const arr = await progressApi.listByTopic(topicId);
-      setItems(arr || []);
+      const data = await progressApi.listByTopic(topicId);
+      setItems(data?.items || []);
+      setPageInfo({ page: 0, totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
     } catch (e) {
       console.error(e);
       setNotice({ type: "danger", message: "Không tải được dữ liệu tiến độ" });
@@ -61,6 +64,24 @@ export default function LecturerProgressPage() {
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
+
+  // "Tải thêm" báo cáo cũ hơn (tìm kiếm/lọc áp dụng trên các báo cáo đã tải)
+  const loadMore = async () => {
+    const next = pageInfo.page + 1;
+    setLoadingMore(true);
+    try {
+      const data = await progressApi.listByTopic(topicId, { page: next });
+      setItems((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...(data?.items || []).filter((x) => !seen.has(x.id))];
+      });
+      setPageInfo({ page: next, totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
+    } catch (e) {
+      setNotice({ type: "danger", message: e.message || "Không tải thêm được báo cáo" });
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // --- WEBSOCKET ---
   useEffect(() => {
@@ -258,6 +279,18 @@ export default function LecturerProgressPage() {
             </tbody>
           </table>
         </div>
+        {pageInfo.page < pageInfo.totalPages - 1 && (
+          <div className="p-6 flex justify-center border-t border-outline-variant/5">
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-8 py-3 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-all border border-outline-variant/10 disabled:opacity-50"
+            >
+              {loadingMore ? "Đang tải…" : `Tải báo cáo cũ hơn (${items.length}/${pageInfo.totalElements})`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

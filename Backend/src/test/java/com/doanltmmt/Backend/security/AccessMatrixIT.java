@@ -3,7 +3,6 @@ package com.doanltmmt.Backend.security;
 import com.doanltmmt.Backend.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -111,11 +110,11 @@ class AccessMatrixIT extends AbstractTopicScenarioIT {
         notify(admin, victim).andExpect(status().isOk());
         String json = get("/api/notifications/mine?userId={id}", victim, victim.getId()).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        long victimNotificationId = com.jayway.jsonpath.JsonPath.<Number>read(json, "$[0].id").longValue();
+        long victimNotificationId = com.jayway.jsonpath.JsonPath.<Number>read(json, "$.items[0].id").longValue();
 
         // Người không phải ADMIN luôn bị ép về CHÍNH MÌNH, dù gửi userId của người khác: không thấy dữ liệu của nạn nhân
         get("/api/notifications/mine?userId={id}", userOf(stuA2), victim.getId())
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
         get("/api/notifications/count?userId={id}", userOf(stuA2), victim.getId())
                 .andExpect(status().isOk()).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("0"));
 

@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.controller;
 import com.doanltmmt.Backend.dto.request.DiscussionPostRequest;
 import com.doanltmmt.Backend.dto.request.DiscussionThreadRequest;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.service.DiscussionService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,8 +36,10 @@ public class DiscussionController {
 
     @GetMapping("/threads/{threadId}/posts")
     @PreAuthorize("isAuthenticated()")
-    public List<DiscussionPostDTO> listPosts(@PathVariable Long threadId) {
-        return service.listPosts(threadId);
+    public PageResponse<DiscussionPostDTO> listPosts(@PathVariable Long threadId,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "50") int size) {
+        return service.listPosts(threadId, page, size);
     }
 
     @PostMapping("/threads/{threadId}/posts")

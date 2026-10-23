@@ -9,8 +9,9 @@ export const discussApi = {
     const res = await api.post("/discuss/threads", payload);
     return res.data;
   },
-  posts: async (threadId) => {
-    const res = await api.get(`/discuss/threads/${threadId}/posts`);
+  // Trang bài viết, cũ → mới
+  posts: async (threadId, { page = 0, size = 50 } = {}) => {
+    const res = await api.get(`/discuss/threads/${threadId}/posts`, { params: { page, size } });
     return res.data;
   },
   addPost: async (threadId, payload) => {

@@ -1,14 +1,15 @@
 package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.TopicDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.*;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.*;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
+import com.doanltmmt.Backend.util.Pages;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -191,7 +192,7 @@ public class TopicService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
+    public PageResponse<Map<String, Object>> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
         Specification<Topic> spec = Specification.allOf(List.<Specification<Topic>>of());
 
         if (status != null && !status.isBlank()) {
@@ -212,11 +213,11 @@ public class TopicService {
                 Long finalDeptId = deptId;
                 spec = spec.and((root, q, cb) -> cb.equal(root.get("workspace").get("department").get("id"), finalDeptId));
             } else {
-                return Map.of("items", List.of(), "page", page, "size", size, "totalElements", 0, "totalPages", 0);
+                return PageResponse.empty(page, size);
             }
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = Pages.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         Page<Topic> pageRes = topicRepo.findAll(spec, pageable);
 
         List<Long> ids = pageRes.getContent().stream().map(Topic::getId).toList();
@@ -258,13 +259,7 @@ public class TopicService {
             return topicMap;
         }).collect(Collectors.toList());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("items", items);
-        response.put("page", pageRes.getNumber());
-        response.put("size", pageRes.getSize());
-        response.put("totalElements", pageRes.getTotalElements());
-        response.put("totalPages", pageRes.getTotalPages());
-        return response;
+        return new PageResponse<>(items, pageRes.getNumber(), pageRes.getSize(), pageRes.getTotalElements(), pageRes.getTotalPages());
     }
 
     private boolean canModifyTopic(Topic topic, Long lecturerId) {

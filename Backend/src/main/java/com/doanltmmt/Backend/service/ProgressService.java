@@ -4,6 +4,7 @@ import com.doanltmmt.Backend.dto.request.ProgressCommentRequest;
 import com.doanltmmt.Backend.dto.request.ProgressCreateRequest;
 import com.doanltmmt.Backend.dto.request.ProgressStatusRequest;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.StoredFile;
 import com.doanltmmt.Backend.entity.Student;
@@ -18,6 +19,8 @@ import com.doanltmmt.Backend.repository.StoredFileRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
+import com.doanltmmt.Backend.util.Pages;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -201,7 +204,7 @@ public class ProgressService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProgressReportDTO> listByTopic(Long topicId) {
+    public PageResponse<ProgressReportDTO> listByTopic(Long topicId, int page, int size) {
         Topic topic = topicRepo.findById(topicId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!scope.hasRole("ADMIN")) {
@@ -217,7 +220,8 @@ public class ProgressService {
                 }
             }
         }
-        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::forReviewer).toList();
+        return PageResponse.of(progressRepo.findByTopic_Id(topicId, Pages.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"))),
+                ProgressReportDTO::forReviewer);
     }
 
     @Transactional

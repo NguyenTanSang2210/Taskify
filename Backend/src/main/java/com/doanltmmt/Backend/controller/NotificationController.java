@@ -1,8 +1,10 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.response.NotificationDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.service.NotificationService;
+import com.doanltmmt.Backend.util.Pages;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +22,10 @@ public class NotificationController {
 
     @GetMapping("/mine")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<NotificationDTO> mine(@RequestParam Long userId) {
-        return service.mine(userId);
+    public PageResponse<NotificationDTO> mine(@RequestParam Long userId,
+                                              @RequestParam(defaultValue = "0") int page,
+                                              @RequestParam(defaultValue = Pages.DEFAULT_SIZE) int size) {
+        return service.mine(userId, page, size);
     }
 
     @GetMapping("/count")

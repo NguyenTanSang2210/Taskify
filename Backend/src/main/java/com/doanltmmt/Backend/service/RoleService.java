@@ -37,10 +37,12 @@ public class RoleService {
         this.auditLogService = auditLogService;
     }
 
+    @Transactional(readOnly = true)
     public List<Role> getAllRoles() {
         return roleRepo.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Privilege> getAllPrivileges() {
         return privilegeRepo.findAll();
     }

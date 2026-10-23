@@ -8,18 +8,17 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
+import static org.hamcrest.Matchers.nullValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import java.util.Map;
-
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Map;
 
 /**
  * Các trường mà giao diện đọc phải có trong phản hồi — trước đây nhiều trang đọc trường không tồn tại nên hiện trống
@@ -65,7 +64,7 @@ class UiDataContractIT extends AbstractSecurityIT {
                 .andExpect(jsonPath("$.topic.id").value(topic.getId()));
         mvc.perform(get("/api/messages/inbox").header(AUTH, bearer(lecturer.getUser())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].topic.id").value(topic.getId()));
+                .andExpect(jsonPath("$.items[0].topic.id").value(topic.getId()));
     }
 
     @Test

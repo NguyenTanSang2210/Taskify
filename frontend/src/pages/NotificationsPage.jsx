@@ -8,22 +8,45 @@ export default function NotificationsPage() {
   const { user } = useAuth();
   const userId = user?.id;
 
+  const PAGE_SIZE = 20;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageInfo, setPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0 });
   const [notice, setNotice] = useState(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const data = await notificationsApi.listMine(userId);
-      setItems(data || []);
+      const data = await notificationsApi.listMine(userId, { page: 0, size: PAGE_SIZE });
+      setItems(data?.items || []);
+      setPageInfo({ page: 0, totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
   }, [userId]);
+
+  // "Tải thêm": nối trang kế tiếp, bỏ trùng (thông báo realtime mới có thể đã đẩy các mục cũ xuống trang sau)
+  const loadMore = async () => {
+    const next = pageInfo.page + 1;
+    setLoadingMore(true);
+    try {
+      const data = await notificationsApi.listMine(userId, { page: next, size: PAGE_SIZE });
+      setItems((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...(data?.items || []).filter((x) => !seen.has(x.id))];
+      });
+      setPageInfo({ page: next, totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
+    } catch (e) {
+      console.error(e);
+      setNotice({ type: "danger", message: e.message || "Không tải thêm được thông báo" });
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     load();
@@ -183,6 +206,18 @@ export default function NotificationsPage() {
                     </div>
                  );
               })}
+              {pageInfo.page < pageInfo.totalPages - 1 && (
+                 <div className="p-6 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-8 py-3 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-all border border-outline-variant/10 disabled:opacity-50"
+                    >
+                      {loadingMore ? "Đang tải…" : `Tải thêm (${items.length}/${pageInfo.totalElements})`}
+                    </button>
+                 </div>
+              )}
            </div>
          )}
       </div>

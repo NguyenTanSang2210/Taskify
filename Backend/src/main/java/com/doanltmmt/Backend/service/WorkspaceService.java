@@ -40,6 +40,7 @@ public class WorkspaceService {
     }
 
     /** Đợt ở trạng thái OPEN_TOPIC của khoa người dùng (Admin: mọi khoa). */
+    @Transactional(readOnly = true)
     public List<WorkspaceDTO> listOpenForTopics() {
         if (scope.hasRole("ADMIN")) {
             return repo.findByStatusOrderByIdDesc(WorkspaceStatus.OPEN_TOPIC).stream().map(WorkspaceDTO::new).toList();
@@ -49,6 +50,7 @@ public class WorkspaceService {
         return repo.findByDepartment_IdAndStatusOrderByIdDesc(dept.getId(), WorkspaceStatus.OPEN_TOPIC).stream().map(WorkspaceDTO::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<WorkspaceDTO> list(Long departmentId) {
         List<Workspace> list;
         if (departmentId == null) {
@@ -66,6 +68,7 @@ public class WorkspaceService {
         return list.stream().map(WorkspaceDTO::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public WorkspaceDTO get(Long id) {
         Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());

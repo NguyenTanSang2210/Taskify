@@ -73,7 +73,8 @@ export default function ProjectSpacePage() {
       if (isStudent) {
         arr = await progressApi.listByStudent(user.id, topicId);
       } else {
-        arr = await progressApi.listByTopic(topicId);
+        // không gian đề tài chỉ cần các báo cáo gần nhất (đầy đủ ở trang Nhận xét tiến độ)
+        arr = (await progressApi.listByTopic(topicId, { size: 100 }))?.items;
       }
       setItems(arr || []);
     } catch (e) {

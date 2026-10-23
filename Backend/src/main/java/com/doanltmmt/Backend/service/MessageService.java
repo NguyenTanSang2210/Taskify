@@ -2,11 +2,15 @@ package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.request.MessageRequest;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.Message;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.MessageRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.util.Pages;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,8 @@ import java.util.Map;
 @Service
 @SuppressWarnings("null")
 public class MessageService {
+
+    private static final Sort NEWEST_FIRST = Sort.by(Sort.Direction.DESC, "createdAt", "id");
 
     private final MessageRepository repo;
     private final UserRepository userRepo;
@@ -44,11 +50,11 @@ public class MessageService {
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> inbox() {
+    public PageResponse<Map<String, Object>> inbox(int page, int size) {
         User me = scope.requireCurrentUser();
-        // Lỗi CSDL để DataAccessErrorHandler xử lý (trước đây bị nuốt và trả danh sách rỗng, che mất sự cố)
+        Page<MessageRepository.InboxRow> rows = repo.findInboxRowsByUserId(me.getId(), Pages.of(page, size, NEWEST_FIRST));
         List<Map<String, Object>> result = new ArrayList<>();
-        for (MessageRepository.InboxRow row : repo.findInboxRowsByUserId(me.getId())) {
+        for (MessageRepository.InboxRow row : rows) {
             Map<String, Object> sender = new HashMap<>();
             sender.put("id", row.getSenderId());
             sender.put("fullName", row.getSenderName());
@@ -65,7 +71,19 @@ public class MessageService {
             item.put("createdAt", row.getCreatedAt());
             result.add(item);
         }
-        return result;
+        return new PageResponse<>(result, rows.getNumber(), rows.getSize(), rows.getTotalElements(), rows.getTotalPages());
+    }
+
+    /**
+     * Hội thoại với {@code peerId}, mới nhất trước (client đảo lại để hiển thị). Có {@code topicId} → chỉ tin trong
+     * đề tài đó và người gọi phải là thành viên đề tài.
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<MessageDTO> conversation(Long peerId, Long topicId, int page, int size) {
+        User me = scope.requireCurrentUser();
+        if (topicId != null) topicAccess.requireMember(topicAccess.loadTopicOr404(topicId));
+        return PageResponse.of(repo.findConversation(me.getId(), peerId, topicId, Pages.of(page, size, NEWEST_FIRST)),
+                MessageDTO::from);
     }
 
     @Transactional

@@ -2,6 +2,7 @@ package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.TopicDTO;
 import com.doanltmmt.Backend.dto.request.TopicRequest;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.service.TopicService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,7 +58,7 @@ public class TopicController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public Map<String, Object> getAll(
+    public PageResponse<Map<String, Object>> getAll(
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false, name = "query") String queryText,
             @RequestParam(required = false) String status,

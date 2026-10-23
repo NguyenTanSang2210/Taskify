@@ -4,6 +4,7 @@ import com.doanltmmt.Backend.dto.UserDTO;
 import com.doanltmmt.Backend.dto.request.ChangePasswordRequest;
 import com.doanltmmt.Backend.dto.request.ProfileUpdateRequest;
 import com.doanltmmt.Backend.dto.request.UserCreateRequest;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -19,6 +20,9 @@ import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.security.PasswordPolicy;
+import com.doanltmmt.Backend.util.Pages;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -146,9 +151,10 @@ public class UserService {
         return self || admin || sameDepartmentAdmin ? new UserDTO(user) : UserDTO.limited(user);
     }
 
+    /** ADMIN: mọi người dùng (lọc vai trò); {@code q} tìm theo tên đăng nhập / họ tên / email, không phân biệt hoa thường. */
     @Transactional(readOnly = true)
-    public List<UserDTO> listAll() {
-        return userRepository.findAll().stream().map(UserDTO::new).toList();
+    public PageResponse<UserDTO> listAll(String role, String q, int page, int size) {
+        return search(null, role, q, page, size);
     }
 
     @Transactional
@@ -262,16 +268,29 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserDTO> listByDepartment(Long departmentId, String role) {
+    public PageResponse<UserDTO> listByDepartment(Long departmentId, String role, String q, int page, int size) {
         if (departmentId == null && !scope.hasRole("ADMIN")) {
             User me = scope.requireCurrentUser();
             departmentId = me.getDepartment() != null ? me.getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
-        List<User> users = role != null && !role.isBlank()
-                ? userRepository.findByDepartment_IdAndRole_NameOrderByIdDesc(departmentId, role.trim().toUpperCase(Locale.ROOT))
-                : userRepository.findByDepartment_IdOrderByIdDesc(departmentId);
-        return users.stream().map(UserDTO::new).toList();
+        return search(departmentId, role, q, page, size);
+    }
+
+    private PageResponse<UserDTO> search(Long departmentId, String role, String q, int page, int size) {
+        List<Specification<User>> filters = new ArrayList<>();
+        if (departmentId != null) filters.add((root, query, cb) -> cb.equal(root.get("department").get("id"), departmentId));
+        if (role != null && !role.isBlank()) {
+            String roleName = role.trim().toUpperCase(Locale.ROOT);
+            filters.add((root, query, cb) -> cb.equal(root.get("role").get("name"), roleName));
+        }
+        if (q != null && !q.isBlank()) {
+            String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
+            filters.add((root, query, cb) -> cb.or(cb.like(cb.lower(root.get("username")), like),
+                    cb.like(cb.lower(root.get("fullName")), like), cb.like(cb.lower(root.get("email")), like)));
+        }
+        return PageResponse.of(userRepository.findAll(Specification.allOf(filters),
+                Pages.of(page, size, Sort.by(Sort.Direction.DESC, "id"))), UserDTO::new);
     }
 
     @Transactional(readOnly = true)

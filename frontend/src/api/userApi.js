@@ -1,7 +1,8 @@
 import api from '../api';
 const userApi = {
-    getAll: async () => {
-        const response = await api.get('/users');
+    // Trả về trang { items, page, size, totalElements, totalPages } — params: { role, q, page, size }
+    getAll: async (params = {}) => {
+        const response = await api.get('/users', { params });
         return response.data;
     },
     create: async (payload) => {
@@ -16,6 +17,7 @@ const userApi = {
             throw error;
         }
     },
+    // Trả về trang — params: { departmentId, role, q, page, size }
     getByDepartment: async (params = {}) => {
         const response = await api.get('/users/by-department', { params });
         return response.data;

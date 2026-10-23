@@ -1,6 +1,5 @@
 package com.doanltmmt.Backend.time;
 
-import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.config.AppTimeZone;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
@@ -10,21 +9,21 @@ import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.repository.MessageRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
 import jakarta.persistence.EntityManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Giờ ứng dụng là giờ Việt Nam; CSDL lưu UTC. Một thời điểm 16:38 (VN) phải được lưu là 09:38 (UTC)
@@ -63,7 +62,7 @@ class TimeZoneIT extends AbstractSecurityIT {
         assertEquals(VN_TIME, notificationRepo.findById(id).orElseThrow().getCreatedAt());
         mvc.perform(get("/api/notifications/mine").param("userId", s.getUser().getId().toString()).header(AUTH, bearer(s.getUser())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].createdAt").value("2030-01-15T16:38:00"));
+                .andExpect(jsonPath("$.items[0].createdAt").value("2030-01-15T16:38:00"));
     }
 
     @Test
@@ -84,7 +83,9 @@ class TimeZoneIT extends AbstractSecurityIT {
         messageRepo.saveAndFlush(m);
         em.clear();
 
-        MessageRepository.InboxRow row = messageRepo.findInboxRowsByUserId(lec.getUser().getId()).get(0);
+        MessageRepository.InboxRow row = messageRepo.findInboxRowsByUserId(lec.getUser().getId(),
+                org.springframework.data.domain.PageRequest.of(0, 10, org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))).getContent().get(0);
         assertEquals(VN_TIME, row.getCreatedAt());
         assertEquals(topic.getId(), row.getTopicId());
     }

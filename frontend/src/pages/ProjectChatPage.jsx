@@ -21,6 +21,8 @@ export default function ProjectChatPage() {
   const [selectedRecipientId, setSelectedRecipientId] = useState("");
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [convInfo, setConvInfo] = useState({ page: 0, totalPages: 0 });
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [chatSending, setChatSending] = useState(false);
   
   const messageContainerRef = useRef(null);
@@ -67,18 +69,42 @@ export default function ProjectChatPage() {
     }
   }, [isLecturer, user?.id, topicId]);
 
+  // Hội thoại với người đang chọn trong đề tài đang chọn: trang mới nhất trước (P3-06)
   const loadChatInbox = useCallback(async () => {
+    if (!selectedRecipientId) {
+      setInboxMessages([]);
+      setConvInfo({ page: 0, totalPages: 0 });
+      return;
+    }
     setChatLoading(true);
     try {
-      const data = await messageApi.inbox();
-      setInboxMessages(Array.isArray(data) ? data : []);
+      const data = await messageApi.conversation(selectedRecipientId, { topicId });
+      setInboxMessages(data?.items || []);
+      setConvInfo({ page: 0, totalPages: data?.totalPages || 0 });
     } catch (e) {
       console.error(e);
       setNotice({ type: "danger", message: "Không tải được tin nhắn" });
     } finally {
       setChatLoading(false);
     }
-  }, []);
+  }, [selectedRecipientId, topicId]);
+
+  const loadOlderMessages = async () => {
+    const next = convInfo.page + 1;
+    setLoadingOlder(true);
+    try {
+      const data = await messageApi.conversation(selectedRecipientId, { topicId, page: next });
+      setInboxMessages((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...(data?.items || []).filter((x) => !seen.has(x.id))];
+      });
+      setConvInfo({ page: next, totalPages: data?.totalPages || 0 });
+    } catch (e) {
+      setNotice({ type: "danger", message: e.message || "Không tải được tin nhắn cũ hơn" });
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
 
   const loadRecipientCandidates = useCallback(async () => {
     const candidates = [];
@@ -342,7 +368,20 @@ export default function ProjectChatPage() {
                           <p className="text-[10px] font-bold text-outline mt-2 leading-relaxed uppercase">Hãy gửi lời chào đầu tiên để bắt đầu thảo luận về đề tài.</p>
                        </div>
                     ) : (
-                       selectedConversation.map((m, idx) => {
+                       <>
+                       {convInfo.page < convInfo.totalPages - 1 && (
+                          <div className="flex justify-center">
+                             <button
+                               type="button"
+                               onClick={loadOlderMessages}
+                               disabled={loadingOlder}
+                               className="px-5 py-2 bg-surface-container text-on-surface-variant rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-surface-container-high transition-all disabled:opacity-50"
+                             >
+                               {loadingOlder ? "Đang tải…" : "Tải tin cũ hơn"}
+                             </button>
+                          </div>
+                       )}
+                       {selectedConversation.map((m, idx) => {
                           const mine = m?.sender?.id === user?.id;
                           const showSender = idx === 0 || selectedConversation[idx-1]?.sender?.id !== m?.sender?.id;
                           return (
@@ -362,7 +401,8 @@ export default function ProjectChatPage() {
                                 </div>
                              </div>
                           );
-                       })
+                       })}
+                       </>
                     )}
                  </div>
 

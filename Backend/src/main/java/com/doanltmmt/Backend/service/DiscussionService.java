@@ -3,12 +3,15 @@ package com.doanltmmt.Backend.service;
 import com.doanltmmt.Backend.dto.request.DiscussionPostRequest;
 import com.doanltmmt.Backend.dto.request.DiscussionThreadRequest;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.DiscussionPost;
 import com.doanltmmt.Backend.entity.DiscussionThread;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.DiscussionPostRepository;
 import com.doanltmmt.Backend.repository.DiscussionThreadRepository;
+import com.doanltmmt.Backend.util.Pages;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,10 +66,12 @@ public class DiscussionService {
     }
 
     @Transactional(readOnly = true)
-    public List<DiscussionPostDTO> listPosts(Long threadId) {
+    public PageResponse<DiscussionPostDTO> listPosts(Long threadId, int page, int size) {
         DiscussionThread th = loadThread(threadId);
         topicAccess.requireMember(th.getTopic());
-        return postRepo.findByThread_IdOrderByCreatedAtAsc(threadId).stream().map(DiscussionPostDTO::from).toList();
+        // cũ → mới (đọc như một cuộc trò chuyện); trang 0 là các bài đầu tiên
+        return PageResponse.of(postRepo.findByThread_Id(threadId, Pages.of(page, size, Sort.by("createdAt", "id"))),
+                DiscussionPostDTO::from);
     }
 
     @Transactional

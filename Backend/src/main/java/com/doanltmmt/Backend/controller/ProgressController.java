@@ -4,7 +4,9 @@ import com.doanltmmt.Backend.dto.request.ProgressCommentRequest;
 import com.doanltmmt.Backend.dto.request.ProgressCreateRequest;
 import com.doanltmmt.Backend.dto.request.ProgressStatusRequest;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.service.ProgressService;
+import com.doanltmmt.Backend.util.Pages;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,8 +40,10 @@ public class ProgressController {
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<ProgressReportDTO> listByTopic(@PathVariable Long topicId) {
-        return service.listByTopic(topicId);
+    public PageResponse<ProgressReportDTO> listByTopic(@PathVariable Long topicId,
+                                                       @RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = Pages.DEFAULT_SIZE) int size) {
+        return service.listByTopic(topicId, page, size);
     }
 
     @PatchMapping("/{id}/status")

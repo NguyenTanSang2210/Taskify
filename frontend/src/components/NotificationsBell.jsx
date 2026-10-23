@@ -16,8 +16,8 @@ export default function NotificationsBell() {
   const load = useCallback(async () => {
     if (!userId) return;
     try {
-      const list = await notificationsApi.listMine(userId);
-      setItems(list.slice(0, 6)); // Show top 6
+      const list = await notificationsApi.recent(userId, 6);
+      setItems(list || []);
       const cnt = await notificationsApi.countUnread(userId);
       setUnread(cnt);
     } catch { /* noop */ }
@@ -27,10 +27,10 @@ export default function NotificationsBell() {
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    Promise.all([notificationsApi.listMine(userId), notificationsApi.countUnread(userId)])
+    Promise.all([notificationsApi.recent(userId, 6), notificationsApi.countUnread(userId)])
       .then(([list, cnt]) => {
         if (cancelled) return;
-        setItems((list || []).slice(0, 6));
+        setItems(list || []);
         setUnread(cnt || 0);
       })
       .catch(() => { /* chuông không quan trọng bằng trang — bỏ qua lỗi */ });

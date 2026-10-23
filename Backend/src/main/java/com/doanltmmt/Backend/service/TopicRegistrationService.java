@@ -119,6 +119,7 @@ public class TopicRegistrationService {
         return new TopicRegistrationDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<TopicRegistrationDTO> getRegistrations(Long topicId) {
         Topic topic = topicRepo.findById(topicId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         List<TopicRegistration> list;
@@ -140,6 +141,7 @@ public class TopicRegistrationService {
         return list.stream().map(reg -> gradeService.describe(reg, true)).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<TopicRegistrationDTO> myRegistrations(Long studentId) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {

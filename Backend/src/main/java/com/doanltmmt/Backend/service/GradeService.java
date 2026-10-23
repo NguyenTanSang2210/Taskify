@@ -6,6 +6,7 @@ import com.doanltmmt.Backend.dto.request.GradeRevisionRequestBody;
 import com.doanltmmt.Backend.dto.request.GradeRevisionReviewRequest;
 import com.doanltmmt.Backend.dto.response.GradeHistoryDTO;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.GradeHistory;
 import com.doanltmmt.Backend.entity.GradeRevisionRequest;
 import com.doanltmmt.Backend.entity.Topic;
@@ -24,8 +25,8 @@ import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.util.Inputs;
+import com.doanltmmt.Backend.util.Pages;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,10 +35,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -251,7 +250,8 @@ public class GradeService {
         return GradeRevisionDTO.from(saved);
     }
 
-    public Map<String, Object> listRevisions(String status, int page, int size) {
+    @Transactional(readOnly = true)
+    public PageResponse<GradeRevisionDTO> listRevisions(String status, int page, int size) {
         GradeRevisionStatus filter = null;
         if (status != null && !status.isBlank()) {
             try {
@@ -266,16 +266,9 @@ public class GradeService {
             if (dept == null) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa thuộc khoa nào");
             departmentId = dept.getId();
         }
-        int safeSize = Math.min(Math.max(size, 1), 100);
         Page<GradeRevisionRequest> result = revisionRepo.search(filter, departmentId,
-                PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "createdAt", "id")));
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("items", result.getContent().stream().map(GradeRevisionDTO::from).toList());
-        response.put("page", result.getNumber());
-        response.put("size", result.getSize());
-        response.put("totalElements", result.getTotalElements());
-        response.put("totalPages", result.getTotalPages());
-        return response;
+                Pages.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id")));
+        return PageResponse.of(result, GradeRevisionDTO::from);
     }
 
     @Transactional
@@ -351,6 +344,7 @@ public class GradeService {
 
     // ================================================================== lịch sử
 
+    @Transactional(readOnly = true)
     public List<GradeHistoryDTO> history(Long regId) {
         TopicRegistration reg = regRepo.findById(regId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đăng ký"));

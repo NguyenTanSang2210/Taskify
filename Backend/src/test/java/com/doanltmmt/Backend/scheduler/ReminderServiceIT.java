@@ -1,9 +1,5 @@
 package com.doanltmmt.Backend.scheduler;
 
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
-import com.doanltmmt.Backend.entity.enums.NotificationType;
-import com.doanltmmt.Backend.entity.enums.ProgressStatus;
-import com.doanltmmt.Backend.entity.enums.Severity;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -13,26 +9,30 @@ import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
+import com.doanltmmt.Backend.entity.enums.Severity;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.repository.ProgressReportRepository;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
 import com.doanltmmt.Backend.service.ReminderService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /** P2-07 — nhắc tiến độ và nhắc hạn mốc: đúng đối tượng, không gửi trùng khi job chạy lại. */
 @SuppressWarnings("null")
@@ -76,7 +76,7 @@ class ReminderServiceIT extends AbstractSecurityIT {
     }
 
     private List<Notification> remindersOf(Student s, String refType) {
-        return notificationRepo.findByUser_IdOrderByCreatedAtDesc(s.getUser().getId()).stream()
+        return notificationRepo.findByUser_Id(s.getUser().getId(), Pageable.unpaged()).stream()
                 .filter(n -> n.getType() == NotificationType.REMINDER && refType.equals(n.getRefType())).toList();
     }
 

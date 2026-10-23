@@ -1,31 +1,30 @@
 package com.doanltmmt.Backend.flow;
 
-import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.Student;
-import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.User;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.repository.GradeHistoryRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
-import com.jayway.jsonpath.JsonPath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.jayway.jsonpath.JsonPath;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * P2-12 — hồi quy nghiệp vụ toàn luồng, chỉ qua API như người dùng thật:
@@ -104,7 +103,7 @@ class FullLifecycleIT extends AbstractSecurityIT {
                 Map.of("title", "Báo cáo tuần 1", "content", "Đã hoàn thành phân tích yêu cầu và thiết kế CSDL",
                         "deadline", "2030-02-01T23:59"), s1.getId(), topicId));
         ok(HttpMethod.PUT, "/api/progress/{id}/comment", lec, Map.of("lecturerComment", "Tốt, tiếp tục", "status", "DONE"), reportId);
-        assertTrue(notificationRepo.findByUser_IdOrderByCreatedAtDesc(s1.getUser().getId()).stream()
+        assertTrue(notificationRepo.findByUser_Id(s1.getUser().getId(), Pageable.unpaged()).stream()
                 .anyMatch(n -> n.getTitle().startsWith("Giảng viên nhận xét")));
 
         // 6. GV chấm điểm cả hai SV → đề tài hoàn thành

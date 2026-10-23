@@ -7,19 +7,18 @@ import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
-import com.jayway.jsonpath.JsonPath;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.nullValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import java.util.Map;
-
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.jayway.jsonpath.JsonPath;
+
+import java.util.Map;
 
 /** P2-08 — báo cáo gần giống báo cáo của SV khác cùng workspace: GV thấy cảnh báo, SV không thấy. */
 @SuppressWarnings("null")
@@ -68,9 +67,9 @@ class ProgressSimilarityIT extends AbstractSecurityIT {
 
         mvc.perform(get("/api/progress/topic/{id}", topicB.getId()).header(AUTH, bearer(lecturer.getUser())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(copy))
-                .andExpect(jsonPath("$[0].similarityScore").value(greaterThanOrEqualTo(0.8)))
-                .andExpect(jsonPath("$[0].similarToReportId").value(original));
+                .andExpect(jsonPath("$.items[0].id").value(copy))
+                .andExpect(jsonPath("$.items[0].similarityScore").value(greaterThanOrEqualTo(0.8)))
+                .andExpect(jsonPath("$.items[0].similarToReportId").value(original));
 
         // SV không thấy điểm trùng lặp (không lộ báo cáo của bạn khác)
         mvc.perform(get("/api/progress/student/{id}", s2.getId()).param("topicId", topicB.getId().toString())

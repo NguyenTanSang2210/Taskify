@@ -1,14 +1,18 @@
 package com.doanltmmt.Backend.service;
 
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.TopicDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.repository.*;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,10 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TopicServiceTest {
@@ -107,9 +107,9 @@ public class TopicServiceTest {
         Page<Topic> page = new PageImpl<>(List.of(new Topic()));
         when(topicRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
-        Map<String, Object> response = topicService.getAll(null, "search", "OPEN", null, 0, 10);
+        PageResponse<Map<String, Object>> response = topicService.getAll(null, "search", "OPEN", null, 0, 10);
 
-        assertNotNull(response.get("items"));
-        assertEquals(1, ((List<?>) response.get("items")).size());
+        assertNotNull(response.items());
+        assertEquals(1, response.items().size());
     }
 }

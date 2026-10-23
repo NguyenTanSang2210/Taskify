@@ -215,8 +215,9 @@ export default function DepartmentAdminPage() {
     const loadLecturers = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await userApi.getByDepartment({ role: 'LECTURER' });
-            setLecturers(data || []);
+            // size tối đa của API (100): đủ cho danh sách chọn giảng viên của một khoa
+            const data = await userApi.getByDepartment({ role: 'LECTURER', size: 100 });
+            setLecturers(data?.items || []);
         } catch (error) {
             console.error('Failed to load lecturers', error);
         } finally {

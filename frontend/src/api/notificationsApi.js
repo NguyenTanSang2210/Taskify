@@ -1,8 +1,14 @@
 import api from "../api";
 
 export const notificationsApi = {
-  listMine: async (userId) => {
-    const res = await api.get(`/notifications/mine`, { params: { userId } });
+  // Trang { items, page, size, totalElements, totalPages }, mới nhất trước
+  listMine: async (userId, { page = 0, size = 20 } = {}) => {
+    const res = await api.get(`/notifications/mine`, { params: { userId, page, size } });
+    return res.data;
+  },
+  // N thông báo mới nhất (LIMIT ở SQL) — cho chuông thông báo
+  recent: async (userId, limit = 6) => {
+    const res = await api.get(`/notifications/recent`, { params: { userId, limit } });
     return res.data;
   },
   countUnread: async (userId) => {

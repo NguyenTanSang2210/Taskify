@@ -1,12 +1,15 @@
 package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.response.NotificationDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.util.Pages;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,8 @@ import java.util.List;
 @Service
 @SuppressWarnings("null")
 public class NotificationService {
+
+    private static final Sort NEWEST_FIRST = Sort.by(Sort.Direction.DESC, "createdAt", "id");
 
     private final NotificationRepository notificationRepo;
     private final UserRepository userRepo;
@@ -90,8 +95,9 @@ public class NotificationService {
     // ------------------------------------------------------------------ đọc
 
     @Transactional(readOnly = true)
-    public List<NotificationDTO> mine(Long userId) {
-        return notificationRepo.findByUser_IdOrderByCreatedAtDesc(target(userId)).stream().map(NotificationDTO::from).toList();
+    public PageResponse<NotificationDTO> mine(Long userId, int page, int size) {
+        return PageResponse.of(notificationRepo.findByUser_Id(target(userId), Pages.of(page, size, NEWEST_FIRST)),
+                NotificationDTO::from);
     }
 
     @Transactional(readOnly = true)
@@ -101,8 +107,9 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public List<NotificationDTO> recent(Long userId, int limit) {
-        return notificationRepo.findByUser_IdOrderByCreatedAtDesc(target(userId)).stream()
-                .limit(Math.max(1, limit)).map(NotificationDTO::from).toList();
+        // LIMIT ở SQL (trước đây tải hết rồi mới cắt)
+        return notificationRepo.findByUser_Id(target(userId), Pages.of(0, limit, NEWEST_FIRST)).stream()
+                .map(NotificationDTO::from).toList();
     }
 
     @Transactional

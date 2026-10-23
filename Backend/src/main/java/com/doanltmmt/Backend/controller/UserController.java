@@ -4,8 +4,10 @@ import com.doanltmmt.Backend.dto.UserDTO;
 import com.doanltmmt.Backend.dto.request.ChangePasswordRequest;
 import com.doanltmmt.Backend.dto.request.ProfileUpdateRequest;
 import com.doanltmmt.Backend.dto.request.UserCreateRequest;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.service.UserService;
+import com.doanltmmt.Backend.util.Pages;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,8 +45,11 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<UserDTO> getAll() {
-        return service.listAll();
+    public PageResponse<UserDTO> getAll(@RequestParam(required = false) String role,
+                                        @RequestParam(required = false) String q,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = Pages.DEFAULT_SIZE) int size) {
+        return service.listAll(role, q, page, size);
     }
 
     @PostMapping({ "", "/create" })
@@ -62,9 +67,12 @@ public class UserController {
 
     @GetMapping("/by-department")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public List<UserDTO> listByDepartment(@RequestParam(required = false) Long departmentId,
-                                          @RequestParam(required = false) String role) {
-        return service.listByDepartment(departmentId, role);
+    public PageResponse<UserDTO> listByDepartment(@RequestParam(required = false) Long departmentId,
+                                                  @RequestParam(required = false) String role,
+                                                  @RequestParam(required = false) String q,
+                                                  @RequestParam(defaultValue = "0") int page,
+                                                  @RequestParam(defaultValue = Pages.DEFAULT_SIZE) int size) {
+        return service.listByDepartment(departmentId, role, q, page, size);
     }
 
     @GetMapping("/roles")

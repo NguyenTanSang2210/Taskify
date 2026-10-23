@@ -2,12 +2,12 @@ package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.request.MessageRequest;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.service.MessageService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,8 +26,19 @@ public class MessageController {
 
     @GetMapping("/inbox")
     @PreAuthorize("isAuthenticated()")
-    public List<Map<String, Object>> inbox() {
-        return service.inbox();
+    public PageResponse<Map<String, Object>> inbox(@RequestParam(defaultValue = "0") int page,
+                                                   @RequestParam(defaultValue = "50") int size) {
+        return service.inbox(page, size);
+    }
+
+    /** Hội thoại với một người (tùy chọn trong một đề tài), mới nhất trước — dùng "Tải tin cũ hơn" để lùi trang. */
+    @GetMapping("/conversation/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public PageResponse<MessageDTO> conversation(@PathVariable Long userId,
+                                                 @RequestParam(required = false) Long topicId,
+                                                 @RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "50") int size) {
+        return service.conversation(userId, topicId, page, size);
     }
 
     @PostMapping("/send")
