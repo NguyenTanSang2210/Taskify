@@ -103,6 +103,21 @@ if (last) {
   console.log("ℹ️  Bỏ qua kiểm tra chat: chưa có tin nhắn (chạy scripts/smoke-test.mjs trước).");
 }
 
+// ---------- P3-11: realtime vẫn chạy khi thư viện WebSocket được tải sau (lazy) ----------
+{
+  sql("UPDATE notifications SET read_at = NOW(6) WHERE user_id = " + student.userId);
+  page = await pageAs(student);
+  await page.goto(WEB + "/dashboard");
+  await page.waitForTimeout(3000); // kết nối WebSocket
+  const title = "Thông báo realtime " + Date.now();
+  const sent = await call("POST", `/notifications/create?userId=${student.userId}&title=${encodeURIComponent(title)}`, admin.token);
+  await page.waitForTimeout(2500);
+  const badge = (await page.locator("button:has(span:text('notifications')) span.rounded-full").first().textContent().catch(() => "")) || "";
+  check(sent.status === 200 && badge.trim() === "1", "P3-11: chuông nhận thông báo realtime (WebSocket tải lazy)", `huy hiệu: '${badge.trim()}'`);
+  await page.context().close();
+  sql(`DELETE FROM notifications WHERE title = '${title}'`);
+}
+
 // ---------- P3-03/P3-02: lỗi kiểm tra dữ liệu hiển thị bằng tiếng Việt ----------
 const bad = await call("POST", "/workspaces", dept.token, { name: "", startAt: "31/12/2030" });
 check(bad.status === 400 && bad.data?.code === "VALIDATION_FAILED" && /[À-ỹ]/.test(bad.data?.message || ""),
