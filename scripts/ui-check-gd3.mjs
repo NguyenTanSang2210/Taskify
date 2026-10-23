@@ -118,6 +118,35 @@ if (last) {
   sql(`DELETE FROM notifications WHERE title = '${title}'`);
 }
 
+// ---------- P3-11: quét mọi trang / tab theo vai trò sau khi tách component ----------
+{
+  const lecturer = await login("lecturer");
+  const sweep = [
+    [student, ["/", "/my-registrations", "/progress", "/project-space", "/project-chat", "/notifications", "/profile", "/dashboard"], []],
+    [lecturer, ["/lecturer-topics", "/lecturer", "/lecturer-progress", "/project-space", "/project-chat", "/dashboard", "/profile"], []],
+    [dept, ["/department-admin"], ["Không gian (Workspace)", "Danh mục Lớp", "Phân bổ Lớp", "Giảng viên & Quota", "Duyệt Đề tài", "Yêu cầu chấm lại", "Báo cáo số liệu"]],
+    [admin, ["/admin/roles", "/admin"], ["Danh bạ thành viên", "Quản lý Khoa", "Yêu cầu chấm lại", "Khởi tạo tài khoản"]],
+  ];
+  for (const [session, routes, tabs] of sweep) {
+    page = await pageAs(session);
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    const empty = [];
+    for (const route of routes) {
+      await page.goto(WEB + route, { waitUntil: "networkidle" });
+      const text = (await page.locator("main").first().innerText().catch(() => "")).trim();
+      if (text.length < 40) empty.push(route);
+    }
+    for (const tab of tabs) {
+      await page.getByRole("button", { name: tab }).first().click();
+      await page.waitForTimeout(700);
+    }
+    check(errors.length === 0 && empty.length === 0, `P3-11: các trang của ${session.role} hiển thị bình thường (${routes.length} trang, ${tabs.length} tab)`,
+      [...errors, ...empty.map((r) => "trống: " + r)].join(" | "));
+    await page.context().close();
+  }
+}
+
 // ---------- P3-03/P3-02: lỗi kiểm tra dữ liệu hiển thị bằng tiếng Việt ----------
 const bad = await call("POST", "/workspaces", dept.token, { name: "", startAt: "31/12/2030" });
 check(bad.status === 400 && bad.data?.code === "VALIDATION_FAILED" && /[À-ỹ]/.test(bad.data?.message || ""),
