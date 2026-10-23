@@ -32,6 +32,8 @@ public final class ErrorCodes {
     public static final String TOPIC_FULL = "TOPIC_FULL";
     public static final String DUPLICATE_REGISTRATION = "DUPLICATE_REGISTRATION";
     public static final String GRADE_LOCKED = "GRADE_LOCKED";
+    /** File import (P4-03) không đọc được: sai định dạng, thiếu cột bắt buộc, quá số dòng. */
+    public static final String IMPORT_FILE_INVALID = "IMPORT_FILE_INVALID";
 
     /** Mã mặc định cho một mã HTTP (khi lỗi không mang mã riêng). */
     public static String forStatus(HttpStatusCode status) {

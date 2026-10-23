@@ -28,6 +28,13 @@ Không có đăng ký công khai: mọi tài khoản do **Admin** tạo (mục *
 
 **Quên mật khẩu:** trang đăng nhập → *Quên mật khẩu* → nhập **tên đăng nhập hoặc email** → nhận mã qua email → đặt mật khẩu mới.
 
+**Nhập hàng loạt từ Excel** (Admin: *Quản trị hệ thống → Nhập từ Excel*; quản trị khoa: *Quản trị khoa → Nhập từ Excel*, chỉ cho khoa của mình):
+1. Chọn **Sinh viên** hoặc **Giảng viên** (Admin chọn thêm khoa) → *Tải file mẫu*.
+2. Điền danh sách vào sheet "Danh sách" — sinh viên: MSSV (là tên đăng nhập), họ tên, email, mã lớp, số điện thoại; giảng viên: mã giảng viên, họ tên, email, học vị, chuyên ngành, số điện thoại. Tối đa 2000 dòng/file, tiêu đề cột không cần đúng thứ tự.
+3. Chọn file → *Kiểm tra file*: hệ thống báo lỗi **từng dòng** (thiếu dữ liệu, email sai định dạng, trùng trong file, đã có tài khoản, lớp không thuộc khoa…) mà chưa ghi gì. Có thể *Tải danh sách lỗi (CSV)* để sửa.
+4. *Nhập N tài khoản hợp lệ*: chỉ các dòng hợp lệ được tạo, dòng lỗi bị bỏ qua. Tài khoản ở trạng thái **chưa kích hoạt**; mỗi người nhận mã kích hoạt qua email (gửi dần để không bị máy chủ email chặn).
+5. Mã lớp chưa có trong khoa: báo lỗi, hoặc chọn *Tự tạo lớp chưa có trong khoa*.
+
 **Hồ sơ cá nhân** (*Hồ sơ của tôi*): sửa họ tên, email; đổi mật khẩu (cần mật khẩu hiện tại).
 
 ---

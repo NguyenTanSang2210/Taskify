@@ -148,7 +148,7 @@
 | P3-14 | Access token ngắn hạn + Refresh token | P1 | 1,5 ngày | ✅ |
 | P4-01 | Dashboard thống kê nâng cao | P1 | 3 ngày | ⬜ |
 | P4-02 | Giao diện Audit Log cho Admin | P2 | 1 ngày | ⬜ |
-| P4-03 | Import người dùng/lớp từ Excel | P1 | 2 ngày | ⬜ |
+| P4-03 | Import người dùng/lớp từ Excel | P1 | 2 ngày | ✅ |
 | P4-04 | Quản lý nhóm (Team) — phát triển sau v1.0 | P3 | 3–4 ngày | 🕒 |
 | P4-05 | Nộp bài theo milestone + chấm theo mốc | P2 | 3 ngày | ⬜ |
 | P4-06 | Cài đặt thông báo cá nhân + email digest | P3 | 1,5 ngày | ⬜ |
@@ -1757,18 +1757,20 @@ Số truy vấn đo bằng Hibernate statistics trong `QueryCountIT` (không ch�
 
 ---
 
-### ⬜ P4-03 — Import người dùng/lớp từ Excel
+### ✅ P4-03 — Import người dùng/lớp từ Excel
 
 > Vì đăng ký công khai đã bị tắt (D-02 = A), đây là cách chính để đưa **hàng loạt** sinh viên vào hệ thống mỗi học kỳ → ưu tiên hạng 2.
 
-- [ ] Mẫu file Excel tải về (MSSV, họ tên, email, lớp / mã GV, học vị, chuyên ngành).
-- [ ] Quyền: ADMIN (mọi khoa), DEPT_ADMIN (chỉ khoa mình — người dùng import tự gán khoa).
-- [ ] Upload → **xem trước + báo lỗi từng dòng** (trùng MSSV/email, lớp không tồn tại, email sai định dạng…) → xác nhận import.
-- [ ] Tùy chọn tự tạo lớp học thuật chưa có.
-- [ ] Tài khoản tạo ra ở trạng thái **chưa kích hoạt** + gửi email kích hoạt (dùng luồng của P1-09) — khớp quy trình ở tài liệu vận hành mục 1. Gửi email theo lô qua hàng đợi async (P2-06) để không bị Gmail chặn.
-- [ ] Import chạy trong transaction; báo cáo kết quả (thành công X, lỗi Y) + tải file lỗi.
+- [x] Mẫu file Excel tải về (MSSV, họ tên, email, lớp / mã GV, học vị, chuyên ngành).
+- [x] Quyền: ADMIN (mọi khoa), DEPT_ADMIN (chỉ khoa mình — người dùng import tự gán khoa).
+- [x] Upload → **xem trước + báo lỗi từng dòng** (trùng MSSV/email, lớp không tồn tại, email sai định dạng…) → xác nhận import.
+- [x] Tùy chọn tự tạo lớp học thuật chưa có.
+- [x] Tài khoản tạo ra ở trạng thái **chưa kích hoạt** + gửi email kích hoạt (dùng luồng của P1-09) — khớp quy trình ở tài liệu vận hành mục 1. Gửi email theo lô qua hàng đợi async (P2-06) để không bị Gmail chặn.
+- [x] Import chạy trong transaction; báo cáo kết quả (thành công X, lỗi Y) + tải file lỗi.
 
-**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: xem Changelog
+
+**Kết quả:** `GET /api/users/import/template?kind=STUDENT|LECTURER` (file mẫu + sheet hướng dẫn), `POST /api/users/import/preview` (báo cáo từng dòng, không ghi), `POST /api/users/import` (kiểm tra lại y hệt rồi tạo **các dòng hợp lệ** trong một transaction, bỏ qua dòng lỗi). Tiêu đề cột so khớp không dấu, không phân biệt thứ tự; tối đa 5 MB / 2000 dòng. Tài khoản chưa kích hoạt, dùng chung một hash mật khẩu ngẫu nhiên (BCrypt từng dòng quá chậm), mã kích hoạt gửi sau commit. Hàng đợi mail nâng từ 100 lên 5000 việc + `CallerRunsPolicy` (trước đây import > 100 người sẽ **mất email**), giãn nhịp `app.mail.min-interval-ms` (200 ms). "Tải file lỗi" là CSV tạo ở trình duyệt. Giao diện: tab *Nhập từ Excel* ở trang Admin và Quản trị khoa. Test: `UserImportIT` (8), `MailDispatcherPacingTest`, `errorsCsv.test.js`, `ui-check-gd4.mjs`.
 
 ---
 

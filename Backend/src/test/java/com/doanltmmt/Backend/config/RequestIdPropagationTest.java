@@ -42,7 +42,7 @@ class RequestIdPropagationTest {
 
     @Test
     void mailExecutorCarriesTheRequestId() throws Exception {
-        ThreadPoolTaskExecutor executor = (ThreadPoolTaskExecutor) new AsyncConfig().mailExecutor();
+        ThreadPoolTaskExecutor executor = (ThreadPoolTaskExecutor) new AsyncConfig().mailExecutor(100);
         try {
             MDC.put(RequestIdFilter.MDC_KEY, "req-2");
             CompletableFuture<String> onMailThread = new CompletableFuture<>();

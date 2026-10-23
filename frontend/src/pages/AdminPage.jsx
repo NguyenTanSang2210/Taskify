@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import InlineNotice from '../components/InlineNotice';
+import UserImportPanel from '../components/userImport/UserImportPanel';
 import GradeRevisionPanel from '../components/GradeRevisionPanel';
 import { useAdmin } from './admin/useAdmin';
 import CreateUserTab from './admin/CreateUserTab';
@@ -54,6 +55,7 @@ export default function AdminPage() {
                     { id: 'createUser', label: 'Khởi tạo tài khoản', icon: 'person_add' },
                     { id: 'userList', label: 'Danh bạ thành viên', icon: 'group_work' },
                     { id: 'departments', label: 'Quản lý Khoa', icon: 'account_tree' },
+                    { id: 'importUsers', label: 'Nhập từ Excel', icon: 'upload_file' },
                     { id: 'gradeRevisions', label: 'Yêu cầu chấm lại', icon: 'lock_reset' }
                 ].map(tab => (
                     <button 
@@ -84,6 +86,8 @@ export default function AdminPage() {
 
                 {activeTab === 'userList' && <UserListTab {...d} />}
 
+                {activeTab === 'importUsers' && <UserImportPanel departments={d.departments} />}
+
                 {activeTab === 'gradeRevisions' && <GradeRevisionPanel />}
 
                 {activeTab === 'departments' && <DepartmentsTab {...d} />}
@@ -96,7 +100,7 @@ export default function AdminPage() {
                </div>
                <p className="text-xs font-bold text-on-surface-variant leading-relaxed">
                   <span className="font-black text-primary mr-2 uppercase tracking-widest">Thông số quản trị:</span>
-                  Tài khoản được khởi tạo sẽ mặc định được kích hoạt. Hãy đảm bảo mật khẩu khởi tạo đủ an toàn và cung cấp cho người dùng trong lần đăng nhập đầu tiên.
+                  Để trống mật khẩu khi tạo tài khoản: người dùng nhận mã kích hoạt qua email và tự đặt mật khẩu. Nếu đặt mật khẩu tạm, người dùng bắt buộc đổi ở lần đăng nhập đầu tiên. Nhập hàng loạt: tab "Nhập từ Excel".
                </p>
             </div>
         </div>

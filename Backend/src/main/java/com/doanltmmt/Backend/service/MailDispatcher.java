@@ -30,13 +30,18 @@ public class MailDispatcher {
     private final ObjectProvider<JavaMailSender> mailSender;
     private final String fromEmail;
     private final long retryDelayMillis;
+    private final long minIntervalMillis;
+    /** Thời điểm sớm nhất được gửi email kế tiếp (dùng chung mọi luồng gửi). */
+    private long nextSendAt = 0;
 
     public MailDispatcher(ObjectProvider<JavaMailSender> mailSender,
                           @Value("${spring.mail.username:}") String fromEmail,
-                          @Value("${app.mail.retry-delay-ms:2000}") long retryDelayMillis) {
+                          @Value("${app.mail.retry-delay-ms:2000}") long retryDelayMillis,
+                          @Value("${app.mail.min-interval-ms:200}") long minIntervalMillis) {
         this.mailSender = mailSender;
         this.fromEmail = fromEmail;
         this.retryDelayMillis = retryDelayMillis;
+        this.minIntervalMillis = Math.max(0, minIntervalMillis);
     }
 
     @Async(AsyncConfig.MAIL_EXECUTOR)
@@ -49,7 +54,9 @@ public class MailDispatcher {
         }
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
-                sender.send(build(sender, mail));
+                MimeMessage message = build(sender, mail);
+                pace(); // ngay trước khi gửi: thời gian dựng email không làm hai lần gửi dồn vào nhau
+                sender.send(message);
                 log.info("Đã gửi email \"{}\"", mail.subject());
                 return;
             } catch (MailException | MessagingException e) {
@@ -73,6 +80,22 @@ public class MailDispatcher {
         helper.setSubject(mail.subject());
         helper.setText(EmailTemplates.toPlainText(mail.htmlBody()), mail.htmlBody());
         return message;
+    }
+
+    /**
+     * Giãn nhịp: các email cách nhau tối thiểu {@code app.mail.min-interval-ms} trên toàn ứng dụng — gửi hàng loạt
+     * (import tài khoản) không dồn dập vào máy chủ SMTP (Gmail chặn khi gửi quá nhanh).
+     */
+    private void pace() {
+        if (minIntervalMillis == 0) return;
+        long wait;
+        synchronized (this) {
+            long now = System.currentTimeMillis();
+            long sendAt = Math.max(now, nextSendAt);
+            nextSendAt = sendAt + minIntervalMillis;
+            wait = sendAt - now;
+        }
+        if (wait > 0) sleep(wait);
     }
 
     private static void sleep(long millis) {

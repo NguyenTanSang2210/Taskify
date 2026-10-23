@@ -57,6 +57,7 @@ Mọi lỗi của API `/api/**` trả về cùng một định dạng JSON. Các
 | `TOPIC_FULL` | 400 | Đề tài đã đủ số sinh viên |
 | `DUPLICATE_REGISTRATION` | 400 | Sinh viên đã có hoặc đang chờ duyệt một đăng ký trong đợt |
 | `GRADE_LOCKED` | 400 | Điểm đã khóa, phải gửi yêu cầu chấm lại |
+| `IMPORT_FILE_INVALID` | 400 | File nhập tài khoản (P4-03) không dùng được: không phải .xlsx, quá 5 MB / 2000 dòng, thiếu cột bắt buộc, không có dòng dữ liệu, hoặc không còn dòng hợp lệ nào để nhập |
 
 ## Thêm mã mới
 

@@ -7,7 +7,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +23,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findByEmail(String email);
 
     boolean existsByRole_Name(String roleName);
+
+    /** Các tên đăng nhập trong danh sách đã có tài khoản (so khớp như cột username — không phân biệt hoa thường). */
+    @Query("select u.username from User u where u.username in :usernames")
+    List<String> findExistingUsernames(@Param("usernames") Collection<String> usernames);
+
+    @Query("select u.email from User u where u.email in :emails")
+    List<String> findExistingEmails(@Param("emails") Collection<String> emails);
     long countByDepartment_Id(Long departmentId);
     /** Quản trị khoa của một khoa (nhận thông báo yêu cầu chấm lại). */
     List<User> findByDepartment_IdAndRole_NameOrderByIdDesc(Long departmentId, String roleName);

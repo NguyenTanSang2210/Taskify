@@ -1,5 +1,6 @@
 import InlineNotice from '../components/InlineNotice';
 import GradeRevisionPanel from '../components/GradeRevisionPanel';
+import UserImportPanel from '../components/userImport/UserImportPanel';
 import { useDepartmentAdmin } from './departmentAdmin/useDepartmentAdmin';
 import WorkspacesTab from './departmentAdmin/WorkspacesTab';
 import ClassesTab from './departmentAdmin/ClassesTab';
@@ -52,6 +53,7 @@ export default function DepartmentAdminPage() {
                     { id: 'workspaceClasses', label: 'Phân bổ Lớp', icon: 'hub' },
                     { id: 'assignments', label: 'Giảng viên & Quota', icon: 'assignment_ind' },
                     { id: 'topics', label: 'Duyệt Đề tài', icon: 'inventory_2' },
+                    { id: 'importUsers', label: 'Nhập từ Excel', icon: 'upload_file' },
                     { id: 'gradeRevisions', label: 'Yêu cầu chấm lại', icon: 'lock_reset' },
                     { id: 'stats', label: 'Báo cáo số liệu', icon: 'bar_chart' }
                 ].map(tab => (
@@ -72,7 +74,7 @@ export default function DepartmentAdminPage() {
 
             {/* Main Content Rendering Layer */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden min-h-[500px]">
-                {loading && activeTab !== 'stats' && activeTab !== 'gradeRevisions' && (
+                {loading && activeTab !== 'stats' && activeTab !== 'gradeRevisions' && activeTab !== 'importUsers' && (
                     <div className="py-32 flex flex-col items-center justify-center opacity-30 select-none">
                         <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mb-4"></div>
                         <p className="text-[10px] font-black uppercase tracking-widest">Đang trích xuất dữ liệu...</p>
@@ -88,6 +90,8 @@ export default function DepartmentAdminPage() {
                 {activeTab === 'assignments' && !loading && <AssignmentsTab {...d} />}
 
                 {activeTab === 'topics' && !loading && <TopicsTab {...d} />}
+
+                {activeTab === 'importUsers' && <UserImportPanel />}
 
                 {activeTab === 'gradeRevisions' && <GradeRevisionPanel />}
 
