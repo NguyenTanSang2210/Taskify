@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = {"department", "role", "role.privileges"})
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
+
+    boolean existsByRole_Name(String roleName);
     long countByDepartment_Id(Long departmentId);
     /** Quản trị khoa của một khoa (nhận thông báo yêu cầu chấm lại). */
     List<User> findByDepartment_IdAndRole_NameOrderByIdDesc(Long departmentId, String roleName);

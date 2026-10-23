@@ -38,6 +38,8 @@ services:
       # Seed dữ liệu demo chỉ có tác dụng với profile dev
       APP_SEED_ENABLED: ${APP_SEED_ENABLED:-false}
       APP_SEED_OTP_EMAIL: ${APP_SEED_OTP_EMAIL:-}
+      APP_BOOTSTRAP_ADMIN_USERNAME: ${APP_BOOTSTRAP_ADMIN_USERNAME:-}
+      APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-}
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-doan_ltmmt}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-ktpm}
       DB_PASSWORD: ${MYSQL_PASSWORD:?Thiếu MYSQL_PASSWORD trong .env — chạy .\scripts\init-env.ps1}

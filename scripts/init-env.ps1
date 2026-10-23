@@ -100,6 +100,8 @@ if ((Test-Path $envPath) -and -not $Force) {
         JWT_SECRET             = $jwtSecret
         MYSQL_PASSWORD         = $mysqlPassword
         MYSQL_ROOT_PASSWORD    = $mysqlRootPassword
+        # dev chạy qua http:// (kể cả IP LAN) → cookie refresh không đặt Secure; prod bắt buộc HTTPS
+        APP_AUTH_REFRESH_COOKIE_SECURE = $(if ($Profile -eq "dev") { "false" } else { "true" })
     }
     if ($OtpEmail) { $values["APP_SEED_OTP_EMAIL"] = $OtpEmail }
     Write-Utf8NoBom $envPath (Set-EnvValues (Get-Content $templatePath -Encoding UTF8) $values)
