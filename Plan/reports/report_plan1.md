@@ -574,3 +574,64 @@ Test mới: `UiDataContractIT` (5), `InputErrorHandlerTest` (2); `ui-check-gd2.m
 2. Lần đầu chạy code mới trên máy, Flyway tự nâng cấp DB; nên **sao lưu DB trước**:
    `docker exec ktpm-db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" doan_ltmmt' > backup.sql`
 3. Nếu `Backend/.env` có `DB_URL` thì giữ nguyên `serverTimezone=UTC` (mặc định của `init-env.ps1`).
+
+---
+
+## 14. Giai đoạn 3 — Củng cố kỹ thuật (hoàn thành 14/14) — 23/10/2026
+
+> Commit trên `develop`: `fa28d7f` (P3-01) → commit tài liệu P3-13. Chi tiết từng task: `Plan/plan1.md` mục 7.
+
+### 14.1. Kết quả theo task
+
+| Task | Kết quả chính | Đo được |
+|---|---|---|
+| P3-01 Flyway | V1 baseline (chạy được trên DB cũ) → V6; `ddl-auto=validate` | Nâng cấp thật DB của `v0.1.0`, `v0.2.0` |
+| P3-02 Request DTO | 24 record + Bean Validation, thông báo tiếng Việt có tên trường | `@RequestBody Map` trong controller: **0** |
+| P3-03 Lỗi chuẩn | `{code, message, errors[], requestId…}` cho mọi lỗi, kể cả filter bảo mật | `ErrorFormatIT` |
+| P3-04 Enum | 8 enum, quy tắc chuyển trạng thái trong enum | `normalizeStatus`: 7 → **0** |
+| P3-05 Service | 17 service mới; controller < 120 dòng, không dùng repository | `LayeringTest` |
+| P3-06 Phân trang | `PageResponse` (size ≤ 100), tìm kiếm người dùng/audit, "Tải thêm" | `PaginationIT` |
+| P3-07 Truy vấn | Gom nhóm + EntityGraph + index V5 | Danh sách đề tài **55 → 7** truy vấn; thông báo 7 → 4; tiến độ 11 → 7; đăng ký theo đề tài 18 → 10; đăng ký của tôi 14 → 8 |
+| P3-08 Logging/health | Request id xuyên suốt, log JSON ở prod, readiness chỉ phụ thuộc DB | Stack lên `healthy` ~28 giây |
+| P3-09 Test | Testcontainers, JaCoCo, Vitest | **325** test backend · độ phủ dòng **87,6%** (service 87,0%) · **28** test frontend |
+| P3-10 CI | verify + JaCoCo check, lint/test/build, dựng stack Docker `--wait` | CI xanh trên `develop` |
+| P3-11 Frontend | Layout theo dữ liệu, route lazy, tách 8 trang, API qua `src/api`, `useLoadEffect` | Bundle **737 → 340 KB** (gzip 188 → 110); file lớn nhất 893 → **352** dòng; lint 34 cảnh báo → **0** |
+| P3-12 Tên | Taskify ở mọi chỗ người dùng/vận hành thấy | — |
+| P3-13 Tài liệu | README, ARCHITECTURE, SECURITY, ADR 0001–0010, DEPLOYMENT, CONTRIBUTING, vận hành | — |
+| P3-14 Phiên | Access 15 phút trong bộ nhớ + refresh xoay vòng cookie HttpOnly, phát hiện dùng lại | `RefreshTokenIT` (8) |
+
+### 14.2. Lỗi phát hiện trong GĐ3 và đã xử lý
+
+| # | Vấn đề | Mức độ | Xử lý |
+|---|---|---|---|
+| 1 | `EntityGraph` kiểu FETCH làm quan hệ EAGER ngoài graph thành lazy → `/api/users` 500 (OSIV tắt). Test chạy trong transaction nên không lộ | 🔴 | Đổi sang `LOAD`; thêm `QueryCountIT` không chạy trong transaction |
+| 2 | Commit `f95ef2a` lỗi biên dịch: công cụ dọn import xóa nhầm import của `SecurityConfig` (nhận nhầm `/*` trong chuỗi `"/api/**"`) | 🟠 | Sửa ở `7efe182`; từ đó luôn biên dịch + test **sau** bước dọn import, trước khi commit |
+| 3 | Giới hạn refresh 30/phút làm tải lại trang liên tục bị 429 | 🟡 | 300/phút (dev 1000) |
+| 4 | 401 sau khi refresh thất bại quay lại trang đăng nhập nhưng cookie còn hiệu lực đăng nhập lại ngay | 🟡 | `sessionExpired()` thu hồi phiên trước khi chuyển trang |
+| 5 | `.properties` tiếng Việt bị lỗi font (Spring đọc ISO-8859-1); build-info hiện năm 1980 | 🟢 | Escape `\u`; đặt `<time>` cho build-info |
+| 6 | `.env.docker.example` vẫn để `JWT_EXPIRATION=86400000` (24 giờ, trước P3-14) | 🟡 | 900000 + biến refresh token; `init-env.ps1` đặt cookie không-`Secure` cho profile dev |
+| 7 | Bản cài production mới **không có cách tạo tài khoản Admin đầu tiên** (seed chỉ chạy ở dev) | 🟠 | `AdminBootstrap`: `APP_BOOTSTRAP_ADMIN_USERNAME/EMAIL` → Admin chưa kích hoạt + mã kích hoạt qua email; chỉ khi chưa có Admin. Đã thử trên CSDL trống |
+
+### 14.3. Kiểm thử cuối
+
+| Hạng mục | Kết quả |
+|---|---|
+| `mvnw verify` | **325/325**, JaCoCo đạt ngưỡng (≥ 75% / service ≥ 80%) |
+| `npm run check` | lint **0 cảnh báo** · Vitest **28/28** · build đạt |
+| Smoke test | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** (29 kịch bản) |
+| Giao diện | `ui-check` · `ui-check-gd2` · `ui-check-gd3` đều đạt (gồm quét mọi trang/tab của 4 vai trò sau khi tách component) |
+
+### 14.4. Còn lại / chưa đạt
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| 1 | Bundle ban đầu 340 KB thô (mục tiêu 250 KB); gzip 110 KB | Phần lớn là React + router + axios; tách vendor chunk hoặc bỏ dần thư viện ít dùng ở P4-11 |
+| 2 | Còn 12 quan hệ JPA `EAGER` | Đổi `LAZY` từng quan hệ khi có `QueryCountIT` bao phủ |
+| 3 | Kịch bản Playwright chưa chạy trong CI | Đưa vào job `docker-compose-check` (cần dữ liệu seed) |
+| 4 | `/actuator/health` tổng báo DOWN khi SMTP lỗi (readiness vẫn UP — cố ý) | Đã ghi rõ trong `DEPLOYMENT.md` |
+
+### 14.5. Việc của bạn
+
+1. Merge PR `develop` → `main`, tạo tag **`v0.3.0-business`** (GĐ2) và **`v0.4.0-hardening`** (GĐ3).
+2. **Sao lưu DB trước** khi chạy bản mới (Flyway sẽ chạy V4–V6): `docker exec taskify-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -uroot doan_ltmmt' > backup.sql`. Container nay tên `taskify-*` (không còn `ktpm-*`).
+3. Truy cập qua HTTP bằng IP LAN (không phải `localhost`) thì đặt `APP_AUTH_REFRESH_COOKIE_SECURE=false` trong `.env`, nếu không trình duyệt sẽ không giữ phiên đăng nhập. Production: dùng HTTPS (`docs/DEPLOYMENT.md`).

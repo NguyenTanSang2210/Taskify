@@ -1,64 +1,35 @@
 # Taskify — Frontend
 
-## 1. Tong quan
-Frontend la ung dung React + Vite, cung cap giao dien cho 4 vai tro:
-- ADMIN
-- DEPARTMENT_ADMIN
-- LECTURER
-- STUDENT
+React 19 + Vite + Tailwind CSS. Kiến trúc: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md#frontend).
 
-Muc tieu cua frontend:
-- Hien thi du lieu nghiep vu theo role.
-- Goi REST API den backend qua `/api/*`.
-- Nhan cap nhat realtime qua WebSocket `/ws`.
+## Cấu trúc `src/`
 
-## 2. Cong nghe chinh
-- React 19
-- Vite
-- React Router
-- Axios
-- Bootstrap + Bootstrap Icons
-- STOMP/SockJS (realtime)
+| Thư mục | Nội dung |
+|---|---|
+| `routes/AppRoutes.jsx` | Khai báo route; mọi trang tải lười (`React.lazy`) |
+| `layouts/`, `components/Sidebar.jsx`, `config/navigation.js` | Khung giao diện, menu theo vai trò |
+| `pages/` | Mỗi màn hình một file; trang lớn có thư mục con chứa hook dữ liệu + component từng tab |
+| `api/` | Mọi lời gọi HTTP theo domain (`topicApi`, `workspaceApi`, …) — trang không gọi axios trực tiếp |
+| `api.js` | axios instance: gắn access token, làm mới phiên một lần khi gặp 401, chuẩn hóa lỗi (`code`, `message`, `fieldErrors`) |
+| `auth/session.js`, `context/AuthContext.jsx` | Access token trong bộ nhớ, khôi phục phiên qua cookie khi tải lại trang, đồng bộ đăng xuất giữa các tab |
+| `ws/stomp.js` | Kết nối STOMP/SockJS (tải lười) |
+| `hooks/` | `useLoadEffect` (tải dữ liệu sau render), `useMediaQuery` |
+| `constants/status.js` | Nhãn tiếng Việt cho các trạng thái |
 
-## 3. Cau truc va trach nhiem module
-- `src/pages`: cac man hinh nghiep vu theo role va quy trinh.
-- `src/components`: thanh phan dung lai (navbar, bang, notice, progress row, ...).
-- `src/api`: lop giao tiep backend theo domain (`topicApi`, `registrationApi`, ...).
-- `src/context`: quan ly auth state va thong tin user dang dang nhap.
-- `src/ws`: ket noi STOMP/SockJS va subscribe thong diep realtime.
-- `src/App.jsx`: khai bao route va role guard cap ung dung.
-
-## 4. Luong hoat dong so luoc
-1. User dang nhap tu trang login.
-2. Frontend goi API auth, luu `token` + `user` vao local storage/context.
-3. Axios interceptor gan `Authorization` cho request can bao mat.
-4. Router dieu huong man hinh theo role.
-5. Cac man hinh goi API theo module nghiep vu.
-6. Neu co cap nhat realtime, frontend nhan qua `/ws` va refresh UI.
-
-## 5. Chay frontend local
-Tu thu muc `frontend/`:
+## Lệnh
 
 ```powershell
 npm ci
-npm run dev
+npm run dev        # http://localhost:5175, proxy /api và /ws tới http://localhost:8080
+                   # dùng backend trong Docker: $env:VITE_PROXY_TARGET = "http://localhost:8081"
+npm run check      # lint (0 cảnh báo) → test (Vitest) → build
+npm run test:watch
 ```
 
-Mac dinh chay tai: `http://localhost:5175`
+Yêu cầu Node.js ≥ 22.12. Bản build (`dist/`) được nginx phục vụ trong image Docker (`Dockerfile`, `nginx.conf` — header bảo mật, CSP, proxy `/api`, `/ws`).
 
-## 6. Build, lint, preview
-```powershell
-npm run lint
-npm run build
-npm run preview
-```
+## Quy ước
 
-## 7. Quy uoc phat trien frontend
-- Uu tien de logic nghiep vu o lop `api`/`service`, component tap trung render.
-- Moi route moi phai kiem tra role guard va quyen truy cap.
-- API file dat ten theo domain de de truy vet va bao tri.
-
-## 8. Tham khao
-- Tong quan du an: `../README.md`
-- Tai lieu backend: `../Backend/README.md`
-- Bao cao ky thuat: `../docs/TECHNICAL_REPORT.md`
+- Tải dữ liệu: `useCallback` cho hàm tải + `useLoadEffect(load)`; giá trị suy ra được thì tính trong render, không đồng bộ bằng `useEffect`.
+- Lỗi API: hiển thị `err.message` (tiếng Việt từ backend), lỗi từng ô nhập lấy từ `err.fieldErrors`.
+- Trang mới: thêm route ở `AppRoutes.jsx` (bọc `RequireRole`) và mục menu ở `config/navigation.js`.
