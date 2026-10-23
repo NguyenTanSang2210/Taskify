@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.db;
 
+import com.doanltmmt.Backend.support.TestDatabase;
 import org.flywaydb.core.Flyway;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * P3-01 — migration Flyway chạy đúng trên CSDL riêng {@value #SCHEMA} (tạo mới mỗi test, không đụng DB của ứng dụng):
  * DB trống → đủ schema + vai trò; DB cũ (tạo bằng ddl-auto, thiếu cột/bảng, dữ liệu kiểu cũ) → nâng cấp tại chỗ.
- * Cần quyền CREATE DATABASE: dùng FLYWAY_IT_USERNAME / FLYWAY_IT_PASSWORD nếu có, không thì tài khoản DB_USERNAME.
+ * Cần quyền CREATE DATABASE: FLYWAY_IT_USERNAME / FLYWAY_IT_PASSWORD (hoặc DB_USERNAME); với Testcontainers dùng root.
  */
 class FlywayMigrationIT {
 
@@ -31,11 +32,12 @@ class FlywayMigrationIT {
 
     @BeforeEach
     void recreateSchema() throws SQLException {
-        String dbUrl = System.getenv("DB_URL");
-        assumeTrue(dbUrl != null && dbUrl.startsWith("jdbc:mysql://"), "Cần DB_URL trỏ tới MySQL");
+        TestDatabase.Info db = TestDatabase.get(); // DB_URL hoặc MySQL trong Testcontainers (P3-09)
+        String dbUrl = db.url();
+        assumeTrue(dbUrl != null && dbUrl.startsWith("jdbc:mysql://"), "Cần CSDL MySQL");
         serverUrl = dbUrl.replaceFirst("(jdbc:mysql://[^/]+/)[^?]*", "$1" + SCHEMA);
-        user = env("FLYWAY_IT_USERNAME", env("DB_USERNAME", "root"));
-        password = env("FLYWAY_IT_PASSWORD", env("DB_PASSWORD", ""));
+        user = db.adminUser();
+        password = db.adminPassword();
         try (Connection c = DriverManager.getConnection(dbUrl.replaceFirst("(jdbc:mysql://[^/]+/)[^?]*", "$1"), user, password);
              Statement st = c.createStatement()) {
             st.execute("DROP DATABASE IF EXISTS " + SCHEMA);
@@ -45,10 +47,6 @@ class FlywayMigrationIT {
         }
     }
 
-    private static String env(String key, String fallback) {
-        String v = System.getenv(key);
-        return v == null || v.isBlank() ? fallback : v;
-    }
 
     private Flyway flyway(String target) {
         var config = Flyway.configure().dataSource(serverUrl, user, password).locations("classpath:db/migration")
