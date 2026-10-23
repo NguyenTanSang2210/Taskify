@@ -1,11 +1,22 @@
 package com.doanltmmt.Backend.config;
 
+import com.doanltmmt.Backend.security.JwtAuthenticationFilter;
+import com.doanltmmt.Backend.security.SecurityErrorHandlers;
+import com.doanltmmt.Backend.service.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -43,7 +54,7 @@ public class SecurityConfig {
                                                    @Value("${app.swagger.public:false}") boolean swaggerPublic) throws Exception {
         http
                 // CSRF không áp dụng: xác thực bằng header Authorization (Bearer), không dùng cookie/session.
-                // Khi có refresh token trong cookie (P3-14) phải bảo vệ CSRF cho endpoint đó (SameSite + kiểm tra Origin).
+                // Riêng cookie refresh token (P3-14) có chống CSRF: SameSite=Strict + kiểm tra Origin (RefreshCookie).
                 .csrf(csrf -> csrf.disable())
                 // Bật CORS trong Spring Security để preflight/POST từ frontend không bị 403
                 .cors(cors -> {
