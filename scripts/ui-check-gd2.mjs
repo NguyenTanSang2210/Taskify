@@ -10,7 +10,7 @@
  * Cần chạy scripts/smoke-test.mjs TRƯỚC (để có một sinh viên đã được chấm điểm trong đợt đang thực hiện).
  * Đọc mã OTP từ container DB (dev chưa gửi email thật).
  *
- * Biến môi trường: API_URL, WEB_URL, DB_CONTAINER (ktpm-db), PASSWORD (123456), EDGE_PATH, PW_MODULE, SHOT_DIR.
+ * Biến môi trường: API_URL, WEB_URL, DB_CONTAINER (taskify-db), PASSWORD (123456), EDGE_PATH, PW_MODULE, SHOT_DIR.
  */
 import { execSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -20,7 +20,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 const API = process.env.API_URL || "http://localhost:8081/api";
 const WEB = process.env.WEB_URL || "http://localhost:5175";
-const DB = process.env.DB_CONTAINER || "ktpm-db";
+const DB = process.env.DB_CONTAINER || "taskify-db";
 const PASSWORD = process.env.PASSWORD || "123456";
 const EDGE = process.env.EDGE_PATH || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const SHOTS = process.env.SHOT_DIR || path.resolve(process.cwd(), "Plan/reports");

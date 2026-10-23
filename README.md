@@ -1,4 +1,4 @@
-# KTPM - He thong quan ly de tai va cong viec nhom
+# Taskify — Hệ thống quản lý đề tài và tiến độ đồ án
 
 ## 1. Tong quan du an
 KTPM la he thong web ho tro quan ly de tai hoc thuat va cong viec nhom theo 4 vai tro:

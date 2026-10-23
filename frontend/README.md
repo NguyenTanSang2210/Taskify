@@ -1,4 +1,4 @@
-# Frontend - KTPM
+# Taskify — Frontend
 
 ## 1. Tong quan
 Frontend la ung dung React + Vite, cung cap giao dien cho 4 vai tro:

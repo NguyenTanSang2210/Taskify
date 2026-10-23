@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.4
-    container_name: ktpm-db
+    container_name: taskify-db
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-doan_ltmmt}
@@ -24,7 +24,7 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
-    container_name: ktpm-backend
+    container_name: taskify-backend
     restart: unless-stopped
     depends_on:
       db:
@@ -60,7 +60,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: ktpm-frontend
+    container_name: taskify-frontend
     restart: unless-stopped
     depends_on:
       - backend

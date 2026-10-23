@@ -1,4 +1,4 @@
-# TECHNICAL REPORT - KTPM
+# TECHNICAL REPORT — Taskify
 
 ## 1. Tong quan he thong
 He thong duoc xay dung de quan ly de tai va cong viec nhom trong moi truong hoc thuat.

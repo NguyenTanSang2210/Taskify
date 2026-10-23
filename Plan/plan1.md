@@ -1976,8 +1976,8 @@ docker compose down                        # dừng, giữ dữ liệu
 docker compose down -v                     # dừng + XÓA dữ liệu DB (cẩn thận)
 
 # ===== Sao lưu / khôi phục DB =====
-docker exec ktpm-db mysqldump -uroot -p<ROOT_PASS> doan_ltmmt > backup_$(Get-Date -Format yyyyMMdd).sql
-Get-Content backup.sql | docker exec -i ktpm-db mysql -uroot -p<ROOT_PASS> doan_ltmmt
+docker exec taskify-db mysqldump -uroot -p<ROOT_PASS> doan_ltmmt > backup_$(Get-Date -Format yyyyMMdd).sql
+Get-Content backup.sql | docker exec -i taskify-db mysql -uroot -p<ROOT_PASS> doan_ltmmt
 
 # ===== Git =====
 git checkout main; git pull
