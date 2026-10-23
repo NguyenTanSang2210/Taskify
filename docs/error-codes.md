@@ -43,8 +43,8 @@ Mọi lỗi của API `/api/**` trả về cùng một định dạng JSON. Các
 
 | code | HTTP | Khi nào |
 |---|---|---|
-| `VALIDATION_FAILED` | 400 | Bean Validation (`@Valid`) thất bại, kèm `errors[]` |
-| `MALFORMED_REQUEST` | 400 | JSON hỏng, thiếu tham số bắt buộc, sai kiểu tham số (vd. `/users/abc`) |
+| `VALIDATION_FAILED` | 400 | Bean Validation (`@Valid`) thất bại hoặc giá trị sai kiểu (chữ ở trường số, ngày sai định dạng). Có kèm `errors[]` theo đúng thứ tự khai báo trường |
+| `MALFORMED_REQUEST` | 400 | JSON hỏng, thiếu body, thiếu tham số bắt buộc, sai kiểu tham số URL (vd. `/users/abc`) |
 | `INVALID_INPUT` | 400 | Dữ liệu sai nghiệp vụ cơ bản (ngày sai định dạng, số âm, sai kiểu trong body…) |
 | `DATA_CONFLICT` | 409 | Vi phạm ràng buộc CSDL (trùng khóa duy nhất…) |
 
@@ -63,3 +63,15 @@ Mọi lỗi của API `/api/**` trả về cùng một định dạng JSON. Các
 1. Khai báo hằng số trong `exception/ErrorCodes.java` và bổ sung bảng trên.
 2. Ném lỗi bằng `ApiException.badRequest(ErrorCodes.X, "thông báo tiếng Việt")`. Các factory khác: `notFound`, `forbidden`, `conflict`.
 3. Viết test kiểm tra `$.code` (xem `ErrorFormatIT`).
+
+## Request DTO (P3-02)
+
+Mọi body JSON đều đi qua một record trong `dto/request`. Controller không còn nhận `Map`.
+
+- Ràng buộc định dạng và độ dài được khai báo bằng annotation, kèm thông báo tiếng Việt có tên trường, ví dụ `@NotBlank(message = "Tiêu đề báo cáo không được để trống")`. Thông báo mặc định nằm trong `ValidationMessages.properties`.
+- Compact constructor chuẩn hóa chuỗi qua `Texts.trim` / `Texts.blankToNull` trước khi validate.
+- Trường bắt buộc khi tạo nhưng được bỏ trống khi sửa dùng nhóm `OnCreate`. Endpoint tạo khai báo `@Validated({OnCreate.class, Default.class})`. Khi sửa, trường không gửi (`null`) được giữ nguyên.
+- Trường ngày giờ nhận `yyyy-MM-ddTHH:mm[:ss]` hoặc `yyyy-MM-dd` (hiểu là đầu ngày). Chuỗi rỗng được hiểu là `null` (xem `JacksonConfig`).
+- `@FieldLabel("Hạn chót")` đặt tên tiếng Việt cho trường, dùng trong thông báo khi giá trị sai kiểu.
+- Quy tắc cần dữ liệu trong CSDL vẫn nằm ở service/controller và ném `Inputs.badRequest` (`INVALID_INPUT`) hoặc mã nghiệp vụ. Ví dụ: ngày phải nằm trong thời gian của đợt, sức chứa không nhỏ hơn số sinh viên đã duyệt.
+- Validation chạy **trước** kiểm tra quyền trong thân method. Vì vậy body sai luôn nhận 400, kể cả khi người gọi không có quyền. Test phân quyền phải gửi body hợp lệ.

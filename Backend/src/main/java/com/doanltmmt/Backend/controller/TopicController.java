@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.controller;
 import com.doanltmmt.Backend.dto.TopicDTO;
 import com.doanltmmt.Backend.dto.request.TopicRequest;
 import com.doanltmmt.Backend.service.TopicService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class TopicController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
-    public TopicDTO createTopic(@RequestParam Long lecturerId, @RequestBody TopicRequest request) {
+    public TopicDTO createTopic(@RequestParam Long lecturerId, @Valid @RequestBody TopicRequest request) {
         return service.createTopic(lecturerId, request.toTopic());
     }
 
@@ -29,7 +30,7 @@ public class TopicController {
     @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO updateTopic(@PathVariable Long id,
                              @RequestParam(required = false) Long lecturerId,
-                             @RequestBody TopicRequest request) {
+                             @Valid @RequestBody TopicRequest request) {
         return service.updateTopic(id, lecturerId, request.toTopic());
     }
 

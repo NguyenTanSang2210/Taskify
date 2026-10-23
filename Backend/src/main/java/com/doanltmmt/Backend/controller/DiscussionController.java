@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.DiscussionPostRequest;
+import com.doanltmmt.Backend.dto.request.DiscussionThreadRequest;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.DiscussionPost;
 import com.doanltmmt.Backend.entity.DiscussionThread;
@@ -10,14 +12,13 @@ import com.doanltmmt.Backend.repository.DiscussionThreadRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
-import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 /** Thảo luận theo đề tài: chỉ thành viên đề tài (đã được duyệt / giảng viên hướng dẫn / quản trị) xem và đăng bài. */
 @RestController
@@ -25,7 +26,6 @@ import java.util.Map;
 @SuppressWarnings("null")
 public class DiscussionController {
 
-    private static final int MAX_CONTENT_LENGTH = 5000;
 
     private final DiscussionThreadRepository threadRepo;
     private final DiscussionPostRepository postRepo;
@@ -55,10 +55,10 @@ public class DiscussionController {
 
     @PostMapping("/threads")
     @PreAuthorize("isAuthenticated()")
-    public DiscussionThreadDTO createThread(@RequestBody Map<String, String> body) {
-        Topic topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
+    public DiscussionThreadDTO createThread(@Valid @RequestBody DiscussionThreadRequest body) {
+        Topic topic = topicAccess.loadTopicOr404(body.topicId());
         topicAccess.requireMember(topic);
-        String title = Inputs.requiredText(body.get("title"), "Tiêu đề chủ đề", 255);
+        String title = body.title();
 
         User user = scope.requireCurrentUser();
         DiscussionThread t = new DiscussionThread();
@@ -80,10 +80,10 @@ public class DiscussionController {
 
     @PostMapping("/threads/{threadId}/posts")
     @PreAuthorize("isAuthenticated()")
-    public DiscussionPostDTO addPost(@PathVariable Long threadId, @RequestBody Map<String, String> body) {
+    public DiscussionPostDTO addPost(@PathVariable Long threadId, @Valid @RequestBody DiscussionPostRequest body) {
         DiscussionThread th = loadThread(threadId);
         topicAccess.requireMember(th.getTopic());
-        String content = Inputs.requiredText(body.get("content"), "Nội dung bài viết", MAX_CONTENT_LENGTH);
+        String content = body.content();
 
         User user = scope.requireCurrentUser();
         DiscussionPost p = new DiscussionPost();

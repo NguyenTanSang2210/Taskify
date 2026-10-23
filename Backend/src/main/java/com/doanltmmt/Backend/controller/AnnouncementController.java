@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.AnnouncementRequest;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Announcement;
 import com.doanltmmt.Backend.entity.Topic;
@@ -8,14 +9,13 @@ import com.doanltmmt.Backend.repository.AnnouncementRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
-import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Thông báo. Có hai loại:
@@ -57,10 +57,10 @@ public class AnnouncementController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public AnnouncementDTO create(@RequestBody Map<String, String> body) {
+    public AnnouncementDTO create(@Valid @RequestBody AnnouncementRequest body) {
         Topic topic = null;
-        if (body.get("topicId") != null) {
-            topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
+        if (body.topicId() != null) {
+            topic = topicAccess.loadTopicOr404(body.topicId());
             topicAccess.requireOwner(topic);
         } else if (!scope.hasRole("ADMIN")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ quản trị viên hệ thống được đăng thông báo toàn hệ thống.");
@@ -68,8 +68,8 @@ public class AnnouncementController {
 
         User author = scope.requireCurrentUser();
         Announcement a = new Announcement();
-        a.setTitle(Inputs.requiredText(body.get("title"), "Tiêu đề thông báo", 255));
-        a.setContent(Inputs.requiredText(body.get("content"), "Nội dung thông báo", 5000));
+        a.setTitle(body.title());
+        a.setContent(body.content());
         a.setAuthor(author);
         a.setTopic(topic);
         Announcement saved = repo.save(a);

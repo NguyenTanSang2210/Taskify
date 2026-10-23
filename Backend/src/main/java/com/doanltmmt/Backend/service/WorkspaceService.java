@@ -1,11 +1,12 @@
 package com.doanltmmt.Backend.service;
 
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.exception.ApiException;
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.dto.WorkspaceDTO;
+import com.doanltmmt.Backend.dto.request.WorkspaceRequest;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @SuppressWarnings("null")
@@ -73,26 +73,25 @@ public class WorkspaceService {
     }
 
     @Transactional
-    public WorkspaceDTO create(Map<String, Object> body) {
+    public WorkspaceDTO create(WorkspaceRequest body) {
         Long departmentId;
         if (scope.hasRole("ADMIN")) {
-            departmentId = Inputs.requiredId(body.get("departmentId"), "Khoa (departmentId)");
+            departmentId = body.departmentId();
+            if (departmentId == null) throw Inputs.badRequest("Khoa (departmentId) là bắt buộc");
         } else {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
         Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
-        String name = Inputs.trimmed(body.get("name"));
-        if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên là bắt buộc.");
-        
+
         Workspace w = new Workspace();
         w.setDepartment(dept);
-        w.setName(name);
-        if (body.get("type") != null) w.setType(String.valueOf(body.get("type")).trim());
-        if (body.get("semester") != null) w.setSemester(String.valueOf(body.get("semester")).trim());
-        if (body.get("active") != null) w.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        w.setStartAt(Inputs.dateTime(body.get("startAt"), "Ngày bắt đầu"));
-        w.setEndAt(Inputs.dateTime(body.get("endAt"), "Ngày kết thúc"));
+        w.setName(body.name());
+        w.setType(body.type());
+        w.setSemester(body.semester());
+        if (body.active() != null) w.setActive(body.active());
+        w.setStartAt(body.startAt());
+        w.setEndAt(body.endAt());
         validatePeriod(w);
         
         Workspace saved = repo.save(w);
@@ -101,25 +100,22 @@ public class WorkspaceService {
     }
 
     @Transactional
-    public WorkspaceDTO update(Long id, Map<String, Object> body) {
+    public WorkspaceDTO update(Long id, WorkspaceRequest body) {
         Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         
         if (w.getStatus() != WorkspaceStatus.DRAFT) {
-            if (body.get("name") != null || body.get("type") != null || body.get("semester") != null || body.get("startAt") != null || body.get("endAt") != null) {
+            if (body.touchesDraftOnlyFields()) {
                 throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Chỉ sửa thông tin đợt khi đợt còn là bản nháp.");
             }
         }
         
-        if (body.get("name") != null) {
-            String name = String.valueOf(body.get("name")).trim();
-            if (!name.isBlank()) w.setName(name);
-        }
-        if (body.get("type") != null) w.setType(String.valueOf(body.get("type")).trim());
-        if (body.get("semester") != null) w.setSemester(String.valueOf(body.get("semester")).trim());
-        if (body.get("active") != null) w.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        if (body.get("startAt") != null) w.setStartAt(Inputs.dateTime(body.get("startAt"), "Ngày bắt đầu"));
-        if (body.get("endAt") != null) w.setEndAt(Inputs.dateTime(body.get("endAt"), "Ngày kết thúc"));
+        if (body.name() != null) w.setName(body.name());
+        if (body.type() != null) w.setType(body.type());
+        if (body.semester() != null) w.setSemester(body.semester());
+        if (body.active() != null) w.setActive(body.active());
+        if (body.startAt() != null) w.setStartAt(body.startAt());
+        if (body.endAt() != null) w.setEndAt(body.endAt());
         validatePeriod(w);
 
         Workspace saved = repo.save(w);

@@ -1,19 +1,22 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.AcademicClassRequest;
+import com.doanltmmt.Backend.dto.request.OnCreate;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.repository.AcademicClassRepository;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
-import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/classes")
@@ -48,21 +51,18 @@ public class AcademicClassController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public AcademicClass create(@RequestBody Map<String, Object> body) {
-        Long departmentId = Inputs.optionalId(body.get("departmentId"), "departmentId");
+    public AcademicClass create(@Validated({OnCreate.class, Default.class}) @RequestBody AcademicClassRequest body) {
+        Long departmentId = body.departmentId();
         if (!scope.hasRole("ADMIN")) {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
         Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
-        String code = Inputs.trimmed(body.get("code"));
-        String name = Inputs.trimmed(body.get("name"));
-        if (code.isBlank() || name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã và tên là bắt buộc.");
         AcademicClass c = new AcademicClass();
         c.setDepartment(dept);
-        c.setCode(code);
-        c.setName(name);
-        if (body.get("active") != null) c.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
+        c.setCode(body.code());
+        c.setName(body.name());
+        if (body.active() != null) c.setActive(body.active());
         AcademicClass saved = repo.save(c);
         auditLogService.log("CREATE_CLASS", "AcademicClass", saved.getId().toString(), "dept=" + dept.getId());
         return saved;
@@ -70,14 +70,12 @@ public class AcademicClassController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public AcademicClass update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public AcademicClass update(@PathVariable Long id, @Valid @RequestBody AcademicClassRequest body) {
         AcademicClass c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lớp."));
         scope.requireDepartmentAccess(c.getDepartment().getId());
-        String code = Inputs.trimmedOrNull(body.get("code"));
-        String name = Inputs.trimmedOrNull(body.get("name"));
-        if (code != null && !code.isBlank()) c.setCode(code);
-        if (name != null && !name.isBlank()) c.setName(name);
-        if (body.get("active") != null) c.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
+        if (body.code() != null) c.setCode(body.code());
+        if (body.name() != null) c.setName(body.name());
+        if (body.active() != null) c.setActive(body.active());
         AcademicClass saved = repo.save(c);
         auditLogService.log("UPDATE_CLASS", "AcademicClass", saved.getId().toString(), "updated");
         return saved;

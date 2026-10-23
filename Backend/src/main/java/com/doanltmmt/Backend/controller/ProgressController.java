@@ -1,40 +1,39 @@
 package com.doanltmmt.Backend.controller;
 
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.dto.request.ProgressCommentRequest;
+import com.doanltmmt.Backend.dto.request.ProgressCreateRequest;
+import com.doanltmmt.Backend.dto.request.ProgressStatusRequest;
+import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.entity.Notification;
+import com.doanltmmt.Backend.entity.ProgressReport;
+import com.doanltmmt.Backend.entity.StoredFile;
+import com.doanltmmt.Backend.entity.Student;
+import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
-import com.doanltmmt.Backend.dto.response.*;
-import com.doanltmmt.Backend.entity.StoredFile;
-import com.doanltmmt.Backend.repository.StoredFileRepository;
-import com.doanltmmt.Backend.service.FileStorageService;
-import com.doanltmmt.Backend.entity.ProgressReport;
-import com.doanltmmt.Backend.entity.Student;
-import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
+import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.repository.ProgressReportRepository;
+import com.doanltmmt.Backend.repository.StoredFileRepository;
 import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
-import com.doanltmmt.Backend.repository.NotificationRepository;
-import com.doanltmmt.Backend.entity.Notification;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import com.doanltmmt.Backend.service.EmailService;
 import com.doanltmmt.Backend.service.EmailTemplates;
-import com.doanltmmt.Backend.service.SimilarityService;
 import com.doanltmmt.Backend.service.EventPublisher;
+import com.doanltmmt.Backend.service.FileStorageService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
-import com.doanltmmt.Backend.util.Inputs;
+import com.doanltmmt.Backend.service.SimilarityService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 @RestController
@@ -86,7 +85,7 @@ public class ProgressController {
     @PreAuthorize("hasRole('STUDENT')")
     public ProgressReportDTO create(@RequestParam Long studentId,
                                  @RequestParam Long topicId,
-                                 @Valid @RequestBody Map<String, String> body) {
+                                 @Valid @RequestBody ProgressCreateRequest body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         if (!currentUserId.equals(studentId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
@@ -105,10 +104,9 @@ public class ProgressController {
             throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
         }
 
-        String title = Inputs.requiredText(body.get("title"), "Tiêu đề báo cáo", 200);
-        String content = Inputs.requiredText(body.get("content"), "Nội dung báo cáo", 20_000);
-        String fileUrl = body.getOrDefault("fileUrl", "");
-        if (fileUrl == null) fileUrl = "";
+        String title = body.title();
+        String content = body.content();
+        String fileUrl = body.fileUrl();
 
         ProgressReport pr = new ProgressReport();
         pr.setStudent(student);
@@ -117,7 +115,7 @@ public class ProgressController {
         pr.setContent(content);
         // File đính kèm phải là file CỦA CHÍNH sinh viên này (đã tải lên qua /api/upload) và chưa gắn vào báo cáo nào.
         StoredFile attachment = null;
-        if (!fileUrl.isBlank()) {
+        if (fileUrl != null) {
             attachment = storedFileRepo.findByStoredName(FileStorageService.storedNameFromUrl(fileUrl))
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "File đính kèm không hợp lệ."));
             if (!attachment.getOwnerId().equals(currentUserId)) {
@@ -129,18 +127,12 @@ public class ProgressController {
             pr.setFileUrl(FileStorageService.urlFor(attachment));
         }
         
-        pr.setDeadline(Inputs.dateTime(body.get("deadline"), "Hạn chót"));
+        pr.setDeadline(body.deadline());
 
         // Tùy chọn: gắn vào milestone. Milestone phải TỒN TẠI và thuộc đúng đề tài này
         // (trước đây tạo một Milestone "rỗng" chỉ có id: gây lỗi khóa ngoại 500 hoặc gắn nhầm milestone đề tài khác).
-        String milestoneIdStr = body.getOrDefault("milestoneId", "");
-        if (milestoneIdStr != null && !milestoneIdStr.isBlank()) {
-            Long milestoneId;
-            try {
-                milestoneId = Long.parseLong(milestoneIdStr.trim());
-            } catch (NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milestoneId không hợp lệ");
-            }
+        Long milestoneId = body.milestoneId();
+        if (milestoneId != null) {
             com.doanltmmt.Backend.entity.Milestone ms = milestoneRepo.findById(milestoneId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy milestone"));
             if (ms.getTopic() == null || !ms.getTopic().getId().equals(topicId)) {
@@ -260,7 +252,7 @@ public class ProgressController {
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STUDENT')")
     public ProgressReportDTO updateStatus(@PathVariable Long id,
-                                       @RequestBody Map<String, String> body) {
+                                       @Valid @RequestBody ProgressStatusRequest body) {
         Long currentUserId = scope.requireCurrentUser().getId();
         ProgressReport pr = progressRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy báo cáo tiến độ."));
@@ -268,7 +260,7 @@ public class ProgressController {
         if (!currentUserId.equals(pr.getStudent().getUser().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
-        ProgressStatus status = ProgressStatus.parse(body.get("status"));
+        ProgressStatus status = ProgressStatus.parse(body.status());
         pr.setStatus(status);
         ProgressReport saved = progressRepo.save(pr);
         auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
@@ -279,7 +271,7 @@ public class ProgressController {
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public ProgressReportDTO addComment(@PathVariable Long id,
-                                     @RequestBody Map<String, String> body) {
+                                     @Valid @RequestBody ProgressCommentRequest body) {
         ProgressReport pr = progressRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy báo cáo tiến độ."));
         if (!scope.hasRole("ADMIN")) {
@@ -294,20 +286,9 @@ public class ProgressController {
         if (pr.getTopic().getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
             throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
         }
-        String comment = Objects.requireNonNullElse(Inputs.optionalText(body.get("lecturerComment"), "Nhận xét", 5000), "");
-        String status = Objects.requireNonNullElse(body.get("status"), "").trim();
-        if (comment.isBlank() && status.isBlank() && Inputs.dateTime(body.get("deadline"), "Hạn chót") == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không có nội dung nào để cập nhật");
-        }
-        if (!status.isBlank()) {
-            pr.setStatus(ProgressStatus.parse(status));
-        }
-        if (!comment.isBlank()) {
-            pr.setLecturerComment(comment);
-        }
-        
-        LocalDateTime deadline = Inputs.dateTime(body.get("deadline"), "Hạn chót");
-        if (deadline != null) pr.setDeadline(deadline);
+        if (body.status() != null) pr.setStatus(ProgressStatus.parse(body.status()));
+        if (body.lecturerComment() != null) pr.setLecturerComment(body.lecturerComment());
+        if (body.deadline() != null) pr.setDeadline(body.deadline());
 
         ProgressReport saved = progressRepo.save(pr);
         auditLogService.log("UPDATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Comment added/Status updated");

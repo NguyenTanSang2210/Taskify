@@ -75,6 +75,38 @@ class ErrorFormatIT extends AbstractSecurityIT {
     }
 
     @Test
+    void wrongTypeNamesTheFieldInVietnamese_andDateOnlyIsAccepted() throws Exception {
+        Department dept = newDepartment("ERR");
+        com.doanltmmt.Backend.entity.Lecturer lec = newLecturer("lerr2", dept);
+        Topic topic = newTopic(lec, newWorkspace(dept, "IN_PROGRESS"), 2);
+        String bad = "{\"topicId\":" + topic.getId() + ",\"title\":\"M1\",\"deadline\":\"31/12/2030\"}";
+        mvc.perform(post("/api/milestones").header(AUTH, bearer(lec.getUser()))
+                        .contentType(MediaType.APPLICATION_JSON).content(bad))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCodes.VALIDATION_FAILED))
+                .andExpect(jsonPath("$.errors[0].field").value("deadline"))
+                .andExpect(jsonPath("$.message").value("Hạn chót không đúng định dạng ngày giờ (yyyy-MM-ddTHH:mm)"));
+        String dateOnly = "{\"topicId\":" + topic.getId() + ",\"title\":\"M1\",\"deadline\":\"2030-12-31\"}";
+        mvc.perform(post("/api/milestones").header(AUTH, bearer(lec.getUser()))
+                        .contentType(MediaType.APPLICATION_JSON).content(dateOnly))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deadline").value(org.hamcrest.Matchers.startsWith("2030-12-31T00:00")));
+    }
+
+    @Test
+    void firstErrorFollowsDeclaredFieldOrder() throws Exception {
+        Department dept = newDepartment("ERR");
+        User deptAdmin = newUser("derr", "DEPARTMENT_ADMIN", dept);
+        for (int i = 0; i < 3; i++) {
+            mvc.perform(post("/api/workspace-classes/assign").header(AUTH, bearer(deptAdmin))
+                            .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errors[0].field").value("workspaceId"))
+                    .andExpect(jsonPath("$.errors[1].field").value("classId"));
+        }
+    }
+
+    @Test
     void errorBodyNeverLeaksInternals() throws Exception {
         mvc.perform(get("/api/users/{id}", "abc").header(AUTH, bearer(newUser("aerr2", "ADMIN", newDepartment("ERR")))))
                 .andExpect(status().isBadRequest())

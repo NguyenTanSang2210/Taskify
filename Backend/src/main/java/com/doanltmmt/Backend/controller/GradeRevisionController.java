@@ -1,9 +1,13 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.GradeRevisionRequestBody;
+import com.doanltmmt.Backend.dto.request.GradeRevisionReviewRequest;
 import com.doanltmmt.Backend.dto.response.GradeHistoryDTO;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
 import com.doanltmmt.Backend.service.GradeService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +26,7 @@ public class GradeRevisionController {
 
     @PostMapping("/registration/{regId}/grade-revisions")
     @PreAuthorize("hasRole('LECTURER')")
-    public GradeRevisionDTO request(@PathVariable Long regId, @RequestBody Map<String, Object> body) {
+    public GradeRevisionDTO request(@PathVariable Long regId, @Valid @RequestBody GradeRevisionRequestBody body) {
         return gradeService.requestRevision(regId, body);
     }
 
@@ -42,13 +46,15 @@ public class GradeRevisionController {
 
     @PostMapping("/grade-revisions/{id}/approve")
     @PreAuthorize("hasAnyRole('DEPARTMENT_ADMIN','ADMIN')")
-    public GradeRevisionDTO approve(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
-        return gradeService.approve(id, body == null ? Map.of() : body);
+    public GradeRevisionDTO approve(@PathVariable Long id,
+                                    @Valid @RequestBody(required = false) GradeRevisionReviewRequest body) {
+        return gradeService.approve(id, body == null ? GradeRevisionReviewRequest.empty() : body);
     }
 
     @PostMapping("/grade-revisions/{id}/reject")
     @PreAuthorize("hasAnyRole('DEPARTMENT_ADMIN','ADMIN')")
-    public GradeRevisionDTO reject(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
-        return gradeService.reject(id, body == null ? Map.of() : body);
+    public GradeRevisionDTO reject(@PathVariable Long id,
+                                   @Validated(GradeRevisionReviewRequest.Reject.class) @RequestBody GradeRevisionReviewRequest body) {
+        return gradeService.reject(id, body);
     }
 }

@@ -1,30 +1,33 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.UserDTO;
-import com.doanltmmt.Backend.entity.Role;
+import com.doanltmmt.Backend.dto.request.ChangePasswordRequest;
+import com.doanltmmt.Backend.dto.request.ProfileUpdateRequest;
+import com.doanltmmt.Backend.dto.request.UserCreateRequest;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
+import com.doanltmmt.Backend.entity.OtpPurpose;
+import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.AcademicClassRepository;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.LecturerRepository;
-import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
+import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
-import com.doanltmmt.Backend.entity.OtpPurpose;
 import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.security.PasswordPolicy;
 import com.doanltmmt.Backend.service.OtpService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import com.doanltmmt.Backend.util.Inputs;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -79,7 +82,7 @@ public class UserController {
 
     @PutMapping("/{id}/profile")
     @PreAuthorize("isAuthenticated()")
-    public UserDTO updateProfile(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+    public UserDTO updateProfile(@PathVariable Long id, @Valid @RequestBody ProfileUpdateRequest body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         
@@ -90,18 +93,11 @@ public class UserController {
              throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể sửa hồ sơ của người khác.");
         }
 
-        if (body.containsKey("fullName")) {
-            String fullName = body.get("fullName") == null ? "" : body.get("fullName").trim();
-            if (fullName.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Họ tên không được để trống");
-            }
-            user.setFullName(fullName);
+        if (body.fullName() != null) {
+            user.setFullName(body.fullName());
         }
-        if (body.containsKey("email")) {
-            String email = body.get("email") == null ? "" : body.get("email").trim();
-            if (email.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không được để trống");
-            }
+        if (body.email() != null) {
+            String email = body.email();
             if (!isValidEmail(email)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
             }
@@ -120,7 +116,7 @@ public class UserController {
 
     @PutMapping("/{id}/password")
     @PreAuthorize("isAuthenticated()")
-    public Map<String, String> changePassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+    public Map<String, String> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
         
@@ -129,10 +125,10 @@ public class UserController {
              throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể đổi mật khẩu của người khác.");
         }
         
-        String oldPass = body.get("oldPassword");
-        String newPass = body.get("newPassword");
-        
-        if (oldPass == null || !passwordEncoder.matches(oldPass, user.getPassword())) {
+        String oldPass = body.oldPassword();
+        String newPass = body.newPassword();
+
+        if (!passwordEncoder.matches(oldPass, user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không đúng");
         }
         PasswordPolicy.requireValid(newPass, user.getUsername());
@@ -184,23 +180,20 @@ public class UserController {
     @PostMapping({ "", "/create" })
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public UserDTO create(@RequestBody Map<String, Object> body) {
-        String username = Inputs.trimmed(body.get("username"));
-        String password = Inputs.trimmed(body.get("password"));
-        String fullName = Inputs.trimmed(body.get("fullName"));
-        String email = Inputs.trimmedOrNull(body.get("email"));
-        String phone = Inputs.trimmedOrNull(body.get("phone"));
-        Long roleId = Inputs.optionalId(body.get("roleId"), "roleId");
-        Long departmentId = Inputs.optionalId(body.get("departmentId"), "departmentId");
-        boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
+    public UserDTO create(@Valid @RequestBody UserCreateRequest body) {
+        String username = body.username();
+        String password = body.password();
+        String fullName = body.fullName();
+        String email = body.email();
+        String phone = body.phone();
+        Long roleId = body.roleId();
+        Long departmentId = body.departmentId();
+        boolean active = body.active() == null || body.active();
 
-        if (username.isBlank() || fullName.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập và họ tên là bắt buộc.");
-        }
         // Có mật khẩu tạm: bắt buộc đổi ở lần đăng nhập đầu. Không có: gửi mã kích hoạt qua email để người dùng tự đặt.
-        boolean sendActivation = password.isBlank();
+        boolean sendActivation = password == null;
         if (sendActivation) {
-            if (email == null || email.isBlank() || !email.contains("@")) {
+            if (email == null || !email.contains("@")) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Cần nhập email hợp lệ để gửi mã kích hoạt (hoặc đặt mật khẩu tạm cho người dùng)");
             }
@@ -213,7 +206,7 @@ public class UserController {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập đã tồn tại.");
         }
-        if (email != null && !email.isBlank() && userRepository.findByEmail(email).isPresent()) {
+        if (email != null && userRepository.findByEmail(email).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email đã được sử dụng.");
         }
 
@@ -236,14 +229,14 @@ public class UserController {
         AcademicClass academicClass = null;
 
         if (roleName.equals("STUDENT")) {
-            studentCode = Inputs.trimmed(body.get("studentCode"));
-            className = Inputs.trimmedOrNull(body.get("className"));
-            academicClassId = Inputs.optionalId(body.get("academicClassId"), "academicClassId");
+            studentCode = body.studentCode();
+            className = body.className();
+            academicClassId = body.academicClassId();
 
-            if (studentCode.isBlank()) {
+            if (studentCode == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên phải có mã sinh viên.");
             }
-            if ((className == null || className.isBlank()) && academicClassId == null) {
+            if (className == null && academicClassId == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên phải thuộc một lớp.");
             }
 
@@ -263,8 +256,8 @@ public class UserController {
         u.setActivated(!sendActivation);
         u.setMustChangePassword(!sendActivation);
         u.setFullName(fullName);
-        if (email != null && !email.isBlank()) u.setEmail(email);
-        if (phone != null && !phone.isBlank()) u.setPhone(phone);
+        u.setEmail(email);
+        u.setPhone(phone);
         u.setDepartment(dept);
         u.setRole(role);
         u.setActive(active);
@@ -274,7 +267,7 @@ public class UserController {
             Student s = new Student();
             s.setUser(userRepository.getReferenceById(saved.getId()));
             s.setStudentCode(studentCode);
-            if (className != null && !className.isBlank()) s.setClassName(className);
+            if (className != null) s.setClassName(className);
             if (academicClass != null) s.setAcademicClass(academicClass);
             studentRepository.save(s);
         }
@@ -283,10 +276,8 @@ public class UserController {
             Lecturer l = new Lecturer();
             l.setUser(userRepository.getReferenceById(saved.getId()));
             l.setDepartment(dept);
-            String degree = Inputs.trimmedOrNull(body.get("degree"));
-            String speciality = Inputs.trimmedOrNull(body.get("speciality"));
-            if (degree != null && !degree.isBlank()) l.setDegree(degree);
-            if (speciality != null && !speciality.isBlank()) l.setSpeciality(speciality);
+            if (body.degree() != null) l.setDegree(body.degree());
+            if (body.speciality() != null) l.setSpeciality(body.speciality());
             lecturerRepository.save(l);
         }
 

@@ -1,13 +1,9 @@
 package com.doanltmmt.Backend.service;
 
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.exception.ApiException;
-import com.doanltmmt.Backend.entity.enums.TopicStatus;
-import com.doanltmmt.Backend.entity.enums.NotificationType;
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
-import com.doanltmmt.Backend.entity.enums.GradeState;
-import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
+import com.doanltmmt.Backend.dto.request.GradeRequest;
+import com.doanltmmt.Backend.dto.request.GradeRevisionRequestBody;
+import com.doanltmmt.Backend.dto.request.GradeRevisionReviewRequest;
 import com.doanltmmt.Backend.dto.response.GradeHistoryDTO;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
 import com.doanltmmt.Backend.entity.GradeHistory;
@@ -17,6 +13,13 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
+import com.doanltmmt.Backend.entity.enums.GradeState;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.GradeHistoryRepository;
 import com.doanltmmt.Backend.repository.GradeRevisionRequestRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
@@ -36,10 +39,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Locale;
 
 /**
  * P2-13 (D-08) — chấm điểm, khóa điểm khi đợt đóng và quy trình chấm lại có kiểm soát.
@@ -58,8 +61,6 @@ public class GradeService {
 
     public static final int DEFAULT_UNLOCK_HOURS = 72;
     public static final int MAX_UNLOCK_HOURS = 168;
-    private static final int MAX_REASON = 2000;
-    private static final int MAX_NOTE = 1000;
     private static final DateTimeFormatter DATE_VN = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
 
     private final TopicRegistrationRepository regRepo;
@@ -123,16 +124,16 @@ public class GradeService {
     // ================================================================== chấm điểm
 
     @Transactional
-    public TopicRegistrationDTO grade(Long regId, Map<String, Object> body) {
+    public TopicRegistrationDTO grade(Long regId, GradeRequest body) {
         TopicRegistration reg = regRepo.findByIdForUpdate(regId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đăng ký"));
         User me = requireTopicLecturer(reg);
         if (!Boolean.TRUE.equals(reg.getApproved())) {
             throw Inputs.badRequest("Chỉ chấm điểm sinh viên đã được duyệt");
         }
-        Double score = parseScore(body.get("score"));
-        String feedback = Inputs.optionalText(body.get("feedback"), "Nhận xét", 5000);
-        String reason = Inputs.optionalText(body.get("reason"), "Lý do chỉnh sửa", MAX_REASON);
+        Double score = parseScore(body.score());
+        String feedback = body.feedback();
+        String reason = body.reason();
 
         LocalDateTime now = LocalDateTime.now();
         GradeRevisionRequest unlock = null;
@@ -197,11 +198,11 @@ public class GradeService {
     }
 
     /** Điểm thang 10, làm tròn đến 0,25; thiếu hoặc sai → 400. */
-    static Double parseScore(Object raw) {
-        if (raw == null || raw.toString().isBlank()) throw Inputs.badRequest("Vui lòng nhập điểm");
+    static Double parseScore(String raw) {
+        if (raw == null || raw.isBlank()) throw Inputs.badRequest("Vui lòng nhập điểm");
         double score;
         try {
-            score = Double.parseDouble(raw.toString().trim().replace(',', '.'));
+            score = Double.parseDouble(raw.trim().replace(',', '.'));
         } catch (NumberFormatException e) {
             throw Inputs.badRequest("Điểm phải là một số");
         }
@@ -215,11 +216,11 @@ public class GradeService {
     // ================================================================== yêu cầu chấm lại
 
     @Transactional
-    public GradeRevisionDTO requestRevision(Long regId, Map<String, Object> body) {
+    public GradeRevisionDTO requestRevision(Long regId, GradeRevisionRequestBody body) {
         TopicRegistration reg = regRepo.findByIdForUpdate(regId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đăng ký"));
         User me = requireTopicLecturer(reg);
-        String reason = Inputs.requiredText(body.get("reason"), "Lý do chấm lại", MAX_REASON);
+        String reason = body.reason();
         LocalDateTime now = LocalDateTime.now();
         GradeState state = gradeState(reg, now);
         if (state == GradeState.UNLOCKED) {
@@ -283,21 +284,10 @@ public class GradeService {
     }
 
     @Transactional
-    public GradeRevisionDTO approve(Long requestId, Map<String, Object> body) {
+    public GradeRevisionDTO approve(Long requestId, GradeRevisionReviewRequest body) {
         GradeRevisionRequest request = loadForReview(requestId);
-        int hours = DEFAULT_UNLOCK_HOURS;
-        Object rawHours = body.get("unlockHours");
-        if (rawHours != null && !rawHours.toString().isBlank()) {
-            try {
-                hours = Integer.parseInt(rawHours.toString().trim());
-            } catch (NumberFormatException e) {
-                throw Inputs.badRequest("Số giờ mở khóa phải là số nguyên");
-            }
-        }
-        if (hours < 1 || hours > MAX_UNLOCK_HOURS) {
-            throw Inputs.badRequest("Số giờ mở khóa phải từ 1 đến " + MAX_UNLOCK_HOURS);
-        }
-        String note = Inputs.optionalText(body.get("note"), "Ghi chú", MAX_NOTE);
+        int hours = body.unlockHours() != null ? body.unlockHours() : DEFAULT_UNLOCK_HOURS;
+        String note = body.note();
         LocalDateTime now = LocalDateTime.now();
         request.setStatus(GradeRevisionStatus.APPROVED);
         request.setReviewNote(note);
@@ -306,9 +296,9 @@ public class GradeService {
     }
 
     @Transactional
-    public GradeRevisionDTO reject(Long requestId, Map<String, Object> body) {
+    public GradeRevisionDTO reject(Long requestId, GradeRevisionReviewRequest body) {
         GradeRevisionRequest request = loadForReview(requestId);
-        String note = Inputs.requiredText(body.get("note"), "Lý do từ chối", MAX_NOTE); // kiểm tra trước khi đổi trạng thái
+        String note = body.note();
         request.setStatus(GradeRevisionStatus.REJECTED);
         request.setReviewNote(note);
         return finishReview(request, LocalDateTime.now(), false);

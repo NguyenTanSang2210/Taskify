@@ -1,28 +1,28 @@
 package com.doanltmmt.Backend.controller;
 
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.exception.ApiException;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.doanltmmt.Backend.dto.request.LecturerAssignRequest;
+import com.doanltmmt.Backend.dto.request.LecturerRevokeRequest;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Lecturer;
 import com.doanltmmt.Backend.entity.LecturerAssignment;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.LecturerAssignmentRepository;
 import com.doanltmmt.Backend.repository.LecturerRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
-import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assignments")
@@ -57,15 +57,10 @@ public class LecturerAssignmentController {
     @PostMapping("/assign")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     @Transactional
-    public LecturerAssignmentDTO assign(@RequestBody Map<String, Object> body) {
-        Long workspaceId = Inputs.requiredId(body.get("workspaceId"), "workspaceId");
-        Long lecturerUserId = Inputs.requiredId(body.get("lecturerId"), "lecturerId");
-        String type = String.valueOf(body.getOrDefault("type", "MAIN")).trim().toUpperCase();
-        int quotaMaxGroups = Inputs.optionalNonNegativeInt(body.get("quotaMaxGroups"), "Hạn mức nhóm", 0);
-        String reason = Inputs.trimmedOrNull(body.get("reason"));
-        if (!type.equals("MAIN") && !type.equals("ASSISTANT")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại không hợp lệ.");
-        }
+    public LecturerAssignmentDTO assign(@Valid @RequestBody LecturerAssignRequest body) {
+        Long workspaceId = body.workspaceId();
+        Long lecturerUserId = body.lecturerId();
+        String type = body.type();
         Workspace w = workspaceRepo.findById(workspaceId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         requireWorkspaceConfigurable(w);
@@ -89,9 +84,9 @@ public class LecturerAssignmentController {
             la.setType(type);
             return la;
         });
-        a.setQuotaMaxGroups(Math.max(0, quotaMaxGroups));
+        a.setQuotaMaxGroups(body.quotaMaxGroups());
         a.setActive(true);
-        a.setReason(reason);
+        a.setReason(body.reason());
         LecturerAssignment saved = repo.save(a);
         auditLogService.log("ASSIGN_LECTURER", "LecturerAssignment", saved.getId().toString(), "workspace=" + workspaceId + ",lecturer=" + lecturerUserId + ",type=" + type);
         return LecturerAssignmentDTO.from(saved);
@@ -99,10 +94,9 @@ public class LecturerAssignmentController {
 
     @PostMapping("/revoke")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public LecturerAssignmentDTO revoke(@RequestBody Map<String, Object> body) {
-        Long assignmentId = Inputs.requiredId(body.get("assignmentId"), "assignmentId");
-        String reason = Inputs.trimmedOrNull(body.get("reason"));
-        LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy phân công."));
+    public LecturerAssignmentDTO revoke(@Valid @RequestBody LecturerRevokeRequest body) {
+        String reason = body.reason();
+        LecturerAssignment a = repo.findById(body.assignmentId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy phân công."));
         scope.requireDepartmentAccess(a.getWorkspace().getDepartment().getId());
         requireWorkspaceConfigurable(a.getWorkspace());
         a.setActive(false);

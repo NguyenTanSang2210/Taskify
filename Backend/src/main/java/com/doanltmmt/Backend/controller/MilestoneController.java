@@ -1,5 +1,8 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.MilestoneRequest;
+import com.doanltmmt.Backend.dto.request.OnCreate;
+import com.doanltmmt.Backend.dto.request.Texts;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Topic;
@@ -8,14 +11,16 @@ import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.TopicAccessService;
 import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Milestone của đề tài. Xem: thành viên đề tài (sinh viên đã được duyệt, giảng viên hướng dẫn, quản trị khoa/hệ thống).
@@ -26,8 +31,6 @@ import java.util.Map;
 @SuppressWarnings("null")
 public class MilestoneController {
 
-    private static final int MAX_TITLE = 255;
-    private static final int MAX_DESCRIPTION = 5000;
 
     private final MilestoneRepository milestoneRepo;
     private final AuditLogService auditLogService;
@@ -57,17 +60,16 @@ public class MilestoneController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public MilestoneDTO createMilestone(@RequestBody Map<String, Object> body) {
-        Topic topic = topicAccess.loadTopicOr404(Inputs.requiredId(body.get("topicId"), "topicId"));
+    public MilestoneDTO createMilestone(@Validated({OnCreate.class, Default.class}) @RequestBody MilestoneRequest body) {
+        Topic topic = topicAccess.loadTopicOr404(body.topicId());
         topicAccess.requireOwner(topic);
 
         Milestone milestone = new Milestone();
         milestone.setTopic(topic);
-        milestone.setTitle(Inputs.requiredText(body.get("title"), "Tên mốc", MAX_TITLE));
-        milestone.setDescription(Inputs.optionalText(body.get("description"), "Mô tả", MAX_DESCRIPTION));
-        milestone.setStartDate(Inputs.dateTime(body.get("startDate"), "Ngày bắt đầu"));
-        milestone.setDeadline(Inputs.dateTime(body.get("deadline"), "Hạn chót"));
-        if (milestone.getDeadline() == null) throw Inputs.badRequest("Hạn chót là bắt buộc");
+        milestone.setTitle(body.title());
+        milestone.setDescription(Texts.blankToNull(body.description()));
+        milestone.setStartDate(body.startDate());
+        milestone.setDeadline(body.deadline());
         validateDates(milestone);
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("CREATE_MILESTONE", "Milestone", saved.getId().toString(), "Created milestone: " + saved.getTitle());
@@ -76,20 +78,14 @@ public class MilestoneController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
-    public MilestoneDTO updateMilestone(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public MilestoneDTO updateMilestone(@PathVariable Long id, @Valid @RequestBody MilestoneRequest body) {
         Milestone milestone = loadMilestone(id);
         topicAccess.requireOwner(milestone.getTopic());
 
-        if (body.containsKey("title")) milestone.setTitle(Inputs.requiredText(body.get("title"), "Tên mốc", MAX_TITLE));
-        if (body.containsKey("description")) {
-            milestone.setDescription(Inputs.optionalText(body.get("description"), "Mô tả", MAX_DESCRIPTION));
-        }
-        if (body.containsKey("startDate")) milestone.setStartDate(Inputs.dateTime(body.get("startDate"), "Ngày bắt đầu"));
-        if (body.containsKey("deadline")) {
-            LocalDateTime deadline = Inputs.dateTime(body.get("deadline"), "Hạn chót");
-            if (deadline == null) throw Inputs.badRequest("Hạn chót là bắt buộc");
-            milestone.setDeadline(deadline);
-        }
+        if (body.title() != null) milestone.setTitle(body.title());
+        if (body.description() != null) milestone.setDescription(Texts.blankToNull(body.description()));
+        if (body.startDate() != null) milestone.setStartDate(body.startDate());
+        if (body.deadline() != null) milestone.setDeadline(body.deadline());
         validateDates(milestone);
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("UPDATE_MILESTONE", "Milestone", saved.getId().toString(), "Updated milestone");

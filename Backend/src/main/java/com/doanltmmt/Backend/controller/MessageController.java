@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.MessageRequest;
 import com.doanltmmt.Backend.dto.response.*;
 import com.doanltmmt.Backend.entity.Message;
 import com.doanltmmt.Backend.entity.Topic;
@@ -10,7 +11,7 @@ import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
-import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,6 @@ import java.util.Map;
 @SuppressWarnings("null")
 public class MessageController {
 
-    private static final int MAX_CONTENT_LENGTH = 5000;
 
     private final MessageRepository repo;
     private final UserRepository userRepo;
@@ -81,18 +81,11 @@ public class MessageController {
 
     @PostMapping("/send")
     @PreAuthorize("isAuthenticated()")
-    public MessageDTO send(@RequestBody Map<String, String> body) {
+    public MessageDTO send(@Valid @RequestBody MessageRequest body) {
         User me = scope.requireCurrentUser();
-
-        Long recipientId = Inputs.requiredId(body.get("recipientId"), "Người nhận (recipientId)");
-        Long topicId = Inputs.requiredId(body.get("topicId"), "topicId");
-        String content = body.get("content") == null ? "" : body.get("content").trim();
-        if (content.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nội dung tin nhắn không được để trống");
-        }
-        if (content.length() > MAX_CONTENT_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tin nhắn quá dài (tối đa " + MAX_CONTENT_LENGTH + " ký tự)");
-        }
+        Long recipientId = body.recipientId();
+        Long topicId = body.topicId();
+        String content = body.content();
 
         Topic topic = topicAccess.loadTopicOr404(topicId);
         if (topic.getWorkspace() == null) {

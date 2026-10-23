@@ -1,12 +1,16 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.WorkspaceDTO;
+import com.doanltmmt.Backend.dto.request.OnCreate;
+import com.doanltmmt.Backend.dto.request.WorkspaceRequest;
 import com.doanltmmt.Backend.service.WorkspaceService;
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -40,13 +44,13 @@ public class WorkspaceController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public WorkspaceDTO create(@RequestBody Map<String, Object> body) {
+    public WorkspaceDTO create(@Validated({OnCreate.class, Default.class}) @RequestBody WorkspaceRequest body) {
         return service.create(body);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
-    public WorkspaceDTO update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public WorkspaceDTO update(@PathVariable Long id, @Valid @RequestBody WorkspaceRequest body) {
         return service.update(id, body);
     }
 

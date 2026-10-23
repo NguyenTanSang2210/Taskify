@@ -1,13 +1,14 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
+import com.doanltmmt.Backend.dto.request.GradeRequest;
 import com.doanltmmt.Backend.service.GradeService;
 import com.doanltmmt.Backend.service.TopicRegistrationService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/registration")
@@ -64,7 +65,7 @@ public class TopicRegistrationController {
     @PostMapping("/grade/{regId}")
     @PreAuthorize("hasRole('LECTURER')")
     public TopicRegistrationDTO grade(@PathVariable Long regId,
-                                   @RequestBody Map<String, Object> body) {
+                                   @Valid @RequestBody GradeRequest body) {
         return gradeService.grade(regId, body);
     }
 }

@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.exception;
 
+import com.doanltmmt.Backend.dto.request.FieldLabel;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -32,7 +33,13 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
+import java.lang.reflect.RecordComponent;
+import java.time.temporal.Temporal;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -107,7 +114,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex,
                                                                   @NonNull HttpHeaders headers, @NonNull HttpStatusCode status,
                                                                   @NonNull WebRequest request) {
+        List<String> order = declaredOrder(ex.getBindingResult().getTarget());
         List<ErrorBodies.FieldError> errors = ex.getBindingResult().getFieldErrors().stream()
+                .sorted(Comparator.comparingInt(f -> rank(order, f.getField())))
                 .map(f -> new ErrorBodies.FieldError(f.getField(), f.getDefaultMessage())).toList();
         if (errors.isEmpty()) {
             errors = ex.getBindingResult().getGlobalErrors().stream()
@@ -133,7 +142,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                              @NonNull WebRequest request) {
         String code = ErrorCodes.forStatus(status);
         String message = ErrorCodes.defaultMessage(status);
-        if (ex instanceof HttpMessageNotReadableException) {
+        if (ex instanceof HttpMessageNotReadableException && ex.getCause() instanceof MismatchedInputException mismatch
+                && !mismatch.getPath().isEmpty()) {
+            return validationFailed(List.of(typeMismatch(mismatch)), path(request));
+        } else if (ex instanceof HttpMessageNotReadableException) {
             code = ErrorCodes.MALFORMED_REQUEST;
             message = "Dữ liệu gửi lên không đúng định dạng JSON.";
         } else if (ex instanceof MissingServletRequestParameterException m) {
@@ -170,6 +182,48 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static ResponseEntity<Object> simple(HttpStatus status, String code, String message, HttpServletRequest req) {
         return ErrorBodies.of(status, code, message, req.getRequestURI(), null, HttpHeaders.EMPTY);
+    }
+
+    /** Thứ tự khai báo trường của request DTO (record) — để lỗi đầu tiên (thành {@code message}) luôn cố định. */
+    private static List<String> declaredOrder(Object target) {
+        if (target == null || !target.getClass().isRecord()) return List.of();
+        return Arrays.stream(target.getClass().getRecordComponents()).map(RecordComponent::getName).toList();
+    }
+
+    private static int rank(List<String> order, String field) {
+        int dot = field.indexOf('.');
+        int i = order.indexOf(dot < 0 ? field : field.substring(0, dot));
+        return i < 0 ? Integer.MAX_VALUE : i;
+    }
+
+    /** Giá trị sai kiểu trong body JSON (vd. chữ ở trường số, ngày sai định dạng) → lỗi theo trường có tên tiếng Việt. */
+    private static ErrorBodies.FieldError typeMismatch(MismatchedInputException ex) {
+        JsonMappingException.Reference ref = ex.getPath().get(ex.getPath().size() - 1);
+        String field = ref.getFieldName() != null ? ref.getFieldName() : String.valueOf(ref.getIndex());
+        String label = labelOf(ref.getFrom(), field);
+        Class<?> target = ex.getTargetType();
+        String message;
+        if (target != null && Temporal.class.isAssignableFrom(target)) {
+            message = label + " không đúng định dạng ngày giờ (yyyy-MM-ddTHH:mm)";
+        } else if (target != null && (Number.class.isAssignableFrom(target) || (target.isPrimitive() && target != boolean.class))) {
+            message = label + " không hợp lệ (phải là một số)";
+        } else if (target == Boolean.class || target == boolean.class) {
+            message = label + " phải là true hoặc false";
+        } else {
+            message = label + " không hợp lệ";
+        }
+        return new ErrorBodies.FieldError(field, message);
+    }
+
+    private static String labelOf(Object from, String field) {
+        Class<?> type = from instanceof Class<?> c ? c : from == null ? null : from.getClass();
+        if (type == null) return field;
+        try {
+            FieldLabel label = type.getDeclaredField(field).getAnnotation(FieldLabel.class);
+            return label != null ? label.value() : field;
+        } catch (NoSuchFieldException e) {
+            return field;
+        }
     }
 
     private static String path(WebRequest request) {

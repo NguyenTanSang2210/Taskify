@@ -1,17 +1,20 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.DepartmentRequest;
+import com.doanltmmt.Backend.dto.request.OnCreate;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
-import com.doanltmmt.Backend.util.Inputs;
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/departments")
@@ -40,18 +43,11 @@ public class DepartmentController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Department create(@RequestBody Map<String, Object> body) {
-        String code = Inputs.trimmed(body.get("code"));
-        String name = Inputs.trimmed(body.get("name"));
-        if (code.isBlank() || name.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã và tên là bắt buộc.");
-        }
+    public Department create(@Validated({OnCreate.class, Default.class}) @RequestBody DepartmentRequest body) {
         Department d = new Department();
-        d.setCode(code);
-        d.setName(name);
-        if (body.get("active") != null) {
-            d.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        }
+        d.setCode(body.code());
+        d.setName(body.name());
+        if (body.active() != null) d.setActive(body.active());
         Department saved = repo.save(d);
         auditLogService.log("CREATE_DEPARTMENT", "Department", saved.getId().toString(), "code=" + saved.getCode());
         return saved;
@@ -59,13 +55,11 @@ public class DepartmentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Department update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public Department update(@PathVariable Long id, @Valid @RequestBody DepartmentRequest body) {
         Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
-        String code = Inputs.trimmedOrNull(body.get("code"));
-        String name = Inputs.trimmedOrNull(body.get("name"));
-        if (code != null && !code.isBlank()) d.setCode(code);
-        if (name != null && !name.isBlank()) d.setName(name);
-        if (body.get("active") != null) d.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
+        if (body.code() != null) d.setCode(body.code());
+        if (body.name() != null) d.setName(body.name());
+        if (body.active() != null) d.setActive(body.active());
         Department saved = repo.save(d);
         auditLogService.log("UPDATE_DEPARTMENT", "Department", saved.getId().toString(), "updated");
         return saved;
