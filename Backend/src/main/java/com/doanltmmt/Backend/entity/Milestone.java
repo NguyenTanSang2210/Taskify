@@ -41,4 +41,7 @@ public class Milestone {
             createdAt = LocalDateTime.now();
         }
     }
+
+    /** P4-05: trọng số của mốc trong điểm tổng kết (%, 0–100); null = mốc không tính điểm. */
+    private Integer weight;
 }

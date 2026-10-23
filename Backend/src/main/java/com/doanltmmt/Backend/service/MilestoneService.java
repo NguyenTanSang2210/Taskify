@@ -7,6 +7,7 @@ import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
+import com.doanltmmt.Backend.repository.ProgressReportRepository;
 import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,12 @@ public class MilestoneService {
     private final MilestoneRepository milestoneRepo;
     private final AuditLogService auditLogService;
     private final TopicAccessService topicAccess;
+    private final ProgressReportRepository progressRepo;
 
-    public MilestoneService(MilestoneRepository milestoneRepo, AuditLogService auditLogService, TopicAccessService topicAccess) {
+    public MilestoneService(MilestoneRepository milestoneRepo, AuditLogService auditLogService, TopicAccessService topicAccess,
+                            ProgressReportRepository progressRepo) {
         this.milestoneRepo = milestoneRepo;
+        this.progressRepo = progressRepo;
         this.auditLogService = auditLogService;
         this.topicAccess = topicAccess;
     }
@@ -56,6 +60,7 @@ public class MilestoneService {
         milestone.setDescription(Texts.blankToNull(body.description()));
         milestone.setStartDate(body.startDate());
         milestone.setDeadline(body.deadline());
+        milestone.setWeight(body.weight());
         validateDates(milestone);
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("CREATE_MILESTONE", "Milestone", saved.getId().toString(), "Created milestone: " + saved.getTitle());
@@ -71,6 +76,7 @@ public class MilestoneService {
         if (body.description() != null) milestone.setDescription(Texts.blankToNull(body.description()));
         if (body.startDate() != null) milestone.setStartDate(body.startDate());
         if (body.deadline() != null) milestone.setDeadline(body.deadline());
+        if (body.weight() != null) milestone.setWeight(body.weight());
         validateDates(milestone);
         Milestone saved = milestoneRepo.save(milestone);
         auditLogService.log("UPDATE_MILESTONE", "Milestone", saved.getId().toString(), "Updated milestone");
@@ -81,6 +87,10 @@ public class MilestoneService {
     public void deleteMilestone(Long id) {
         Milestone milestone = loadMilestone(id);
         topicAccess.requireOwner(milestone.getTopic());
+        if (progressRepo.existsByMilestone_Id(id)) {
+            // trước đây: lỗi khóa ngoại (500) — bài nộp của sinh viên không được mất theo mốc
+            throw Inputs.badRequest("Mốc đã có bài nộp của sinh viên nên không xóa được — hãy sửa tên/hạn chót thay vì xóa");
+        }
 
         milestoneRepo.delete(milestone);
         auditLogService.log("DELETE_MILESTONE", "Milestone", id.toString(), "Deleted milestone");

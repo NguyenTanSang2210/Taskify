@@ -44,6 +44,7 @@ export const AUDIT_ACTION_LABELS = {
   REJECT_REGISTRATION: "Từ chối đăng ký",
   GRADE_TOPIC: "Chấm điểm",
   GRADE_CHANGED: "Sửa điểm",
+  GRADE_MILESTONE: "Chấm điểm mốc",
   GRADE_REVISION_REQUESTED: "Yêu cầu chấm lại",
   GRADE_REVISION_APPROVED: "Duyệt chấm lại",
   GRADE_REVISION_REJECTED: "Từ chối chấm lại",

@@ -150,7 +150,7 @@
 | P4-02 | Giao diện Audit Log cho Admin | P2 | 1 ngày | ✅ |
 | P4-03 | Import người dùng/lớp từ Excel | P1 | 2 ngày | ✅ |
 | P4-04 | Quản lý nhóm (Team) — phát triển sau v1.0 | P3 | 3–4 ngày | 🕒 |
-| P4-05 | Nộp bài theo milestone + chấm theo mốc | P2 | 3 ngày | ⬜ |
+| P4-05 | Nộp bài theo milestone + chấm theo mốc | P2 | 3 ngày | ✅ |
 | P4-06 | Cài đặt thông báo cá nhân + email digest | P3 | 1,5 ngày | ⬜ |
 | P4-07 | Học phí — tạm hoãn, phát triển sau v1.0 | P3 | Chưa ước lượng | 🕒 |
 | P4-08 | Observability (metrics, dashboard) | P2 | 1,5 ngày | ⬜ |
@@ -1805,14 +1805,16 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 
 ---
 
-### ⬜ P4-05 — Nộp bài theo milestone + chấm theo mốc
+### ✅ P4-05 — Nộp bài theo milestone + chấm theo mốc
 
-- [ ] Mỗi milestone có yêu cầu nộp (mô tả, loại file, hạn chót, trọng số điểm).
-- [ ] SV nộp bài cho từng milestone; trạng thái đúng hạn/trễ hạn.
-- [ ] GV chấm từng mốc → điểm tổng kết = tổng có trọng số (có thể chỉnh tay).
-- [ ] Lịch học thuật hiển thị milestone tự động (hợp nhất `CalendarEvent` và `Milestone`).
+- [x] Mỗi milestone có yêu cầu nộp (mô tả, hạn chót, **trọng số %**). Loại file: dùng chung danh sách 13 loại của hệ thống (không cấu hình riêng từng mốc).
+- [x] SV nộp bài cho từng milestone; trạng thái đúng hạn/trễ hạn.
+- [x] GV chấm từng mốc → điểm tổng kết = tổng có trọng số (có thể chỉnh tay).
+- [x] Lịch học thuật hiển thị milestone tự động (hợp nhất `CalendarEvent` và `Milestone`).
 
-**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: xem Changelog
+
+**Kết quả:** V9 (`milestones.weight`, bảng `milestone_grades`, unique (mốc, SV)). `GET /api/milestones/board?topicId=`: lưới SV × mốc — đã nộp chưa, **đúng hạn / trễ** (theo lần nộp đầu so với hạn chót), điểm + nhận xét, điểm đề xuất = Σ điểm × trọng số / Σ trọng số các mốc đã chấm (cờ `complete`); sinh viên chỉ thấy dòng của mình. `PUT /api/milestones/{id}/grades/{studentId}`: chỉ người quản lý đề tài, chỉ khi đợt `IN_PROGRESS` (`WORKSPACE_PHASE`), SV phải được duyệt; ghi `GRADE_MILESTONE` (giữ lâu dài theo P4-02) và báo SV. Điểm tổng kết **không tự ghi đè** — giảng viên vẫn nhập ở trang Duyệt đăng ký (theo khóa điểm/chấm lại P2-13). Xóa mốc đã có bài nộp: trước đây 500 (khóa ngoại) → nay 400 có hướng dẫn. `GET /api/calendar` gộp các mốc (type `MILESTONE`, có `milestoneId`). Giao diện: khối *Mốc tiến độ & chấm điểm* trong Không gian làm việc — giảng viên thêm/sửa/xóa mốc (trước đây **không có giao diện tạo mốc**) và chấm trực tiếp trên lưới; sinh viên xem mốc, trạng thái, điểm, nhận xét và nút *Nộp bài*. Test: `MilestoneGradeIT` (5), `milestoneUtils.test.js`, `ui-check-gd4.mjs`.
 
 ---
 

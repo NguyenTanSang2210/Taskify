@@ -1,8 +1,10 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.MilestoneGradeRequest;
 import com.doanltmmt.Backend.dto.request.MilestoneRequest;
 import com.doanltmmt.Backend.dto.request.OnCreate;
 import com.doanltmmt.Backend.dto.response.*;
+import com.doanltmmt.Backend.service.MilestoneGradeService;
 import com.doanltmmt.Backend.service.MilestoneService;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
@@ -21,9 +23,24 @@ import java.util.List;
 public class MilestoneController {
 
     private final MilestoneService service;
+    private final MilestoneGradeService grades;
 
-    public MilestoneController(MilestoneService service) {
+    public MilestoneController(MilestoneService service, MilestoneGradeService grades) {
         this.service = service;
+        this.grades = grades;
+    }
+
+    /** P4-05 — bảng nộp bài + điểm theo mốc (giảng viên: mọi sinh viên của đề tài; sinh viên: chỉ mình). */
+    @GetMapping("/board")
+    @PreAuthorize("isAuthenticated()")
+    public MilestoneBoardDTO board(@RequestParam Long topicId) {
+        return grades.board(topicId);
+    }
+
+    @PutMapping("/{id}/grades/{studentId}")
+    @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    public MilestoneBoardDTO.Cell grade(@PathVariable Long id, @PathVariable Long studentId, @Valid @RequestBody MilestoneGradeRequest body) {
+        return grades.grade(id, studentId, body);
     }
 
     @GetMapping("/{id}")

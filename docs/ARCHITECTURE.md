@@ -26,7 +26,7 @@ flowchart TB
     ACT["Actuator health · info"]
   end
 
-  DB[("MySQL 8.4<br/>Flyway V1–V8")]
+  DB[("MySQL 8.4<br/>Flyway V1–V9")]
   MAIL["SMTP (email bất đồng bộ)"]
 
   SPA -->|HTTPS| STATIC
@@ -86,7 +86,9 @@ erDiagram
   TOPICS ||--o{ MILESTONES : ""
   TOPICS ||--o{ PROGRESS_REPORT : ""
   STUDENTS ||--o{ PROGRESS_REPORT : ""
-  MILESTONES |o--o{ PROGRESS_REPORT : "tùy chọn"
+  MILESTONES |o--o{ PROGRESS_REPORT : "bài nộp theo mốc"
+  MILESTONES ||--o{ MILESTONE_GRADES : "điểm theo mốc"
+  STUDENTS ||--o{ MILESTONE_GRADES : ""
   TOPICS ||--o{ DISCUSSION_THREADS : ""
   DISCUSSION_THREADS ||--o{ DISCUSSION_POSTS : ""
   TOPICS ||--o{ MESSAGES : "ngữ cảnh"
@@ -103,7 +105,7 @@ Bảng không có khóa ngoại: `audit_logs` (ghi tên người thực hiện),
 Ghi chú:
 - `topic_registration.approved`: `NULL` = chờ duyệt, `1` = đã duyệt, `0` = từ chối. Một đề tài nhận nhiều sinh viên độc lập theo `capacity`, mỗi sinh viên chấm điểm riêng ([ADR-0001](adr/0001-nhieu-sinh-vien-moi-de-tai.md)).
 - Thời gian lưu **UTC** trong CSDL, ứng dụng chạy giờ Việt Nam (`Asia/Ho_Chi_Minh`) và trả về giao diện theo giờ Việt Nam.
-- Schema chỉ thay đổi qua Flyway (`Backend/src/main/resources/db/migration`): V1 baseline, V2 vai trò/quyền mặc định, V3 sửa dữ liệu GĐ2, V4 enum trạng thái, V5 index truy vấn, V6 refresh token, V7 IP/trình duyệt trong nhật ký hệ thống, V8 thời điểm nhận xét tiến độ.
+- Schema chỉ thay đổi qua Flyway (`Backend/src/main/resources/db/migration`): V1 baseline, V2 vai trò/quyền mặc định, V3 sửa dữ liệu GĐ2, V4 enum trạng thái, V5 index truy vấn, V6 refresh token, V7 IP/trình duyệt trong nhật ký hệ thống, V8 thời điểm nhận xét tiến độ, V9 trọng số + điểm theo mốc.
 
 ## 3. Vòng đời trạng thái
 

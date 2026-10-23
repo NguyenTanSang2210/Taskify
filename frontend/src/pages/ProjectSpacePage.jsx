@@ -9,6 +9,7 @@ import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 import { PROGRESS_STATUS, statusOptions } from "../constants/status";
 import ProgressSubmitPanel from "./projectSpace/ProgressSubmitPanel";
+import MilestonePanel from "./projectSpace/MilestonePanel";
 import ProgressHistoryPanel from "./projectSpace/ProgressHistoryPanel";
 import useLoadEffect from '../hooks/useLoadEffect';
 
@@ -286,6 +287,8 @@ export default function ProjectSpacePage() {
            </div>
         </div>
       )}
+
+      <MilestonePanel topicId={topicId} isLecturer={isLecturer} />
 
       {/* Main Workspace Grid */}
       <div className={isLecturer ? "flex flex-col space-y-8" : "grid grid-cols-1 lg:grid-cols-12 gap-8"}>

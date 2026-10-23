@@ -20,4 +20,13 @@ export const milestoneApi = {
   delete: async (id) => {
     await api.delete(`/milestones/${id}`);
   },
+  /** P4-05: bảng nộp bài + điểm theo mốc { milestones, weightTotal, canGrade, students[{ cells[], weightedScore, complete }] } */
+  board: async (topicId) => {
+    const res = await api.get("/milestones/board", { params: { topicId } });
+    return res.data;
+  },
+  grade: async (milestoneId, studentId, payload) => {
+    const res = await api.put(`/milestones/${milestoneId}/grades/${studentId}`, payload);
+    return res.data;
+  },
 };

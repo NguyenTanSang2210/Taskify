@@ -3,6 +3,7 @@
  * Kiểm tra giao diện các tính năng Giai đoạn 4 (Playwright, giống ui-check-gd3.mjs):
  *   (P4-03) nhập sinh viên từ Excel: file mẫu, kiểm tra báo lỗi từng dòng, tải danh sách lỗi, nhập dòng hợp lệ
  *   (P4-01) dashboard theo vai trò: thống kê khoa/đợt (Admin, quản trị khoa), việc cần làm (GV), tiến độ (SV)
+ *   (P4-05) mốc tiến độ: giảng viên tạo mốc có trọng số, chấm theo mốc; sinh viên thấy điểm + trạng thái nộp
  *   (P4-02) nhật ký hệ thống: lọc nhanh "Thay đổi điểm", lọc người thực hiện, xem chi tiết, IP, xuất CSV
  * Chạy trên stack Docker profile dev có dữ liệu demo (DataSeeder).
  *
@@ -157,6 +158,65 @@ let page;
   check(!(await page.getByText("Gợi ý từ AI").count()), "P4-01: bỏ khối giả lập \"Gợi ý từ AI\" / \"Tiến độ 0%\"");
   await page.screenshot({ path: path.join(SHOTS, "ui-gd4-dashboard-student.png"), fullPage: true });
   await page.context().close();
+}
+
+// ---------- P4-05: mốc tiến độ + chấm theo mốc ----------
+{
+  const lecturer = await login("lecturer");
+  const silent = (await call("GET", "/dashboard/lecturer", lecturer.token)).data.silentStudents[0]; // đề tài đang thực hiện có SV được duyệt
+  if (!silent) {
+    console.log("ℹ️  Bỏ qua P4-05: chưa có đề tài đang thực hiện có sinh viên (chạy scripts/smoke-test.mjs trước).");
+  } else {
+    const title = "Mốc UI " + Date.now().toString(36);
+    page = await pageAs(lecturer);
+    await page.goto(WEB + "/project-space");
+    await page.locator("select").first().selectOption(String(silent.topicId));
+    const panel = page.getByRole("region", { name: "Mốc và chấm điểm" });
+    await panel.waitFor();
+    await panel.getByRole("button", { name: "Thêm mốc" }).click();
+    await panel.locator("#ms-title").fill(title);
+    const deadline = new Date(Date.now() + 5 * 864e5);
+    const local = new Date(deadline.getTime() - deadline.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+    await panel.locator("#ms-deadline").fill(local);
+    await panel.locator("#ms-weight").fill("100");
+    await panel.getByRole("button", { name: "Thêm mốc" }).last().click();
+    await panel.getByText("Đã thêm mốc.").waitFor();
+    const headerText = await panel.locator("thead th", { hasText: title }).innerText();
+    check(/100%/.test(headerText), "P4-05: giảng viên thêm mốc có trọng số", headerText.replace(/\n/g, " · "));
+    const row = panel.locator("tbody tr", { hasText: silent.studentCode });
+    const col = await panel.locator("thead th").evaluateAll((ths, t) => ths.findIndex((th) => th.innerText.includes(t)), title);
+    await row.locator("td").nth(col).getByRole("button").click();
+    await row.locator("td").nth(col).getByLabel("Điểm").fill("8.5");
+    await row.locator("td").nth(col).getByRole("button", { name: "Lưu" }).click();
+    await panel.getByText("Đã lưu điểm.").waitFor();
+    const suggestion = (await row.locator("td").last().innerText()).trim();
+    check(suggestion.startsWith("8.5"), "P4-05: chấm điểm mốc + điểm đề xuất có trọng số", suggestion.replace(/\n/g, " "));
+    await page.screenshot({ path: path.join(SHOTS, "ui-gd4-milestones-lecturer.png"), fullPage: true });
+    await page.context().close();
+
+    const username = sql(`SELECT u.username FROM students s JOIN users u ON u.id = s.id WHERE s.student_code = '${silent.studentCode}' LIMIT 1`);
+    const sv = await login(username);
+    const svBoard = (await call("GET", `/milestones/board?topicId=${silent.topicId}`, sv.token)).data;
+    const mine = svBoard.students?.[0];
+    const msIdx = (svBoard.milestones || []).findIndex((m) => m.title === title);
+    check(svBoard.students?.length === 1 && mine.cells[msIdx]?.score === 8.5, "P4-05: sinh viên chỉ thấy dòng của mình, có điểm mốc", `${svBoard.students?.length} dòng`);
+    // trang Không gian làm việc của SV hiển thị đề tài được duyệt ĐẦU TIÊN — chỉ kiểm tra giao diện khi đó là đề tài đang thử
+    const regs = (await call("GET", `/registration/mine?studentId=${sv.userId}`, sv.token)).data;
+    if (String(regs.filter((r) => r.approved === true)[0]?.topic?.id) === String(silent.topicId)) {
+      page = await pageAs(sv);
+      await page.goto(WEB + "/project-space");
+      const item = page.getByRole("region", { name: "Mốc và chấm điểm" }).locator("li", { hasText: title });
+      await item.waitFor();
+      const text = await item.innerText();
+      check(/8\.5/.test(text) && /Chưa nộp/.test(text) && await item.getByRole("link", { name: "Nộp bài" }).isVisible(),
+        "P4-05: giao diện sinh viên: mốc, điểm, trạng thái nộp, nút nộp bài", text.replace(/\n/g, " · "));
+      await page.screenshot({ path: path.join(SHOTS, "ui-gd4-milestones-student.png") });
+      await page.context().close();
+    }
+    sql(`DELETE g FROM milestone_grades g JOIN milestones m ON m.id = g.milestone_id WHERE m.title = '${title}'`);
+    sql(`DELETE FROM notifications WHERE title LIKE '%${title}%'`);
+    sql(`DELETE FROM milestones WHERE title = '${title}'`);
+  }
 }
 
 // ---------- P4-02: nhật ký hệ thống ----------

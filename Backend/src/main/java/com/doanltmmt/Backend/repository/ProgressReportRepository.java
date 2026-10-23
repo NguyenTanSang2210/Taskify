@@ -27,4 +27,10 @@ public interface ProgressReportRepository extends JpaRepository<ProgressReport, 
     @Query("select new com.doanltmmt.Backend.service.SimilarityService$Candidate(p.id, p.content) "
             + "from ProgressReport p where p.topic.id = :topicId")
     List<SimilarityService.Candidate> findSimilarityCandidatesInTopic(@Param("topicId") Long topicId);
+
+    boolean existsByMilestone_Id(Long milestoneId);
+
+    /** P4-05: [mã mốc, mã SV, lúc nộp, mã báo cáo] các bài nộp theo mốc của đề tài. */
+    @Query("select p.milestone.id, p.student.id, p.createdAt, p.id from ProgressReport p where p.topic.id = :topicId and p.milestone is not null")
+    List<Object[]> findMilestoneSubmissions(@Param("topicId") Long topicId);
 }

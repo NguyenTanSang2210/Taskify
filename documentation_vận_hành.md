@@ -72,7 +72,7 @@ Khác: *Danh mục Lớp* (tạo lớp của khoa), *Duyệt Đề tài* (xem/đ
 
 - **Đề tài của tôi**: tạo đề tài (tên, mô tả, **số sinh viên tối đa** – `capacity`) trong đợt đang *Mở đề tài*. Hệ thống cảnh báo khi tên trùng/gần trùng đề tài đã có (so sánh không phân biệt dấu tiếng Việt). Không được giảm số chỗ xuống dưới số sinh viên đã duyệt.
 - **Duyệt đăng ký** (*Quản lý đăng ký*): xem sinh viên đăng ký từng đề tài → **Duyệt** hoặc **Từ chối** (nhập lý do). Đề tài tự chuyển *Đã đủ sinh viên* khi số sinh viên được duyệt bằng số chỗ.
-- **Mốc tiến độ (Milestone)**: đặt các mốc kèm hạn trong thời gian của đợt. Sinh viên được nhắc trước hạn.
+- **Mốc tiến độ & chấm theo mốc** (*Không gian làm việc* → chọn đề tài → khối *Mốc tiến độ & chấm điểm*): *Thêm mốc* với tên, hạn chót (trong thời gian của đợt), **trọng số %** và yêu cầu nộp. Lưới bên dưới cho thấy từng sinh viên đã nộp chưa, **đúng hạn hay trễ**; bấm ô để chấm điểm mốc (0–10, kèm nhận xét) khi đợt đang thực hiện. Cột *Điểm đề xuất* = trung bình có trọng số các mốc đã chấm — dùng tham khảo khi nhập điểm tổng kết ở *Duyệt đăng ký*. Không xóa được mốc đã có bài nộp. Sinh viên được nhắc 2 ngày trước hạn.
 - **Theo dõi tiến độ**: xem báo cáo của sinh viên theo đề tài (tải thêm báo cáo cũ), tải file đính kèm, viết nhận xét.
 - **Chấm điểm**: thang 0–10 cho **từng sinh viên** khi đợt *Đang thực hiện*. Đề tài chuyển *Hoàn thành* khi mọi sinh viên đã duyệt đều có điểm. Xem lịch sử điểm của từng sinh viên.
 - **Xuất Excel**: danh sách đăng ký và điểm (toàn bộ đề tài mình hướng dẫn hoặc một đề tài).
@@ -84,6 +84,7 @@ Khác: *Danh mục Lớp* (tạo lớp của khoa), *Duyệt Đề tài* (xem/đ
 
 - **Danh sách đề tài**: xem đề tài của các đợt mà lớp mình tham gia; lọc theo trạng thái, tìm theo tên/giảng viên; xem số chỗ còn lại.
 - **Đăng ký**: chỉ khi đợt *Mở đăng ký* và đề tài còn chỗ. Mỗi đợt chỉ có **một** đăng ký đang chờ hoặc đã duyệt; muốn đổi đề tài thì hủy đăng ký đang chờ trước (*Đăng ký của tôi*).
+- **Mốc**: ở *Không gian làm việc*, khối *Mốc tiến độ* liệt kê hạn chót, trọng số, trạng thái (chưa nộp / đúng hạn / nộp trễ), điểm và nhận xét của từng mốc; nút *Nộp bài* mở trang nộp cho mốc đó.
 - **Theo dõi tiến độ**: khi đợt *Đang thực hiện* và đăng ký đã được duyệt — tạo báo cáo (tiêu đề, nội dung, file đính kèm tối đa 20 MB: pdf, Word, Excel, PowerPoint, zip, rar, ảnh png/jpg, txt), kéo thả trên bảng **Kanban** (Cần làm / Đang thực hiện / Hoàn thành) hoặc xem dạng danh sách. Nhận xét của giảng viên hiện ngay trên thẻ.
 - **Kết quả**: xem trạng thái đăng ký, điểm và ngày cập nhật điểm.
 - **Trao đổi**: nhắn tin với giảng viên hướng dẫn, tham gia thảo luận của đề tài.
