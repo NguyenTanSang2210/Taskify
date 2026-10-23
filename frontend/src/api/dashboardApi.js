@@ -8,5 +8,9 @@ export const dashboardApi = {
     getLecturerStats: async () => {
         const res = await api.get('/dashboard/lecturer');
         return res.data;
+    },
+    getDepartmentAdminStats: async () => {
+        const res = await api.get('/dashboard/department-admin');
+        return res.data;
     }
 };

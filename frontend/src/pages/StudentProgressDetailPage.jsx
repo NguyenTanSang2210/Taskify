@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import InlineNotice from "../components/InlineNotice";
 import { milestoneApi } from "../api/milestoneApi";
@@ -6,6 +6,7 @@ import { progressApi } from "../api/progressApi";
 import { fileApi } from "../api/fileApi";
 import FileDownloadButton from "../components/FileDownloadButton";
 import { useAuth } from "../context/AuthContext";
+import useLoadEffect from "../hooks/useLoadEffect";
 
 export default function StudentProgressDetailPage() {
   const { user } = useAuth();
@@ -13,7 +14,7 @@ export default function StudentProgressDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [milestoneId, setMilestoneId] = useState("");
+  const milestoneId = new URLSearchParams(location.search).get("milestoneId") || "";
   const [milestone, setMilestone] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null);
@@ -25,28 +26,21 @@ export default function StudentProgressDetailPage() {
   const [fileUrl, setFileUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const msId = params.get("milestoneId");
-    if (msId) setMilestoneId(msId);
-  }, [location.search]);
-
-  useEffect(() => {
-    const load = async () => {
-      if (!milestoneId) return;
-      setLoading(true);
-      try {
-        const ms = await milestoneApi.get(milestoneId);
-        setMilestone(ms);
-        setTitle(ms?.title || "");
-      } catch (e) {
-        setNotice({ type: "danger", message: e.message || "Không tải được thông tin mốc tiến độ." });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const loadMilestone = useCallback(async () => {
+    if (!milestoneId) return;
+    setLoading(true);
+    try {
+      const ms = await milestoneApi.get(milestoneId);
+      setMilestone(ms);
+      setTitle(ms?.title || "");
+    } catch (e) {
+      setNotice({ type: "danger", message: e.message || "Không tải được thông tin mốc tiến độ." });
+    } finally {
+      setLoading(false);
+    }
   }, [milestoneId]);
+
+  useLoadEffect(loadMilestone);
 
   const handleUpload = async () => {
     if (!file) return;

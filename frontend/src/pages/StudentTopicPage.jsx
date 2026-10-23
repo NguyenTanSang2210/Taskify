@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { topicApi } from "../api/topicApi";
 import { registrationApi } from "../api/registrationApi";
 import TopicCard from "../components/TopicCard";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
+import useLoadEffect from "../hooks/useLoadEffect";
 import { TOPIC_STATUS, statusOptions } from "../constants/status";
 
 export default function StudentTopicPage() {
@@ -15,7 +16,7 @@ export default function StudentTopicPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [loadingId, setLoadingId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(user));
   const [error, setError] = useState("");
   const [notice, setNotice] = useState(null);
   
@@ -23,7 +24,7 @@ export default function StudentTopicPage() {
   const isStudent = roleName === "STUDENT";
   const studentId = isStudent ? user?.id : null;
 
-  const load = async (override = {}) => {
+  const load = useCallback(async (override = {}) => {
     setLoading(true);
     setError("");
     try {
@@ -45,16 +46,13 @@ export default function StudentTopicPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId, query, status, page, size]);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, status, page, size]);
+  const loadIfSignedIn = useCallback(() => {
+    if (user) load();
+  }, [user, load]);
+
+  useLoadEffect(loadIfSignedIn);
 
   const handleRegister = async (topicId) => {
     if (!isStudent || !studentId) {

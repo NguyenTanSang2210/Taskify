@@ -10,10 +10,12 @@ import { STATUS_CONFIG, STATUS_ORDER } from "./studentProgress/kanbanConfig";
 import KanbanColumn from "./studentProgress/KanbanColumn";
 import ProgressForm from "./studentProgress/ProgressForm";
 import ProgressTable from "./studentProgress/ProgressTable";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function StudentProgressPage() {
   const { user } = useAuth();
+  const userId = user?.id;
 
   const [topicId, setTopicId] = useState("");
   const [items, setItems] = useState([]);
@@ -29,9 +31,9 @@ export default function StudentProgressPage() {
 
   // --- LOAD TOPIC ---
   const loadStudentTopic = useCallback(async () => {
-    if (!user?.id) return;
+    if (!userId) return;
     try {
-      const data = await registrationApi.getMine(user.id);
+      const data = await registrationApi.getMine(userId);
       const approved = (data || []).filter((r) => r.approved === true);
       if (approved.length > 0) {
         setTopicId(String(approved[0].topic?.id || ""));
@@ -39,16 +41,16 @@ export default function StudentProgressPage() {
     } catch (e) {
       console.error(e);
     }
-  }, [user?.id]);
+  }, [userId]);
 
-  useEffect(() => { loadStudentTopic(); }, [loadStudentTopic]);
+  useLoadEffect(loadStudentTopic);
 
   // --- LOAD PROGRESS ---
   const loadProgress = useCallback(async () => {
     if (!topicId) { setItems([]); return; }
     setLoading(true);
     try {
-      const arr = await progressApi.listByStudent(user.id, topicId);
+      const arr = await progressApi.listByStudent(userId, topicId);
       setItems(arr || []);
     } catch (e) {
       console.error(e);
@@ -56,9 +58,9 @@ export default function StudentProgressPage() {
     } finally {
       setLoading(false);
     }
-  }, [topicId, user?.id]);
+  }, [topicId, userId]);
 
-  useEffect(() => { loadProgress(); }, [loadProgress]);
+  useLoadEffect(loadProgress);
 
   // --- WEBSOCKET ---
   useEffect(() => {
@@ -112,7 +114,7 @@ export default function StudentProgressPage() {
     try {
       let fileUrl = "";
       if (file) fileUrl = (await fileApi.upload(file)).fileUrl;
-      await progressApi.create(user.id, topicId, {
+      await progressApi.create(userId, topicId, {
         title: title.trim(),
         content: content.trim(),
         fileUrl,

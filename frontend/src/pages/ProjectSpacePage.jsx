@@ -10,9 +10,11 @@ import { useAuth } from "../context/AuthContext";
 import { PROGRESS_STATUS, statusOptions } from "../constants/status";
 import ProgressSubmitPanel from "./projectSpace/ProgressSubmitPanel";
 import ProgressHistoryPanel from "./projectSpace/ProgressHistoryPanel";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function ProjectSpacePage() {
   const { user } = useAuth();
+  const userId = user?.id;
   const role = typeof user?.role === "object" && user?.role ? user.role.name : user?.role;
   const isStudent = role === "STUDENT";
   const isLecturer = role === "LECTURER";
@@ -33,9 +35,9 @@ export default function ProjectSpacePage() {
   const [loadingId, setLoadingId] = useState(null);
 
   const loadStudentTopic = useCallback(async () => {
-    if (!isStudent || !user?.id) return;
+    if (!isStudent || !userId) return;
     try {
-      const data = await registrationApi.getMine(user.id);
+      const data = await registrationApi.getMine(userId);
       const approved = (data || []).filter((r) => r.approved === true);
       if (approved.length > 0) {
         setTopicId(String(approved[0].topic?.id || ""));
@@ -43,12 +45,12 @@ export default function ProjectSpacePage() {
     } catch (e) {
       console.error(e);
     }
-  }, [isStudent, user?.id]);
+  }, [isStudent, userId]);
 
   const loadLecturerTopics = useCallback(async () => {
-    if (!isLecturer || !user?.id) return;
+    if (!isLecturer || !userId) return;
     try {
-      const data = await topicApi.getAllTopics({ lecturerId: user.id, size: 100 });
+      const data = await topicApi.getAllTopics({ lecturerId: userId, size: 100 });
       setLecturerTopics(data.items || []);
       if (data.items?.length > 0 && !topicId) {
         setTopicId(String(data.items[0].id));
@@ -56,12 +58,14 @@ export default function ProjectSpacePage() {
     } catch (e) {
       console.error(e);
     }
-  }, [isLecturer, user?.id, topicId]);
+  }, [isLecturer, userId, topicId]);
 
-  useEffect(() => {
+  const loadTopics = useCallback(() => {
     if (isStudent) loadStudentTopic();
     if (isLecturer) loadLecturerTopics();
   }, [loadStudentTopic, loadLecturerTopics, isStudent, isLecturer]);
+
+  useLoadEffect(loadTopics);
 
   const loadProgress = useCallback(async () => {
     if (!topicId) {
@@ -72,7 +76,7 @@ export default function ProjectSpacePage() {
     try {
       let arr = [];
       if (isStudent) {
-        arr = await progressApi.listByStudent(user.id, topicId);
+        arr = await progressApi.listByStudent(userId, topicId);
       } else {
         // không gian đề tài chỉ cần các báo cáo gần nhất (đầy đủ ở trang Nhận xét tiến độ)
         arr = (await progressApi.listByTopic(topicId, { size: 100 }))?.items;
@@ -84,11 +88,9 @@ export default function ProjectSpacePage() {
     } finally {
       setLoading(false);
     }
-  }, [topicId, isStudent, user?.id]);
+  }, [topicId, isStudent, userId]);
 
-  useEffect(() => {
-    loadProgress();
-  }, [loadProgress]);
+  useLoadEffect(loadProgress);
 
   useEffect(() => {
     if (!topicId) return;
@@ -128,7 +130,7 @@ export default function ProjectSpacePage() {
       if (file) {
         fileUrl = (await fileApi.upload(file)).fileUrl;
       }
-      await progressApi.create(user.id, topicId, {
+      await progressApi.create(userId, topicId, {
         title: title.trim(),
         content: content.trim(),
         fileUrl,

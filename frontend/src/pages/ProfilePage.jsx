@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api from '../api';
+import userApi from '../api/userApi';
+import useLoadEffect from '../hooks/useLoadEffect';
 import InlineNotice from '../components/InlineNotice';
 import PasswordChecklist, { isPasswordValid } from '../components/PasswordChecklist';
 
@@ -12,9 +13,9 @@ export default function ProfilePage() {
     const [notice, setNotice] = useState(null);
 
     // Form states
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
+    const [fullName, setFullName] = useState(user?.fullName || "");
+    const [email, setEmail] = useState(user?.email || "");
+    const username = user?.username || "";
     
     // Password states
     const [oldPassword, setOldPassword] = useState("");
@@ -24,13 +25,15 @@ export default function ProfilePage() {
     const fetchLatestProfile = useCallback(async () => {
         if (!user?.id) return;
         try {
-            const res = await api.get(`/users/${user.id}`);
-            if (res.data) {
-                const data = res.data;
+            const data = await userApi.get(user.id);
+            if (data) {
                 const cleanData = { ...data };
                 if (cleanData.role && typeof cleanData.role === 'object') {
                     cleanData.role = cleanData.role.name;
                 }
+                // Form lấy giá trị mới nhất từ máy chủ (không đồng bộ lại từ user trong effect)
+                setFullName(cleanData.fullName || "");
+                setEmail(cleanData.email || "");
                 if (cleanData.fullName !== user.fullName || 
                     cleanData.email !== user.email || 
                     cleanData.role !== user.role) {
@@ -42,22 +45,15 @@ export default function ProfilePage() {
         }
     }, [user, updateUser]);
 
-    useEffect(() => {
-        if (user) {
-            setFullName(user.fullName || "");
-            setEmail(user.email || "");
-            setUsername(user.username || "");
-            fetchLatestProfile();
-        }
-    }, [user, fetchLatestProfile]);
+    useLoadEffect(fetchLatestProfile);
 
     const handleUpdateInfo = async (e) => {
         e.preventDefault();
         setLoading(true);
         setNotice(null);
         try {
-            const res = await api.put(`/users/${user.id}/profile`, { fullName, email });
-            updateUser({ ...user, fullName: res.data.fullName, email: res.data.email });
+            const updated = await userApi.updateProfile(user.id, { fullName, email });
+            updateUser({ ...user, fullName: updated.fullName, email: updated.email });
             setNotice({ type: 'success', message: 'Hồ sơ của bạn đã được cập nhật thành công!' });
         } catch (err) {
             setNotice({ type: 'danger', message: err.message || 'Lỗi cập nhật hồ sơ' });
@@ -82,9 +78,9 @@ export default function ProfilePage() {
 
         setLoading(true);
         try {
-            const res = await api.put(`/users/${user.id}/password`, { oldPassword, newPassword });
+            const res = await userApi.changePassword(user.id, { oldPassword, newPassword });
             // Đổi mật khẩu làm mọi token cũ mất hiệu lực; server cấp token mới cho phiên này
-            updateToken(res.data?.token);
+            updateToken(res?.token);
             setNotice({ type: 'success', message: 'Mật khẩu đã được thay đổi thành công!' });
             setOldPassword('');
             setNewPassword('');

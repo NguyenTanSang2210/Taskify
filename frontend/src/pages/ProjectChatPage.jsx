@@ -7,9 +7,11 @@ import { useAuth } from "../context/AuthContext";
 import InlineNotice from "../components/InlineNotice";
 import ChatPeopleSidebar from "./projectChat/ChatPeopleSidebar";
 import ChatConversation from "./projectChat/ChatConversation";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function ProjectChatPage() {
   const { user } = useAuth();
+  const userId = user?.id;
   const role = typeof user?.role === "object" && user?.role ? user.role.name : user?.role;
   const isStudent = role === "STUDENT";
   const isLecturer = role === "LECTURER";
@@ -20,7 +22,9 @@ export default function ProjectChatPage() {
 
   const [inboxMessages, setInboxMessages] = useState([]);
   const [recipientCandidates, setRecipientCandidates] = useState([]);
-  const [selectedRecipientId, setSelectedRecipientId] = useState("");
+  const [pickedRecipientId, setSelectedRecipientId] = useState("");
+  // Chưa chọn ai thì mặc định là người đầu tiên trong danh sách (suy ra, không đồng bộ bằng effect)
+  const selectedRecipientId = pickedRecipientId || recipientCandidates[0]?.id || "";
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [convInfo, setConvInfo] = useState({ page: 0, totalPages: 0 });
@@ -46,9 +50,9 @@ export default function ProjectChatPage() {
   };
 
   const loadStudentTopic = useCallback(async () => {
-    if (!isStudent || !user?.id) return;
+    if (!isStudent || !userId) return;
     try {
-      const data = await registrationApi.getMine(user.id);
+      const data = await registrationApi.getMine(userId);
       const approved = (data || []).filter((r) => r.approved === true);
       if (approved.length > 0) {
         setTopicId(String(approved[0].topic?.id || ""));
@@ -56,12 +60,12 @@ export default function ProjectChatPage() {
     } catch (e) {
       console.error(e);
     }
-  }, [isStudent, user?.id]);
+  }, [isStudent, userId]);
 
   const loadLecturerTopics = useCallback(async () => {
-    if (!isLecturer || !user?.id) return;
+    if (!isLecturer || !userId) return;
     try {
-      const data = await topicApi.getAllTopics({ lecturerId: user.id, size: 100 });
+      const data = await topicApi.getAllTopics({ lecturerId: userId, size: 100 });
       setLecturerTopics(data.items || []);
       if (data.items?.length > 0 && !topicId) {
         setTopicId(String(data.items[0].id));
@@ -69,7 +73,7 @@ export default function ProjectChatPage() {
     } catch (e) {
       console.error(e);
     }
-  }, [isLecturer, user?.id, topicId]);
+  }, [isLecturer, userId, topicId]);
 
   // Hội thoại với người đang chọn trong đề tài đang chọn: trang mới nhất trước (P3-06)
   const loadChatInbox = useCallback(async () => {
@@ -113,7 +117,7 @@ export default function ProjectChatPage() {
     const seen = new Set();
 
     const pushCandidate = (id, name, avatarData) => {
-      if (!id || seen.has(id) || id === user?.id) return;
+      if (!id || seen.has(id) || id === userId) return;
       seen.add(id);
       candidates.push({ 
         id: String(id), 
@@ -123,8 +127,8 @@ export default function ProjectChatPage() {
     };
 
     try {
-      if (isStudent && user?.id) {
-        const regs = await registrationApi.getMine(user.id);
+      if (isStudent && userId) {
+        const regs = await registrationApi.getMine(userId);
         const approved = (regs || []).find((r) => r.approved === true);
         const topic = approved?.topic;
         if (topic?.lecturerId) {
@@ -144,19 +148,19 @@ export default function ProjectChatPage() {
     }
 
     setRecipientCandidates(candidates);
-  }, [isStudent, isLecturer, topicId, user?.id]);
+  }, [isStudent, isLecturer, topicId, userId]);
 
-  useEffect(() => {
+  const loadTopics = useCallback(() => {
     if (isStudent) loadStudentTopic();
     if (isLecturer) loadLecturerTopics();
   }, [loadStudentTopic, loadLecturerTopics, isStudent, isLecturer]);
 
-  useEffect(() => {
-    loadChatInbox();
-  }, [loadChatInbox]);
+  useLoadEffect(loadTopics);
+
+  useLoadEffect(loadChatInbox);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!userId) return;
     const client = connectAndSubscribe({
       destination: "/user/queue/messages",
       onMessage: (payload) => {
@@ -167,17 +171,9 @@ export default function ProjectChatPage() {
       },
     });
     return () => client?.deactivate?.();
-  }, [user?.id, upsertMessage]);
+  }, [userId, upsertMessage]);
 
-  useEffect(() => {
-    loadRecipientCandidates();
-  }, [loadRecipientCandidates]);
-
-  useEffect(() => {
-    if (selectedRecipientId) return;
-    if (recipientCandidates.length === 0) return;
-    setSelectedRecipientId(recipientCandidates[0].id);
-  }, [recipientCandidates, selectedRecipientId]);
+  useLoadEffect(loadRecipientCandidates);
 
   const selectedConversation = useMemo(() => {
     if (!selectedRecipientId) return [];
@@ -187,14 +183,14 @@ export default function ProjectChatPage() {
         const senderId = m?.sender?.id;
         const recipientId = m?.recipient?.id;
         const isPeerMsg =
-          (senderId === user?.id && recipientId === rid) ||
-          (senderId === rid && recipientId === user?.id);
+          (senderId === userId && recipientId === rid) ||
+          (senderId === rid && recipientId === userId);
         if (!isPeerMsg) return false;
         if (!topicId) return true;
         return String(m?.topic?.id ?? "") === String(topicId);
       })
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  }, [inboxMessages, selectedRecipientId, user?.id, topicId]);
+  }, [inboxMessages, selectedRecipientId, userId, topicId]);
 
   useEffect(() => {
     if (messageContainerRef.current) {

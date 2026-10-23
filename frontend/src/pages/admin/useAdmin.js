@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import api from '../../api';
+import { useCallback, useMemo, useState } from 'react';
+import { departmentApi } from '../../api/departmentApi';
+import useLoadEffect from '../../hooks/useLoadEffect';
 import userApi from '../../api/userApi';
 import { isPasswordValid } from '../../components/PasswordChecklist';
 import { normalizeKey } from './helpers';
@@ -20,9 +21,11 @@ export function useAdmin() {
     const [departmentCreate, setDepartmentCreate] = useState({ code: '', name: '', active: true });
     const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
     const [selectedUserRole, setSelectedUserRole] = useState('');
-    const [academicClasses, setAcademicClasses] = useState([]);
+    const [loadedClasses, setAcademicClasses] = useState([]);
+    // Chưa chọn khoa thì không hiện lớp nào (suy ra thay vì xóa state trong effect)
+    const academicClasses = selectedDepartmentId ? loadedClasses : [];
 
-    const [userCreate, setUserCreate] = useState({
+    const [userCreateInput, setUserCreate] = useState({
         username: '',
         password: '',
         fullName: '',
@@ -38,18 +41,28 @@ export function useAdmin() {
         speciality: ''
     });
 
+    // Giá trị mặc định của form tạo tài khoản được suy ra (không đồng bộ bằng effect):
+    // vai trò đầu tiên khác ADMIN, và khoa đang chọn ở danh bạ (trừ tài khoản ADMIN).
+    const defaultRole = roles.find(r => r.name !== 'ADMIN') || roles[0];
+    const roleId = userCreateInput.roleId || (defaultRole?.id ? String(defaultRole.id) : '');
+
     const createRoleName = useMemo(() => {
-        const id = Number(userCreate.roleId);
+        const id = Number(roleId);
         const role = roles.find(r => r.id === id);
         return role?.name || '';
-    }, [roles, userCreate.roleId]);
+    }, [roles, roleId]);
 
     const createRoleKey = useMemo(() => normalizeKey(createRoleName), [createRoleName]);
 
+    const userCreate = {
+        ...userCreateInput,
+        roleId,
+        departmentId: userCreateInput.departmentId || (createRoleKey === 'ADMIN' ? '' : selectedDepartmentId),
+    };
+
     const loadDepartments = useCallback(async () => {
         try {
-            const res = await api.get('/departments');
-            const items = res.data || [];
+            const items = (await departmentApi.list()) || [];
             setDepartments(items);
             setSelectedDepartmentId((current) => {
                 if (current) return current;
@@ -71,7 +84,7 @@ export function useAdmin() {
         }
         setLoading(true);
         try {
-            await api.post('/departments', { code, name, active: !!departmentCreate.active });
+            await departmentApi.create({ code, name, active: !!departmentCreate.active });
             setNotice({ type: 'success', message: 'Hệ thống đã khởi tạo khoa mới thành công!' });
             setDepartmentCreate({ code: '', name: '', active: true });
             await loadDepartments();
@@ -97,8 +110,7 @@ export function useAdmin() {
             return;
         }
         try {
-            const res = await api.get('/classes', { params: { departmentId } });
-            setAcademicClasses(res.data || []);
+            setAcademicClasses((await departmentApi.listClasses(departmentId)) || []);
         } catch (error) {
             console.error('Failed to load academic classes', error);
         }
@@ -244,42 +256,25 @@ export function useAdmin() {
         }
     };
 
-    useEffect(() => {
+    const loadInitial = useCallback(() => {
         loadDepartments();
         loadRoles();
     }, [loadDepartments, loadRoles]);
 
-    useEffect(() => {
-        setUserCreate((s) => {
-            if (s.roleId) return s;
-            const first = roles.find(r => r.name !== 'ADMIN') || roles[0];
-            if (!first?.id) return s;
-            return { ...s, roleId: String(first.id) };
-        });
-    }, [roles]);
+    useLoadEffect(loadInitial);
 
-    useEffect(() => {
-        setUserCreate((s) => {
-            if (s.departmentId) return s;
-            if (!selectedDepartmentId) return s;
-            if (createRoleKey === 'ADMIN') return s;
-            return { ...s, departmentId: selectedDepartmentId };
-        });
-    }, [createRoleKey, selectedDepartmentId]);
-
-    useEffect(() => {
-        const departmentId = selectedDepartmentId ? Number(selectedDepartmentId) : null;
-        if (!departmentId) {
-            setAcademicClasses([]);
-            return;
-        }
-        loadAcademicClasses(departmentId);
+    const loadSelectedDepartmentClasses = useCallback(() => {
+        if (selectedDepartmentId) loadAcademicClasses(Number(selectedDepartmentId));
     }, [loadAcademicClasses, selectedDepartmentId]);
 
-    useEffect(() => {
+    useLoadEffect(loadSelectedDepartmentClasses);
+
+    const loadActiveTab = useCallback(() => {
         if (activeTab === 'userList') loadUsers();
         if (activeTab === 'departments') loadDepartments();
     }, [activeTab, loadUsers, loadDepartments]);
+
+    useLoadEffect(loadActiveTab);
 
     return { loading, setLoading, activeTab, setActiveTab, notice, setNotice, users, setUsers, userPage, setUserPage, userPageInfo, setUserPageInfo, userQuery, setUserQuery, userQueryInput, setUserQueryInput, roles, setRoles, departments, setDepartments, departmentCreate, setDepartmentCreate, selectedDepartmentId, setSelectedDepartmentId, selectedUserRole, setSelectedUserRole, academicClasses, setAcademicClasses, userCreate, setUserCreate, createRoleName, createRoleKey, loadDepartments, createDepartment, loadRoles, loadAcademicClasses, loadUsers, toggleUserStatus, changeUserRole, resendActivation, createUser };
 }

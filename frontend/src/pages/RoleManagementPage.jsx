@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { roleApi } from "../api/roleApi";
 import InlineNotice from "../components/InlineNotice";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 /** Vai trò hệ thống — backend không cho xóa (RoleService.SYSTEM_ROLES). */
 const SYSTEM_ROLES = ["ADMIN", "DEPARTMENT_ADMIN", "LECTURER", "STUDENT"];
@@ -36,9 +37,7 @@ export default function RoleManagementPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useLoadEffect(loadData);
 
   const handleTogglePrivilege = async (role, privilegeId) => {
     const currentPrivs = role.privileges || [];

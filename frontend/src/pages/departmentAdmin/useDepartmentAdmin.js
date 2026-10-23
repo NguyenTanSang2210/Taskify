@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import api from '../../api';
+import { useCallback, useMemo, useState } from 'react';
+import { workspaceApi } from '../../api/workspaceApi';
+import { departmentApi } from '../../api/departmentApi';
+import { dashboardApi } from '../../api/dashboardApi';
+import useLoadEffect from '../../hooks/useLoadEffect';
 import userApi from '../../api/userApi';
 import { topicApi } from '../../api/topicApi';
 import { useLocation } from 'react-router-dom';
@@ -25,10 +28,13 @@ export function useDepartmentAdmin() {
     const [classCreate, setClassCreate] = useState({ code: '', name: '' });
 
     const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
-    const [workspaceClasses, setWorkspaceClasses] = useState([]);
+    const [loadedWorkspaceClasses, setWorkspaceClasses] = useState([]);
 
     const [lecturers, setLecturers] = useState([]);
-    const [assignments, setAssignments] = useState([]);
+    const [loadedAssignments, setAssignments] = useState([]);
+    // Chưa chọn đợt thì không hiện lớp/phân công nào (suy ra thay vì xóa state trong effect)
+    const workspaceClasses = useMemo(() => (selectedWorkspaceId ? loadedWorkspaceClasses : []), [selectedWorkspaceId, loadedWorkspaceClasses]);
+    const assignments = useMemo(() => (selectedWorkspaceId ? loadedAssignments : []), [selectedWorkspaceId, loadedAssignments]);
     const [assignForm, setAssignForm] = useState({ lecturerId: '', type: 'MAIN', quotaMaxGroups: 0, reason: '' });
     const [deptStats, setDeptStats] = useState(null);
 
@@ -76,8 +82,7 @@ export function useDepartmentAdmin() {
     const loadWorkspaces = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get('/workspaces');
-            setWorkspaces(res.data || []);
+            setWorkspaces((await workspaceApi.list()) || []);
         } catch (error) {
             console.error('Failed to load workspaces', error);
         } finally {
@@ -88,8 +93,7 @@ export function useDepartmentAdmin() {
     const loadClasses = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get('/classes');
-            setClasses(res.data || []);
+            setClasses((await departmentApi.listClasses()) || []);
         } catch (error) {
             console.error('Failed to load classes', error);
         } finally {
@@ -116,7 +120,7 @@ export function useDepartmentAdmin() {
                 startAt: wsCreate.startAt || null,
                 endAt: wsCreate.endAt || null
             };
-            await api.post('/workspaces', payload);
+            await workspaceApi.create(payload);
             setNotice({ type: 'success', message: 'Đã khởi tạo Không gian làm việc mới.' });
             setWsCreate({ name: '', type: '', semester: '', startAt: '', endAt: '' });
             await loadWorkspaces();
@@ -131,7 +135,7 @@ export function useDepartmentAdmin() {
         if (!window.confirm(`Xác nhận chuyển trạng thái sang ${getWorkspaceStatusLabel(to)}?`)) return;
         setLoading(true);
         try {
-            await api.post(`/workspaces/${workspaceId}/transition`, null, { params: { to } });
+            await workspaceApi.transition(workspaceId, to);
             setNotice({ type: 'success', message: 'Cập nhật trạng thái chu kỳ thành công.' });
             await loadWorkspaces();
         } catch (error) {
@@ -150,7 +154,7 @@ export function useDepartmentAdmin() {
         }
         setLoading(true);
         try {
-            await api.post('/classes', { code, name });
+            await departmentApi.createClass({ code, name });
             setNotice({ type: 'success', message: 'Lớp học học thuật mới đã được thêm vào hệ thống.' });
             setClassCreate({ code: '', name: '' });
             await loadClasses();
@@ -168,8 +172,7 @@ export function useDepartmentAdmin() {
         }
         setLoading(true);
         try {
-            const res = await api.get('/workspace-classes', { params: { workspaceId } });
-            setWorkspaceClasses(res.data || []);
+            setWorkspaceClasses((await workspaceApi.listClasses(workspaceId)) || []);
         } catch (error) {
             console.error('Failed to load workspace classes', error);
         } finally {
@@ -180,7 +183,7 @@ export function useDepartmentAdmin() {
     const assignClassToWorkspace = async (workspaceId, classId) => {
         setLoading(true);
         try {
-            await api.post('/workspace-classes/assign', { workspaceId, classId });
+            await workspaceApi.assignClass(workspaceId, classId);
             await loadWorkspaceClasses(workspaceId);
         } catch {
             setNotice({ type: 'danger', message: 'Lỗi gán lớp.' });
@@ -192,7 +195,7 @@ export function useDepartmentAdmin() {
     const unassignClassFromWorkspace = async (workspaceId, classId) => {
         setLoading(true);
         try {
-            await api.post('/workspace-classes/unassign', { workspaceId, classId });
+            await workspaceApi.unassignClass(workspaceId, classId);
             await loadWorkspaceClasses(workspaceId);
         } catch {
             setNotice({ type: 'danger', message: 'Lỗi gỡ lớp.' });
@@ -221,8 +224,7 @@ export function useDepartmentAdmin() {
         }
         setLoading(true);
         try {
-            const res = await api.get('/assignments', { params: { workspaceId } });
-            setAssignments(res.data || []);
+            setAssignments((await workspaceApi.listAssignments(workspaceId)) || []);
         } catch (error) {
             console.error('Failed to load assignments', error);
         } finally {
@@ -233,8 +235,7 @@ export function useDepartmentAdmin() {
     const loadDeptStats = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get('/dashboard/department-admin');
-            setDeptStats(res.data || null);
+            setDeptStats((await dashboardApi.getDepartmentAdminStats()) || null);
         } catch (error) {
             console.error('Failed to load department stats', error);
         } finally {
@@ -251,7 +252,7 @@ export function useDepartmentAdmin() {
         }
         setLoading(true);
         try {
-            await api.post('/assignments/assign', {
+            await workspaceApi.assignLecturer({
                 workspaceId,
                 lecturerId,
                 type: assignForm.type,
@@ -272,7 +273,7 @@ export function useDepartmentAdmin() {
         const reason = window.prompt('Lý do thu hồi (tuỳ chọn):') || '';
         setLoading(true);
         try {
-            await api.post('/assignments/revoke', { assignmentId, reason: reason.trim() || null });
+            await workspaceApi.revokeAssignment(assignmentId, reason.trim() || null);
             setNotice({ type: 'success', message: 'Đã thu hồi quyền tham gia của giảng viên.' });
             await loadAssignments(Number(selectedWorkspaceId));
         } catch {
@@ -282,7 +283,7 @@ export function useDepartmentAdmin() {
         }
     };
 
-    useEffect(() => {
+    const loadActiveTab = useCallback(() => {
         if (activeTab === 'workspaces') {
             loadWorkspaces();
         } else if (activeTab === 'classes') {
@@ -302,12 +303,7 @@ export function useDepartmentAdmin() {
         }
     }, [activeTab, loadWorkspaces, loadClasses, loadWorkspaceClasses, selectedWorkspaceId, loadLecturers, loadAssignments, loadTopics, loadDeptStats]);
 
-    useEffect(() => {
-        if (!selectedWorkspaceId) {
-            setWorkspaceClasses([]);
-            setAssignments([]);
-        }
-    }, [selectedWorkspaceId]);
+    useLoadEffect(loadActiveTab);
 
     const activeClassIds = useMemo(() => {
         return new Set((workspaceClasses || []).filter(x => x.active).map(x => x.academicClass?.id));

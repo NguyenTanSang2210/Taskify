@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { topicApi } from "../api/topicApi";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
@@ -6,6 +6,7 @@ import { TOPIC_STATUS, statusOptions } from "../constants/status";
 import { EMPTY_FORM, MAX_CAPACITY, MIN_CAPACITY } from "./lecturerTopics/topicForm";
 import TopicTable from "./lecturerTopics/TopicTable";
 import TopicFormModal from "./lecturerTopics/TopicFormModal";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 
 export default function LecturerTopicsPage() {
@@ -61,9 +62,7 @@ export default function LecturerTopicsPage() {
     }
   }, [lecturerId, query, status, page, size]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useLoadEffect(load);
 
   const openCreate = async () => {
     setEditing(null);

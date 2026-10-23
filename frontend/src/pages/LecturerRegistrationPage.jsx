@@ -8,6 +8,7 @@ import GradeHistoryModal from "../components/GradeHistoryModal";
 import InlineNotice from "../components/InlineNotice";
 import { connectAndSubscribe } from "../ws/stomp";
 import RegistrationReviewModal from "./lecturerRegistration/RegistrationReviewModal";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function LecturerRegistrationPage() {
   const location = useLocation();
@@ -61,9 +62,7 @@ export default function LecturerRegistrationPage() {
   }, [user?.id]);
 
   // Tải danh sách đăng ký mỗi khi đổi đề tài (trước đây phải bấm "Làm mới" mới thấy dữ liệu)
-  useEffect(() => {
-    load();
-  }, [load]);
+  useLoadEffect(load);
 
   useEffect(() => {
     if (!topicId) return;

@@ -3,6 +3,7 @@ import { notificationsApi } from "../api/notificationsApi";
 import { connectAndSubscribe } from "../ws/stomp";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
@@ -48,9 +49,7 @@ export default function NotificationsPage() {
     }
   };
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useLoadEffect(load);
 
   useEffect(() => {
     if (!userId) return;

@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { registrationApi } from "../api/registrationApi";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function StudentMyRegistrationsPage() {
   const [items, setItems] = useState([]);
@@ -33,9 +34,7 @@ export default function StudentMyRegistrationsPage() {
     }
   }, [isStudent, studentId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useLoadEffect(load);
 
   const handleCancel = async (regId) => {
     if (!window.confirm("Bạn có chắc muốn hủy đăng ký này? Thao tác này không thể hoàn tác.")) return;

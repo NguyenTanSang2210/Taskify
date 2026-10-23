@@ -7,9 +7,11 @@ import ProgressRow, { mergeProgressUpdate } from "../components/ProgressRow";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 import { PROGRESS_STATUS, statusOptions } from "../constants/status";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function LecturerProgressPage() {
   const { user } = useAuth();
+  const userId = user?.id;
 
   const location = useLocation();
   // ?topicId= từ liên kết thông báo "Sinh viên gửi báo cáo" — mở đúng đề tài
@@ -26,9 +28,9 @@ export default function LecturerProgressPage() {
 
   // --- LOAD TOPICS ---
   const loadTopics = useCallback(async () => {
-    if (!user?.id) return;
+    if (!userId) return;
     try {
-      const data = await topicApi.getAllTopics({ lecturerId: user.id, size: 100 });
+      const data = await topicApi.getAllTopics({ lecturerId: userId, size: 100 });
       setTopics(data.items || []);
       if (data.items?.length > 0 && !topicId) {
         setTopicId(String(data.items[0].id));
@@ -36,11 +38,9 @@ export default function LecturerProgressPage() {
     } catch (e) {
       console.error(e);
     }
-  }, [user?.id, topicId]);
+  }, [userId, topicId]);
 
-  useEffect(() => {
-    loadTopics();
-  }, [loadTopics]);
+  useLoadEffect(loadTopics);
 
   // --- LOAD PROGRESS ---
   const loadProgress = useCallback(async () => {
@@ -61,9 +61,7 @@ export default function LecturerProgressPage() {
     }
   }, [topicId]);
 
-  useEffect(() => {
-    loadProgress();
-  }, [loadProgress]);
+  useLoadEffect(loadProgress);
 
   // "Tải thêm" báo cáo cũ hơn (tìm kiếm/lọc áp dụng trên các báo cáo đã tải)
   const loadMore = async () => {
