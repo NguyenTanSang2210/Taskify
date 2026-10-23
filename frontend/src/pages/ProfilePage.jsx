@@ -2,13 +2,14 @@ import React, { useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import userApi from '../api/userApi';
 import useLoadEffect from '../hooks/useLoadEffect';
+import NotificationSettingsTab from './profile/NotificationSettingsTab';
 import InlineNotice from '../components/InlineNotice';
 import PasswordChecklist, { isPasswordValid } from '../components/PasswordChecklist';
 
 export default function ProfilePage() {
     const { user, updateUser, updateToken } = useAuth();
     
-    const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
+    const [activeTab, setActiveTab] = useState('info'); // 'info' | 'password' | 'notifications'
     const [loading, setLoading] = useState(false);
     const [notice, setNotice] = useState(null);
 
@@ -176,6 +177,13 @@ export default function ProfilePage() {
                             <span className="material-symbols-outlined">security</span>
                             <span className="text-[11px] font-black uppercase tracking-[0.2em]">Bảo mật & Mật khẩu</span>
                         </button>
+                        <button 
+                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'notifications' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
+                            onClick={() => setActiveTab('notifications')}
+                        >
+                            <span className="material-symbols-outlined">notifications</span>
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em]">Thông báo</span>
+                        </button>
                     </div>
 
                     <div className="p-6 bg-secondary/5 rounded-[2rem] border border-secondary/10">
@@ -253,6 +261,8 @@ export default function ProfilePage() {
                                 </div>
                             </form>
                         )}
+
+                        {activeTab === 'notifications' && <NotificationSettingsTab />}
 
                         {activeTab === 'password' && (
                             <form onSubmit={handleChangePassword} className="space-y-8">

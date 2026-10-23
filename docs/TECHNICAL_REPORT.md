@@ -70,11 +70,11 @@ Sơ đồ thành phần, ERD và sơ đồ trạng thái: [`ARCHITECTURE.md`](AR
 
 ## 5. Mô hình dữ liệu
 
-30 bảng nghiệp vụ (không tính `flyway_schema_history`), ERD ở [`ARCHITECTURE.md`](ARCHITECTURE.md#2-mô-hình-dữ-liệu-erd-rút-gọn). Nhóm chính:
+32 bảng nghiệp vụ (không tính `flyway_schema_history`), ERD ở [`ARCHITECTURE.md`](ARCHITECTURE.md#2-mô-hình-dữ-liệu-erd-rút-gọn). Nhóm chính:
 
 - Tài khoản: `users`, `roles`, `privileges`, `roles_privileges`, `departments`, `lecturers`, `students`, `academic_classes`, `otp_tokens`, `refresh_tokens`, `login_throttle`.
 - Đợt và đề tài: `workspaces`, `workspace_classes`, `lecturer_assignments`, `topics`, `topic_registration`, `grade_history`, `grade_revision_requests`.
-- Tiến độ và cộng tác: `milestones`, `milestone_grades`, `progress_report`, `stored_files`, `discussion_threads`, `discussion_posts`, `messages`, `announcements`, `calendar_events`, `notifications`.
+- Tiến độ và cộng tác: `milestones`, `milestone_grades`, `progress_report`, `stored_files`, `discussion_threads`, `discussion_posts`, `messages`, `announcements`, `calendar_events`, `notifications`, `notification_settings`, `email_digest_items`.
 - Vận hành: `audit_logs`, `data_migrations` (đánh dấu bước sửa dữ liệu đã chạy).
 
 Thời gian lưu UTC, hiển thị giờ Việt Nam. Migration: V1 baseline → V6 refresh token.

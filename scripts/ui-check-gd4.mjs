@@ -4,6 +4,7 @@
  *   (P4-03) nhập sinh viên từ Excel: file mẫu, kiểm tra báo lỗi từng dòng, tải danh sách lỗi, nhập dòng hợp lệ
  *   (P4-01) dashboard theo vai trò: thống kê khoa/đợt (Admin, quản trị khoa), việc cần làm (GV), tiến độ (SV)
  *   (P4-05) mốc tiến độ: giảng viên tạo mốc có trọng số, chấm theo mốc; sinh viên thấy điểm + trạng thái nộp
+ *   (P4-06) cài đặt email thông báo trong Hồ sơ: tắt nhóm, chọn tổng hợp mỗi sáng
  *   (P4-02) nhật ký hệ thống: lọc nhanh "Thay đổi điểm", lọc người thực hiện, xem chi tiết, IP, xuất CSV
  * Chạy trên stack Docker profile dev có dữ liệu demo (DataSeeder).
  *
@@ -217,6 +218,29 @@ let page;
     sql(`DELETE FROM notifications WHERE title LIKE '%${title}%'`);
     sql(`DELETE FROM milestones WHERE title = '${title}'`);
   }
+}
+
+// ---------- P4-06: cài đặt email thông báo ----------
+{
+  page = await pageAs(student);
+  await page.goto(WEB + "/profile");
+  await page.getByRole("button", { name: "Thông báo" }).click();
+  await page.getByLabel("Kết quả đăng ký đề tài").waitFor();
+  await page.getByLabel("Nhắc hạn tự động").uncheck();
+  await page.getByLabel("Tổng hợp mỗi sáng (07:30)").check();
+  await page.getByRole("button", { name: "Lưu cài đặt" }).click();
+  await page.getByText("Đã lưu cài đặt thông báo.").waitFor();
+  const row = sql(`SELECT CONCAT(email_digest + 0, ':', email_registration + 0, ':', email_reminder + 0) FROM notification_settings WHERE user_id = ${student.userId}`);
+  check(row === "1:1:0", "P4-06: lưu cài đặt — tổng hợp mỗi sáng, tắt nhóm nhắc hạn", row);
+  await page.reload();
+  await page.getByRole("button", { name: "Thông báo" }).click();
+  await page.getByLabel("Nhắc hạn tự động").waitFor();
+  check(!(await page.getByLabel("Nhắc hạn tự động").isChecked()) && (await page.getByLabel("Tổng hợp mỗi sáng (07:30)").isChecked()),
+    "P4-06: tải lại trang vẫn giữ cài đặt");
+  await page.screenshot({ path: path.join(SHOTS, "ui-gd4-notification-settings.png") });
+  await page.context().close();
+  sql(`DELETE FROM notification_settings WHERE user_id = ${student.userId}`);
+  sql(`DELETE FROM email_digest_items WHERE user_id = ${student.userId}`);
 }
 
 // ---------- P4-02: nhật ký hệ thống ----------

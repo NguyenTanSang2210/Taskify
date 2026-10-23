@@ -22,11 +22,11 @@ flowchart TB
     REPO["Spring Data JPA repository<br/>EntityGraph · truy vấn gom nhóm"]
     WS["STOMP broker (/ws)<br/>/user/queue/* · /topic/*"]
     EVT["EventPublisher<br/>(gửi sau khi commit)"]
-    JOBS["Scheduler: nhắc hạn, hết hạn chấm lại,<br/>dọn refresh token / file / login throttle"]
+    JOBS["Scheduler: nhắc hạn, thư tổng hợp, hết hạn chấm lại,<br/>dọn refresh token / file / login throttle / nhật ký"]
     ACT["Actuator health · info"]
   end
 
-  DB[("MySQL 8.4<br/>Flyway V1–V9")]
+  DB[("MySQL 8.4<br/>Flyway V1–V10")]
   MAIL["SMTP (email bất đồng bộ)"]
 
   SPA -->|HTTPS| STATIC
@@ -96,6 +96,8 @@ erDiagram
   TOPICS |o--o{ ANNOUNCEMENTS : "null = toàn hệ thống"
   TOPICS ||--o{ CALENDAR_EVENTS : ""
   USERS ||--o{ NOTIFICATIONS : ""
+  USERS ||--o| NOTIFICATION_SETTINGS : "cài đặt email"
+  USERS ||--o{ EMAIL_DIGEST_ITEMS : "chờ thư tổng hợp"
   USERS ||--o{ REFRESH_TOKENS : "phiên đăng nhập"
   USERS ||--o{ OTP_TOKENS : ""
 ```
@@ -105,7 +107,7 @@ Bảng không có khóa ngoại: `audit_logs` (ghi tên người thực hiện),
 Ghi chú:
 - `topic_registration.approved`: `NULL` = chờ duyệt, `1` = đã duyệt, `0` = từ chối. Một đề tài nhận nhiều sinh viên độc lập theo `capacity`, mỗi sinh viên chấm điểm riêng ([ADR-0001](adr/0001-nhieu-sinh-vien-moi-de-tai.md)).
 - Thời gian lưu **UTC** trong CSDL, ứng dụng chạy giờ Việt Nam (`Asia/Ho_Chi_Minh`) và trả về giao diện theo giờ Việt Nam.
-- Schema chỉ thay đổi qua Flyway (`Backend/src/main/resources/db/migration`): V1 baseline, V2 vai trò/quyền mặc định, V3 sửa dữ liệu GĐ2, V4 enum trạng thái, V5 index truy vấn, V6 refresh token, V7 IP/trình duyệt trong nhật ký hệ thống, V8 thời điểm nhận xét tiến độ, V9 trọng số + điểm theo mốc.
+- Schema chỉ thay đổi qua Flyway (`Backend/src/main/resources/db/migration`): V1 baseline, V2 vai trò/quyền mặc định, V3 sửa dữ liệu GĐ2, V4 enum trạng thái, V5 index truy vấn, V6 refresh token, V7 IP/trình duyệt trong nhật ký hệ thống, V8 thời điểm nhận xét tiến độ, V9 trọng số + điểm theo mốc, V10 cài đặt email thông báo + hàng chờ thư tổng hợp.
 
 ## 3. Vòng đời trạng thái
 

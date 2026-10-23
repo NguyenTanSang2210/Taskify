@@ -2,6 +2,7 @@ package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.EmailCategory;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.exception.ApiException;
@@ -30,7 +31,7 @@ public class TopicRegistrationService {
     private final EventPublisher eventPublisher;
     private final NotificationService notifications;
     private final AuditLogService auditLogService;
-    private final EmailService emailService;
+    private final NotificationMailer mailer;
     private final SecurityScopeService scope;
     private final WorkspaceClassRepository workspaceClassRepo;
     private final GradeService gradeService;
@@ -42,7 +43,7 @@ public class TopicRegistrationService {
                                     EventPublisher eventPublisher,
                                     NotificationService notifications,
                                     AuditLogService auditLogService,
-                                    EmailService emailService,
+                                    NotificationMailer mailer,
                                     SecurityScopeService scope,
                                     WorkspaceClassRepository workspaceClassRepo,
                                     GradeService gradeService) {
@@ -54,7 +55,7 @@ public class TopicRegistrationService {
         this.eventPublisher = eventPublisher;
         this.notifications = notifications;
         this.auditLogService = auditLogService;
-        this.emailService = emailService;
+        this.mailer = mailer;
         this.scope = scope;
         this.workspaceClassRepo = workspaceClassRepo;
         this.gradeService = gradeService;
@@ -268,7 +269,7 @@ public class TopicRegistrationService {
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {
-        emailService.sendEmail(to.getEmail(), mail.subject(), mail.html());
+        mailer.send(to, EmailCategory.REGISTRATION, mail);
     }
 
     private TopicRegistration findRegistration(Long regId) {

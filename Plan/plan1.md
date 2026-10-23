@@ -151,7 +151,7 @@
 | P4-03 | Import người dùng/lớp từ Excel | P1 | 2 ngày | ✅ |
 | P4-04 | Quản lý nhóm (Team) — phát triển sau v1.0 | P3 | 3–4 ngày | 🕒 |
 | P4-05 | Nộp bài theo milestone + chấm theo mốc | P2 | 3 ngày | ✅ |
-| P4-06 | Cài đặt thông báo cá nhân + email digest | P3 | 1,5 ngày | ⬜ |
+| P4-06 | Cài đặt thông báo cá nhân + email digest | P3 | 1,5 ngày | ✅ |
 | P4-07 | Học phí — tạm hoãn, phát triển sau v1.0 | P3 | Chưa ước lượng | 🕒 |
 | P4-08 | Observability (metrics, dashboard) | P2 | 1,5 ngày | ⬜ |
 | P4-09 | Triển khai production (HTTPS, backup) | P1 | 2 ngày | ⬜ |
@@ -1818,12 +1818,14 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 
 ---
 
-### ⬜ P4-06 — Cài đặt thông báo cá nhân + email digest
+### ✅ P4-06 — Cài đặt thông báo cá nhân + email digest
 
-- [ ] Người dùng chọn loại thông báo nhận qua email / chỉ trong app.
-- [ ] Email tổng hợp hằng ngày thay vì từng email lẻ.
+- [x] Người dùng chọn loại thông báo nhận qua email / chỉ trong app.
+- [x] Email tổng hợp hằng ngày thay vì từng email lẻ.
 
-**Theo dõi:** Trạng thái: ✅
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: xem Changelog
+
+**Kết quả:** V10 (`notification_settings`, `email_digest_items`). 4 nhóm email bật/tắt riêng (kết quả đăng ký, tiến độ & nhận xét, điểm & chấm lại, nhắc hạn) + chế độ **gửi ngay / tổng hợp 07:30 mỗi sáng**; email bảo mật (OTP, kích hoạt, đặt lại mật khẩu) luôn gửi ngay, thông báo trong app không đổi. `NotificationMailer` thay cho các lời gọi `EmailService` trực tiếp ở 4 service. API `GET/PUT /api/notification-settings`; tab *Thông báo* trong Hồ sơ. Test: `NotificationSettingsIT` (5), `ui-check-gd4.mjs`.
 
 ---
 

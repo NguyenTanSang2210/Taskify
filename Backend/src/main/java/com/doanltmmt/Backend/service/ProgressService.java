@@ -9,6 +9,7 @@ import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.StoredFile;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.entity.enums.EmailCategory;
 import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.exception.ApiException;
@@ -45,7 +46,7 @@ public class ProgressService {
     private final EventPublisher eventPublisher;
     private final NotificationService notifications;
     private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
-    private final EmailService emailService;
+    private final NotificationMailer mailer;
     private final SimilarityService similarityService;
     private final SecurityScopeService scope;
     private final StoredFileRepository storedFileRepo;
@@ -58,7 +59,7 @@ public class ProgressService {
                            EventPublisher eventPublisher,
                            NotificationService notifications,
                            com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                           EmailService emailService,
+                           NotificationMailer mailer,
                            SimilarityService similarityService,
                            SecurityScopeService scope,
                            StoredFileRepository storedFileRepo) {
@@ -71,7 +72,7 @@ public class ProgressService {
         this.eventPublisher = eventPublisher;
         this.notifications = notifications;
         this.auditLogService = auditLogService;
-        this.emailService = emailService;
+        this.mailer = mailer;
         this.similarityService = similarityService;
         this.scope = scope;
     }
@@ -162,7 +163,7 @@ public class ProgressService {
             // Email to lecturer
             EmailTemplates.Mail mail = EmailTemplates.progressSubmitted(
                     saved.getStudent().getUser().getFullName(), saved.getTitle(), saved.getTopic().getTitle());
-            emailService.sendEmail(saved.getTopic().getLecturer().getUser().getEmail(), mail.subject(), mail.html());
+            mailer.send(saved.getTopic().getLecturer().getUser(), EmailCategory.PROGRESS, mail);
         }
         notifications.notify(saved.getStudent().getUser(), "Đã gửi báo cáo #" + saved.getId(),
                 "Bạn đã gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId(),
@@ -273,7 +274,7 @@ public class ProgressService {
                 msg.trim().isEmpty() ? "Báo cáo \"" + saved.getTitle() + "\" đã được cập nhật" : msg,
                 REF_TYPE, saved.getId(), studentLink(saved));
         EmailTemplates.Mail feedbackMail = EmailTemplates.progressFeedback(saved.getTitle(), saved.getLecturerComment());
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), feedbackMail.subject(), feedbackMail.html());
+        mailer.send(saved.getStudent().getUser(), EmailCategory.PROGRESS, feedbackMail);
         return ProgressReportDTO.forReviewer(saved);
     }
 

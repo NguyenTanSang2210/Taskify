@@ -2,6 +2,7 @@ package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.EmailCategory;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.repository.*;
@@ -29,7 +30,7 @@ public class TopicRegistrationServiceTest {
     @Mock private EventPublisher eventPublisher;
     @Mock private NotificationService notifications;
     @Mock private AuditLogService auditLogService;
-    @Mock private EmailService emailService;
+    @Mock private NotificationMailer mailer;
     @Mock private SecurityScopeService scope;
     @Mock private WorkspaceClassRepository workspaceClassRepo;
     @Mock private GradeService gradeService;
@@ -131,6 +132,6 @@ public class TopicRegistrationServiceTest {
 
         assertTrue(result.getApproved());
         verify(auditLogService).log(eq("APPROVE_REGISTRATION"), any(), eq("500"), any());
-        verify(emailService).sendEmail(any(), any(), any());
+        verify(mailer).send(any(), eq(EmailCategory.REGISTRATION), any());
     }
 }

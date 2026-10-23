@@ -35,7 +35,7 @@ class MailDispatcherPacingTest {
         }).when(sender).send(any(MimeMessage.class));
         ObjectProvider<JavaMailSender> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(sender);
-        MailDispatcher dispatcher = new MailDispatcher(provider, "noreply@test.local", 10, 60);
+        MailDispatcher dispatcher = new MailDispatcher(provider, "noreply@test.local", 10, 100);
 
         List<Thread> threads = new ArrayList<>();
         for (int t = 0; t < 2; t++) {
@@ -51,9 +51,13 @@ class MailDispatcherPacingTest {
 
         List<Long> sorted = sentAt.stream().sorted().toList();
         assertTrue(sorted.size() == 4, "gửi đủ 4 email");
+        // Mỗi email được cấp một "suất" cách suất trước ≥ 100 ms; thời điểm gửi quan sát được còn lệch theo lập lịch
+        // luồng (máy bận khi chạy cả bộ test) nên kiểm tra với dung sai: từng khoảng ≥ 50 ms, cả 4 email trải ≥ 250 ms.
         for (int i = 1; i < sorted.size(); i++) {
             long gapMillis = (sorted.get(i) - sorted.get(i - 1)) / 1_000_000;
-            assertTrue(gapMillis >= 50, "hai email liên tiếp cách nhau " + gapMillis + " ms (< 60 ms tối thiểu)");
+            assertTrue(gapMillis >= 50, "hai email liên tiếp cách nhau " + gapMillis + " ms");
         }
+        long spanMillis = (sorted.get(3) - sorted.get(0)) / 1_000_000;
+        assertTrue(spanMillis >= 250, "4 email phải trải trên ≥ 3 khoảng 100 ms, thực tế " + spanMillis + " ms");
     }
 }

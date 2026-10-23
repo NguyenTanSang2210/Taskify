@@ -4,6 +4,7 @@ import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
+import com.doanltmmt.Backend.entity.enums.EmailCategory;
 import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.enums.Severity;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
@@ -45,17 +46,17 @@ public class ReminderService {
     private final MilestoneRepository milestoneRepo;
     private final NotificationRepository notificationRepo;
     private final NotificationService notifications;
-    private final EmailService emailService;
+    private final NotificationMailer mailer;
     private final AuditLogService auditLogService;
 
     public ReminderService(TopicRegistrationRepository regRepo, MilestoneRepository milestoneRepo,
                            NotificationRepository notificationRepo, NotificationService notifications,
-                           EmailService emailService, AuditLogService auditLogService) {
+                           NotificationMailer mailer, AuditLogService auditLogService) {
         this.regRepo = regRepo;
         this.milestoneRepo = milestoneRepo;
         this.notificationRepo = notificationRepo;
         this.notifications = notifications;
-        this.emailService = emailService;
+        this.mailer = mailer;
         this.auditLogService = auditLogService;
     }
 
@@ -139,8 +140,6 @@ public class ReminderService {
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {
-        if (to.getEmail() != null && !to.getEmail().isBlank()) {
-            emailService.sendEmail(to.getEmail(), mail.subject(), mail.html());
-        }
+        mailer.send(to, EmailCategory.REMINDER, mail);
     }
 }

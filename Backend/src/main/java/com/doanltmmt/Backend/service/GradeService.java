@@ -13,6 +13,7 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.EmailCategory;
 import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
 import com.doanltmmt.Backend.entity.enums.GradeState;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
@@ -65,21 +66,21 @@ public class GradeService {
     private final GradeHistoryRepository historyRepo;
     private final UserRepository userRepo;
     private final NotificationService notifications;
-    private final EmailService emailService;
+    private final NotificationMailer mailer;
     private final AuditLogService auditLogService;
     private final SecurityScopeService scope;
 
     public GradeService(TopicRegistrationRepository regRepo, TopicRepository topicRepo,
                         GradeRevisionRequestRepository revisionRepo, GradeHistoryRepository historyRepo,
                         UserRepository userRepo, NotificationService notifications,
-                        EmailService emailService, AuditLogService auditLogService, SecurityScopeService scope) {
+                        NotificationMailer mailer, AuditLogService auditLogService, SecurityScopeService scope) {
         this.regRepo = regRepo;
         this.topicRepo = topicRepo;
         this.revisionRepo = revisionRepo;
         this.historyRepo = historyRepo;
         this.userRepo = userRepo;
         this.notifications = notifications;
-        this.emailService = emailService;
+        this.mailer = mailer;
         this.auditLogService = auditLogService;
         this.scope = scope;
     }
@@ -378,8 +379,6 @@ public class GradeService {
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {
-        if (to.getEmail() != null && !to.getEmail().isBlank()) {
-            emailService.sendEmail(to.getEmail(), mail.subject(), mail.html());
-        }
+        mailer.send(to, EmailCategory.GRADE, mail);
     }
 }

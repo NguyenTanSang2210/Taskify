@@ -22,4 +22,7 @@ export const notificationsApi = {
   markAllRead: async (userId) => {
     await api.post(`/notifications/read-all`, null, { params: { userId } });
   },
+  // P4-06: cài đặt email thông báo của người dùng hiện tại
+  getSettings: async () => (await api.get("/notification-settings")).data,
+  saveSettings: async (settings) => (await api.put("/notification-settings", settings)).data,
 };

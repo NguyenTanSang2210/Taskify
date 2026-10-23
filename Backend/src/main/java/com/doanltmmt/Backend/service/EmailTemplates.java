@@ -2,6 +2,7 @@ package com.doanltmmt.Backend.service;
 
 import org.springframework.web.util.HtmlUtils;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -151,6 +152,18 @@ public final class EmailTemplates {
                 + "</b>) đã bị <b>từ chối</b>.");
         String noteHtml = note == null || note.isBlank() ? "" : p("Ghi chú của người duyệt: <i>" + esc(note) + "</i>");
         return new Mail("Taskify - Kết quả yêu cầu chấm lại", layout("Kết quả yêu cầu chấm lại", result + noteHtml));
+    }
+
+    /** P4-06: thư tổng hợp hằng ngày — mỗi mục là tiêu đề + nội dung văn bản của một email thông báo. */
+    public static Mail digest(List<String[]> items) {
+        StringBuilder body = new StringBuilder(p("Bạn có " + items.size() + " thông báo mới từ Taskify:"));
+        for (String[] item : items) {
+            body.append("<div style=\"border-top:1px solid #e3e7f0;padding:12px 0\"><div style=\"font-weight:bold;font-size:15px\">")
+                    .append(esc(item[0])).append("</div><div style=\"font-size:14px;line-height:1.6;color:#3b4252;white-space:pre-line\">")
+                    .append(esc(item[1])).append("</div></div>");
+        }
+        body.append(p("Đổi cách nhận email tại <b>Hồ sơ của tôi → Thông báo</b>."));
+        return new Mail("Taskify - Tổng hợp " + items.size() + " thông báo", layout("Thông báo trong ngày", body.toString()));
     }
 
     public static String formatScore(Double score) {

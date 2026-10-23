@@ -37,6 +37,8 @@ Không có đăng ký công khai: mọi tài khoản do **Admin** tạo (mục *
 
 **Hồ sơ cá nhân** (*Hồ sơ của tôi*): sửa họ tên, email; đổi mật khẩu (cần mật khẩu hiện tại).
 
+**Cài đặt email thông báo** (*Hồ sơ của tôi → Thông báo*): bật/tắt từng nhóm email (kết quả đăng ký đề tài, báo cáo tiến độ & nhận xét, điểm & chấm lại, nhắc hạn tự động) và chọn *Gửi ngay* hoặc *Tổng hợp mỗi sáng (07:30)* — mọi thông báo trong ngày gom thành một email. Thông báo trong ứng dụng (chuông) không bị ảnh hưởng; email OTP, kích hoạt, đặt lại mật khẩu luôn được gửi ngay.
+
 ---
 
 ## 2. Quản lý Khoa, vai trò và người dùng (Admin)
