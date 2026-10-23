@@ -1,6 +1,5 @@
 package com.doanltmmt.Backend.security;
 
-import com.doanltmmt.Backend.config.DataMigrationRunner;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -10,7 +9,6 @@ import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.entity.WorkspaceClass;
-import com.doanltmmt.Backend.repository.DataMigrationRepository;
 import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,8 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TopicCapacityIT extends AbstractSecurityIT {
 
     @Autowired private WorkspaceClassRepository workspaceClassRepo;
-    @Autowired private DataMigrationRepository migrationRepo;
-    @Autowired private DataMigrationRunner dataMigrations;
 
     private Lecturer lecturer;
     private Workspace ws;
@@ -141,20 +137,5 @@ class TopicCapacityIT extends AbstractSecurityIT {
         mvc.perform(post("/api/topics/{id}/open", small.getId()).param("lecturerId", lec.getId().toString()).header(AUTH, bearer(lec)))
                 .andExpect(status().isOk());
         assertEquals(Topic.FULL, topicRepo.findById(small.getId()).orElseThrow().getStatus());
-    }
-
-    @Test
-    void legacyRegisteredTopics_areRecomputedOnce() {
-        Topic legacy = newTopic(lecturer, ws, 3);
-        legacy.setStatus("REGISTERED"); // mô hình cũ: 1 SV được duyệt là "REGISTERED"
-        topicRepo.save(legacy);
-        newRegistration(students.get(0), legacy, true);
-        migrationRepo.deleteById("P2-04_topic_status_by_capacity");
-        migrationRepo.flush();
-
-        dataMigrations.run();
-
-        assertEquals(Topic.OPEN, topicRepo.findById(legacy.getId()).orElseThrow().getStatus(), "1/3 chỗ → còn mở");
-        assertEquals(true, migrationRepo.existsById("P2-04_topic_status_by_capacity"));
     }
 }

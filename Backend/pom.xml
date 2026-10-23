@@ -71,6 +71,15 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- P3-01: quản lý schema bằng migration (thay ddl-auto=update) -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>

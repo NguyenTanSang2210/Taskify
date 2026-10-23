@@ -1,9 +1,7 @@
 package com.doanltmmt.Backend.security;
 
-import com.doanltmmt.Backend.config.DataMigrationRunner;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
-import com.doanltmmt.Backend.entity.Privilege;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.entity.Student;
 import com.doanltmmt.Backend.entity.Topic;
@@ -11,9 +9,6 @@ import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
@@ -21,7 +16,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
@@ -30,17 +24,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * P2-01 — giảng viên tự tạo/sửa/đóng/mở đề tài của mình (quyền TOPIC_MANAGE), không đụng được đề tài của người khác;
- * quyền do quản trị viên chỉnh không bị ghi đè khi khởi động lại.
+ * quyền do quản trị viên chỉnh không bị ghi đè — xem db/FlywayMigrationIT.
  */
 @SuppressWarnings("null")
 class TopicManagementIT extends AbstractSecurityIT {
-
-    @Autowired
-    @Qualifier("initRolesAndPrivileges")
-    private CommandLineRunner roleInitializer;
-
-    @Autowired
-    private DataMigrationRunner dataMigrations;
 
     private Lecturer lecA;
     private Lecturer lecA2;
@@ -124,20 +111,5 @@ class TopicManagementIT extends AbstractSecurityIT {
                 .andExpect(status().isBadRequest())
                 .andExpect(errorMessageContains("giảng viên"));
         assertFalse(lecturerRepo.existsById(student.getUser().getId()), "không được tạo bản ghi giảng viên cho sinh viên");
-    }
-
-    @Test
-    void privilegesEditedByAdmin_surviveRestart() throws Exception {
-        Role lecturer = roleRepo.findByName("LECTURER").orElseThrow();
-        lecturer.getPrivileges().removeIf(p -> p.getName().equals("TOPIC_MANAGE"));
-        roleRepo.saveAndFlush(lecturer);
-
-        roleInitializer.run(); // giả lập khởi động lại
-        dataMigrations.run();
-
-        Role after = roleRepo.findByName("LECTURER").orElseThrow();
-        assertFalse(after.getPrivileges().stream().map(Privilege::getName).anyMatch("TOPIC_MANAGE"::equals),
-                "khởi động lại không được ghi đè quyền quản trị viên đã chỉnh");
-        assertEquals(1, after.getPrivileges().size());
     }
 }
