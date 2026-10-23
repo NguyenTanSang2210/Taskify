@@ -25,6 +25,7 @@ export const ROLE_SECTIONS = {
     items: [
       { to: "/admin", icon: "shield_person", label: "Quản trị hệ thống", end: true },
       { to: "/admin/roles", icon: "admin_panel_settings", label: "Vai trò & quyền hạn" },
+      { to: "/admin/audit", icon: "history", label: "Nhật ký hệ thống" },
     ],
   },
   DEPARTMENT_ADMIN: {

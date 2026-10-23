@@ -2,6 +2,7 @@
 /**
  * Kiểm tra giao diện các tính năng Giai đoạn 4 (Playwright, giống ui-check-gd3.mjs):
  *   (P4-03) nhập sinh viên từ Excel: file mẫu, kiểm tra báo lỗi từng dòng, tải danh sách lỗi, nhập dòng hợp lệ
+ *   (P4-02) nhật ký hệ thống: lọc nhanh "Thay đổi điểm", lọc người thực hiện, xem chi tiết, IP, xuất CSV
  * Chạy trên stack Docker profile dev có dữ liệu demo (DataSeeder).
  *
  * Biến môi trường: API_URL, WEB_URL, DB_CONTAINER (taskify-db), PASSWORD (123456), EDGE_PATH, PW_MODULE, SHOT_DIR.
@@ -102,6 +103,41 @@ let page;
   sql(`DELETE o FROM otp_tokens o JOIN users u ON u.id = o.user_id WHERE u.username LIKE '${tag}%'`);
   sql(`DELETE s FROM students s JOIN users u ON u.id = s.id WHERE u.username LIKE '${tag}%'`);
   sql(`DELETE FROM users WHERE username LIKE '${tag}%'`);
+}
+
+// ---------- P4-02: nhật ký hệ thống ----------
+{
+  page = await pageAs(admin);
+  await page.goto(WEB + "/admin/audit");
+  await page.getByRole("link", { name: "Nhật ký hệ thống" }).waitFor();
+  await page.locator("tbody tr").first().waitFor();
+  const rows = await page.locator("tbody tr").count();
+  check(rows > 0 && rows <= 50, "P4-02: trang nhật ký hiển thị tối đa 50 bản ghi mới nhất", `${rows} dòng`);
+  const ip = (await page.locator("tbody tr").first().locator("td").nth(4).innerText()).trim();
+  check(/^[0-9a-f.:]+$/i.test(ip), "P4-02: ghi IP của người thực hiện", ip);
+
+  await page.getByRole("button", { name: "Thay đổi điểm" }).click();
+  await page.waitForTimeout(1200);
+  const gradeLabels = await page.locator("tbody tr td:nth-child(3)").allInnerTexts();
+  const allGrade = gradeLabels.every((t) => /điểm|chấm lại/i.test(t)) || (await page.getByText("Không có bản ghi phù hợp bộ lọc.").isVisible());
+  check(allGrade, "P4-02: lọc nhanh \"Thay đổi điểm\" chỉ còn nhật ký điểm số", `${gradeLabels.length} dòng: ${[...new Set(gradeLabels)].join(", ")}`);
+
+  await page.getByRole("button", { name: "Tất cả" }).click();
+  await page.locator("#audit-actor").fill("deptadmin");
+  await page.getByRole("button", { name: "Lọc", exact: true }).click();
+  await page.waitForTimeout(1200);
+  const actors = [...new Set(await page.locator("tbody tr td:nth-child(2)").allInnerTexts())];
+  check(actors.length === 1 && actors[0] === "deptadmin", "P4-02: lọc theo người thực hiện", actors.join(", "));
+  await page.locator("tbody tr").first().click();
+  const detail = await page.locator("dl").first().innerText();
+  check(/mã hành động/i.test(detail) && /trình duyệt/i.test(detail), "P4-02: bấm một dòng để xem chi tiết + trình duyệt");
+  await page.screenshot({ path: path.join(SHOTS, "ui-gd4-audit.png") });
+  const [csv] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Xuất CSV" }).click()]);
+  const csvText = (await import("node:fs")).readFileSync(await csv.path(), "utf8");
+  const csvLines = csvText.trim().split(/\r?\n/);
+  check(csv.suggestedFilename() === "nhat-ky-he-thong.csv" && csvLines.length > 1 && csvLines.slice(1).every((l) => l.split(",")[1] === "deptadmin"),
+    "P4-02: xuất CSV theo đúng bộ lọc đang chọn", `${csvLines.length - 1} dòng`);
+  await page.context().close();
 }
 
 await browser.close();

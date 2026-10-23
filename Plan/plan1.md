@@ -147,7 +147,7 @@
 | P3-13 | Viết lại tài liệu | P2 | 0,5 ngày | ✅ |
 | P3-14 | Access token ngắn hạn + Refresh token | P1 | 1,5 ngày | ✅ |
 | P4-01 | Dashboard thống kê nâng cao | P1 | 3 ngày | ⬜ |
-| P4-02 | Giao diện Audit Log cho Admin | P2 | 1 ngày | ⬜ |
+| P4-02 | Giao diện Audit Log cho Admin | P2 | 1 ngày | ✅ |
 | P4-03 | Import người dùng/lớp từ Excel | P1 | 2 ngày | ✅ |
 | P4-04 | Quản lý nhóm (Team) — phát triển sau v1.0 | P3 | 3–4 ngày | 🕒 |
 | P4-05 | Nộp bài theo milestone + chấm theo mốc | P2 | 3 ngày | ⬜ |
@@ -1746,14 +1746,16 @@ Số truy vấn đo bằng Hibernate statistics trong `QueryCountIT` (không ch�
 
 ---
 
-### ⬜ P4-02 — Giao diện Audit Log cho Admin
+### ✅ P4-02 — Giao diện Audit Log cho Admin
 
-- [ ] Trang `/admin/audit`: bảng phân trang, lọc theo người thực hiện, hành động, đối tượng, khoảng ngày; xem chi tiết; xuất CSV.
-- [ ] Bộ lọc nhanh "Thay đổi điểm" (các hành động `GRADE_*` từ P2-13).
-- [ ] Ghi thêm IP + user-agent vào audit log.
-- [ ] Chính sách lưu trữ: xóa/lưu trữ log > 12 tháng (job định kỳ) — **trừ** log liên quan điểm số (giữ lâu dài).
+- [x] Trang `/admin/audit`: bảng phân trang, lọc theo người thực hiện, hành động, đối tượng, khoảng ngày; xem chi tiết; xuất CSV.
+- [x] Bộ lọc nhanh "Thay đổi điểm" (các hành động `GRADE_*` từ P2-13).
+- [x] Ghi thêm IP + user-agent vào audit log.
+- [x] Chính sách lưu trữ: xóa/lưu trữ log > 12 tháng (job định kỳ) — **trừ** log liên quan điểm số (giữ lâu dài).
 
-**Theo dõi:** Trạng thái: ⬜ · Commit: `____`
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: xem Changelog
+
+**Kết quả:** trang `/admin/audit` (menu Admin *Nhật ký hệ thống*): lọc nhanh theo nhóm (*Thay đổi điểm* = `GRADE_*`, *Đăng nhập & bảo mật*, *Tài khoản & quyền*), người thực hiện, hành động, đối tượng, khoảng ngày; 50 bản ghi/trang; bấm dòng xem chi tiết + trình duyệt; xuất CSV theo đúng bộ lọc (tối đa 10 000 dòng, UTF-8 có BOM, **chặn CSV injection** — ô bắt đầu bằng `= + - @` được thêm `'`). Nhãn tiếng Việt cho 64 mã hành động. Migration **V7**: cột `ip_address`, `user_agent` + index `(action, timestamp)`, `(entity_name, entity_id)`; `AuditLogService` tự lấy IP/user-agent từ request hiện tại. Lưu trữ: job 03:45 hằng ngày xóa bản ghi > `app.audit.retention-months` (12) tháng, **giữ lâu dài** `GRADE_*`. Test: `AuditLogIT` (5), `ui-check-gd4.mjs`.
 
 ---
 

@@ -13,6 +13,7 @@ const LecturerProgressPage = lazy(() => import("../pages/LecturerProgressPage"))
 const NotificationsPage = lazy(() => import("../pages/NotificationsPage"));
 const AdminPage = lazy(() => import("../pages/AdminPage"));
 const RoleManagementPage = lazy(() => import("../pages/RoleManagementPage"));
+const AuditLogPage = lazy(() => import("../pages/AuditLogPage"));
 const DepartmentAdminPage = lazy(() => import("../pages/DepartmentAdminPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
@@ -63,6 +64,7 @@ export default function AppRoutes({ roleName }) {
             roleName === "DEPARTMENT_ADMIN" ? <Navigate to="/department-admin" replace /> : <AdminPage />)}
         />
         <Route path="/admin/roles" element={only("ADMIN", <RoleManagementPage />)} />
+        <Route path="/admin/audit" element={only("ADMIN", <AuditLogPage />)} />
         <Route path="/department-admin" element={only("DEPARTMENT_ADMIN", <DepartmentAdminPage />)} />
         <Route path="/project-space" element={only(["STUDENT", "LECTURER"], <ProjectSpacePage />)} />
         <Route path="/project-chat" element={only(["STUDENT", "LECTURER"], <ProjectChatPage />)} />

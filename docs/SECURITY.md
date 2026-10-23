@@ -90,7 +90,7 @@ Các quy tắc quan trọng của ma trận (IDOR theo id, phạm vi khoa, thàn
 
 - **File tải lên**: tối đa 20 MB; chỉ 13 đuôi được phép (pdf, doc(x), xls(x), ppt(x), zip, rar, png, jpg/jpeg, txt) **và** nội dung (magic bytes) phải khớp đuôi; tên lưu là UUID, ngoài thư mục web; chỉ tải được qua API có kiểm tra quyền (`Content-Disposition: attachment`). File mồ côi được dọn định kỳ.
 - **Lỗi API** không chứa stacktrace, câu SQL hay thông điệp nội bộ — chỉ `code` + thông báo tiếng Việt + `requestId` để tra log ([`error-codes.md`](error-codes.md)).
-- **Log** không ghi mật khẩu, OTP, token; mọi thao tác quản trị quan trọng được ghi `audit_logs` (chỉ Admin xem).
+- **Log** không ghi mật khẩu, OTP, token; mọi thao tác quan trọng được ghi `audit_logs` kèm IP + trình duyệt (chỉ Admin xem, trang *Nhật ký hệ thống*). Bản ghi cũ hơn 12 tháng bị xóa tự động, trừ nhật ký điểm số (`GRADE_*`). File CSV xuất ra vô hiệu hóa công thức Excel (CSV injection).
 - **Secret** (DB, JWT, mail) chỉ đọc từ biến môi trường; `.env` không được commit (đã có trong `.gitignore`). Lịch sử git đã được làm sạch file cá nhân ([ADR-0004](adr/0004-viet-lai-lich-su-git.md)).
 
 ## 5. Lớp web

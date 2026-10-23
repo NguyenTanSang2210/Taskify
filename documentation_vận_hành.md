@@ -45,7 +45,7 @@ Không có đăng ký công khai: mọi tài khoản do **Admin** tạo (mục *
 - **Người dùng** (*Danh bạ thành viên*): lọc theo khoa, vai trò, tìm theo tên/tên đăng nhập; phân trang 20 người/trang. Thao tác: khóa/mở khóa, đổi vai trò, gửi lại mã kích hoạt.
 - Tài khoản không phải `ADMIN` phải thuộc một khoa. Sinh viên cần **mã sinh viên** và **lớp**; giảng viên có thể nhập học vị, chuyên ngành.
 - **Vai trò & quyền** (*Vai trò & quyền*): bật/tắt quyền chi tiết của từng vai trò (VD `TOPIC_MANAGE`). Không xóa được vai trò đang có người dùng.
-- **Nhật ký hệ thống**: các thao tác quan trọng (tạo/khóa tài khoản, đổi vai trò, chấm điểm, duyệt chấm lại…) được ghi lại kèm người thực hiện và thời điểm.
+- **Nhật ký hệ thống** (*Nhật ký hệ thống* trong menu Admin): mọi thao tác quan trọng (đăng nhập, tạo/khóa tài khoản, đổi vai trò, chấm/sửa điểm, duyệt chấm lại, nhập Excel…) được ghi kèm người thực hiện, thời điểm, IP và trình duyệt. Lọc nhanh *Thay đổi điểm* / *Đăng nhập & bảo mật* / *Tài khoản & quyền*, lọc theo người, hành động, đối tượng, khoảng ngày; bấm một dòng để xem chi tiết; *Xuất CSV* theo bộ lọc đang chọn. Nhật ký giữ 12 tháng, riêng nhật ký điểm số giữ lâu dài.
 
 ---
 
