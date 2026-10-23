@@ -10,8 +10,6 @@ import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.EventPublisher;
 import com.doanltmmt.Backend.service.SecurityScopeService;
 import com.doanltmmt.Backend.service.TopicAccessService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,7 +30,6 @@ import java.util.Map;
 @SuppressWarnings("null")
 public class MessageController {
 
-    private static final Logger log = LoggerFactory.getLogger(MessageController.class);
     private static final int MAX_CONTENT_LENGTH = 5000;
 
     private final MessageRepository repo;
@@ -60,30 +57,26 @@ public class MessageController {
     @PreAuthorize("isAuthenticated()")
     public List<Map<String, Object>> inbox() {
         User me = scope.requireCurrentUser();
-        try {
-            List<MessageRepository.InboxRow> rows = repo.findInboxRowsByUserId(me.getId());
-            List<Map<String, Object>> result = new ArrayList<>();
-            for (MessageRepository.InboxRow row : rows) {
-                Map<String, Object> sender = new HashMap<>();
-                sender.put("id", row.getSenderId());
-                sender.put("fullName", row.getSenderName());
+        // Lỗi CSDL để DataAccessErrorHandler xử lý (trước đây bị nuốt và trả danh sách rỗng, che mất sự cố)
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (MessageRepository.InboxRow row : repo.findInboxRowsByUserId(me.getId())) {
+            Map<String, Object> sender = new HashMap<>();
+            sender.put("id", row.getSenderId());
+            sender.put("fullName", row.getSenderName());
 
-                Map<String, Object> recipient = new HashMap<>();
-                recipient.put("id", row.getRecipientId());
+            Map<String, Object> recipient = new HashMap<>();
+            recipient.put("id", row.getRecipientId());
 
-                Map<String, Object> item = new HashMap<>();
-                item.put("id", row.getId());
-                item.put("sender", sender);
-                item.put("recipient", recipient);
-                item.put("content", row.getContent());
-                item.put("createdAt", row.getCreatedAt());
-                result.add(item);
-            }
-            return result;
-        } catch (RuntimeException ex) {
-            log.warn("Failed to load inbox for user {}. Returning empty list. Cause: {}", me.getId(), ex.getMessage());
-            return List.of();
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", row.getId());
+            item.put("sender", sender);
+            item.put("recipient", recipient);
+            item.put("topic", row.getTopicId() == null ? null : Map.of("id", row.getTopicId()));
+            item.put("content", row.getContent());
+            item.put("createdAt", row.getCreatedAt());
+            result.add(item);
         }
+        return result;
     }
 
     @PostMapping("/send")

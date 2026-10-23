@@ -185,11 +185,11 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDTO create(@RequestBody Map<String, Object> body) {
-        String username = String.valueOf(body.getOrDefault("username", "")).trim();
-        String password = body.get("password") == null ? "" : String.valueOf(body.get("password")).trim();
-        String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
-        String email = body.get("email") != null ? String.valueOf(body.get("email")).trim() : null;
-        String phone = body.get("phone") != null ? String.valueOf(body.get("phone")).trim() : null;
+        String username = Inputs.trimmed(body.get("username"));
+        String password = Inputs.trimmed(body.get("password"));
+        String fullName = Inputs.trimmed(body.get("fullName"));
+        String email = Inputs.trimmedOrNull(body.get("email"));
+        String phone = Inputs.trimmedOrNull(body.get("phone"));
         Long roleId = Inputs.optionalId(body.get("roleId"), "roleId");
         Long departmentId = Inputs.optionalId(body.get("departmentId"), "departmentId");
         boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
@@ -236,8 +236,8 @@ public class UserController {
         AcademicClass academicClass = null;
 
         if (roleName.equals("STUDENT")) {
-            studentCode = String.valueOf(body.getOrDefault("studentCode", "")).trim();
-            className = body.get("className") != null ? String.valueOf(body.get("className")).trim() : null;
+            studentCode = Inputs.trimmed(body.get("studentCode"));
+            className = Inputs.trimmedOrNull(body.get("className"));
             academicClassId = Inputs.optionalId(body.get("academicClassId"), "academicClassId");
 
             if (studentCode.isBlank()) {
@@ -283,8 +283,8 @@ public class UserController {
             Lecturer l = new Lecturer();
             l.setUser(userRepository.getReferenceById(saved.getId()));
             l.setDepartment(dept);
-            String degree = body.get("degree") != null ? String.valueOf(body.get("degree")).trim() : null;
-            String speciality = body.get("speciality") != null ? String.valueOf(body.get("speciality")).trim() : null;
+            String degree = Inputs.trimmedOrNull(body.get("degree"));
+            String speciality = Inputs.trimmedOrNull(body.get("speciality"));
             if (degree != null && !degree.isBlank()) l.setDegree(degree);
             if (speciality != null && !speciality.isBlank()) l.setSpeciality(speciality);
             lecturerRepository.save(l);

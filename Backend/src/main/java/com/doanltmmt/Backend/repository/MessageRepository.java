@@ -9,20 +9,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
-    @Query("""
-            select m
-            from Message m
-            join m.workspace w
-            where m.sender.id = :userId or m.recipient.id = :userId
-            order by m.createdAt desc
-            """)
-    List<Message> findInboxByUserId(@Param("userId") Long userId);
-
     interface InboxRow {
         Long getId();
         Long getSenderId();
         String getSenderName();
         Long getRecipientId();
+        Long getTopicId();
         String getContent();
         LocalDateTime getCreatedAt();
     }
@@ -33,6 +25,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
                 s.id as senderId,
                 coalesce(s.full_name, s.username) as senderName,
                 r.id as recipientId,
+                m.topic_id as topicId,
                 m.content as content,
                 m.created_at as createdAt
             from messages m

@@ -80,7 +80,7 @@ public class WorkspaceService {
         }
         scope.requireDepartmentAccess(departmentId);
         Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-        String name = String.valueOf(body.getOrDefault("name", "")).trim();
+        String name = Inputs.trimmed(body.get("name"));
         if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
         
         Workspace w = new Workspace();

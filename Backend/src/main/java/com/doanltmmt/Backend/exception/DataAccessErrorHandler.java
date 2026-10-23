@@ -10,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -27,22 +25,12 @@ public class DataAccessErrorHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> integrity(DataIntegrityViolationException ex, HttpServletRequest req) {
         log.warn("Vi phạm ràng buộc dữ liệu tại {}: {}", req.getRequestURI(), ex.getMostSpecificCause().getMessage());
-        return body(HttpStatus.CONFLICT, "Dữ liệu không hợp lệ hoặc bị trùng. Vui lòng kiểm tra lại.", req);
+        return ErrorBodies.of(HttpStatus.CONFLICT, "Dữ liệu không hợp lệ hoặc bị trùng. Vui lòng kiểm tra lại.", req);
     }
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Map<String, Object>> dataAccess(DataAccessException ex, HttpServletRequest req) {
         log.error("Lỗi truy cập CSDL tại {}", req.getRequestURI(), ex);
-        return body(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống, vui lòng thử lại sau.", req);
-    }
-
-    private static ResponseEntity<Map<String, Object>> body(HttpStatus status, String message, HttpServletRequest req) {
-        Map<String, Object> b = new LinkedHashMap<>();
-        b.put("timestamp", OffsetDateTime.now().toString());
-        b.put("status", status.value());
-        b.put("error", status.getReasonPhrase());
-        b.put("message", message);
-        b.put("path", req.getRequestURI());
-        return ResponseEntity.status(status).body(b);
+        return ErrorBodies.of(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống, vui lòng thử lại sau.", req);
     }
 }

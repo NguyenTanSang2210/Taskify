@@ -61,7 +61,7 @@ export default function TopicCard({ topic, onRegister, loading }) {
       <div className="flex justify-between items-start mb-6 relative z-10">
         <div className="flex items-center gap-2">
            <span className="px-3 py-1 bg-surface-container text-outline text-[9px] font-black rounded-lg uppercase tracking-widest border border-outline-variant/5">
-             {topic.category || "Học thuật"}
+             {topic.workspaceName || "Đề tài"}
            </span>
            {isOpen && (
               <span className="px-3 py-1 bg-green-500/5 text-green-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-green-500/10 flex items-center gap-1.5">

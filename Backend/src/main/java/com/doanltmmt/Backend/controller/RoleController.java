@@ -3,6 +3,7 @@ package com.doanltmmt.Backend.controller;
 import com.doanltmmt.Backend.entity.Privilege;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.service.RoleService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -45,10 +46,13 @@ public class RoleController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Role> updateRole(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        String description = (String) body.get("description");
-        @SuppressWarnings("unchecked")
-        List<Number> privs = (List<Number>) body.get("privilegeIds");
-        Set<Long> privilegeIds = privs != null ? privs.stream().map(Number::longValue).collect(Collectors.toSet()) : null;
+        String description = Inputs.trimmedOrNull(body.get("description"));
+        Set<Long> privilegeIds = null;
+        if (body.get("privilegeIds") instanceof List<?> privs) {
+            privilegeIds = privs.stream().map(p -> Inputs.requiredId(p, "privilegeIds")).collect(Collectors.toSet());
+        } else if (body.get("privilegeIds") != null) {
+            throw Inputs.badRequest("privilegeIds phải là danh sách mã quyền");
+        }
         return ResponseEntity.ok(roleService.updateRole(id, description, privilegeIds));
     }
 

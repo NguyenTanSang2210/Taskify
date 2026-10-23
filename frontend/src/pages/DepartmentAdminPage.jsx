@@ -350,6 +350,8 @@ export default function DepartmentAdminPage() {
         return classes.filter(c => c.active && !activeClassIds.has(c.id));
     }, [classes, activeClassIds]);
 
+    const fillRateLabel = deptStats?.fillRate == null ? '—' : `${String(deptStats.fillRate).replace('.', ',')}%`;
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-12">
             {/* Header Area */}
@@ -800,8 +802,8 @@ export default function DepartmentAdminPage() {
                                                <h4 className="text-sm font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-2">{t.title}</h4>
                                             </td>
                                             <td className="px-8 py-6">
-                                               <p className="text-xs font-bold text-on-surface-variant uppercase tracking-tight">{t.lecturer?.user.fullName}</p>
-                                               <p className="text-[9px] font-black text-outline uppercase mt-0.5">{t.lecturer?.user.username}</p>
+                                               <p className="text-xs font-bold text-on-surface-variant uppercase tracking-tight">{t.lecturerName || '—'}</p>
+                                               {t.workspaceName && <p className="text-[9px] font-black text-outline uppercase mt-0.5">{t.workspaceName}</p>}
                                             </td>
                                             <td className="px-8 py-6">
                                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${t.status === 'OPEN' ? 'bg-green-500/10 text-green-600' : 'bg-surface-container text-outline'}`}>
@@ -857,7 +859,7 @@ export default function DepartmentAdminPage() {
                     <div className="p-10 space-y-12 animate-in fade-in duration-500">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 text-center">
                             {[
-                                { label: 'WORKSPACE ĐANG CHẠY', value: deptStats?.totalWorkspaces, icon: 'hub', color: 'text-primary' },
+                                { label: 'SỐ ĐỢT (WORKSPACE)', value: deptStats?.totalWorkspaces, icon: 'hub', color: 'text-primary' },
                                 { label: 'TỔNG NHÂN SỰ KHOA', value: deptStats?.totalUsers, icon: 'group', color: 'text-secondary' },
                                 { label: 'SINH VIÊN HOẠT ĐỘNG', value: deptStats?.totalStudents, icon: 'person_outline', color: 'text-on-surface' },
                                 { label: 'DANH MỤC ĐỀ TÀI', value: deptStats?.totalTopics, icon: 'inventory', color: 'text-amber-500' },
@@ -876,20 +878,29 @@ export default function DepartmentAdminPage() {
                         <div className="bg-primary/5 p-10 rounded-[3rem] border border-primary/10 flex flex-col md:flex-row items-center gap-12">
                            <div className="flex-1 space-y-4">
                               <h3 className="text-2xl font-black text-on-surface uppercase tracking-tight leading-none">Báo cáo Tổng quát Đơn vị</h3>
-                              <p className="text-sm font-medium text-outline leading-relaxed">Hệ thống đang quản lý tốt các chu kỳ đề án cấp khoa. Các chỉ số cho thấy tỉ lệ đề tài đang mở đáp ứng nhu cầu đăng ký của sinh viên hiện hữu.</p>
+                              <p className="text-sm font-medium text-outline leading-relaxed">
+                                 Các đề tài của khoa có tổng <strong>{deptStats?.capacityTotal ?? 0}</strong> chỗ, đã duyệt <strong>{deptStats?.approvedTotal ?? 0}</strong> sinh viên.
+                              </p>
                               <div className="pt-4 flex gap-4">
                                  <div className="px-6 py-3 bg-white rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col">
-                                    <span className="text-[8px] font-black uppercase tracking-widest text-outline">TỈ LỆ LẤY ĐẦY (EST)</span>
-                                    <span className="text-lg font-black text-primary">84.2%</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-outline">TỈ LỆ LẤP ĐẦY</span>
+                                    <span className="text-lg font-black text-primary">{fillRateLabel}</span>
                                  </div>
                                  <div className="px-6 py-3 bg-white rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col">
-                                    <span className="text-[8px] font-black uppercase tracking-widest text-outline">CHƯA GÁN QUOTA (LECTURERS)</span>
-                                    <span className="text-lg font-black text-secondary">06</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-outline">GIẢNG VIÊN CHƯA ĐƯỢC PHÂN CÔNG</span>
+                                    <span className="text-lg font-black text-secondary">{deptStats?.lecturersWithoutAssignment ?? 0}</span>
                                  </div>
                               </div>
                            </div>
-                           <div className="w-48 h-48 rounded-full border-[16px] border-primary/10 border-t-primary flex items-center justify-center relative animate-pulse">
-                              <span className="text-3xl font-black text-primary">OK</span>
+                           <div
+                              className="w-48 h-48 rounded-full flex items-center justify-center relative"
+                              style={{ background: `conic-gradient(var(--color-primary, #1e3a8a) ${(deptStats?.fillRate ?? 0) * 3.6}deg, rgba(30,58,138,0.1) 0deg)` }}
+                              role="img"
+                              aria-label={`Tỉ lệ lấp đầy ${fillRateLabel}`}
+                           >
+                              <div className="w-32 h-32 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center">
+                                 <span className="text-2xl font-black text-primary">{fillRateLabel}</span>
+                              </div>
                            </div>
                         </div>
                     </div>

@@ -60,7 +60,7 @@ public class LecturerAssignmentController {
         Long lecturerUserId = Inputs.requiredId(body.get("lecturerId"), "lecturerId");
         String type = String.valueOf(body.getOrDefault("type", "MAIN")).trim().toUpperCase();
         int quotaMaxGroups = Inputs.optionalNonNegativeInt(body.get("quotaMaxGroups"), "Hạn mức nhóm", 0);
-        String reason = body.get("reason") != null ? String.valueOf(body.get("reason")).trim() : null;
+        String reason = Inputs.trimmedOrNull(body.get("reason"));
         if (!type.equals("MAIN") && !type.equals("ASSISTANT")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid type");
         }
@@ -99,7 +99,7 @@ public class LecturerAssignmentController {
     @PreAuthorize("hasAnyRole('ADMIN','DEPARTMENT_ADMIN')")
     public LecturerAssignmentDTO revoke(@RequestBody Map<String, Object> body) {
         Long assignmentId = Inputs.requiredId(body.get("assignmentId"), "assignmentId");
-        String reason = body.get("reason") != null ? String.valueOf(body.get("reason")).trim() : null;
+        String reason = Inputs.trimmedOrNull(body.get("reason"));
         LecturerAssignment a = repo.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
         scope.requireDepartmentAccess(a.getWorkspace().getDepartment().getId());
         requireWorkspaceConfigurable(a.getWorkspace());

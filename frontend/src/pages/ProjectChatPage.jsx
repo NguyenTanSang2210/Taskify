@@ -163,7 +163,7 @@ export default function ProjectChatPage() {
           (senderId === rid && recipientId === user?.id);
         if (!isPeerMsg) return false;
         if (!topicId) return true;
-        return !m?.topic?.id || String(m.topic.id) === String(topicId);
+        return String(m?.topic?.id ?? "") === String(topicId);
       })
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   }, [inboxMessages, selectedRecipientId, user?.id, topicId]);

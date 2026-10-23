@@ -1,7 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.TopicDTO;
-import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.dto.request.TopicRequest;
 import com.doanltmmt.Backend.service.TopicService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,16 +21,16 @@ public class TopicController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
-    public TopicDTO createTopic(@RequestParam Long lecturerId, @RequestBody Topic topic) {
-        return service.createTopic(lecturerId, topic);
+    public TopicDTO createTopic(@RequestParam Long lecturerId, @RequestBody TopicRequest request) {
+        return service.createTopic(lecturerId, request.toTopic());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO updateTopic(@PathVariable Long id,
                              @RequestParam(required = false) Long lecturerId,
-                             @RequestBody Topic payload) {
-        return service.updateTopic(id, lecturerId, payload);
+                             @RequestBody TopicRequest request) {
+        return service.updateTopic(id, lecturerId, request.toTopic());
     }
 
     @DeleteMapping("/{id}")

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { topicApi } from "../api/topicApi";
 import { progressApi } from "../api/progressApi";
 import { connectAndSubscribe } from "../ws/stomp";
@@ -9,7 +10,9 @@ import { useAuth } from "../context/AuthContext";
 export default function LecturerProgressPage() {
   const { user } = useAuth();
 
-  const [topicId, setTopicId] = useState("");
+  const location = useLocation();
+  // ?topicId= từ liên kết thông báo "Sinh viên gửi báo cáo" — mở đúng đề tài
+  const [topicId, setTopicId] = useState(() => new URLSearchParams(location.search).get("topicId") || "");
   const [topics, setTopics] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);

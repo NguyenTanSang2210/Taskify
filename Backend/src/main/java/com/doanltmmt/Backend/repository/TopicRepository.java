@@ -24,4 +24,10 @@ public interface TopicRepository extends JpaRepository<Topic, Long>, JpaSpecific
     long countByWorkspace_Id(Long workspaceId);
     long countByWorkspace_Department_Id(Long departmentId);
     long countByWorkspace_Department_IdAndStatus(Long departmentId, String status);
+
+    /** Tổng số chỗ của các đề tài trong khoa (đề tài cũ không đặt capacity tính là 1 chỗ — như Topic.effectiveCapacity). */
+    @Query(
+            "select coalesce(sum(case when t.capacity is null or t.capacity < 1 then 1 else t.capacity end), 0) "
+            + "from Topic t where t.workspace.department.id = :departmentId")
+    long sumCapacityByDepartment(@Param("departmentId") Long departmentId);
 }

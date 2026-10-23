@@ -4,6 +4,7 @@ import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.SecurityScopeService;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +41,8 @@ public class DepartmentController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Department create(@RequestBody Map<String, Object> body) {
-        String code = String.valueOf(body.getOrDefault("code", "")).trim();
-        String name = String.valueOf(body.getOrDefault("name", "")).trim();
+        String code = Inputs.trimmed(body.get("code"));
+        String name = Inputs.trimmed(body.get("name"));
         if (code.isBlank() || name.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "code and name are required");
         }
@@ -60,8 +61,8 @@ public class DepartmentController {
     @PreAuthorize("hasRole('ADMIN')")
     public Department update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Department d = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-        String code = body.get("code") != null ? String.valueOf(body.get("code")).trim() : null;
-        String name = body.get("name") != null ? String.valueOf(body.get("name")).trim() : null;
+        String code = Inputs.trimmedOrNull(body.get("code"));
+        String name = Inputs.trimmedOrNull(body.get("name"));
         if (code != null && !code.isBlank()) d.setCode(code);
         if (name != null && !name.isBlank()) d.setName(name);
         if (body.get("active") != null) d.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));

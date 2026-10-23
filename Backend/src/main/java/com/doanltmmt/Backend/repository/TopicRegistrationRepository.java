@@ -26,6 +26,8 @@ public interface TopicRegistrationRepository extends JpaRepository<TopicRegistra
 
     List<TopicRegistration> findByTopic_IdAndApprovedTrue(Long topicId);
 
+    long countByTopic_Workspace_Department_IdAndApprovedTrue(Long departmentId);
+
     /** Khóa dòng đăng ký khi chấm điểm / gửi yêu cầu chấm lại để hai request đồng thời không chồng nhau. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from TopicRegistration r where r.id = :id")

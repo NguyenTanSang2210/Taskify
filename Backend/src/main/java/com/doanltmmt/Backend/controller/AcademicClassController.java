@@ -55,8 +55,8 @@ public class AcademicClassController {
         }
         scope.requireDepartmentAccess(departmentId);
         Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-        String code = String.valueOf(body.getOrDefault("code", "")).trim();
-        String name = String.valueOf(body.getOrDefault("name", "")).trim();
+        String code = Inputs.trimmed(body.get("code"));
+        String name = Inputs.trimmed(body.get("name"));
         if (code.isBlank() || name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "code and name are required");
         AcademicClass c = new AcademicClass();
         c.setDepartment(dept);
@@ -73,8 +73,8 @@ public class AcademicClassController {
     public AcademicClass update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         AcademicClass c = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
         scope.requireDepartmentAccess(c.getDepartment().getId());
-        String code = body.get("code") != null ? String.valueOf(body.get("code")).trim() : null;
-        String name = body.get("name") != null ? String.valueOf(body.get("name")).trim() : null;
+        String code = Inputs.trimmedOrNull(body.get("code"));
+        String name = Inputs.trimmedOrNull(body.get("name"));
         if (code != null && !code.isBlank()) c.setCode(code);
         if (name != null && !name.isBlank()) c.setName(name);
         if (body.get("active") != null) c.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));

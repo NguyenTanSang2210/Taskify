@@ -220,6 +220,10 @@ public class TopicService {
             topicMap.put("description", topic.getDescription());
             topicMap.put("status", topic.getStatus());
             topicMap.put("capacity", topic.getCapacity());
+            if (topic.getWorkspace() != null) {
+                topicMap.put("workspaceId", topic.getWorkspace().getId());
+                topicMap.put("workspaceName", topic.getWorkspace().getName());
+            }
             
             // Basic lecturer info to avoid full entity deep nesting in this specific map
             if (topic.getLecturer() != null && topic.getLecturer().getUser() != null) {

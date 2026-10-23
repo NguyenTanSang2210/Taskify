@@ -23,6 +23,22 @@ export default function NotificationsBell() {
     } catch { /* noop */ }
   }, [userId]);
 
+  // Tải số thông báo chưa đọc ngay khi đăng nhập (trước đây chỉ tải khi mở chuông → huy hiệu luôn là 0)
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    Promise.all([notificationsApi.listMine(userId), notificationsApi.countUnread(userId)])
+      .then(([list, cnt]) => {
+        if (cancelled) return;
+        setItems((list || []).slice(0, 6));
+        setUnread(cnt || 0);
+      })
+      .catch(() => { /* chuông không quan trọng bằng trang — bỏ qua lỗi */ });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   useEffect(() => {
     if (!userId) return;
     const client = connectAndSubscribe({

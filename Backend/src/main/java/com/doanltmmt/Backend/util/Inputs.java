@@ -61,6 +61,16 @@ public final class Inputs {
         }
     }
 
+    /** Chuỗi đã cắt khoảng trắng; thiếu hoặc JSON {@code null} → chuỗi rỗng (không thành chữ "null"). */
+    public static String trimmed(Object raw) {
+        return raw == null ? "" : raw.toString().trim();
+    }
+
+    /** Như {@link #trimmed} nhưng giữ {@code null} khi không gửi — dùng cho trường sửa từng phần. */
+    public static String trimmedOrNull(Object raw) {
+        return raw == null ? null : raw.toString().trim();
+    }
+
     /** Chuỗi bắt buộc, đã cắt khoảng trắng, độ dài 1..{@code max}. */
     public static String requiredText(Object raw, String label, int max) {
         String value = raw == null ? "" : raw.toString().trim();
