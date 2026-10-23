@@ -19,21 +19,13 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
         LocalDateTime getCreatedAt();
     }
 
-    @Query(value = """
-            select
-                m.id as id,
-                s.id as senderId,
-                coalesce(s.full_name, s.username) as senderName,
-                r.id as recipientId,
-                m.topic_id as topicId,
-                m.content as content,
-                m.created_at as createdAt
-            from messages m
-            join users s on s.id = m.sender_id
-            join users r on r.id = m.recipient_id
-            where (m.sender_id = :userId or m.recipient_id = :userId)
-              and exists (select 1 from workspaces w where w.id = m.workspace_id)
-            order by m.created_at desc
-            """, nativeQuery = true)
+    /** JPQL (không dùng SQL thuần) để thời gian được quy đổi UTC → giờ ứng dụng như mọi truy vấn khác. */
+    @Query("""
+            select m.id as id, s.id as senderId, coalesce(s.fullName, s.username) as senderName,
+                   r.id as recipientId, t.id as topicId, m.content as content, m.createdAt as createdAt
+            from Message m join m.sender s join m.recipient r join m.workspace w left join m.topic t
+            where s.id = :userId or r.id = :userId
+            order by m.createdAt desc
+            """)
     List<InboxRow> findInboxRowsByUserId(@Param("userId") Long userId);
 }

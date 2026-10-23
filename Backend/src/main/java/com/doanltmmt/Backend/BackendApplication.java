@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend;
 
+import com.doanltmmt.Backend.config.AppTimeZone;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,6 +18,7 @@ public class BackendApplication {
                 .ignoreIfMissing()
                 .load();
         dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+        AppTimeZone.apply(); // giờ Việt Nam cho toàn ứng dụng (kể cả khi container chạy UTC)
 
         SpringApplication.run(BackendApplication.class, args);
     }

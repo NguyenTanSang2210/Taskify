@@ -122,6 +122,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
+					<!-- Test chạy cùng múi giờ với ứng dụng (AppTimeZone) dù máy CI đặt UTC -->
+					<argLine>-Duser.timezone=Asia/Ho_Chi_Minh</argLine>
 					<includes>
 						<include>**/*Test.java</include>
 						<include>**/*Tests.java</include>

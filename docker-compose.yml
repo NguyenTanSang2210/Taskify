@@ -32,6 +32,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: 8080
+      # Giờ ứng dụng (giờ Việt Nam); TZ để log của container cũng theo giờ này. CSDL vẫn lưu UTC (serverTimezone=UTC)
+      APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Ho_Chi_Minh}
+      TZ: ${APP_TIME_ZONE:-Asia/Ho_Chi_Minh}
       # Seed dữ liệu demo chỉ có tác dụng với profile dev
       APP_SEED_ENABLED: ${APP_SEED_ENABLED:-false}
       APP_SEED_OTP_EMAIL: ${APP_SEED_OTP_EMAIL:-}

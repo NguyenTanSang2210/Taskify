@@ -28,10 +28,7 @@ public class ReminderScheduler {
         reminders.remindMilestoneDeadlines(now());
     }
 
-    /**
-     * Giờ của JVM — cùng hệ với {@code createdAt} của mọi bản ghi khác. Job chạy lúc 8–9h sáng giờ Việt Nam
-     * nên "hôm nay" theo UTC (01–02h) và theo giờ Việt Nam là cùng một ngày.
-     */
+    /** Giờ của ứng dụng (giờ Việt Nam — {@link com.doanltmmt.Backend.config.AppTimeZone}), cùng hệ với mọi {@code createdAt}. */
     private static LocalDateTime now() {
         return LocalDateTime.now();
     }
