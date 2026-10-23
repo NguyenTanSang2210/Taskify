@@ -1,11 +1,12 @@
 package com.doanltmmt.Backend.service;
 
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.exception.ApiException;
-import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.dto.TopicDTO;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.*;
+import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -189,6 +190,7 @@ public class TopicService {
         return new TopicDTO(topicRepo.save(topic));
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
         Specification<Topic> spec = Specification.allOf(List.<Specification<Topic>>of());
 
@@ -217,6 +219,18 @@ public class TopicService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         Page<Topic> pageRes = topicRepo.findAll(spec, pageable);
 
+        List<Long> ids = pageRes.getContent().stream().map(Topic::getId).toList();
+        Map<Long, TopicRegistrationRepository.TopicRegistrationCounts> counts = new HashMap<>();
+        Map<Long, String> myStatus = new HashMap<>();
+        if (!ids.isEmpty()) {
+            regRepo.countByTopicIds(ids).forEach(c -> counts.put(c.getTopicId(), c));
+            if (studentId != null) {
+                // bản ghi mới nhất của mỗi đề tài đứng trước → putIfAbsent giữ trạng thái mới nhất
+                regRepo.findStatusesOfStudent(studentId, ids).forEach(r -> myStatus.putIfAbsent(r.getTopicId(),
+                        r.getApproved() == null ? "CHO_DUYET" : r.getApproved() ? "DA_DUYET" : "TU_CHOI"));
+            }
+        }
+
         List<Map<String, Object>> items = pageRes.getContent().stream().map(topic -> {
             Map<String, Object> topicMap = new HashMap<>();
             topicMap.put("id", topic.getId());
@@ -235,20 +249,12 @@ public class TopicService {
                 topicMap.put("lecturerId", topic.getLecturer().getId());
             }
 
-            topicMap.put("registrationCount", regRepo.countByTopic_Id(topic.getId()));
-            topicMap.put("pendingCount", regRepo.countByTopic_IdAndApprovedIsNull(topic.getId()));
-            topicMap.put("approvedCount", regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
-            topicMap.put("rejectedCount", regRepo.countByTopic_IdAndApprovedFalse(topic.getId()));
-
-            String regStatus = "CHUA_DANG_KY";
-            if (studentId != null) {
-                regStatus = regRepo.findTopByStudent_IdAndTopic_IdOrderByRegisteredAtDesc(studentId, topic.getId())
-                        .map(reg -> {
-                            if (reg.getApproved() == null) return "CHO_DUYET";
-                            return reg.getApproved() ? "DA_DUYET" : "TU_CHOI";
-                        }).orElse("CHUA_DANG_KY");
-            }
-            topicMap.put("registrationStatus", regStatus);
+            TopicRegistrationRepository.TopicRegistrationCounts c = counts.get(topic.getId());
+            topicMap.put("registrationCount", c == null ? 0L : c.getTotal());
+            topicMap.put("pendingCount", c == null ? 0L : c.getPending());
+            topicMap.put("approvedCount", c == null ? 0L : c.getApproved());
+            topicMap.put("rejectedCount", c == null ? 0L : c.getRejected());
+            topicMap.put("registrationStatus", myStatus.getOrDefault(topic.getId(), "CHUA_DANG_KY"));
             return topicMap;
         }).collect(Collectors.toList());
 

@@ -1,8 +1,8 @@
 package com.doanltmmt.Backend.controller;
 
-import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.DataSeeder;
 import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.repository.LecturerRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
@@ -10,23 +10,22 @@ import com.doanltmmt.Backend.repository.UserRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.AuditLogService;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -68,7 +67,11 @@ public class TopicControllerTest {
         given(topicRepo.findAll(any(Specification.class), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(t)));
         
-        given(regRepo.countByTopic_Id(1L)).willReturn(5L);
+        TopicRegistrationRepository.TopicRegistrationCounts counts =
+                org.mockito.Mockito.mock(TopicRegistrationRepository.TopicRegistrationCounts.class);
+        given(counts.getTopicId()).willReturn(1L);
+        given(counts.getTotal()).willReturn(5L);
+        given(regRepo.countByTopicIds(List.of(1L))).willReturn(List.of(counts));
 
         mockMvc.perform(get("/api/topics")
                 .param("page", "0")

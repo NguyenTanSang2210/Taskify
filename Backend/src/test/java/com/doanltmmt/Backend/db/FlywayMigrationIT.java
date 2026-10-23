@@ -1,6 +1,10 @@
 package com.doanltmmt.Backend.db;
 
 import org.flywaydb.core.Flyway;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,11 +15,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * P3-01 — migration Flyway chạy đúng trên CSDL riêng {@value #SCHEMA} (tạo mới mỗi test, không đụng DB của ứng dụng):
@@ -97,7 +96,11 @@ class FlywayMigrationIT {
         assertEquals(List.of("REGISTRATION_MANAGE", "TOPIC_MANAGE"), privilegesOf("LECTURER"));
         assertEquals(6, privilegesOf("ADMIN").size());
         assertTrue(query("select version from flyway_schema_history where success = 1 order by installed_rank")
-                .containsAll(List.of("1", "2", "3")));
+                .containsAll(List.of("1", "2", "3", "4", "5")));
+        // V5 (P3-07): index cho truy vấn hay dùng
+        assertEquals(List.of("idx_notifications_user_created", "idx_notifications_user_read"),
+                query("select distinct index_name from information_schema.statistics where table_schema = database() "
+                        + "and table_name = 'notifications' and index_name like 'idx_%' order by index_name"));
         flyway(null).validate();
     }
 

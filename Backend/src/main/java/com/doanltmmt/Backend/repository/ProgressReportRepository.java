@@ -2,6 +2,7 @@ package com.doanltmmt.Backend.repository;
 
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.service.SimilarityService;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,8 +10,11 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ProgressReportRepository extends JpaRepository<ProgressReport, Long> {
+    @EntityGraph(attributePaths = {"student", "student.user", "topic", "milestone"})
     List<ProgressReport> findByStudent_IdOrderByCreatedAtDesc(Long studentId);
+    @EntityGraph(attributePaths = {"student", "student.user", "topic", "milestone"})
     List<ProgressReport> findByTopic_IdOrderByCreatedAtDesc(Long topicId);
+    @EntityGraph(attributePaths = {"student", "student.user", "topic", "milestone"})
     List<ProgressReport> findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(Long studentId, Long topicId);
 
     /** Nội dung các báo cáo cùng workspace — ứng viên so trùng lặp (chỉ lấy id + nội dung). */
