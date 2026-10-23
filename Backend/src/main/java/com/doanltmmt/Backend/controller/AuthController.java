@@ -9,17 +9,12 @@ import com.doanltmmt.Backend.dto.OtpResendRequest;
 import com.doanltmmt.Backend.dto.OtpResendResponse;
 import com.doanltmmt.Backend.dto.OtpVerifyRequest;
 import com.doanltmmt.Backend.dto.ResetPasswordRequest;
-import com.doanltmmt.Backend.entity.User;
-import com.doanltmmt.Backend.repository.UserRepository;
-import com.doanltmmt.Backend.service.AuditLogService;
 import com.doanltmmt.Backend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -32,15 +27,9 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserRepository userRepository;
-    private final AuditLogService auditLogService;
 
-    public AuthController(AuthService authService,
-                          UserRepository userRepository,
-                          AuditLogService auditLogService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userRepository = userRepository;
-        this.auditLogService = auditLogService;
     }
 
     /** Bước 1: tên đăng nhập + mật khẩu. Vai trò cần OTP chỉ nhận token tạm, chưa gọi được API nghiệp vụ. */
@@ -65,12 +54,7 @@ public class AuthController {
     @PostMapping("/logout-all")
     @PreAuthorize("isAuthenticated()")
     public Map<String, Object> logoutAll() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        user.setTokenVersion(user.getTokenVersion() + 1);
-        userRepository.save(user);
-        auditLogService.log("LOGOUT_ALL", "User", user.getId().toString(), "Đăng xuất mọi thiết bị");
+        authService.logoutAll(SecurityContextHolder.getContext().getAuthentication().getName());
         return Map.of("loggedOut", true);
     }
 

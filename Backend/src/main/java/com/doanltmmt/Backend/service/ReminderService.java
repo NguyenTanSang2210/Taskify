@@ -1,11 +1,11 @@
 package com.doanltmmt.Backend.service;
 
-import com.doanltmmt.Backend.entity.enums.Severity;
-import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
+import com.doanltmmt.Backend.entity.enums.NotificationType;
+import com.doanltmmt.Backend.entity.enums.Severity;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
@@ -44,17 +44,17 @@ public class ReminderService {
     private final TopicRegistrationRepository regRepo;
     private final MilestoneRepository milestoneRepo;
     private final NotificationRepository notificationRepo;
-    private final EventPublisher events;
+    private final NotificationService notifications;
     private final EmailService emailService;
     private final AuditLogService auditLogService;
 
     public ReminderService(TopicRegistrationRepository regRepo, MilestoneRepository milestoneRepo,
-                           NotificationRepository notificationRepo, EventPublisher events,
+                           NotificationRepository notificationRepo, NotificationService notifications,
                            EmailService emailService, AuditLogService auditLogService) {
         this.regRepo = regRepo;
         this.milestoneRepo = milestoneRepo;
         this.notificationRepo = notificationRepo;
-        this.events = events;
+        this.notifications = notifications;
         this.emailService = emailService;
         this.auditLogService = auditLogService;
     }
@@ -135,7 +135,7 @@ public class ReminderService {
         n.setRefId(refId);
         n.setDueAt(dueAt);
         n.setLinkPath("/progress");
-        events.notificationCreated(notificationRepo.save(n));
+        notifications.publish(n);
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {

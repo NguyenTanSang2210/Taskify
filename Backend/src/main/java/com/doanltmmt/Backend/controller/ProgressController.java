@@ -4,81 +4,21 @@ import com.doanltmmt.Backend.dto.request.ProgressCommentRequest;
 import com.doanltmmt.Backend.dto.request.ProgressCreateRequest;
 import com.doanltmmt.Backend.dto.request.ProgressStatusRequest;
 import com.doanltmmt.Backend.dto.response.*;
-import com.doanltmmt.Backend.entity.Notification;
-import com.doanltmmt.Backend.entity.ProgressReport;
-import com.doanltmmt.Backend.entity.StoredFile;
-import com.doanltmmt.Backend.entity.Student;
-import com.doanltmmt.Backend.entity.Topic;
-import com.doanltmmt.Backend.entity.enums.NotificationType;
-import com.doanltmmt.Backend.entity.enums.ProgressStatus;
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
-import com.doanltmmt.Backend.exception.ApiException;
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.repository.MilestoneRepository;
-import com.doanltmmt.Backend.repository.NotificationRepository;
-import com.doanltmmt.Backend.repository.ProgressReportRepository;
-import com.doanltmmt.Backend.repository.StoredFileRepository;
-import com.doanltmmt.Backend.repository.StudentRepository;
-import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
-import com.doanltmmt.Backend.repository.TopicRepository;
-import com.doanltmmt.Backend.service.EmailService;
-import com.doanltmmt.Backend.service.EmailTemplates;
-import com.doanltmmt.Backend.service.EventPublisher;
-import com.doanltmmt.Backend.service.FileStorageService;
-import com.doanltmmt.Backend.service.SecurityScopeService;
-import com.doanltmmt.Backend.service.SimilarityService;
+import com.doanltmmt.Backend.service.ProgressService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.function.Function;
 
 @RestController
 @RequestMapping("/api/progress")
-
-@SuppressWarnings("null")
 public class ProgressController {
 
-    private final ProgressReportRepository progressRepo;
-    private final StudentRepository studentRepo;
-    private final TopicRepository topicRepo;
-    private final TopicRegistrationRepository regRepo;
-    private final MilestoneRepository milestoneRepo;
-    private final EventPublisher eventPublisher;
-    private final NotificationRepository notificationRepo;
-    private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
-    private final EmailService emailService;
-    private final SimilarityService similarityService;
-    private final SecurityScopeService scope;
-    private final StoredFileRepository storedFileRepo;
+    private final ProgressService service;
 
-    public ProgressController(ProgressReportRepository progressRepo,
-                              StudentRepository studentRepo,
-                              TopicRepository topicRepo,
-                              TopicRegistrationRepository regRepo,
-                              MilestoneRepository milestoneRepo,
-                              EventPublisher eventPublisher,
-                              NotificationRepository notificationRepo,
-                              com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                              EmailService emailService,
-                              SimilarityService similarityService,
-                              SecurityScopeService scope,
-                              StoredFileRepository storedFileRepo) {
-        this.storedFileRepo = storedFileRepo;
-        this.progressRepo = progressRepo;
-        this.studentRepo = studentRepo;
-        this.topicRepo = topicRepo;
-        this.regRepo = regRepo;
-        this.milestoneRepo = milestoneRepo;
-        this.eventPublisher = eventPublisher;
-        this.notificationRepo = notificationRepo;
-        this.auditLogService = auditLogService;
-        this.emailService = emailService;
-        this.similarityService = similarityService;
-        this.scope = scope;
+    public ProgressController(ProgressService service) {
+        this.service = service;
     }
 
     @PostMapping("/create")
@@ -86,227 +26,33 @@ public class ProgressController {
     public ProgressReportDTO create(@RequestParam Long studentId,
                                  @RequestParam Long topicId,
                                  @Valid @RequestBody ProgressCreateRequest body) {
-        Long currentUserId = scope.requireCurrentUser().getId();
-        if (!currentUserId.equals(studentId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-        }
-        Student student = studentRepo.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên."));
-        Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
-        if (!regRepo.existsByStudent_IdAndTopic_IdAndApprovedTrue(studentId, topicId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chưa được duyệt vào đề tài này.");
-        }
-        if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
-        }
-        if (topic.getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
-            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
-        }
-
-        String title = body.title();
-        String content = body.content();
-        String fileUrl = body.fileUrl();
-
-        ProgressReport pr = new ProgressReport();
-        pr.setStudent(student);
-        pr.setTopic(topic);
-        pr.setTitle(title);
-        pr.setContent(content);
-        // File đính kèm phải là file CỦA CHÍNH sinh viên này (đã tải lên qua /api/upload) và chưa gắn vào báo cáo nào.
-        StoredFile attachment = null;
-        if (fileUrl != null) {
-            attachment = storedFileRepo.findByStoredName(FileStorageService.storedNameFromUrl(fileUrl))
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "File đính kèm không hợp lệ."));
-            if (!attachment.getOwnerId().equals(currentUserId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể đính kèm file của người khác.");
-            }
-            if (attachment.getRefType() != null) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
-            }
-            pr.setFileUrl(FileStorageService.urlFor(attachment));
-        }
-        
-        pr.setDeadline(body.deadline());
-
-        // Tùy chọn: gắn vào milestone. Milestone phải TỒN TẠI và thuộc đúng đề tài này
-        // (trước đây tạo một Milestone "rỗng" chỉ có id: gây lỗi khóa ngoại 500 hoặc gắn nhầm milestone đề tài khác).
-        Long milestoneId = body.milestoneId();
-        if (milestoneId != null) {
-            com.doanltmmt.Backend.entity.Milestone ms = milestoneRepo.findById(milestoneId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy milestone"));
-            if (ms.getTopic() == null || !ms.getTopic().getId().equals(topicId)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Milestone không thuộc đề tài này");
-            }
-            pr.setMilestone(ms);
-        }
-        pr.setStatus(ProgressStatus.TODO);
-        // P2-08: so với mọi báo cáo trong cùng workspace (của chính SV và của SV khác)
-        SimilarityService.Match match = similarityService.mostSimilar(content, topic.getWorkspace() != null
-                ? progressRepo.findSimilarityCandidatesInWorkspace(topic.getWorkspace().getId())
-                : progressRepo.findSimilarityCandidatesInTopic(topicId));
-        if (match != null) {
-            pr.setSimilarityScore(Math.round(match.score() * 1000) / 1000.0);
-            pr.setSimilarToReportId(match.reportId());
-        }
-        ProgressReport saved = progressRepo.save(pr);
-        if (attachment != null && storedFileRepo.claim(attachment.getId(), StoredFile.REF_PROGRESS_REPORT, saved.getId()) == 0) {
-            // Có request khác vừa gắn cùng file này (đua nhau): hoàn tác báo cáo vừa tạo
-            progressRepo.delete(saved);
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
-        }
-        auditLogService.log("CREATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Title: " + saved.getTitle());
-        if (match != null && match.score() >= SimilarityService.ALERT_THRESHOLD) {
-            auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(),
-                    "Giống " + Math.round(match.score() * 100) + "% với báo cáo #" + match.reportId());
-        }
-        eventPublisher.progressCreated(saved);
-        // notify lecturer when available
-        if (saved.getTopic().getLecturer() != null && saved.getTopic().getLecturer().getUser() != null) {
-            Notification nLecturer = new Notification();
-            nLecturer.setUser(saved.getTopic().getLecturer().getUser());
-            nLecturer.setType(NotificationType.INFO);
-            nLecturer.setTitle("Sinh viên gửi báo cáo #" + saved.getId());
-            nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
-            nLecturer.setRefType("PROGRESS_REPORT");
-            nLecturer.setRefId(saved.getId());
-            nLecturer.setLinkPath("/lecturer-progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
-            Notification savedLecturer = notificationRepo.save(nLecturer);
-            eventPublisher.notificationCreated(savedLecturer);
-            
-            // Email to lecturer
-            EmailTemplates.Mail mail = EmailTemplates.progressSubmitted(
-                    saved.getStudent().getUser().getFullName(), saved.getTitle(), saved.getTopic().getTitle());
-            emailService.sendEmail(saved.getTopic().getLecturer().getUser().getEmail(), mail.subject(), mail.html());
-        }
-        Notification nStudent = new Notification();
-        nStudent.setUser(saved.getStudent().getUser());
-        nStudent.setType(NotificationType.INFO);
-        nStudent.setTitle("Đã gửi báo cáo #" + saved.getId());
-        nStudent.setContent("Bạn đã gửi \"" + saved.getTitle() + "\" cho đề tài #" + saved.getTopic().getId());
-        nStudent.setRefType("PROGRESS_REPORT");
-        nStudent.setRefId(saved.getId());
-        nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
-        Notification savedStudent = notificationRepo.save(nStudent);
-        eventPublisher.notificationCreated(savedStudent);
-        return ProgressReportDTO.from(saved);
+        return service.create(studentId, topicId, body);
     }
 
     @GetMapping("/student/{studentId}")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public List<ProgressReportDTO> listByStudent(@PathVariable Long studentId,
                                               @RequestParam(required = false) Long topicId) {
-        if (scope.hasRole("STUDENT")) {
-            Long currentUserId = scope.requireCurrentUser().getId();
-            if (!currentUserId.equals(studentId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-            }
-        } else if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            // Quản trị khoa chỉ xem tiến độ của sinh viên thuộc KHOA MÌNH
-            Student student = studentRepo.findById(studentId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên."));
-            if (student.getUser() == null || student.getUser().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-            }
-            scope.requireDepartmentAccess(student.getUser().getDepartment().getId());
-        } else if (scope.hasRole("LECTURER")) {
-            if (topicId == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu mã đề tài (topicId).");
-            }
-            Topic topic = topicRepo.findById(topicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
-            Long currentUserId = scope.requireCurrentUser().getId();
-            if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-            }
-        }
-        Function<ProgressReport, ProgressReportDTO> view =
-                scope.hasRole("STUDENT") ? ProgressReportDTO::from : ProgressReportDTO::forReviewer;
-        List<ProgressReport> reports = topicId != null
-                ? progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId)
-                : progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId);
-        return reports.stream().map(view).toList();
+        return service.listByStudent(studentId, topicId);
     }
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public List<ProgressReportDTO> listByTopic(@PathVariable Long topicId) {
-        Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
-        if (!scope.hasRole("ADMIN")) {
-            if (scope.hasRole("DEPARTMENT_ADMIN")) {
-                if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt/khoa nào.");
-                }
-                scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
-            } else {
-                Long currentUserId = scope.requireCurrentUser().getId();
-                if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-                }
-            }
-        }
-        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::forReviewer).toList();
+        return service.listByTopic(topicId);
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STUDENT')")
     public ProgressReportDTO updateStatus(@PathVariable Long id,
                                        @Valid @RequestBody ProgressStatusRequest body) {
-        Long currentUserId = scope.requireCurrentUser().getId();
-        ProgressReport pr = progressRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy báo cáo tiến độ."));
-        // Chỉ cho phép sinh viên sở hữu báo cáo này mới được đổi trạng thái
-        if (!currentUserId.equals(pr.getStudent().getUser().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-        }
-        ProgressStatus status = ProgressStatus.parse(body.status());
-        pr.setStatus(status);
-        ProgressReport saved = progressRepo.save(pr);
-        auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
-        eventPublisher.progressUpdated(saved);
-        return ProgressReportDTO.from(saved);
+        return service.updateStatus(id, body);
     }
 
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public ProgressReportDTO addComment(@PathVariable Long id,
                                      @Valid @RequestBody ProgressCommentRequest body) {
-        ProgressReport pr = progressRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy báo cáo tiến độ."));
-        if (!scope.hasRole("ADMIN")) {
-            Long currentUserId = scope.requireCurrentUser().getId();
-            if (pr.getTopic() == null || pr.getTopic().getLecturer() == null || pr.getTopic().getLecturer().getId() == null || !currentUserId.equals(pr.getTopic().getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
-            }
-        }
-        if (pr.getTopic() == null || pr.getTopic().getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
-        }
-        if (pr.getTopic().getWorkspace().getStatus() != WorkspaceStatus.IN_PROGRESS) {
-            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt không ở giai đoạn thực hiện.");
-        }
-        if (body.status() != null) pr.setStatus(ProgressStatus.parse(body.status()));
-        if (body.lecturerComment() != null) pr.setLecturerComment(body.lecturerComment());
-        if (body.deadline() != null) pr.setDeadline(body.deadline());
-
-        ProgressReport saved = progressRepo.save(pr);
-        auditLogService.log("UPDATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Comment added/Status updated");
-        eventPublisher.progressUpdated(saved);
-        Notification nStudent = new Notification();
-        nStudent.setUser(saved.getStudent().getUser());
-        nStudent.setType(NotificationType.INFO);
-        nStudent.setTitle("Giảng viên nhận xét báo cáo #" + saved.getId());
-        String msg = "Nhận xét: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
-        nStudent.setContent(msg.trim().isEmpty() ? "Báo cáo \"" + saved.getTitle() + "\" đã được cập nhật" : msg);
-        nStudent.setRefType("PROGRESS_REPORT");
-        nStudent.setRefId(saved.getId());
-        nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
-        Notification savedN = notificationRepo.save(nStudent);
-        eventPublisher.notificationCreated(savedN);
-        EmailTemplates.Mail feedbackMail = EmailTemplates.progressFeedback(saved.getTitle(), saved.getLecturerComment());
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), feedbackMail.subject(), feedbackMail.html());
-        return ProgressReportDTO.forReviewer(saved);
+        return service.addComment(id, body);
     }
 }
-

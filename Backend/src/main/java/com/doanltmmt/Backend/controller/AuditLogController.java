@@ -1,7 +1,7 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.entity.AuditLog;
-import com.doanltmmt.Backend.repository.AuditLogRepository;
+import com.doanltmmt.Backend.service.AuditLogQueryService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,16 +17,16 @@ import java.util.List;
 @RequestMapping("/api/audit")
 public class AuditLogController {
 
-    private final AuditLogRepository repo;
+    private final AuditLogQueryService service;
 
-    public AuditLogController(AuditLogRepository repo) {
-        this.repo = repo;
+    public AuditLogController(AuditLogQueryService service) {
+        this.service = service;
     }
 
     /** 200 bản ghi mới nhất. (Phân trang + lọc: P3-06.) */
     @GetMapping("/recent")
     @PreAuthorize("hasRole('ADMIN')")
     public List<AuditLog> recent() {
-        return repo.findTop200ByOrderByTimestampDesc();
+        return service.recent();
     }
 }

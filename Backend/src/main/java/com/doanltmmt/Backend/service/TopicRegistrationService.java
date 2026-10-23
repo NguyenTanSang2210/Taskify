@@ -1,12 +1,11 @@
 package com.doanltmmt.Backend.service;
 
-import com.doanltmmt.Backend.exception.ErrorCodes;
-import com.doanltmmt.Backend.exception.ApiException;
-import com.doanltmmt.Backend.entity.enums.NotificationType;
-import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
-import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -29,7 +28,7 @@ public class TopicRegistrationService {
     private final LecturerRepository lecturerRepo;
     private final UserRepository userRepo;
     private final EventPublisher eventPublisher;
-    private final NotificationRepository notificationRepo;
+    private final NotificationService notifications;
     private final AuditLogService auditLogService;
     private final EmailService emailService;
     private final SecurityScopeService scope;
@@ -41,7 +40,7 @@ public class TopicRegistrationService {
                                     LecturerRepository lecturerRepo,
                                     UserRepository userRepo,
                                     EventPublisher eventPublisher,
-                                    NotificationRepository notificationRepo,
+                                    NotificationService notifications,
                                     AuditLogService auditLogService,
                                     EmailService emailService,
                                     SecurityScopeService scope,
@@ -53,7 +52,7 @@ public class TopicRegistrationService {
         this.lecturerRepo = lecturerRepo;
         this.userRepo = userRepo;
         this.eventPublisher = eventPublisher;
-        this.notificationRepo = notificationRepo;
+        this.notifications = notifications;
         this.auditLogService = auditLogService;
         this.emailService = emailService;
         this.scope = scope;
@@ -281,15 +280,6 @@ public class TopicRegistrationService {
     }
 
     private void sendNotification(User user, String title, String content, Long refId) {
-        Notification n = new Notification();
-        n.setUser(user);
-        n.setType(NotificationType.INFO);
-        n.setTitle(title);
-        n.setContent(content);
-        n.setRefType("TOPIC_REGISTRATION");
-        n.setRefId(refId);
-        n.setLinkPath("/my-registrations");
-        Notification saved = notificationRepo.save(n);
-        eventPublisher.notificationCreated(saved);
+        notifications.notify(user, title, content, "TOPIC_REGISTRATION", refId, "/my-registrations");
     }
 }

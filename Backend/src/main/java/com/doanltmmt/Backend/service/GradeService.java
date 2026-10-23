@@ -8,21 +8,18 @@ import com.doanltmmt.Backend.dto.response.GradeHistoryDTO;
 import com.doanltmmt.Backend.dto.response.GradeRevisionDTO;
 import com.doanltmmt.Backend.entity.GradeHistory;
 import com.doanltmmt.Backend.entity.GradeRevisionRequest;
-import com.doanltmmt.Backend.entity.Notification;
 import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.entity.enums.GradeRevisionStatus;
 import com.doanltmmt.Backend.entity.enums.GradeState;
-import com.doanltmmt.Backend.entity.enums.NotificationType;
 import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.exception.ApiException;
 import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.GradeHistoryRepository;
 import com.doanltmmt.Backend.repository.GradeRevisionRequestRepository;
-import com.doanltmmt.Backend.repository.NotificationRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
@@ -68,23 +65,21 @@ public class GradeService {
     private final GradeRevisionRequestRepository revisionRepo;
     private final GradeHistoryRepository historyRepo;
     private final UserRepository userRepo;
-    private final NotificationRepository notificationRepo;
-    private final EventPublisher events;
+    private final NotificationService notifications;
     private final EmailService emailService;
     private final AuditLogService auditLogService;
     private final SecurityScopeService scope;
 
     public GradeService(TopicRegistrationRepository regRepo, TopicRepository topicRepo,
                         GradeRevisionRequestRepository revisionRepo, GradeHistoryRepository historyRepo,
-                        UserRepository userRepo, NotificationRepository notificationRepo, EventPublisher events,
+                        UserRepository userRepo, NotificationService notifications,
                         EmailService emailService, AuditLogService auditLogService, SecurityScopeService scope) {
         this.regRepo = regRepo;
         this.topicRepo = topicRepo;
         this.revisionRepo = revisionRepo;
         this.historyRepo = historyRepo;
         this.userRepo = userRepo;
-        this.notificationRepo = notificationRepo;
-        this.events = events;
+        this.notifications = notifications;
         this.emailService = emailService;
         this.auditLogService = auditLogService;
         this.scope = scope;
@@ -385,15 +380,7 @@ public class GradeService {
     }
 
     private void notify(User user, String title, String content, String refType, Long refId, String linkPath) {
-        Notification n = new Notification();
-        n.setUser(user);
-        n.setType(NotificationType.INFO);
-        n.setTitle(title);
-        n.setContent(content);
-        n.setRefType(refType);
-        n.setRefId(refId);
-        n.setLinkPath(linkPath);
-        events.notificationCreated(notificationRepo.save(n));
+        notifications.notify(user, title, content, refType, refId, linkPath);
     }
 
     private void sendMail(User to, EmailTemplates.Mail mail) {

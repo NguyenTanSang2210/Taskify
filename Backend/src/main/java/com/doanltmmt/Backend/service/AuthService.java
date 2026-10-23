@@ -7,9 +7,9 @@ import com.doanltmmt.Backend.dto.OtpResendResponse;
 import com.doanltmmt.Backend.entity.OtpPurpose;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.repository.UserRepository;
-import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.security.JwtTokenProvider.Scope;
 import com.doanltmmt.Backend.security.JwtTokenProvider.TokenClaims;
+import com.doanltmmt.Backend.security.JwtTokenProvider;
 import com.doanltmmt.Backend.security.PasswordPolicy;
 import com.doanltmmt.Backend.security.RateLimiter;
 import com.doanltmmt.Backend.service.OtpService.VerifyOutcome;
@@ -19,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
@@ -294,5 +295,15 @@ public class AuthService {
             return "***";
         }
         return email.charAt(0) + "***" + email.substring(at);
+    }
+
+    /** Đăng xuất mọi thiết bị: tăng tokenVersion → mọi token đang lưu hành của người dùng lập tức vô hiệu. */
+    @Transactional
+    public void logoutAll(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        auditLogService.log("LOGOUT_ALL", "User", user.getId().toString(), "Đăng xuất mọi thiết bị");
     }
 }
