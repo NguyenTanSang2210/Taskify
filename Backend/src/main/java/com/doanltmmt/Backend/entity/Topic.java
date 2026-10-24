@@ -1,8 +1,11 @@
 package com.doanltmmt.Backend.entity;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "topics")
@@ -31,7 +34,22 @@ public class Topic {
     @Column(name = "capacity")
     private Integer capacity;
 
-    // OPEN, REGISTERED, CLOSED
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // cột varchar (không dùng kiểu ENUM của MySQL) để thêm giá trị mới không phải ALTER
     @Column(length = 50)
-    private String status;
+    private TopicStatus status;
+
+    /** Số sinh viên tối đa; dữ liệu cũ không đặt capacity được hiểu là 1. */
+    public int effectiveCapacity() {
+        return capacity == null || capacity < 1 ? 1 : capacity;
+    }
+
+    /**
+     * Cập nhật trạng thái theo số SV đã được duyệt: còn chỗ → OPEN, đủ → FULL.
+     * Đề tài GV đã đóng hoặc đã hoàn thành giữ nguyên trạng thái.
+     */
+    public void refreshCapacityStatus(long approvedCount) {
+        if (status == TopicStatus.CLOSED || status == TopicStatus.COMPLETED) return;
+        status = approvedCount >= effectiveCapacity() ? TopicStatus.FULL : TopicStatus.OPEN;
+    }
 }

@@ -1,8 +1,11 @@
 package com.doanltmmt.Backend.entity;
 
+import com.doanltmmt.Backend.entity.enums.CalendarEventType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -31,6 +34,8 @@ public class CalendarEvent {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // cột varchar (không dùng kiểu ENUM của MySQL) để thêm giá trị mới không phải ALTER
     @Column(length = 20)
-    private String type; // MILESTONE, MEETING
+    private CalendarEventType type;
 }

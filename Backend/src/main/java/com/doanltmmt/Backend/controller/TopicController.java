@@ -1,8 +1,12 @@
 package com.doanltmmt.Backend.controller;
 
 import com.doanltmmt.Backend.dto.TopicDTO;
-import com.doanltmmt.Backend.entity.Topic;
+import com.doanltmmt.Backend.dto.request.TopicRequest;
+import com.doanltmmt.Backend.dto.response.PageResponse;
+import com.doanltmmt.Backend.dto.response.TopicDetailDTO;
+import com.doanltmmt.Backend.service.TopicDetailService;
 import com.doanltmmt.Backend.service.TopicService;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,23 +18,25 @@ import java.util.Map;
 public class TopicController {
 
     private final TopicService service;
+    private final TopicDetailService detailService;
 
-    public TopicController(TopicService service) {
+    public TopicController(TopicService service, TopicDetailService detailService) {
         this.service = service;
+        this.detailService = detailService;
     }
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
-    public TopicDTO createTopic(@RequestParam Long lecturerId, @RequestBody Topic topic) {
-        return service.createTopic(lecturerId, topic);
+    public TopicDTO createTopic(@RequestParam Long lecturerId, @Valid @RequestBody TopicRequest request) {
+        return service.createTopic(lecturerId, request.toTopic());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('TOPIC_MANAGE') or hasRole('ADMIN')")
     public TopicDTO updateTopic(@PathVariable Long id,
                              @RequestParam(required = false) Long lecturerId,
-                             @RequestBody Topic payload) {
-        return service.updateTopic(id, lecturerId, payload);
+                             @Valid @RequestBody TopicRequest request) {
+        return service.updateTopic(id, lecturerId, request.toTopic());
     }
 
     @DeleteMapping("/{id}")
@@ -56,7 +62,7 @@ public class TopicController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public Map<String, Object> getAll(
+    public PageResponse<Map<String, Object>> getAll(
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false, name = "query") String queryText,
             @RequestParam(required = false) String status,
@@ -66,5 +72,10 @@ public class TopicController {
     ) {
         return service.getAll(studentId, queryText, status, lecturerId, page, size);
     }
-}
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
+    public TopicDetailDTO getDetail(@PathVariable Long id) {
+        return detailService.get(id);
+    }
+}

@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.config.StoredFileMaintenance;
 import com.doanltmmt.Backend.entity.ProgressReport;
 import com.doanltmmt.Backend.entity.StoredFile;
@@ -178,7 +179,7 @@ class FileAccessIT extends AbstractTopicScenarioIT {
         ProgressReport pr = new ProgressReport();
         pr.setTitle("cũ");
         pr.setContent("cũ");
-        pr.setStatus("TODO");
+        pr.setStatus(ProgressStatus.TODO);
         pr.setTopic(topicA);
         pr.setStudent(stuA1);
         pr.setFileUrl("/api/secure/files/123e4567-e89b-12d3-a456-426614174000_Báo cáo cũ.doc");

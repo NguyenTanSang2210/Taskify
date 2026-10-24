@@ -1,9 +1,13 @@
 package com.doanltmmt.Backend.entity;
+
+import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "progress_report")
@@ -39,8 +43,14 @@ public class ProgressReport {
     @Column(columnDefinition = "TEXT")
     private String lecturerComment;
 
+    /** P4-01: lúc giảng viên nhận xét lần đầu (đo thời gian phản hồi); null = chưa nhận xét / nhận xét trước V8. */
+    @Column(name = "commented_at")
+    private java.time.LocalDateTime commentedAt;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // cột varchar (không dùng kiểu ENUM của MySQL) để thêm giá trị mới không phải ALTER
     @Column(length = 20, nullable = false)
-    private String status; // TODO, IN_PROGRESS, DONE
+    private ProgressStatus status;
 
     @Column(name = "file_url", length = 500)
     private String fileUrl;
@@ -52,13 +62,20 @@ public class ProgressReport {
     @JoinColumn(name = "milestone_id")
     private Milestone milestone;
 
+    /** Độ giống (0–1) với báo cáo giống nhất trong cùng workspace lúc nộp — chỉ giảng viên/quản trị thấy. */
+    @Column(name = "similarity_score")
+    private Double similarityScore;
+
+    @Column(name = "similar_to_report_id")
+    private Long similarToReportId;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {
             createdAt = java.time.LocalDateTime.now();
         }
-        if (status == null || status.isBlank()) {
-            status = "TODO";
+        if (status == null) {
+            status = ProgressStatus.TODO;
         }
     }
 }

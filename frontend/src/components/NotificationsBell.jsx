@@ -16,17 +16,33 @@ export default function NotificationsBell() {
   const load = useCallback(async () => {
     if (!userId) return;
     try {
-      const list = await notificationsApi.listMine(userId);
-      setItems(list.slice(0, 6)); // Show top 6
+      const list = await notificationsApi.recent(userId, 6);
+      setItems(list || []);
       const cnt = await notificationsApi.countUnread(userId);
       setUnread(cnt);
     } catch { /* noop */ }
   }, [userId]);
 
+  // Tải số thông báo chưa đọc ngay khi đăng nhập (trước đây chỉ tải khi mở chuông → huy hiệu luôn là 0)
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    Promise.all([notificationsApi.recent(userId, 6), notificationsApi.countUnread(userId)])
+      .then(([list, cnt]) => {
+        if (cancelled) return;
+        setItems(list || []);
+        setUnread(cnt || 0);
+      })
+      .catch(() => { /* chuông không quan trọng bằng trang — bỏ qua lỗi */ });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   useEffect(() => {
     if (!userId) return;
     const client = connectAndSubscribe({
-      destination: "/user/queue/notifications",
+      destination: `/topic/notifications.${userId}`,
       onMessage: (payload) => {
         const n = payload?.notification;
         if (n) {
@@ -73,7 +89,7 @@ export default function NotificationsBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative group focus:outline-none ${open ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative group focus:outline-none ${open ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
         onClick={() => {
           setOpen(!open);
           if (!open) load();
@@ -82,7 +98,7 @@ export default function NotificationsBell() {
       >
         <span className="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">notifications</span>
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-[8px] font-black text-white rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm animate-bounce">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-[8px] font-black text-on-error rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm animate-bounce">
              {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -124,7 +140,7 @@ export default function NotificationsBell() {
           {/* List Area */}
           <div className="max-h-[420px] overflow-y-auto no-scrollbar py-2 divide-y divide-outline-variant/5">
             {items.length === 0 ? (
-              <div className="py-20 text-center opacity-30 select-none grayscale">
+              <div className="py-20 text-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
                  <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6">
                     <span className="material-symbols-outlined text-4xl">notifications_off</span>
                  </div>
@@ -144,7 +160,7 @@ export default function NotificationsBell() {
                       {!isRead && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>}
                       
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105 ${
-                        isReminder ? "bg-amber-500/10 text-amber-600" : "bg-primary/10 text-primary"
+                        isReminder ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "bg-primary/10 text-primary"
                       }`}>
                         <span className="material-symbols-outlined text-xl">
                           {isReminder ? "alarm" : "info"}
@@ -153,17 +169,17 @@ export default function NotificationsBell() {
 
                       <div className="flex-grow min-w-0">
                          <div className="flex justify-between items-start gap-2">
-                           <h4 className={`text-xs leading-snug break-words uppercase tracking-tight ${!isRead ? "font-black text-on-surface" : "font-bold text-outline opacity-60"}`}>
+                           <h4 className={`text-xs leading-snug break-words uppercase tracking-tight ${!isRead ? "font-black text-on-surface" : "font-bold text-outline"}`}>
                              {n.title}
                            </h4>
                            {!isRead && <div className="w-2 h-2 bg-primary rounded-full shrink-0 shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]"></div>}
                          </div>
-                         <p className="text-[11px] font-medium text-outline/70 mt-1 line-clamp-1">{n.content}</p>
+                         <p className="text-[11px] font-medium text-outline mt-1 line-clamp-1">{n.content}</p>
                          <div className="flex items-center gap-2 mt-2">
-                            <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isReminder ? "bg-amber-500/10 text-amber-600" : "bg-primary/10 text-primary"}`}>
+                            <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isReminder ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "bg-primary/10 text-primary"}`}>
                                {n.type}
                             </span>
-                            <span className="text-[9px] text-outline/40 font-bold uppercase tracking-tighter">
+                            <span className="text-[9px] text-outline font-bold uppercase tracking-tighter">
                                {new Date(n.createdAt).toLocaleDateString()} • {new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </span>
                          </div>
@@ -177,7 +193,7 @@ export default function NotificationsBell() {
           {/* Footer Area */}
           <div className="bg-surface-container-low/50 p-6 border-t border-outline-variant/5">
              <Link 
-                className="w-full flex items-center justify-center gap-3 py-3 bg-surface-container hover:bg-primary hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 group" 
+                className="w-full flex items-center justify-center gap-3 py-3 bg-surface-container hover:bg-primary hover:text-on-primary rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 group" 
                 to="/notifications" 
                 onClick={() => setOpen(false)}
              >

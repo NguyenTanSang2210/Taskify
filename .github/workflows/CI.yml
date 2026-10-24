@@ -7,85 +7,92 @@ on:
     branches: [ "main", "master", "develop" ]
 
 jobs:
-  # Job 1: Kiểm tra và Build Backend
+  # Job 1: Backend — test (MySQL thật qua Testcontainers, không cần service MySQL) + ngưỡng độ phủ JaCoCo
   backend-test-and-build:
     runs-on: ubuntu-latest
-    
-    # Cấu hình Database ảo để Spring Boot có thể kết nối khi chạy Test
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: root123
-          MYSQL_DATABASE: doan_ltmmt
-          MYSQL_USER: ktpm
-          MYSQL_PASSWORD: ktpm123
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot123"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
 
-      - name: Run Backend Tests and Build
-        env:
-          SPRING_PROFILES_ACTIVE: dev
-          DB_URL: jdbc:mysql://localhost:3306/doan_ltmmt?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-          DB_USERNAME: ktpm
-          DB_PASSWORD: ktpm123
-          JWT_SECRET: ZGV2LXNlY3JldC1mb3ItdGVzdGluZy1wdXJwb3Nlcy1vbmx5LTIwMjY=
-          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      # verify = test + đóng gói + kiểm tra ngưỡng độ phủ (toàn bộ ≥ 75%, gói service ≥ 80%; xem pom.xml)
+      # Không đặt DB_URL → test tự chạy MySQL 8.4 trong Docker (Testcontainers, xem support/TestDatabase.java)
+      - name: Test, coverage check and package
         run: |
           cd Backend
           chmod +x mvnw
-          ./mvnw clean test package
+          ./mvnw -B verify
 
-  # Job 2: Kiểm tra và Build Frontend
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: Backend/target/site/jacoco/
+          if-no-files-found: ignore
+
+  # Job 2: Frontend — lint, test (Vitest), build
   frontend-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies, Lint and Build
+      - name: Install, lint, test and build
         run: |
           cd frontend
           npm ci
           npm run lint
+          npm test
           npm run build
 
-  # Job 3: Đảm bảo Docker Compose hoạt động trơn tru
+  # Job 3: Chạy thật cả hệ thống bằng docker compose (profile prod) và gọi healthcheck
   docker-compose-check:
     needs: [backend-test-and-build, frontend-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Test Docker Build
-        env:
-          # docker compose BẮT BUỘC các biến này (không có giá trị mặc định); bước build không dùng giá trị thật
-          MYSQL_PASSWORD: ci-build-only
-          MYSQL_ROOT_PASSWORD: ci-build-only
-          JWT_SECRET: ci-build-only
-        run: docker compose build
+      # .env cho MỌI lệnh docker compose của job (không chỉ bước khởi động): ps / logs / down cũng cần nội suy biến
+      - name: Prepare .env
+        run: |
+          {
+            echo "MYSQL_PASSWORD=ci-db-password"
+            echo "MYSQL_ROOT_PASSWORD=ci-root-password"
+            # khóa JWT ngẫu nhiên cho lượt chạy (profile prod từ chối khóa dev công khai)
+            echo "JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')"
+          } > .env
+
+      - name: Start the stack (waits for healthchecks)
+        run: docker compose up -d --build --wait --wait-timeout 300
+
+      - name: Smoke check
+        run: |
+          curl -fsS http://localhost:8080/actuator/health/readiness | grep -q '"UP"'
+          curl -fsS http://localhost:8080/actuator/info | grep -q 'Taskify'
+          curl -fsS -o /dev/null http://localhost:5175/
+          # nginx chuyển tiếp /api tới backend: chưa có cookie phiên → 401 dạng lỗi chuẩn
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:5175/api/auth/refresh)" = "401"
+          docker compose ps
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v

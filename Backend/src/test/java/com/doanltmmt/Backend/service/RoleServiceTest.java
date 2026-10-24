@@ -4,6 +4,7 @@ import com.doanltmmt.Backend.entity.Privilege;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.repository.PrivilegeRepository;
 import com.doanltmmt.Backend.repository.RoleRepository;
+import com.doanltmmt.Backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,6 +26,9 @@ class RoleServiceTest {
 
     @Mock
     private PrivilegeRepository privilegeRepo;
+
+    @Mock
+    private UserRepository userRepo;
 
     @Mock
     private AuditLogService auditLogService;
@@ -80,5 +84,53 @@ class RoleServiceTest {
         assertNotNull(updated);
         assertTrue(updated.getPrivileges().contains(p));
         verify(auditLogService, times(1)).log(eq("UPDATE_ROLE"), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void createRole_normalizesName_andRejectsInvalidNames() {
+        when(roleRepo.findByName("THU_KY")).thenReturn(Optional.empty());
+        when(roleRepo.save(any(Role.class))).thenAnswer(i -> {
+            Role r = i.getArgument(0);
+            r.setId(5L);
+            return r;
+        });
+        assertEquals("THU_KY", roleService.createRole(" thu_ky ", "Thư ký").getName());
+        assertThrows(ResponseStatusException.class, () -> roleService.createRole("Thư ký", "x"));
+        assertThrows(ResponseStatusException.class, () -> roleService.createRole("", "x"));
+    }
+
+    @Test
+    void deleteRole_systemRoles_areProtected() {
+        for (String name : RoleService.SYSTEM_ROLES) {
+            Role role = new Role(name);
+            role.setId(1L);
+            when(roleRepo.findById(1L)).thenReturn(Optional.of(role));
+            ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> roleService.deleteRole(1L));
+            assertTrue(ex.getReason().contains("vai trò hệ thống"));
+        }
+        verify(roleRepo, never()).delete(any(Role.class));
+    }
+
+    @Test
+    void deleteRole_inUse_isRejectedWithUserCount() {
+        Role role = new Role("THU_KY");
+        role.setId(7L);
+        when(roleRepo.findById(7L)).thenReturn(Optional.of(role));
+        when(userRepo.countByRole_Id(7L)).thenReturn(3L);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> roleService.deleteRole(7L));
+        assertEquals(400, ex.getStatusCode().value());
+        assertTrue(ex.getReason().contains("3 người dùng"));
+        verify(roleRepo, never()).delete(any(Role.class));
+    }
+
+    @Test
+    void deleteRole_unused_customRole_isDeleted() {
+        Role role = new Role("THU_KY");
+        role.setId(8L);
+        when(roleRepo.findById(8L)).thenReturn(Optional.of(role));
+        when(userRepo.countByRole_Id(8L)).thenReturn(0L);
+        roleService.deleteRole(8L);
+        verify(roleRepo).delete(role);
+        verify(auditLogService).log(eq("DELETE_ROLE"), anyString(), anyString(), anyString());
     }
 }

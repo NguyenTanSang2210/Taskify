@@ -11,10 +11,10 @@
  *   1. CONNECT không token           → bị từ chối (ERROR)
  *   2. CONNECT token rác             → bị từ chối
  *   3. CONNECT token hợp lệ          → CONNECTED
- *   4. SUBSCRIBE /user/queue/*       → được phép (không ERROR)
- *   5. SUBSCRIBE kênh cũ theo userId → bị từ chối (/topic/notifications/{id}, /topic/messages/{id}, /topic/events)
- *   6. SUBSCRIBE /topic/progress/{đề tài không thuộc mình} → bị từ chối
- *   7. SUBSCRIBE /topic/registration/{id} (sinh viên)       → bị từ chối
+ *   4. SUBSCRIBE /topic/notifications.{id mình}, /topic/messages.{id mình} → được phép (không ERROR)
+ *   5. SUBSCRIBE kênh riêng của người khác, kênh kiểu cũ (/topic/notifications/{id}, /user/queue/*), /topic/events → bị từ chối
+ *   6. SUBSCRIBE /topic/progress.{đề tài không thuộc mình} → bị từ chối
+ *   7. SUBSCRIBE /topic/registration.{id} (sinh viên)       → bị từ chối
  *   8. SEND lên /topic/...           → bị từ chối
  */
 const API = process.env.API_URL || "http://localhost:8081/api";
@@ -107,33 +107,34 @@ async function main() {
     return !!err;
   };
 
-  // 4: kênh riêng được phép
-  for (const dest of ["/user/queue/notifications", "/user/queue/messages"]) {
+  // 4: kênh riêng của chính mình được phép (P4-10: /topic/{notifications|messages}.{userId})
+  for (const dest of [`/topic/notifications.${userId}`, `/topic/messages.${userId}`]) {
     const denied = await tryOnce((c) => c.send("SUBSCRIBE", { id: "s1", destination: dest }));
     report(!denied, `SUBSCRIBE ${dest} được phép`);
   }
 
-  // 5: kênh cũ theo userId + kênh sự kiện chung
-  for (const dest of [`/topic/notifications/${userId}`, `/topic/messages/${userId}`, "/topic/events"]) {
+  // 5: kênh riêng của người khác, kênh kiểu cũ + kênh sự kiện chung
+  for (const dest of [`/topic/notifications.${userId + 1}`, `/topic/messages.${userId + 1}`, `/topic/notifications/${userId}`,
+    "/user/queue/notifications", "/topic/events"]) {
     const denied = await tryOnce((c) => c.send("SUBSCRIBE", { id: "s1", destination: dest }));
     report(denied, `SUBSCRIBE ${dest} bị từ chối`);
   }
 
   // 6: tiến độ của đề tài không thuộc mình (id rất lớn → không tồn tại / không phải thành viên)
   {
-    const denied = await tryOnce((c) => c.send("SUBSCRIBE", { id: "s1", destination: "/topic/progress/999999" }));
-    report(denied, "SUBSCRIBE /topic/progress/{đề tài lạ} bị từ chối");
+    const denied = await tryOnce((c) => c.send("SUBSCRIBE", { id: "s1", destination: "/topic/progress.999999" }));
+    report(denied, "SUBSCRIBE /topic/progress.{đề tài lạ} bị từ chối");
   }
 
   // 7: sinh viên không được nghe kênh đăng ký
   {
-    const denied = await tryOnce((c) => c.send("SUBSCRIBE", { id: "s1", destination: "/topic/registration/1" }));
-    report(denied, "SUBSCRIBE /topic/registration/{id} (sinh viên) bị từ chối");
+    const denied = await tryOnce((c) => c.send("SUBSCRIBE", { id: "s1", destination: "/topic/registration.1" }));
+    report(denied, "SUBSCRIBE /topic/registration.{id} (sinh viên) bị từ chối");
   }
 
   // 8: SEND
   {
-    const denied = await tryOnce((c) => c.send("SEND", { destination: "/topic/progress/1", "content-type": "application/json" }, "{\"type\":\"FAKE\"}"));
+    const denied = await tryOnce((c) => c.send("SEND", { destination: "/topic/progress.1", "content-type": "application/json" }, "{\"type\":\"FAKE\"}"));
     report(denied, "SEND từ client bị từ chối");
   }
 
@@ -147,7 +148,7 @@ async function main() {
     for (const reg of approved.sort((a, b) => b.topic.id - a.topic.id)) {
       const listener = await openStomp({ Authorization: `Bearer ${login.token}` });
       await listener.waitFor(isConnected);
-      listener.send("SUBSCRIBE", { id: "n1", destination: "/user/queue/notifications" });
+      listener.send("SUBSCRIBE", { id: "n1", destination: `/topic/notifications.${userId}` });
       const make = await fetch(`${API}/progress/create?studentId=${userId}&topicId=${reg.topic.id}`, {
         method: "POST", headers: auth, body: JSON.stringify({ title: `ws-check ${Date.now()}`, content: "kiểm tra realtime" }),
       });
@@ -161,7 +162,7 @@ async function main() {
     }
     if (delivered === null) console.log("⏭️  SKIP  nhận thông báo realtime — không có đề tài nào cho phép nộp báo cáo");
     else report(!!delivered?.notification?.id && delivered.notification.user === undefined,
-      "Nhận thông báo realtime qua /user/queue/notifications (không lộ user)");
+      "Nhận thông báo realtime qua kênh riêng /topic/notifications.{id} (không lộ user)");
   }
 
   s.close();

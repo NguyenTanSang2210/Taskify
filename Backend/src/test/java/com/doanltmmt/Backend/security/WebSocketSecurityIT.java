@@ -88,14 +88,21 @@ class WebSocketSecurityIT extends AbstractTopicScenarioIT {
 
     @Test
     void subscribe_withoutPrincipal_isRejected() {
-        assertThrows(MessagingException.class, () -> subscribe(null, "/user/queue/notifications"));
+        assertThrows(MessagingException.class, () -> subscribe(null, "/topic/notifications." + userOf(stuA1).getId()));
     }
 
     @Test
-    void subscribe_privateQueues_areAllowedForAuthenticatedUser() {
+    void subscribe_personalChannels_onlyForTheOwner() {
         Principal p = connectAs(userOf(stuA1));
-        assertDoesNotThrow(() -> subscribe(p, "/user/queue/notifications"));
-        assertDoesNotThrow(() -> subscribe(p, "/user/queue/messages"));
+        long own = userOf(stuA1).getId();
+        long other = userOf(stuA2).getId();
+        assertDoesNotThrow(() -> subscribe(p, "/topic/notifications." + own));
+        assertDoesNotThrow(() -> subscribe(p, "/topic/messages." + own));
+        assertThrows(MessagingException.class, () -> subscribe(p, "/topic/notifications." + other));
+        assertThrows(MessagingException.class, () -> subscribe(p, "/topic/messages." + other));
+        // Admin cũng không đọc trộm kênh riêng của người khác
+        Principal a = connectAs(admin);
+        assertThrows(MessagingException.class, () -> subscribe(a, "/topic/notifications." + own));
     }
 
     @Test
@@ -105,11 +112,14 @@ class WebSocketSecurityIT extends AbstractTopicScenarioIT {
         assertThrows(MessagingException.class, () -> subscribe(p, "/topic/notifications/" + id));
         assertThrows(MessagingException.class, () -> subscribe(p, "/topic/messages/" + id));
         assertThrows(MessagingException.class, () -> subscribe(p, "/topic/events"));
+        // kênh riêng kiểu cũ của Spring (danh sách phiên theo từng instance) không còn dùng
+        assertThrows(MessagingException.class, () -> subscribe(p, "/user/queue/notifications"));
+        assertThrows(MessagingException.class, () -> subscribe(p, "/user/queue/messages"));
     }
 
     @Test
     void subscribe_progress_onlyForTopicMembers() {
-        String dest = "/topic/progress/" + topicA.getId();
+        String dest = "/topic/progress." + topicA.getId();
         for (User allowed : new User[]{userOf(stuA1), userOf(lecA), deptAdminA, admin}) {
             Principal p = connectAs(allowed);
             assertDoesNotThrow(() -> subscribe(p, dest), allowed.getUsername());
@@ -122,7 +132,7 @@ class WebSocketSecurityIT extends AbstractTopicScenarioIT {
 
     @Test
     void subscribe_registration_onlyForTopicOwners_notStudents() {
-        String dest = "/topic/registration/" + topicA.getId();
+        String dest = "/topic/registration." + topicA.getId();
         for (User allowed : new User[]{userOf(lecA), deptAdminA, admin}) {
             Principal p = connectAs(allowed);
             assertDoesNotThrow(() -> subscribe(p, dest), allowed.getUsername());
@@ -136,8 +146,8 @@ class WebSocketSecurityIT extends AbstractTopicScenarioIT {
     @Test
     void subscribe_unknownTopic_andUnknownDestinations_areRejected() {
         Principal p = connectAs(admin);
-        assertThrows(MessagingException.class, () -> subscribe(p, "/topic/progress/99999999"));
-        assertThrows(MessagingException.class, () -> subscribe(p, "/topic/progress/abc"));
+        assertThrows(MessagingException.class, () -> subscribe(p, "/topic/progress.99999999"));
+        assertThrows(MessagingException.class, () -> subscribe(p, "/topic/progress.abc"));
         assertThrows(MessagingException.class, () -> subscribe(p, "/topic/whatever"));
         assertThrows(MessagingException.class, () -> subscribe(p, "/queue/anything"));
     }
@@ -148,7 +158,7 @@ class WebSocketSecurityIT extends AbstractTopicScenarioIT {
     void send_fromClient_isAlwaysRejected() {
         Principal p = connectAs(admin);
         StompHeaderAccessor acc = StompHeaderAccessor.create(StompCommand.SEND);
-        acc.setDestination("/topic/progress/" + topicA.getId());
+        acc.setDestination("/topic/progress." + topicA.getId());
         acc.setUser(p);
         assertThrows(MessagingException.class, () -> interceptor.preSend(frame(acc), null));
     }

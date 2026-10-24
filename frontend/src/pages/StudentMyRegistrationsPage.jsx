@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { registrationApi } from "../api/registrationApi";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function StudentMyRegistrationsPage() {
   const [items, setItems] = useState([]);
@@ -33,9 +34,7 @@ export default function StudentMyRegistrationsPage() {
     }
   }, [isStudent, studentId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useLoadEffect(load);
 
   const handleCancel = async (regId) => {
     if (!window.confirm("Bạn có chắc muốn hủy đăng ký này? Thao tác này không thể hoàn tác.")) return;
@@ -82,7 +81,7 @@ export default function StudentMyRegistrationsPage() {
               <span className="material-symbols-outlined text-sm">history</span>
               Tổng số: {items.length}
            </div>
-           <button onClick={load} className="p-2.5 bg-white border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-all">
+           <button aria-label="Làm mới" onClick={load} className="p-2.5 bg-white dark:bg-slate-900 border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-all">
               <span className="material-symbols-outlined">refresh</span>
            </button>
         </div>
@@ -105,10 +104,10 @@ export default function StudentMyRegistrationsPage() {
             <div className="flex-grow flex flex-col items-center justify-center p-20 text-center space-y-4">
                <span className="material-symbols-outlined text-6xl text-outline/20">lock_open</span>
                <p className="text-sm font-black uppercase tracking-widest text-outline">Vui lòng đăng nhập để xem thông tin đăng ký</p>
-               <Link to="/login" className="px-8 py-3 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">Đến trang đăng nhập</Link>
+               <Link to="/login" className="px-8 py-3 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">Đến trang đăng nhập</Link>
             </div>
         ) : loading ? (
-            <div className="flex-grow flex items-center justify-center p-20 opacity-40">
+            <div className="flex-grow flex items-center justify-center p-20 text-outline [&_.material-symbols-outlined]:opacity-40">
                <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
             </div>
         ) : error ? (
@@ -118,7 +117,7 @@ export default function StudentMyRegistrationsPage() {
                <button onClick={load} className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline">Thử lại</button>
             </div>
         ) : items.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center p-24 text-center opacity-40">
+            <div className="flex-grow flex flex-col items-center justify-center p-24 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                <span className="material-symbols-outlined text-7xl mb-4">tab_unselected</span>
                <h3 className="text-xl font-black uppercase tracking-widest">Chưa có đăng ký nào</h3>
                <p className="text-xs font-bold mt-2 uppercase tracking-tight">Cần chọn đề tài nghiên cứu để bắt đầu gửi yêu cầu.</p>
@@ -148,9 +147,9 @@ export default function StudentMyRegistrationsPage() {
                            <td className="px-8 py-6">
                               <div className="flex items-center gap-3">
                                  <div className="w-8 h-8 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center font-black text-xs">
-                                    {r.topic?.lecturer?.fullName?.charAt(0)}
+                                    {r.topic?.lecturerName?.charAt(0)}
                                  </div>
-                                 <span className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant truncate">{r.topic?.lecturer?.fullName}</span>
+                                 <span className="text-[11px] font-black uppercase tracking-widest text-on-surface-variant truncate">{r.topic?.lecturerName}</span>
                               </div>
                            </td>
                            <td className="px-8 py-6">
@@ -162,6 +161,16 @@ export default function StudentMyRegistrationsPage() {
                                  <span className="material-symbols-outlined text-sm">{status.icon}</span>
                                  <span className="text-[10px] font-black uppercase tracking-widest">{status.label}</span>
                               </div>
+                              {r.approved === true && r.score !== null && (
+                                 <div className="mt-2 text-[11px] font-bold text-on-surface-variant">
+                                    Điểm: <span className="font-black text-primary">{String(r.score).replace(".", ",")}</span>
+                                    {r.scoreRevisedAt && (
+                                       <p className="text-[10px] text-outline">
+                                          Điểm đã được cập nhật ngày {new Date(r.scoreRevisedAt).toLocaleDateString("vi-VN")}
+                                       </p>
+                                    )}
+                                 </div>
+                              )}
                               {r.approved === false && r.rejectReason && (
                                  <div className="mt-2 p-3 bg-error/5 rounded-xl border border-error/10 max-w-[200px]">
                                     <p className="text-[10px] font-bold text-error leading-relaxed">
@@ -174,7 +183,7 @@ export default function StudentMyRegistrationsPage() {
                               {r.approved === null && (
                                  <button 
                                     onClick={() => handleCancel(r.id)} 
-                                    className="px-4 py-2 bg-error/5 text-error rounded-xl font-black text-[9px] uppercase tracking-[0.1em] border border-error/10 hover:bg-error hover:text-white transition-all active:scale-95"
+                                    className="px-4 py-2 bg-error/5 text-error rounded-xl font-black text-[9px] uppercase tracking-[0.1em] border border-error/10 hover:bg-error hover:text-on-error transition-all active:scale-95"
                                  >
                                     Hủy đăng ký
                                  </button>
@@ -182,7 +191,7 @@ export default function StudentMyRegistrationsPage() {
                               {r.approved === true && (
                                  <Link 
                                     to="/progress" 
-                                    className="px-4 py-2 bg-primary/10 text-primary rounded-xl font-black text-[9px] uppercase tracking-[0.1em] border border-primary/20 hover:bg-primary hover:text-white transition-all active:scale-95"
+                                    className="px-4 py-2 bg-primary/10 text-primary rounded-xl font-black text-[9px] uppercase tracking-[0.1em] border border-primary/20 hover:bg-primary hover:text-on-primary transition-all active:scale-95"
                                  >
                                     Xem tiến độ
                                  </Link>
@@ -201,7 +210,7 @@ export default function StudentMyRegistrationsPage() {
       {!loading && items.length > 0 && (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 flex items-center gap-4">
-               <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
+               <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined">help_center</span>
                </div>
                <div>

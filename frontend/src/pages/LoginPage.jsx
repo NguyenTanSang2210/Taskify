@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { authApi } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
-import PasswordChecklist, { isPasswordValid } from "../components/PasswordChecklist";
+import LoginStep from "./login/LoginStep";
+import OtpStep from "./login/OtpStep";
+import ChangePasswordStep from "./login/ChangePasswordStep";
+import ForgotStep from "./login/ForgotStep";
+import ResetStep from "./login/ResetStep";
+import ActivateStep from "./login/ActivateStep";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   // Luồng nhiều bước: "login" → ("changePassword" nếu đang dùng mật khẩu tạm) → ("otp" nếu vai trò cần OTP).
-  // Ngoài ra "activate": kích hoạt tài khoản do quản trị tạo bằng mã nhận qua email.
+  // Ngoài ra "activate": kích hoạt tài khoản do quản trị tạo bằng mã nhận qua email;
+  // "forgot" → "reset": quên mật khẩu (nhận mã qua email rồi đặt mật khẩu mới).
   // preAuthToken chỉ nằm trong state React
   // (không lưu localStorage): nó chỉ dùng được cho bước OTP, không gọi được API nghiệp vụ.
   const [step, setStep] = useState("login");
@@ -18,10 +24,16 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [activationCode, setActivationCode] = useState("");
+  const [resetCode, setResetCode] = useState("");
   const [resendIn, setResendIn] = useState(0);
   const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Bị đưa về đây vì token hết hạn / bị thu hồi (api.js, AuthContext) → báo cho người dùng biết lý do
+  const [error, setError] = useState(() =>
+    new URLSearchParams(window.location.search).get("reason") === "expired"
+      ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+      : ""
+  );
   const [successMsg, setSuccessMsg] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -53,6 +65,7 @@ export default function LoginPage() {
     setNewPassword("");
     setConfirmPassword("");
     setActivationCode("");
+    setResetCode("");
     setResendIn(0);
     setPassword("");
     setSuccessMsg("");
@@ -158,6 +171,42 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+    setLoading(true);
+    try {
+      const data = await authApi.forgotPassword(username.trim());
+      setSuccessMsg(data.message || "Nếu tài khoản tồn tại, mã đã được gửi tới email đăng ký.");
+      setResetCode("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setStep("reset");
+    } catch (err) {
+      setError(err.message || "Không gửi được yêu cầu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+    if (!passwordsOk()) return;
+    setLoading(true);
+    try {
+      await authApi.resetPassword(username.trim(), resetCode.trim(), newPassword);
+      backToLogin();
+      setSuccessMsg("Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.");
+    } catch (err) {
+      setError(err.message || "Đặt lại mật khẩu thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResendOtp = async () => {
     setError("");
     setSuccessMsg("");
@@ -206,263 +255,20 @@ export default function LoginPage() {
 
         <form
           className="space-y-5"
-          onSubmit={{ login: handleLoginSubmit, otp: handleVerifyOtp, changePassword: handleChangeInitialPassword, activate: handleActivate }[step]}
+          onSubmit={{ login: handleLoginSubmit, otp: handleVerifyOtp, changePassword: handleChangeInitialPassword, activate: handleActivate, forgot: handleForgot, reset: handleReset }[step]}
         >
           {step === "login" ? (
-            <>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập / MSSV</label>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">person</span>
-                  <input
-                    className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Nhập mã sinh viên hoặc username"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu</label>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
-                  <input
-                    type="password"
-                    className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 cursor-pointer" type="checkbox" />
-                  <span className="text-outline font-bold group-hover:text-on-surface transition-colors uppercase tracking-tighter">Ghi nhớ tôi</span>
-                </label>
-                <button type="button" className="text-primary font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4">Quên mật khẩu?</button>
-              </div>
-
-              <button 
-                className="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50" 
-                disabled={loading} 
-                type="submit"
-              >
-                {loading ? "Đang xác thực..." : "Đăng nhập"}
-              </button>
-
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-outline-variant/10"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px] font-black tracking-[0.3em] uppercase">
-                  <span className="bg-surface px-4 text-outline/50 font-manrope">HOẶC TIẾP TỤC VỚI</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <button type="button" className="flex items-center justify-center gap-2 py-3 bg-white dark:bg-surface-container border border-outline-variant/10 rounded-xl hover:bg-surface-container-low transition-all active:scale-95 shadow-sm">
-                  <img alt="Google" className="w-5 h-5" src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" />
-                  <span className="text-xs font-black uppercase tracking-widest text-on-surface">Google</span>
-                </button>
-                <button type="button" className="flex items-center justify-center gap-2 py-3 bg-white dark:bg-surface-container border border-outline-variant/10 rounded-xl hover:bg-surface-container-low transition-all active:scale-95 shadow-sm">
-                   <span className="material-symbols-outlined text-xl">brand_family</span>
-                  <span className="text-xs font-black uppercase tracking-widest text-on-surface">SSO</span>
-                </button>
-              </div>
-
-              <div className="mt-10 text-center">
-                <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">
-                  Tài khoản do quản trị viên cấp.
-                  <button
-                    className="text-primary font-black ml-2 hover:underline decoration-2 underline-offset-4 transition-all"
-                    type="button"
-                    onClick={() => { setError(""); setSuccessMsg(""); setStep("activate"); }}
-                  >
-                    Kích hoạt tài khoản
-                  </button>
-                </p>
-              </div>
-            </>
+            <LoginStep loading={loading} password={password} setError={setError} setPassword={setPassword} setStep={setStep} setSuccessMsg={setSuccessMsg} setUsername={setUsername} username={username} />
           ) : step === "otp" ? (
-            <>
-              <div className="space-y-4 text-center">
-                 <div className="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span className="material-symbols-outlined text-3xl">mark_email_unread</span>
-                 </div>
-                 <h2 className="text-xl font-black text-primary uppercase tracking-widest leading-none">Xác thực OTP</h2>
-                 <p className="text-xs text-outline font-medium leading-relaxed">
-                   Mã xác thực gồm 6 chữ số đã được gửi tới{" "}
-                   {maskedEmail ? <strong className="text-on-surface">{maskedEmail}</strong> : "email đăng ký của bạn"}.
-                   Mã có hiệu lực trong 5 phút.
-                 </p>
-              </div>
-
-              <div className="space-y-1.5 mt-6">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã OTP (6 chữ số)</label>
-                <input
-                  className="w-full text-center text-2xl tracking-[0.5em] font-black py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl transition-all duration-300 outline-none"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  autoFocus
-                  required
-                />
-              </div>
-
-              <button
-                className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
-                disabled={loading || otpCode.length !== 6}
-                type="submit"
-              >
-                {loading ? "Đang xác thực..." : "Xác nhận OTP"}
-              </button>
-
-              <div className="flex items-center justify-between mt-4">
-                 <button
-                    className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={resendIn > 0 || resending}
-                 >
-                    {resending ? "Đang gửi..." : resendIn > 0 ? `Gửi lại mã sau ${resendIn}s` : "Gửi lại mã"}
-                 </button>
-                 <button
-                    className="text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors"
-                    type="button"
-                    onClick={() => backToLogin()}
-                 >
-                    Quay lại đăng nhập
-                 </button>
-              </div>
-            </>
+            <OtpStep backToLogin={backToLogin} handleResendOtp={handleResendOtp} loading={loading} maskedEmail={maskedEmail} otpCode={otpCode} resendIn={resendIn} resending={resending} setOtpCode={setOtpCode} />
           ) : step === "changePassword" ? (
-            <>
-              <div className="space-y-3 text-center">
-                <div className="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="material-symbols-outlined text-3xl">key</span>
-                </div>
-                <h2 className="text-xl font-black text-primary uppercase tracking-widest leading-none">Đặt mật khẩu mới</h2>
-                <p className="text-xs text-outline font-medium leading-relaxed">
-                  Bạn đang dùng mật khẩu tạm do quản trị viên cấp. Hãy đặt mật khẩu của riêng bạn để tiếp tục.
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-                <PasswordChecklist password={newPassword} username={username} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-              <button
-                className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
-                disabled={loading || !isPasswordValid(newPassword, username) || !confirmPassword}
-                type="submit"
-              >
-                {loading ? "Đang xử lý..." : "Đổi mật khẩu và tiếp tục"}
-              </button>
-              <button
-                className="w-full text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors"
-                type="button"
-                onClick={() => backToLogin()}
-              >
-                Quay lại đăng nhập
-              </button>
-            </>
+            <ChangePasswordStep backToLogin={backToLogin} confirmPassword={confirmPassword} loading={loading} newPassword={newPassword} setConfirmPassword={setConfirmPassword} setNewPassword={setNewPassword} username={username} />
+          ) : step === "forgot" ? (
+            <ForgotStep backToLogin={backToLogin} loading={loading} setUsername={setUsername} username={username} />
+          ) : step === "reset" ? (
+            <ResetStep backToLogin={backToLogin} confirmPassword={confirmPassword} loading={loading} newPassword={newPassword} resetCode={resetCode} setConfirmPassword={setConfirmPassword} setNewPassword={setNewPassword} setResetCode={setResetCode} setStep={setStep} username={username} />
           ) : (
-            <>
-              <div className="space-y-3 text-center">
-                <div className="w-16 h-16 bg-secondary-container text-on-secondary-container rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="material-symbols-outlined text-3xl">verified_user</span>
-                </div>
-                <h2 className="text-xl font-black text-primary uppercase tracking-widest leading-none">Kích hoạt tài khoản</h2>
-                <p className="text-xs text-outline font-medium leading-relaxed">
-                  Nhập tên đăng nhập (hoặc email) cùng mã kích hoạt trong email quản trị viên đã gửi cho bạn, rồi đặt mật khẩu.
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập hoặc email</label>
-                <input
-                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã kích hoạt (6 chữ số)</label>
-                <input
-                  className="w-full text-center text-2xl tracking-[0.5em] font-black py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl transition-all duration-300 outline-none"
-                  value={activationCode}
-                  onChange={(e) => setActivationCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-                <PasswordChecklist password={newPassword} username={username} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-              <button
-                className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
-                disabled={loading || activationCode.length !== 6 || !isPasswordValid(newPassword, username) || !confirmPassword}
-                type="submit"
-              >
-                {loading ? "Đang xử lý..." : "Kích hoạt"}
-              </button>
-              <button
-                className="w-full text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors"
-                type="button"
-                onClick={() => backToLogin()}
-              >
-                Quay lại đăng nhập
-              </button>
-            </>
+            <ActivateStep activationCode={activationCode} backToLogin={backToLogin} confirmPassword={confirmPassword} loading={loading} newPassword={newPassword} setActivationCode={setActivationCode} setConfirmPassword={setConfirmPassword} setNewPassword={setNewPassword} setUsername={setUsername} username={username} />
           )}
         </form>
       </div>
@@ -510,7 +316,7 @@ export default function LoginPage() {
         <div className="flex flex-col md:flex-row justify-between items-center px-12 gap-6 max-w-7xl mx-auto text-outline">
           <div className="flex flex-col items-center md:items-start gap-1">
              <p className="text-[10px] font-black uppercase tracking-[0.2em]">© 2024 Taskify: Academic Management System</p>
-             <p className="text-[9px] font-bold uppercase tracking-widest opacity-60">Hệ thống quản lý đề tài và nghiên cứu khoa học</p>
+             <p className="text-[9px] font-bold uppercase tracking-widest">Hệ thống quản lý đề tài và nghiên cứu khoa học</p>
           </div>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest">
             <a href="#" className="hover:text-primary transition-colors">Hỗ trợ</a>

@@ -1,16 +1,16 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.RoleRequest;
+import com.doanltmmt.Backend.dto.request.RoleUpdateRequest;
 import com.doanltmmt.Backend.entity.Privilege;
 import com.doanltmmt.Backend.entity.Role;
 import com.doanltmmt.Backend.service.RoleService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/roles")
@@ -36,20 +36,14 @@ public class RoleController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Role> createRole(@RequestBody Map<String, String> body) {
-        String name = body.get("name");
-        String description = body.get("description");
-        return ResponseEntity.ok(roleService.createRole(name, description));
+    public ResponseEntity<Role> createRole(@Valid @RequestBody RoleRequest body) {
+        return ResponseEntity.ok(roleService.createRole(body.name(), body.description()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Role> updateRole(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        String description = (String) body.get("description");
-        @SuppressWarnings("unchecked")
-        List<Number> privs = (List<Number>) body.get("privilegeIds");
-        Set<Long> privilegeIds = privs != null ? privs.stream().map(Number::longValue).collect(Collectors.toSet()) : null;
-        return ResponseEntity.ok(roleService.updateRole(id, description, privilegeIds));
+    public ResponseEntity<Role> updateRole(@PathVariable Long id, @Valid @RequestBody RoleUpdateRequest body) {
+        return ResponseEntity.ok(roleService.updateRole(id, body.description(), body.privilegeIds()));
     }
 
     @DeleteMapping("/{id}")
@@ -61,9 +55,7 @@ public class RoleController {
 
     @PostMapping("/privileges")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Privilege> createPrivilege(@RequestBody Map<String, String> body) {
-        String name = body.get("name");
-        String description = body.get("description");
-        return ResponseEntity.ok(roleService.createPrivilege(name, description));
+    public ResponseEntity<Privilege> createPrivilege(@Valid @RequestBody RoleRequest body) {
+        return ResponseEntity.ok(roleService.createPrivilege(body.name(), body.description()));
     }
 }

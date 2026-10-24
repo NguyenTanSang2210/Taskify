@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Files;
@@ -88,7 +87,6 @@ public class StoredFileMaintenance implements ApplicationRunner {
         return storedName;
     }
 
-    @Scheduled(cron = "${app.upload.purge-cron:0 30 3 * * *}")
     public int purgeOrphans() {
         List<StoredFile> orphans = fileRepo.findByRefTypeIsNullAndCreatedAtBefore(LocalDateTime.now().minusHours(24));
         for (StoredFile f : orphans) {

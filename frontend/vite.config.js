@@ -9,6 +9,13 @@ const backend = process.env.VITE_PROXY_TARGET || 'http://localhost:8080'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // P3-09: test frontend (Vitest + Testing Library, DOM giả lập jsdom) — chạy: npm test
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.js'],
+    include: ['src/**/*.test.{js,jsx}'],
+    restoreMocks: true,
+  },
   server: {
     // Lock dev server to required port and avoid auto change
     port: 5175,
@@ -22,11 +29,6 @@ export default defineConfig({
       '/ws': {
         target: backend,
         ws: true,
-        changeOrigin: true,
-        secure: false,
-      },
-      '/uploads': {
-        target: backend,
         changeOrigin: true,
         secure: false,
       },

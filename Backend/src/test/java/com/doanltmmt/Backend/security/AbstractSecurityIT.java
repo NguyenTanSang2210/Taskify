@@ -1,5 +1,7 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.entity.AcademicClass;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Lecturer;
@@ -161,7 +163,7 @@ public abstract class AbstractSecurityIT {
         Workspace w = new Workspace();
         w.setDepartment(dept);
         w.setName(unique("WS"));
-        w.setStatus(status);
+        w.setStatus(WorkspaceStatus.valueOf(status));
         w.setActive(true);
         return workspaceRepo.save(w);
     }
@@ -172,7 +174,7 @@ public abstract class AbstractSecurityIT {
         t.setLecturer(lecturer);
         t.setWorkspace(ws);
         t.setCapacity(capacity);
-        t.setStatus("OPEN");
+        t.setStatus(TopicStatus.OPEN);
         return topicRepo.save(t);
     }
 

@@ -1,4 +1,31 @@
 import React, { useState } from "react";
+import FileDownloadButton from "./FileDownloadButton";
+import { PROGRESS_STATUS, statusOptions } from "../constants/status";
+
+/** Ngưỡng cảnh báo trùng lặp — khớp SimilarityService.ALERT_THRESHOLD ở backend. */
+export const SIMILARITY_ALERT = 0.8;
+
+/**
+ * Bản cập nhật qua WebSocket là bản công khai (không có điểm trùng lặp) — giữ lại điểm đã tải cho giảng viên.
+ */
+export function mergeProgressUpdate(prev, pr) {
+  return prev.map((x) =>
+    x.id === pr.id ? { ...x, ...pr, similarityScore: x.similarityScore, similarToReportId: x.similarToReportId } : x
+  );
+}
+
+function SimilarityBadge({ score, reportId }) {
+  if (score == null || score < SIMILARITY_ALERT) return null;
+  return (
+    <span
+      className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-[10px] font-black text-error"
+      title="Nội dung giống một báo cáo khác trong cùng đợt — cần kiểm tra"
+    >
+      <span className="material-symbols-outlined text-[12px]">content_copy</span>
+      Trùng lặp {Math.round(score * 100)}% với báo cáo #{reportId}
+    </span>
+  );
+}
 
 export default function ProgressRow({ item, loadingId, onSave }) {
   const student = item.student || {};
@@ -24,7 +51,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
       <td className="px-6 py-4">
         <div className="flex flex-col">
           <span className="text-xs font-bold text-on-surface">{new Date(item.createdAt).toLocaleDateString()}</span>
-          <span className="text-[10px] text-outline font-medium opacity-60">
+          <span className="text-[10px] text-outline font-medium">
             {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
@@ -43,30 +70,29 @@ export default function ProgressRow({ item, loadingId, onSave }) {
       <td className="px-6 py-4 max-w-xs">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-black text-on-surface leading-snug">{item.title}</span>
+          <SimilarityBadge score={item.similarityScore} reportId={item.similarToReportId} />
           <p className="text-xs text-outline line-clamp-2 italic">{item.content}</p>
           {item.fileUrl && (
-            <a 
-              href={item.fileUrl} 
-              target="_blank" 
-              rel="noreferrer" 
+            <FileDownloadButton
+              fileUrl={item.fileUrl}
               className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-black text-primary hover:underline uppercase tracking-widest"
             >
               <span className="material-symbols-outlined text-sm">attach_file</span>
               Tải tài liệu đính kèm
-            </a>
+            </FileDownloadButton>
           )}
         </div>
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-col gap-3 min-w-[160px]">
-          <select 
+          <select aria-label="Trạng thái báo cáo"
             className="w-full bg-surface-container border-none rounded-xl text-[11px] font-black uppercase tracking-widest text-on-surface-variant focus:ring-2 focus:ring-primary/20 py-2 cursor-pointer transition-all"
             value={status} 
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="TODO">Chưa thực hiện</option>
-            <option value="IN_PROGRESS">Đang triển khai</option>
-            <option value="DONE">Đã hoàn thành</option>
+            {statusOptions(PROGRESS_STATUS).map((o) => (
+                   <option key={o.value} value={o.value}>{o.label}</option>
+                 ))}
           </select>
           <div className="flex flex-col gap-1">
              <div className="flex justify-between items-center px-1">
@@ -77,7 +103,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
                   </span>
                 )}
              </div>
-             <input 
+             <input aria-label="Hạn hoàn thành"
                 type="datetime-local" 
                 className={`w-full bg-surface-container border-none rounded-xl text-[11px] font-bold text-on-surface focus:ring-2 focus:ring-primary/20 py-1.5 transition-all ${isOverdue ? 'ring-1 ring-error/50 bg-error/5 text-error' : ''}`}
                 value={deadline}
@@ -87,7 +113,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
         </div>
       </td>
       <td className="px-6 py-4">
-        <textarea
+        <textarea aria-label="Nhận xét của giảng viên"
           className="w-full bg-surface-container border-none rounded-xl text-xs font-medium text-on-surface-variant focus:ring-2 focus:ring-primary/20 p-3 transition-all min-h-[80px] placeholder:text-outline/50"
           value={comment}
           onChange={(e) => setComment(e.target.value)}

@@ -34,6 +34,8 @@ public class SecurityProperties {
         private int otpResendPer10Minutes = 5;
         private int activatePer10Minutes = 10;
         private int uploadPer10Minutes = 30;
+        /** Làm mới phiên (P3-14): mỗi lần tải trang + mỗi 15 phút; token 256 bit không dò được nên chỉ chống quá tải (cả phòng máy chung NAT). */
+        private int refreshPerMinute = 300;
 
         public int getLoginPerMinute() { return loginPerMinute; }
         public void setLoginPerMinute(int v) { this.loginPerMinute = v; }
@@ -43,6 +45,8 @@ public class SecurityProperties {
         public void setOtpResendPer10Minutes(int v) { this.otpResendPer10Minutes = v; }
         public int getActivatePer10Minutes() { return activatePer10Minutes; }
         public void setActivatePer10Minutes(int v) { this.activatePer10Minutes = v; }
+        public int getRefreshPerMinute() { return refreshPerMinute; }
+        public void setRefreshPerMinute(int v) { this.refreshPerMinute = v; }
         public int getUploadPer10Minutes() { return uploadPer10Minutes; }
         public void setUploadPer10Minutes(int v) { this.uploadPer10Minutes = v; }
     }

@@ -1,0 +1,44 @@
+# P4-08 — cảnh báo cơ bản. Xem ở Prometheus → Alerts (http://127.0.0.1:9090/alerts) hoặc Grafana.
+# Gửi cảnh báo ra email/Slack cần thêm Alertmanager (chưa cấu hình — xem docs/DEPLOYMENT.md).
+groups:
+  - name: taskify
+    rules:
+      - alert: TaskifyBackendDown
+        expr: up{job="taskify-backend"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Backend Taskify không trả lời /actuator/prometheus"
+      - alert: TaskifyDatabaseDown
+        expr: taskify_db_up == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Backend không lấy được kết nối CSDL hợp lệ"
+      - alert: TaskifyHigh5xxRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{application="taskify-backend", status=~"5.."}[5m]))
+            / clamp_min(sum(rate(http_server_requests_seconds_count{application="taskify-backend"}[5m])), 1e-9) > 0.01
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Tỉ lệ lỗi 5xx trên 1% trong 5 phút"
+      - alert: TaskifyRealtimeBrokerDown
+        # chỉ có khi bật relay RabbitMQ (P4-10)
+        expr: taskify_realtime_broker_up == 0
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Backend mất kết nối tới RabbitMQ — thông báo realtime giữa các instance bị gián đoạn"
+      - alert: TaskifyMailFailures
+        expr: increase(taskify_mail_sent_total{result="failure"}[15m]) > 5
+        labels: { severity: warning }
+        annotations:
+          summary: "Hơn 5 email gửi thất bại trong 15 phút (kiểm tra cấu hình SMTP)"
+      - alert: TaskifySlowRequests
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application="taskify-backend", uri!~"/actuator.*"}[5m]))) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "95% request chậm hơn 1 giây trong 10 phút"

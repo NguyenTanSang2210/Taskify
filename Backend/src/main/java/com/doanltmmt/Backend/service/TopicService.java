@@ -1,10 +1,15 @@
 package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.TopicDTO;
+import com.doanltmmt.Backend.dto.response.PageResponse;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.*;
+import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
+import com.doanltmmt.Backend.util.Pages;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -44,19 +49,31 @@ public class TopicService {
         this.auditLogService = auditLogService;
     }
 
+    public static final int MIN_CAPACITY = 1;
+    public static final int MAX_CAPACITY = 10;
+    private static final int MAX_TITLE = 255;
+    private static final int MAX_DESCRIPTION = 10_000;
+
     @Transactional
     public TopicDTO createTopic(Long lecturerId, Topic topic) {
         if (scope.hasRole("LECTURER")) {
             Long currentUserId = scope.requireCurrentUser().getId();
             if (!Objects.equals(currentUserId, lecturerId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
             }
         }
+        topic.setId(null); // luôn tạo mới — không cho ghi đè đề tài khác qua trường id trong body
+        if (topic.getTitle() == null || topic.getTitle().isBlank()) {
+            throw badRequest("Tên đề tài không được để trống");
+        }
+        if (topic.getCapacity() == null) topic.setCapacity(MIN_CAPACITY);
+        validateFields(topic.getTitle(), topic.getDescription(), topic.getCapacity());
+        topic.setTitle(topic.getTitle().trim());
         if (topic.getWorkspace() == null || topic.getWorkspace().getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic must be assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn đợt cho đề tài.");
         }
         Workspace w = workspaceRepo.findById(topic.getWorkspace().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         
         requireWorkspaceAllowsTopicCreateOrEdit(w);
 
@@ -68,7 +85,11 @@ public class TopicService {
 
         Lecturer lecturer = lecturerRepo.findById(lecturerId).orElseGet(() -> {
             User user = userRepo.findById(lecturerId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found for lecturerId"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giảng viên."));
+            // Chỉ tài khoản giảng viên mới được làm người hướng dẫn (trước đây có thể gán đề tài cho bất kỳ tài khoản nào)
+            if (user.getRole() == null || !"LECTURER".equals(user.getRole().getName())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Người hướng dẫn phải là tài khoản giảng viên");
+            }
             Lecturer newLecturer = new Lecturer();
             newLecturer.setUser(user);
             newLecturer.setDepartment(user.getDepartment());
@@ -77,15 +98,15 @@ public class TopicService {
 
         if (!scope.hasRole("ADMIN")) {
             if (lecturer.getUser() == null || lecturer.getUser().getDepartment() == null || w.getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing department");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu thông tin khoa.");
             }
             if (!lecturer.getUser().getDepartment().getId().equals(w.getDepartment().getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecturer is not in workspace department");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Giảng viên không thuộc khoa của đợt.");
             }
         }
 
         topic.setLecturer(lecturer);
-        topic.setStatus("OPEN");
+        topic.setStatus(TopicStatus.OPEN);
         topic.setWorkspace(w);
 
         Topic saved = topicRepo.save(topic);
@@ -96,22 +117,30 @@ public class TopicService {
     @Transactional
     public TopicDTO updateTopic(Long id, Long lecturerId, Topic payload) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền sửa đề tài này.");
         }
         
         if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         requireWorkspaceAllowsTopicCreateOrEdit(topic.getWorkspace());
         
-        if (payload.getTitle() != null) topic.setTitle(payload.getTitle());
+        validateFields(payload.getTitle(), payload.getDescription(), payload.getCapacity());
+        if (payload.getTitle() != null) topic.setTitle(payload.getTitle().trim());
         if (payload.getDescription() != null) topic.setDescription(payload.getDescription());
-        if (payload.getCapacity() != null) topic.setCapacity(payload.getCapacity());
-        if (payload.getStatus() != null) topic.setStatus(payload.getStatus());
+        if (payload.getCapacity() != null) {
+            long approved = regRepo.countByTopic_IdAndApprovedTrue(topic.getId());
+            if (payload.getCapacity() < approved) {
+                throw badRequest("Số lượng sinh viên không được nhỏ hơn số sinh viên đã được duyệt (" + approved + ")");
+            }
+            topic.setCapacity(payload.getCapacity());
+            topic.refreshCapacityStatus(approved);
+        }
+        // Trạng thái chỉ đổi qua open/close và theo số chỗ — không nhận từ body
         
         Topic saved = topicRepo.save(topic);
         auditLogService.log("UPDATE_TOPIC", "Topic", saved.getId().toString(), "Updated topic details");
@@ -121,14 +150,14 @@ public class TopicService {
     @Transactional
     public void deleteTopic(Long id, Long lecturerId) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xóa đề tài này.");
         }
         
         if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic is not assigned to a workspace");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đề tài chưa thuộc đợt nào.");
         }
         
         requireWorkspaceAllowsTopicCreateOrEdit(topic.getWorkspace());
@@ -139,32 +168,36 @@ public class TopicService {
     @Transactional
     public TopicDTO openTopic(Long id, Long lecturerId) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to open topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền mở đề tài này.");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
-        topic.setStatus("OPEN");
+        topic.setStatus(TopicStatus.OPEN);
+        // Mở lại đề tài đã đủ SV được duyệt → FULL (không nhận thêm đăng ký)
+        topic.refreshCapacityStatus(regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
         return new TopicDTO(topicRepo.save(topic));
     }
 
     @Transactional
     public TopicDTO closeTopic(Long id, Long lecturerId) {
         Topic topic = topicRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài."));
         if (!canModifyTopic(topic, lecturerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to close topic");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền đóng đề tài này.");
         }
         requireWorkspaceAllowsTopicOpenClose(topic.getWorkspace());
-        topic.setStatus("CLOSED");
+        topic.setStatus(TopicStatus.CLOSED);
         return new TopicDTO(topicRepo.save(topic));
     }
 
-    public Map<String, Object> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
+    @Transactional(readOnly = true)
+    public PageResponse<Map<String, Object>> getAll(Long studentId, String queryText, String status, Long lecturerId, int page, int size) {
         Specification<Topic> spec = Specification.allOf(List.<Specification<Topic>>of());
 
         if (status != null && !status.isBlank()) {
-            spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), status));
+            TopicStatus wanted = parseTopicStatus(status);
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), wanted));
         }
         if (lecturerId != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("lecturer").get("id"), lecturerId));
@@ -180,12 +213,24 @@ public class TopicService {
                 Long finalDeptId = deptId;
                 spec = spec.and((root, q, cb) -> cb.equal(root.get("workspace").get("department").get("id"), finalDeptId));
             } else {
-                return Map.of("items", List.of(), "page", page, "size", size, "totalElements", 0, "totalPages", 0);
+                return PageResponse.empty(page, size);
             }
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = Pages.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         Page<Topic> pageRes = topicRepo.findAll(spec, pageable);
+
+        List<Long> ids = pageRes.getContent().stream().map(Topic::getId).toList();
+        Map<Long, TopicRegistrationRepository.TopicRegistrationCounts> counts = new HashMap<>();
+        Map<Long, String> myStatus = new HashMap<>();
+        if (!ids.isEmpty()) {
+            regRepo.countByTopicIds(ids).forEach(c -> counts.put(c.getTopicId(), c));
+            if (studentId != null) {
+                // bản ghi mới nhất của mỗi đề tài đứng trước → putIfAbsent giữ trạng thái mới nhất
+                regRepo.findStatusesOfStudent(studentId, ids).forEach(r -> myStatus.putIfAbsent(r.getTopicId(),
+                        r.getApproved() == null ? "CHO_DUYET" : r.getApproved() ? "DA_DUYET" : "TU_CHOI"));
+            }
+        }
 
         List<Map<String, Object>> items = pageRes.getContent().stream().map(topic -> {
             Map<String, Object> topicMap = new HashMap<>();
@@ -194,6 +239,10 @@ public class TopicService {
             topicMap.put("description", topic.getDescription());
             topicMap.put("status", topic.getStatus());
             topicMap.put("capacity", topic.getCapacity());
+            if (topic.getWorkspace() != null) {
+                topicMap.put("workspaceId", topic.getWorkspace().getId());
+                topicMap.put("workspaceName", topic.getWorkspace().getName());
+            }
             
             // Basic lecturer info to avoid full entity deep nesting in this specific map
             if (topic.getLecturer() != null && topic.getLecturer().getUser() != null) {
@@ -201,30 +250,16 @@ public class TopicService {
                 topicMap.put("lecturerId", topic.getLecturer().getId());
             }
 
-            topicMap.put("registrationCount", regRepo.countByTopic_Id(topic.getId()));
-            topicMap.put("pendingCount", regRepo.countByTopic_IdAndApprovedIsNull(topic.getId()));
-            topicMap.put("approvedCount", regRepo.countByTopic_IdAndApprovedTrue(topic.getId()));
-            topicMap.put("rejectedCount", regRepo.countByTopic_IdAndApprovedFalse(topic.getId()));
-
-            String regStatus = "CHUA_DANG_KY";
-            if (studentId != null) {
-                regStatus = regRepo.findTopByStudent_IdAndTopic_IdOrderByRegisteredAtDesc(studentId, topic.getId())
-                        .map(reg -> {
-                            if (reg.getApproved() == null) return "CHO_DUYET";
-                            return reg.getApproved() ? "DA_DUYET" : "TU_CHOI";
-                        }).orElse("CHUA_DANG_KY");
-            }
-            topicMap.put("registrationStatus", regStatus);
+            TopicRegistrationRepository.TopicRegistrationCounts c = counts.get(topic.getId());
+            topicMap.put("registrationCount", c == null ? 0L : c.getTotal());
+            topicMap.put("pendingCount", c == null ? 0L : c.getPending());
+            topicMap.put("approvedCount", c == null ? 0L : c.getApproved());
+            topicMap.put("rejectedCount", c == null ? 0L : c.getRejected());
+            topicMap.put("registrationStatus", myStatus.getOrDefault(topic.getId(), "CHUA_DANG_KY"));
             return topicMap;
         }).collect(Collectors.toList());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("items", items);
-        response.put("page", pageRes.getNumber());
-        response.put("size", pageRes.getSize());
-        response.put("totalElements", pageRes.getTotalElements());
-        response.put("totalPages", pageRes.getTotalPages());
-        return response;
+        return new PageResponse<>(items, pageRes.getNumber(), pageRes.getSize(), pageRes.getTotalElements(), pageRes.getTotalPages());
     }
 
     private boolean canModifyTopic(Topic topic, Long lecturerId) {
@@ -241,18 +276,39 @@ public class TopicService {
     }
 
     private void requireWorkspaceAllowsTopicCreateOrEdit(Workspace w) {
-        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
-        if (status.equals("OPEN")) status = "OPEN_TOPIC";
-        if (!status.equals("OPEN_TOPIC")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not open for topic creation");
+        if (!w.getStatus().allowsTopicEditing()) {
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Đợt \"" + w.getName() + "\" không còn nhận tạo/sửa đề tài (trạng thái: " + w.getStatus().label() + ")");
         }
     }
 
     private void requireWorkspaceAllowsTopicOpenClose(Workspace w) {
-        String status = w.getStatus() == null ? "DRAFT" : w.getStatus().trim().toUpperCase();
-        if (status.equals("OPEN")) status = "OPEN_TOPIC";
-        if (!status.equals("OPEN_TOPIC") && !status.equals("OPEN_REGISTRATION")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in topic/registration phase");
+        if (!w.getStatus().allowsTopicOpenClose()) {
+            throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Chỉ đóng/mở đề tài khi đợt đang mở đề tài hoặc mở đăng ký");
         }
+    }
+
+    private static TopicStatus parseTopicStatus(String raw) {
+        try {
+            return TopicStatus.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw badRequest("Trạng thái đề tài không hợp lệ: " + raw);
+        }
+    }
+
+    /** Kiểm tra các trường do người dùng nhập; trường {@code null} (không gửi khi sửa) được bỏ qua. */
+    private static void validateFields(String title, String description, Integer capacity) {
+        if (title != null && (title.isBlank() || title.trim().length() > MAX_TITLE)) {
+            throw badRequest("Tên đề tài phải từ 1 đến " + MAX_TITLE + " ký tự");
+        }
+        if (description != null && description.length() > MAX_DESCRIPTION) {
+            throw badRequest("Mô tả đề tài tối đa " + MAX_DESCRIPTION + " ký tự");
+        }
+        if (capacity != null && (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY)) {
+            throw badRequest("Số lượng sinh viên phải từ " + MIN_CAPACITY + " đến " + MAX_CAPACITY);
+        }
+    }
+
+    private static ResponseStatusException badRequest(String message) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
     }
 }

@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.security;
 
+import com.doanltmmt.Backend.entity.enums.CalendarEventType;
 import com.doanltmmt.Backend.entity.CalendarEvent;
 import com.doanltmmt.Backend.entity.Milestone;
 import com.doanltmmt.Backend.entity.User;
@@ -42,7 +43,7 @@ class MilestoneCalendarAccessIT extends AbstractTopicScenarioIT {
         e.setTopic(topic);
         e.setTitle("Buổi họp thử nghiệm");
         e.setStartTime(LocalDateTime.now().plusDays(1));
-        e.setType("MEETING");
+        e.setType(CalendarEventType.MEETING);
         return calendarRepo.saveAndFlush(e);
     }
 
@@ -50,7 +51,8 @@ class MilestoneCalendarAccessIT extends AbstractTopicScenarioIT {
 
     @Test
     void lecturerB_cannotCreateMilestoneOnLecturerAsTopic() throws Exception {
-        post("/api/milestones", userOf(lecB), Map.of("topicId", topicA.getId(), "title", "Lạ")).andExpect(status().isForbidden());
+        post("/api/milestones", userOf(lecB), Map.of("topicId", topicA.getId(), "title", "Lạ", "deadline", "2030-01-01T00:00"))
+                .andExpect(status().isForbidden());
 
         assertEquals(0, milestoneRepo.findByTopic_IdOrderByDeadlineAsc(topicA.getId()).size(), "không được tạo được dòng nào");
     }
@@ -81,12 +83,12 @@ class MilestoneCalendarAccessIT extends AbstractTopicScenarioIT {
 
     @Test
     void admin_canManageMilestoneOfAnyTopic() throws Exception {
-        post("/api/milestones", admin, Map.of("topicId", topicB.getId(), "title", "Do admin tạo")).andExpect(status().isOk());
+        post("/api/milestones", admin, Map.of("topicId", topicB.getId(), "title", "Do admin tạo", "deadline", "2030-03-01T23:59")).andExpect(status().isOk());
     }
 
     @Test
     void departmentAdmin_andStudents_cannotWriteMilestones_byRole() throws Exception {
-        Map<String, Object> body = Map.of("topicId", topicA.getId(), "title", "x");
+        Map<String, Object> body = Map.of("topicId", topicA.getId(), "title", "x", "deadline", "2030-01-01T00:00");
         post("/api/milestones", deptAdminA, body).andExpect(status().isForbidden());
         post("/api/milestones", userOf(stuA1), body).andExpect(status().isForbidden());
     }
@@ -94,7 +96,8 @@ class MilestoneCalendarAccessIT extends AbstractTopicScenarioIT {
     @Test
     void createMilestone_requiresATopicId_andAnExistingTopic() throws Exception {
         post("/api/milestones", userOf(lecA), Map.of("title", "thiếu topicId")).andExpect(status().isBadRequest());
-        post("/api/milestones", userOf(lecA), Map.of("topicId", 999_999_999L, "title", "x")).andExpect(status().isNotFound());
+        post("/api/milestones", userOf(lecA), Map.of("topicId", 999_999_999L, "title", "x", "deadline", "2030-01-01T00:00"))
+                .andExpect(status().isNotFound());
     }
 
     // ================================================================== MILESTONE — đọc

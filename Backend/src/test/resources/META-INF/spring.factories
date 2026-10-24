@@ -1,0 +1,2 @@
+# P3-09: CSDL test (DB_URL hoặc MySQL trong Testcontainers) + profile mặc định dev — xem TestDatabaseEnvironment
+org.springframework.boot.env.EnvironmentPostProcessor=com.doanltmmt.Backend.support.TestDatabaseEnvironment

@@ -1,344 +1,62 @@
 package com.doanltmmt.Backend.controller;
 
+import com.doanltmmt.Backend.dto.request.ProgressCommentRequest;
+import com.doanltmmt.Backend.dto.request.ProgressCreateRequest;
+import com.doanltmmt.Backend.dto.request.ProgressStatusRequest;
 import com.doanltmmt.Backend.dto.response.*;
-import com.doanltmmt.Backend.entity.StoredFile;
-import com.doanltmmt.Backend.repository.StoredFileRepository;
-import com.doanltmmt.Backend.service.FileStorageService;
-import com.doanltmmt.Backend.entity.ProgressReport;
-import com.doanltmmt.Backend.entity.Student;
-import com.doanltmmt.Backend.entity.Topic;
-import com.doanltmmt.Backend.repository.MilestoneRepository;
-import com.doanltmmt.Backend.repository.ProgressReportRepository;
-import com.doanltmmt.Backend.repository.StudentRepository;
-import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
-import com.doanltmmt.Backend.repository.TopicRepository;
-import com.doanltmmt.Backend.repository.NotificationRepository;
-import com.doanltmmt.Backend.entity.Notification;
+import com.doanltmmt.Backend.dto.response.PageResponse;
+import com.doanltmmt.Backend.service.ProgressService;
+import com.doanltmmt.Backend.util.Pages;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import com.doanltmmt.Backend.service.EventPublisher;
-import com.doanltmmt.Backend.service.SecurityScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/progress")
-
-@SuppressWarnings("null")
 public class ProgressController {
 
-    private final ProgressReportRepository progressRepo;
-    private final StudentRepository studentRepo;
-    private final TopicRepository topicRepo;
-    private final TopicRegistrationRepository regRepo;
-    private final MilestoneRepository milestoneRepo;
-    private final EventPublisher eventPublisher;
-    private final NotificationRepository notificationRepo;
-    private final com.doanltmmt.Backend.service.AuditLogService auditLogService;
-    private final com.doanltmmt.Backend.service.EmailService emailService;
-    private final com.doanltmmt.Backend.service.SimilarityService similarityService;
-    private final SecurityScopeService scope;
-    private final StoredFileRepository storedFileRepo;
+    private final ProgressService service;
 
-    public ProgressController(ProgressReportRepository progressRepo,
-                              StudentRepository studentRepo,
-                              TopicRepository topicRepo,
-                              TopicRegistrationRepository regRepo,
-                              MilestoneRepository milestoneRepo,
-                              EventPublisher eventPublisher,
-                              NotificationRepository notificationRepo,
-                              com.doanltmmt.Backend.service.AuditLogService auditLogService,
-                              com.doanltmmt.Backend.service.EmailService emailService,
-                              com.doanltmmt.Backend.service.SimilarityService similarityService,
-                              SecurityScopeService scope,
-                              StoredFileRepository storedFileRepo) {
-        this.storedFileRepo = storedFileRepo;
-        this.progressRepo = progressRepo;
-        this.studentRepo = studentRepo;
-        this.topicRepo = topicRepo;
-        this.regRepo = regRepo;
-        this.milestoneRepo = milestoneRepo;
-        this.eventPublisher = eventPublisher;
-        this.notificationRepo = notificationRepo;
-        this.auditLogService = auditLogService;
-        this.emailService = emailService;
-        this.similarityService = similarityService;
-        this.scope = scope;
+    public ProgressController(ProgressService service) {
+        this.service = service;
     }
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('STUDENT')")
     public ProgressReportDTO create(@RequestParam Long studentId,
                                  @RequestParam Long topicId,
-                                 @Valid @RequestBody Map<String, String> body) {
-        Long currentUserId = scope.requireCurrentUser().getId();
-        if (!currentUserId.equals(studentId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-        }
-        Student student = studentRepo.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
-        Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-        if (!regRepo.existsByStudent_IdAndTopic_IdAndApprovedTrue(studentId, topicId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Student is not approved for this topic");
-        }
-        if (topic.getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
-        }
-        String wsStatus = topic.getWorkspace().getStatus() == null ? "DRAFT" : topic.getWorkspace().getStatus().trim().toUpperCase();
-        if (wsStatus.equals("OPEN")) wsStatus = "OPEN_TOPIC";
-        if (!wsStatus.equals("IN_PROGRESS")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
-        }
-
-        String title = (body.getOrDefault("title", "")).trim();
-        String content = (body.getOrDefault("content", "")).trim();
-        String fileUrl = (body.getOrDefault("fileUrl", ""));
-
-        if (title.isBlank() || content.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title and content are required");
-        }
-
-        ProgressReport pr = new ProgressReport();
-        pr.setStudent(student);
-        pr.setTopic(topic);
-        pr.setTitle(title);
-        pr.setContent(content);
-        // File đính kèm phải là file CỦA CHÍNH sinh viên này (đã tải lên qua /api/upload) và chưa gắn vào báo cáo nào.
-        StoredFile attachment = null;
-        if (!fileUrl.isBlank()) {
-            attachment = storedFileRepo.findByStoredName(FileStorageService.storedNameFromUrl(fileUrl))
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "File đính kèm không hợp lệ."));
-            if (!attachment.getOwnerId().equals(currentUserId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể đính kèm file của người khác.");
-            }
-            if (attachment.getRefType() != null) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
-            }
-            pr.setFileUrl(FileStorageService.urlFor(attachment));
-        }
-        
-        String deadlineStr = body.getOrDefault("deadline", "");
-        if (!deadlineStr.isBlank()) {
-            try {
-                pr.setDeadline(java.time.LocalDateTime.parse(deadlineStr));
-            } catch (Exception e) {
-                // Ignore invalid date format
-            }
-        }
-
-        // Tùy chọn: gắn vào milestone. Milestone phải TỒN TẠI và thuộc đúng đề tài này
-        // (trước đây tạo một Milestone "rỗng" chỉ có id: gây lỗi khóa ngoại 500 hoặc gắn nhầm milestone đề tài khác).
-        String milestoneIdStr = body.getOrDefault("milestoneId", "");
-        if (milestoneIdStr != null && !milestoneIdStr.isBlank()) {
-            Long milestoneId;
-            try {
-                milestoneId = Long.parseLong(milestoneIdStr.trim());
-            } catch (NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milestoneId không hợp lệ");
-            }
-            com.doanltmmt.Backend.entity.Milestone ms = milestoneRepo.findById(milestoneId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy milestone"));
-            if (ms.getTopic() == null || !ms.getTopic().getId().equals(topicId)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Milestone không thuộc đề tài này");
-            }
-            pr.setMilestone(ms);
-        }
-        pr.setStatus("TODO");
-        // Similarity check (simple)
-        List<ProgressReport> previous = progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId);
-        double maxSim = 0.0;
-        for (ProgressReport prev : previous) {
-            try {
-                maxSim = Math.max(maxSim, similarityService.cosineSimilarity(content, prev.getContent()));
-            } catch (Exception ignored) {}
-        }
-        ProgressReport saved = progressRepo.save(pr);
-        if (attachment != null && storedFileRepo.claim(attachment.getId(), StoredFile.REF_PROGRESS_REPORT, saved.getId()) == 0) {
-            // Có request khác vừa gắn cùng file này (đua nhau): hoàn tác báo cáo vừa tạo
-            progressRepo.delete(saved);
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "File này đã được đính kèm vào một báo cáo khác.");
-        }
-        auditLogService.log("CREATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Title: " + saved.getTitle());
-        if (maxSim >= 0.8) {
-            auditLogService.log("SIMILARITY_ALERT", "ProgressReport", saved.getId().toString(), "Similarity >= 0.8 with previous submissions");
-        }
-        eventPublisher.progressCreated(saved);
-        // notify lecturer when available
-        if (saved.getTopic().getLecturer() != null && saved.getTopic().getLecturer().getUser() != null) {
-            Notification nLecturer = new Notification();
-            nLecturer.setUser(saved.getTopic().getLecturer().getUser());
-            nLecturer.setType("INFO");
-            nLecturer.setTitle("Sinh vien gui bao cao #" + saved.getId());
-            nLecturer.setContent(saved.getStudent().getUser().getFullName() + " gui \"" + saved.getTitle() + "\" cho de tai #" + saved.getTopic().getId());
-            nLecturer.setRefType("PROGRESS_REPORT");
-            nLecturer.setRefId(saved.getId());
-            nLecturer.setLinkPath("/lecturer-progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
-            Notification savedLecturer = notificationRepo.save(nLecturer);
-            eventPublisher.notificationCreated(savedLecturer);
-            
-            // Email to lecturer
-            emailService.sendEmail(
-                saved.getTopic().getLecturer().getUser().getEmail(), 
-                "New Progress Report Submitted", 
-                "Student " + saved.getStudent().getUser().getFullName() + " submitted a progress report for topic " + saved.getTopic().getTitle()
-            );
-        }
-        Notification nStudent = new Notification();
-        nStudent.setUser(saved.getStudent().getUser());
-        nStudent.setType("INFO");
-        nStudent.setTitle("Da gui bao cao #" + saved.getId());
-        nStudent.setContent("Ban da gui \"" + saved.getTitle() + "\" cho de tai #" + saved.getTopic().getId());
-        nStudent.setRefType("PROGRESS_REPORT");
-        nStudent.setRefId(saved.getId());
-        nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
-        Notification savedStudent = notificationRepo.save(nStudent);
-        eventPublisher.notificationCreated(savedStudent);
-        return ProgressReportDTO.from(saved);
+                                 @Valid @RequestBody ProgressCreateRequest body) {
+        return service.create(studentId, topicId, body);
     }
 
     @GetMapping("/student/{studentId}")
     @PreAuthorize("hasAnyRole('STUDENT','LECTURER','ADMIN','DEPARTMENT_ADMIN')")
     public List<ProgressReportDTO> listByStudent(@PathVariable Long studentId,
                                               @RequestParam(required = false) Long topicId) {
-        if (scope.hasRole("STUDENT")) {
-            Long currentUserId = scope.requireCurrentUser().getId();
-            if (!currentUserId.equals(studentId)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-            }
-        } else if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN")) {
-            // Quản trị khoa chỉ xem tiến độ của sinh viên thuộc KHOA MÌNH
-            Student student = studentRepo.findById(studentId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
-            if (student.getUser() == null || student.getUser().getDepartment() == null) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-            }
-            scope.requireDepartmentAccess(student.getUser().getDepartment().getId());
-        } else if (scope.hasRole("LECTURER")) {
-            if (topicId == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topicId is required");
-            }
-            Topic topic = topicRepo.findById(topicId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-            Long currentUserId = scope.requireCurrentUser().getId();
-            if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-            }
-        }
-        if (topicId != null) {
-            return progressRepo.findByStudent_IdAndTopic_IdOrderByCreatedAtDesc(studentId, topicId).stream().map(ProgressReportDTO::from).toList();
-        }
-        return progressRepo.findByStudent_IdOrderByCreatedAtDesc(studentId).stream().map(ProgressReportDTO::from).toList();
+        return service.listByStudent(studentId, topicId);
     }
 
     @GetMapping("/topic/{topicId}")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN','DEPARTMENT_ADMIN')")
-    public List<ProgressReportDTO> listByTopic(@PathVariable Long topicId) {
-        Topic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Topic not found"));
-        if (!scope.hasRole("ADMIN")) {
-            if (scope.hasRole("DEPARTMENT_ADMIN")) {
-                if (topic.getWorkspace() == null || topic.getWorkspace().getDepartment() == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace/department");
-                }
-                scope.requireDepartmentAccess(topic.getWorkspace().getDepartment().getId());
-            } else {
-                Long currentUserId = scope.requireCurrentUser().getId();
-                if (topic.getLecturer() == null || topic.getLecturer().getId() == null || !currentUserId.equals(topic.getLecturer().getId())) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-                }
-            }
-        }
-        return progressRepo.findByTopic_IdOrderByCreatedAtDesc(topicId).stream().map(ProgressReportDTO::from).toList();
+    public PageResponse<ProgressReportDTO> listByTopic(@PathVariable Long topicId,
+                                                       @RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = Pages.DEFAULT_SIZE) int size) {
+        return service.listByTopic(topicId, page, size);
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STUDENT')")
     public ProgressReportDTO updateStatus(@PathVariable Long id,
-                                       @RequestBody Map<String, String> body) {
-        Long currentUserId = scope.requireCurrentUser().getId();
-        ProgressReport pr = progressRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
-        // Chỉ cho phép sinh viên sở hữu báo cáo này mới được đổi trạng thái
-        if (!currentUserId.equals(pr.getStudent().getUser().getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-        }
-        String status = (body.getOrDefault("status", "")).trim().toUpperCase();
-        if (!status.equals("TODO") && !status.equals("IN_PROGRESS") && !status.equals("DONE")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status. Must be TODO, IN_PROGRESS, or DONE");
-        }
-        pr.setStatus(status);
-        ProgressReport saved = progressRepo.save(pr);
-        auditLogService.log("UPDATE_PROGRESS_STATUS", "ProgressReport", saved.getId().toString(), "Status changed to: " + status);
-        eventPublisher.progressUpdated(saved);
-        return ProgressReportDTO.from(saved);
+                                       @Valid @RequestBody ProgressStatusRequest body) {
+        return service.updateStatus(id, body);
     }
 
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('LECTURER','ADMIN')")
     public ProgressReportDTO addComment(@PathVariable Long id,
-                                     @RequestBody Map<String, String> body) {
-        ProgressReport pr = progressRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Progress report not found"));
-        if (!scope.hasRole("ADMIN")) {
-            Long currentUserId = scope.requireCurrentUser().getId();
-            if (pr.getTopic() == null || pr.getTopic().getLecturer() == null || pr.getTopic().getLecturer().getId() == null || !currentUserId.equals(pr.getTopic().getLecturer().getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
-            }
-        }
-        if (pr.getTopic() == null || pr.getTopic().getWorkspace() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic has no workspace");
-        }
-        String wsStatus = pr.getTopic().getWorkspace().getStatus() == null ? "DRAFT" : pr.getTopic().getWorkspace().getStatus().trim().toUpperCase();
-        if (wsStatus.equals("OPEN")) wsStatus = "OPEN_TOPIC";
-        if (!wsStatus.equals("IN_PROGRESS")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not in progress phase");
-        }
-        String comment = (body.getOrDefault("lecturerComment", "")).trim();
-        String status = (body.getOrDefault("status", "")).trim();
-        if (comment.isBlank() && status.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nothing to update");
-        }
-        if (!status.isBlank()) {
-            String up = status.toUpperCase();
-            if (!up.equals("TODO") && !up.equals("IN_PROGRESS") && !up.equals("DONE")) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status");
-            }
-            pr.setStatus(up);
-        }
-        if (!comment.isBlank()) {
-            pr.setLecturerComment(comment);
-        }
-        
-        String deadlineStr = body.getOrDefault("deadline", "");
-        if (!deadlineStr.isBlank()) {
-            try {
-                pr.setDeadline(java.time.LocalDateTime.parse(deadlineStr));
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
-
-        ProgressReport saved = progressRepo.save(pr);
-        auditLogService.log("UPDATE_PROGRESS", "ProgressReport", saved.getId().toString(), "Comment added/Status updated");
-        eventPublisher.progressUpdated(saved);
-        Notification nStudent = new Notification();
-        nStudent.setUser(saved.getStudent().getUser());
-        nStudent.setType("INFO");
-        nStudent.setTitle("GV nhan xet bao cao #" + saved.getId());
-        String msg = "Nhan xet: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "");
-        nStudent.setContent(msg.trim().isEmpty() ? "Bao cao \"" + saved.getTitle() + "\" da duoc cap nhat" : msg);
-        nStudent.setRefType("PROGRESS_REPORT");
-        nStudent.setRefId(saved.getId());
-        nStudent.setLinkPath("/progress?topicId=" + saved.getTopic().getId() + "#pr-" + saved.getId());
-        Notification savedN = notificationRepo.save(nStudent);
-        eventPublisher.notificationCreated(savedN);
-        emailService.sendEmail(saved.getStudent().getUser().getEmail(), "Progress Report Feedback", "Lecturer commented on your report: " + (saved.getLecturerComment() != null ? saved.getLecturerComment() : "Status updated"));
-        return ProgressReportDTO.from(saved);
+                                     @Valid @RequestBody ProgressCommentRequest body) {
+        return service.addComment(id, body);
     }
 }
-

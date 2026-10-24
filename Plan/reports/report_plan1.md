@@ -1,6 +1,6 @@
 # BÁO CÁO ĐỐI CHIẾU KẾ HOẠCH & KIỂM THỬ TOÀN DIỆN — TASKIFY
 
-> **Ngày:** 21/10/2026 · **Nhánh:** `develop` (đối chiếu với `origin/develop` = `9ece91b`, PR #3 `develop` → `main`)
+> **Ngày:** 21/10/2026 · **Nhánh:** `develop` (đối chiếu với `origin/develop` = `a03e4e4`, PR #3 `develop` → `main`)
 > **Căn cứ:** `Plan/plan1.md` (v1.3 → v1.4), `Plan/GĐ1.md`, `Plan/reports/GĐ1-smoke.md`, toàn bộ mã nguồn + lịch sử git.
 > **Phạm vi báo cáo:** (1) xác định giai đoạn hiện tại; (2) các task còn dở và việc đã làm; (3) kiểm thử toàn diện (chức năng, xử lý lỗi, hiệu năng, tương thích, bảo mật); (4) vấn đề phát hiện, mức độ, đề xuất; (5) giải thích "claude" trong lịch sử commit.
 
@@ -17,6 +17,10 @@
 7. ["claude" trong commit: nguyên nhân & cách gỡ](#7-claude-trong-commit-nguyên-nhân--cách-gỡ)
 8. [Việc cần chủ dự án làm để đóng Giai đoạn 1](#8-việc-cần-chủ-dự-án-làm-để-đóng-giai-đoạn-1)
 9. [Phụ lục — môi trường & cách chạy lại](#9-phụ-lục--môi-trường--cách-chạy-lại)
+10. [Kiểm tra lại lần 2 — 22/10/2026](#10-kiểm-tra-lại-lần-2--22102026-rà-soát-code-sạch--xác-nhận-hoàn-thành)
+11. [Đóng Giai đoạn 0 & 1 — 22/10/2026](#11-đóng-giai-đoạn-0--1--22102026)
+12. [Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng (hoàn thành 13/13)](#12-giai-đoạn-2--sửa-lỗi-nghiệp-vụ--chức-năng-hoàn-thành-1313)
+13. [Rà soát giao diện, giờ Việt Nam, Flyway — 23/10/2026](#13-rà-soát-giao-diện-giờ-việt-nam-flyway--23102026)
 
 ---
 
@@ -47,19 +51,19 @@
 
 | Task | Bằng chứng trong mã | Commit | Kiểm chứng đợt này |
 |---|---|---|---|
-| P1-01 OTP pre-auth | `JwtTokenProvider.Scope`, `AuthController` trả `preAuthToken` | `45255ee` | `AuthFlowIT` 19 test; smoke 1a FIXED; UI: ADMIN dừng ở bước OTP, localStorage không có token |
-| P1-02 Thu hồi token | `TokenAuthenticator`, `tokenVersion` | `304b95f` | `TokenRevocationIT` 15; smoke 19 FIXED |
-| P1-03 Secret bắt buộc | `jwt.secret=${JWT_SECRET:}` + kiểm tra khi khởi động; compose `:?` | `b4b78f1` | `JwtTokenProviderTest` 18; JWT `alg=none` / secret yếu → 401 |
-| P1-04 WebSocket | `WebSocketAuthChannelInterceptor` | `590fb10` | `WebSocketSecurityIT` 13; `ws-check.mjs` 12/12 |
-| P1-05 IDOR | `TopicAccessService`, `SecurityScopeService` | `6e38226` | `TopicAccessServiceTest` 16, `MilestoneCalendarAccessIT` 12, `TopicCollaborationAccessIT` 9; smoke S1–S3 FIXED |
-| P1-06 DTO | `dto/response/*`, `open-in-view=false` | `765d542` | `DtoNoLeakIT` 3 |
-| P1-07 Upload | `FileStorageService`, `FileContentValidator`, `StoredFile` | `b57fdd8` | `FileAccessIT` 16; .exe giả .pdf → 400; SVG → 400; 21 MB → 413; path traversal → 400 |
-| P1-08 Gỡ file | `.gitignore` có `Backend/uploads/`; `git ls-files Backend/uploads` rỗng | `5d785c1`, `ebeb7ae` | **Lịch sử vẫn còn** ở 3 commit (`bdd6470`, `58161d6`, `5d785c1`) → 🟨 |
-| P1-09 Kích hoạt | `AuthService`, `PasswordPolicy`, bỏ `/auth/register` | `e5aa01f` | `AccountActivationIT` 10, `PasswordPolicyTest` 7; smoke S4 FIXED; UI không còn "Đăng ký ngay" |
-| P1-10 Brute-force | `LoginThrottleService` (bảng `login_throttle`), `RateLimiter` | `53f9b96` | `LoginThrottleIT` 9, `RateLimitIT` 4; khóa **vẫn giữ sau khi khởi động lại backend** |
-| P1-11 Header/Swagger | `nginx.conf` CSP…, `app.swagger.public` | `a1284ee`, `1a99da7`, `f40369c` | `SecurityEndpointsIT`, `SwaggerClosedIT`; header có đủ trên nginx + API |
-| P1-12 Test hồi quy | `AccessMatrixIT` + bảng ánh xạ ở `GĐ1.md` 6.1 | `9ece91b` | 18/18 pass (trong 202 test) |
-| P1-13 Dependency | Boot 3.5.16, jjwt 0.12.7, POI 5.5.1, springdoc 2.8.17; `dependabot.yml`, `codeql.yml` | `d982264` | Build + test xanh |
+| P1-01 OTP pre-auth | `JwtTokenProvider.Scope`, `AuthController` trả `preAuthToken` | `850bad3` | `AuthFlowIT` 19 test; smoke 1a FIXED; UI: ADMIN dừng ở bước OTP, localStorage không có token |
+| P1-02 Thu hồi token | `TokenAuthenticator`, `tokenVersion` | `2232628` | `TokenRevocationIT` 15; smoke 19 FIXED |
+| P1-03 Secret bắt buộc | `jwt.secret=${JWT_SECRET:}` + kiểm tra khi khởi động; compose `:?` | `bf33cb5` | `JwtTokenProviderTest` 18; JWT `alg=none` / secret yếu → 401 |
+| P1-04 WebSocket | `WebSocketAuthChannelInterceptor` | `5de08b0` | `WebSocketSecurityIT` 13; `ws-check.mjs` 12/12 |
+| P1-05 IDOR | `TopicAccessService`, `SecurityScopeService` | `c946334` | `TopicAccessServiceTest` 16, `MilestoneCalendarAccessIT` 12, `TopicCollaborationAccessIT` 9; smoke S1–S3 FIXED |
+| P1-06 DTO | `dto/response/*`, `open-in-view=false` | `fae6886` | `DtoNoLeakIT` 3 |
+| P1-07 Upload | `FileStorageService`, `FileContentValidator`, `StoredFile` | `78b95f9` | `FileAccessIT` 16; .exe giả .pdf → 400; SVG → 400; 21 MB → 413; path traversal → 400 |
+| P1-08 Gỡ file | `.gitignore` có `Backend/uploads/`; `git ls-files Backend/uploads` rỗng | `14a7894`, `246c3f6` | **Lịch sử vẫn còn** ở 3 commit (`59344f7`, `2426753`, `14a7894`) → 🟨 |
+| P1-09 Kích hoạt | `AuthService`, `PasswordPolicy`, bỏ `/auth/register` | `7c80016` | `AccountActivationIT` 10, `PasswordPolicyTest` 7; smoke S4 FIXED; UI không còn "Đăng ký ngay" |
+| P1-10 Brute-force | `LoginThrottleService` (bảng `login_throttle`), `RateLimiter` | `c67ad6f` | `LoginThrottleIT` 9, `RateLimitIT` 4; khóa **vẫn giữ sau khi khởi động lại backend** |
+| P1-11 Header/Swagger | `nginx.conf` CSP…, `app.swagger.public` | `31cf02a`, `a621ab3`, `77b2c0e` | `SecurityEndpointsIT`, `SwaggerClosedIT`; header có đủ trên nginx + API |
+| P1-12 Test hồi quy | `AccessMatrixIT` + bảng ánh xạ ở `GĐ1.md` 6.1 | `a03e4e4` | 18/18 pass (trong 202 test) |
+| P1-13 Dependency | Boot 3.5.16, jjwt 0.12.7, POI 5.5.1, springdoc 2.8.17; `dependabot.yml`, `codeql.yml` | `428c374` | Build + test xanh |
 
 ---
 
@@ -69,11 +73,11 @@ Mọi commit đứng tên **NguyenTanSang2210** (không còn trailer Claude):
 
 | Commit | Nội dung | Test đi kèm |
 |---|---|---|
-| `011f82e` | **security(api):** vá ReDoS ở kiểm tra email khi sửa hồ sơ (`UserController.isValidEmail`) — regex cũ `^[^@\s]+@[^@\s]+\.[^@\s]+$` quay lui đa thức; regex mới tách tên miền theo dấu chấm + giới hạn 254 ký tự. Ghi chú lý do tắt CSRF. | `UserEmailValidationTest` (3 test, có test chuỗi độc hại < 1 giây) |
-| `d70dbc1` | **security(api):** `LoginRequest` giới hạn 255 ký tự; `DataAccessErrorHandler` — lỗi CSDL trả thông báo chung (409/500), **không còn lộ câu SQL / tên bảng / tên cột** | `AuthFlowIT.overlongUsername_*`, `DataAccessErrorHandlerTest` (2) |
-| `2d13cff` | **fix(files):** `FileStorageService.resolve` bắt `InvalidPathException` (tên file tiếng Việt cũ trên máy chủ locale không phải UTF-8) | Tái hiện bằng `FileAccessIT.backfill_*` khi `LANG=POSIX` |
-| `d340f26` | **chore(security):** `npm audit fix` (follow-redirects, source-map-js — 2 High); `server_tokens off` cho nginx; escape `\` trong báo cáo smoke (CodeQL) | lint + build + audit |
-| `a9ff390` | **chore(claude):** `.claude/settings.json` tắt `Co-Authored-By` / link phiên của Claude Code cho repo này | — |
+| `9541d43` | **security(api):** vá ReDoS ở kiểm tra email khi sửa hồ sơ (`UserController.isValidEmail`) — regex cũ `^[^@\s]+@[^@\s]+\.[^@\s]+$` quay lui đa thức; regex mới tách tên miền theo dấu chấm + giới hạn 254 ký tự. Ghi chú lý do tắt CSRF. | `UserEmailValidationTest` (3 test, có test chuỗi độc hại < 1 giây) |
+| `cfb55aa` | **security(api):** `LoginRequest` giới hạn 255 ký tự; `DataAccessErrorHandler` — lỗi CSDL trả thông báo chung (409/500), **không còn lộ câu SQL / tên bảng / tên cột** | `AuthFlowIT.overlongUsername_*`, `DataAccessErrorHandlerTest` (2) |
+| `05c5df3` | **fix(files):** `FileStorageService.resolve` bắt `InvalidPathException` (tên file tiếng Việt cũ trên máy chủ locale không phải UTF-8) | Tái hiện bằng `FileAccessIT.backfill_*` khi `LANG=POSIX` |
+| `23e94df` | **chore(security):** `npm audit fix` (follow-redirects, source-map-js — 2 High); `server_tokens off` cho nginx; escape `\` trong báo cáo smoke (CodeQL) | lint + build + audit |
+| `985a121` | **chore(claude):** `.claude/settings.json` tắt `Co-Authored-By` / link phiên của Claude Code cho repo này | — |
 | (commit tài liệu) | Đồng bộ `plan1.md` → v1.4 (trạng thái 13 task P1, tiêu chí GĐ1, P0-09, Changelog), thêm nhật ký vào `GĐ1.md`, báo cáo này | — |
 
 **Không thực hiện** (cần chủ dự án xác nhận — thao tác công khai/không hoàn tác): viết lại lịch sử git (P1-08B + gỡ trailer Claude), force push, merge PR #3, gắn tag, đánh dấu cảnh báo CodeQL/GitGuardian trên GitHub.
@@ -171,8 +175,8 @@ Tái hiện cục bộ bằng CodeQL CLI cùng bộ truy vấn:
 
 | Cảnh báo | Vị trí | Mức | Xử lý |
 |---|---|:---:|---|
-| Polynomial ReDoS (`java/polynomial-redos`) | `UserController.java` (regex email) | High | ✅ **Đã vá** (`011f82e`) |
-| Incomplete string escaping | `scripts/smoke-test.mjs` | Medium | ✅ **Đã vá** (`d340f26`) |
+| Polynomial ReDoS (`java/polynomial-redos`) | `UserController.java` (regex email) | High | ✅ **Đã vá** (`9541d43`) |
+| Incomplete string escaping | `scripts/smoke-test.mjs` | Medium | ✅ **Đã vá** (`23e94df`) |
 | Disabled Spring CSRF protection | `SecurityConfig.java` | High | **Dương tính giả**: API xác thực bằng header `Authorization: Bearer`, không dùng cookie/session → CSRF không áp dụng. Đã ghi chú trong code. → Trên GitHub: *Security → Code scanning → alert → Dismiss → "False positive"*. Khi làm **P3-14** (refresh token trong cookie) phải bật bảo vệ CSRF cho endpoint đó. |
 | Clear-text storage of sensitive information ×3 | `frontend/src/context/AuthContext.jsx` (token trong `localStorage`) | High | **Đúng — đã có kế hoạch**: quyết định D-03 = B, làm ở **P3-14** (access token trong bộ nhớ + refresh token cookie HttpOnly). → Dismiss "Won't fix" kèm ghi chú "P3-14", hoặc làm sớm P3-14. |
 
@@ -185,7 +189,7 @@ Sau khi push các commit đợt này, CodeQL sẽ chạy lại: còn 4 cảnh b�
 - Mật khẩu **trong test** (`PasswordPolicyTest`, `AccountActivationIT`, `UserControllerTest`) — chính là các chuỗi dùng để kiểm tra chính sách mật khẩu.
 - Chuỗi base64 giả trong `JwtTokenProviderTest` (để kiểm tra việc *từ chối* secret công khai).
 - Mật khẩu demo `123456` của dữ liệu seed trong `scripts/smoke-test.mjs`.
-- Dòng `docker-compose.yml` ở commit `b4b78f1` (biến bắt buộc `:?`, không có giá trị).
+- Dòng `docker-compose.yml` ở commit `bf33cb5` (biến bắt buộc `:?`, không có giá trị).
 
 → Trên dashboard GitGuardian: đánh dấu các incident là **"Test credential / False positive"**. Không cần đổi mã.
 
@@ -199,11 +203,11 @@ Thang mức độ: 🔴 Nghiêm trọng · 🟠 Cao · 🟡 Trung bình · 🔵 
 
 | # | Vấn đề | Mức | Ảnh hưởng | Khắc phục |
 |:-:|---|:-:|---|---|
-| 1 | **Username/password rất dài ở `/api/auth/login` → HTTP 500 và phản hồi chứa nguyên câu `INSERT INTO audit_logs …`** (do `server.error.include-message=always`) | 🟠 | Lộ cấu trúc CSDL cho người chưa đăng nhập; tạo log lỗi hàng loạt (DoS log) | `@Size(max=255)` + `DataAccessErrorHandler` che mọi lỗi CSDL (`d70dbc1`) |
-| 2 | ReDoS ở regex email khi cập nhật hồ sơ | 🟠 | Người dùng đã đăng nhập gửi chuỗi đặc biệt làm treo luồng xử lý (CodeQL High) | Regex tuyến tính + giới hạn độ dài (`011f82e`) |
-| 3 | `FileStorageService.resolve` ném `InvalidPathException` với tên file tiếng Việt cũ khi máy chủ không chạy locale UTF-8 | 🟡 | Backfill hồ sơ file dừng giữa chừng; tải file cũ trả 500. (Image Docker `eclipse-temurin` mặc định UTF-8 nên production hiện không bị, nhưng chạy `java -jar` trên máy Linux locale POSIX thì bị) | Bắt ngoại lệ, coi như tên không hợp lệ (`2d13cff`) |
-| 4 | 2 lỗ hổng npm mức High (follow-redirects, source-map-js) | 🟡 | Phụ thuộc bắc cầu; follow-redirects có thể làm lộ header xác thực khi chuyển hướng | `npm audit fix` (`d340f26`) |
-| 5 | nginx trả `Server: nginx/1.27.5` | 🔵 | Lộ phiên bản giúp dò lỗ hổng | `server_tokens off` (`d340f26`) |
+| 1 | **Username/password rất dài ở `/api/auth/login` → HTTP 500 và phản hồi chứa nguyên câu `INSERT INTO audit_logs …`** (do `server.error.include-message=always`) | 🟠 | Lộ cấu trúc CSDL cho người chưa đăng nhập; tạo log lỗi hàng loạt (DoS log) | `@Size(max=255)` + `DataAccessErrorHandler` che mọi lỗi CSDL (`cfb55aa`) |
+| 2 | ReDoS ở regex email khi cập nhật hồ sơ | 🟠 | Người dùng đã đăng nhập gửi chuỗi đặc biệt làm treo luồng xử lý (CodeQL High) | Regex tuyến tính + giới hạn độ dài (`9541d43`) |
+| 3 | `FileStorageService.resolve` ném `InvalidPathException` với tên file tiếng Việt cũ khi máy chủ không chạy locale UTF-8 | 🟡 | Backfill hồ sơ file dừng giữa chừng; tải file cũ trả 500. (Image Docker `eclipse-temurin` mặc định UTF-8 nên production hiện không bị, nhưng chạy `java -jar` trên máy Linux locale POSIX thì bị) | Bắt ngoại lệ, coi như tên không hợp lệ (`05c5df3`) |
+| 4 | 2 lỗ hổng npm mức High (follow-redirects, source-map-js) | 🟡 | Phụ thuộc bắc cầu; follow-redirects có thể làm lộ header xác thực khi chuyển hướng | `npm audit fix` (`23e94df`) |
+| 5 | nginx trả `Server: nginx/1.27.5` | 🔵 | Lộ phiên bản giúp dò lỗ hổng | `server_tokens off` (`23e94df`) |
 
 ### 6.2. Còn tồn tại — đề xuất xử lý
 
@@ -223,18 +227,20 @@ Thang mức độ: 🔴 Nghiêm trọng · 🟠 Cao · 🟡 Trung bình · 🔵 
 
 ## 7. "claude" trong commit: nguyên nhân & cách gỡ
 
+> ✅ **Đã xử lý 22/10/2026** — lịch sử đã viết lại theo quy trình 7.4 (xem mục 11). Các mã commit trong báo cáo này đã được cập nhật theo lịch sử mới.
+
 ### 7.1. Vì sao GitHub hiện "NguyenTanSang2210 **and claude**"
 
 - Các phiên **Claude Code** (trên máy `DESKTOP-52AO7BE`) mặc định thêm dòng cuối vào thông điệp commit:
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (7 commit GĐ0) và `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` (17 commit GĐ1).
-- GitHub đọc trailer `Co-Authored-By`, thấy email `noreply@anthropic.com` gắn với tài khoản GitHub **claude** nên hiển thị đồng tác giả. Tổng **24 commit**, từ `98027f4` đến `9ece91b` — **chỉ trên `develop`** (chưa vào `main`).
+- GitHub đọc trailer `Co-Authored-By`, thấy email `noreply@anthropic.com` gắn với tài khoản GitHub **claude** nên hiển thị đồng tác giả. Tổng **24 commit**, từ `9d5145a` đến `a03e4e4` — **chỉ trên `develop`** (chưa vào `main`).
 - **Tác giả thật vẫn là bạn** (email `tansangnts2004@gmail.com`). Tên tác giả hiển thị `DESKTOP-52AO7BE\ADMIN` vì máy đó chưa đặt `git config user.name` — GitHub vẫn liên kết đúng tài khoản nhờ email.
 
 ### 7.2. Gỡ có ảnh hưởng đến dự án không?
 
 - Trailer chỉ nằm trong **thông điệp commit**; nội dung file của 24 commit này giống hệt nhau dù có hay không có trailer → **mã nguồn, cấu hình, test không thay đổi**.
-- Nhưng git không sửa được thông điệp commit cũ mà không **viết lại lịch sử**: mọi mã băm commit từ `98027f4` trở đi đổi → cần **force push** `develop`; mọi bản clone cũ phải **clone lại**; các mã commit ghi trong `Plan/*.md` (Changelog, "Theo dõi") sẽ lệch và cần cập nhật theo bảng ánh xạ `filter-repo` sinh ra (`.git/filter-repo/commit-map`).
-- P1-08 (D-04 = B) **vốn đã bắt buộc viết lại lịch sử** (xóa `Backend/uploads` từ commit thứ 2 `bdd6470`) → nên làm **cả hai trong một lần**: chỉ một lần force push, một lần clone lại.
+- Nhưng git không sửa được thông điệp commit cũ mà không **viết lại lịch sử**: mọi mã băm commit từ `9d5145a` trở đi đổi → cần **force push** `develop`; mọi bản clone cũ phải **clone lại**; các mã commit ghi trong `Plan/*.md` (Changelog, "Theo dõi") sẽ lệch và cần cập nhật theo bảng ánh xạ `filter-repo` sinh ra (`.git/filter-repo/commit-map`).
+- P1-08 (D-04 = B) **vốn đã bắt buộc viết lại lịch sử** (xóa `Backend/uploads` từ commit thứ 2 `59344f7`) → nên làm **cả hai trong một lần**: chỉ một lần force push, một lần clone lại.
 - Tôi **không tự thực hiện**: thao tác viết lại lịch sử (kể cả chạy thử trên bản clone tạm) bị chế độ phân quyền của phiên này chặn, và force push lên GitHub là thao tác không hoàn tác được — cần bạn quyết định.
 
 ### 7.3. Ngăn tái diễn (đã làm)
@@ -330,7 +336,7 @@ Kiểm thử bổ sung đợt này (xử lý lỗi/bảo mật/hiệu năng/tư�
 
 ## 10. Kiểm tra lại lần 2 — 22/10/2026 (rà soát "code sạch" + xác nhận hoàn thành)
 
-Chạy lại toàn bộ trên máy sạch, code tại commit `4eb5aae`:
+Chạy lại toàn bộ trên máy sạch, code tại commit `faf48ad`:
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -343,11 +349,351 @@ Chạy lại toàn bộ trên máy sạch, code tại commit `4eb5aae`:
 | WebSocket / Giao diện / Kiểm thử lỗi-bảo mật-hiệu năng | 12/12 · 8/8 · 28/28 |
 | Profile `prod` | Swagger đóng; secret JWT yếu → **từ chối khởi động**; không seed dữ liệu demo |
 | CodeQL (chạy cục bộ) | Không có cảnh báo mới; 4 cảnh báo cũ đã được dismiss trên GitHub (CSRF: dương tính giả; localStorage: P3-14) |
-| CI trên PR #3 | **10/10 xanh** trên `b409548` (GitGuardian xanh sau khi Ignore 15 dữ liệu test); PR mergeable |
+| CI trên PR #3 | **10/10 xanh** trên `1316b7a` (GitGuardian xanh sau khi Ignore 15 dữ liệu test); PR mergeable |
 
-**Dọn code (commit `4eb5aae`):** bỏ API lỗi thời (`DaoAuthenticationProvider()`, `Specification.where`, `@MockBean`), tạo `AuthenticationManager` trực tiếp, bỏ `hibernate.dialect` thừa, xóa field `EventPublisher` không dùng ở 2 controller và 3 import thừa. Không đổi hành vi (toàn bộ test + smoke giữ nguyên kết quả).
+**Dọn code (commit `faf48ad`):** bỏ API lỗi thời (`DaoAuthenticationProvider()`, `Specification.where`, `@MockBean`), tạo `AuthenticationManager` trực tiếp, bỏ `hibernate.dialect` thừa, xóa field `EventPublisher` không dùng ở 2 controller và 3 import thừa. Không đổi hành vi (toàn bộ test + smoke giữ nguyên kết quả).
 
 **Ghi nhận, không xóa:** `frontend/src/api/discussApi.js`, `calendarApi.js`, `announcementApi.js` chưa được trang nào dùng — backend của Thảo luận / Lịch / Thông báo chung đã có và đã bảo mật, nhưng **chưa có giao diện** (thuộc P4-11). Xóa đi sẽ mất phần nối API sẵn có, nên giữ lại.
 
 **Trạng thái Giai đoạn 1 tại thời điểm này:** toàn bộ phần **mã nguồn** đã xong và sạch. Còn 2 việc **chỉ chủ dự án làm được** (không phải lỗi code): (1) P1-08B viết lại lịch sử git, (2) merge PR #3 + tag `v0.2.0-security`.
 
+---
+
+## 11. Đóng Giai đoạn 0 & 1 — 22/10/2026
+
+### 11.1. Kiểm tra repo sau khi chủ dự án hoàn tất
+
+| Hạng mục | Kết quả kiểm tra trên GitHub |
+|---|---|
+| Lịch sử git | Viết lại thành công: **0** commit chứa `Backend/uploads`, **0** trailer `Co-Authored-By: Claude`, **0** tác giả `DESKTOP-52AO7BE\ADMIN`; 51/51 commit giữ nguyên nội dung (đối chiếu theo tiêu đề + thời gian) |
+| Mã nguồn | `develop` sau viết lại giống hệt trước khi viết lại (diff rỗng) |
+| PR #3 `develop` → `main` | **Đã merge** bằng merge commit `d7e9307`; CI 10/10 xanh trước khi merge |
+| Tag | `v0.1.0-baseline` → `f52e07d` (P0-09) · `v0.2.0-security` → `d7e9307` — đều là annotated tag |
+| Bảo vệ nhánh `main` | Có rule: bắt buộc qua PR + 3 status check |
+| Dependabot | Hoạt động — đã tự mở **10 PR** nâng cấp (PR #4 → #13) ngay sau khi `dependabot.yml` vào `main` → nghiệm thu P1-13 đạt |
+| Repo trên máy chủ dự án | Clone lại sạch ở `D:\Taskify`; bản cũ `D:\Taskify-old`, backup `D:\taskify-rewrite\backup.git` (xóa sau ~30 ngày) |
+
+**Kết luận:** Giai đoạn 0 (9/9) và Giai đoạn 1 (13/13) **đã hoàn thành**. Mọi mã commit trong `plan1.md`, `GĐ1.md` và báo cáo này đã cập nhật theo lịch sử mới.
+
+### 11.2. Việc tiếp theo
+
+**Bước kế tiếp: Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng** (13 task, ước lượng 7–9 ngày công).
+
+1. **Lập `Plan/GĐ2.md`** (kế hoạch chi tiết như đã làm với GĐ1): phân tích lại mã nguồn hiện tại, thiết kế, thứ tự, test cho từng task.
+2. **Thứ tự đề xuất** — ưu tiên 3 lỗi đang chặn luồng chính (smoke test vẫn báo BUG):
+   - **P2-01** Giảng viên tự tạo đề tài (thiếu quyền `TOPIC_MANAGE`) — smoke #5
+   - **P2-02** Tách 401/403 + toast lỗi (GĐ1 đã làm phần tối thiểu: chỉ 401 mới đăng xuất)
+   - **P2-03** Upload/tải file trên giao diện (gán object vào `fileUrl`, `<a href>` không gửi token, nginx giới hạn 1 MB) — smoke #11, #13a, #21
+   - **P2-04** Nhiều sinh viên/đề tài theo `capacity` (D-01 = B) — smoke #9b
+   - **P2-05** Quên mật khẩu — smoke #20
+   - Sau đó P2-06 → P2-11, **P2-13** (khóa điểm & chấm lại, D-08), cuối cùng **P2-12** kiểm thử hồi quy toàn luồng.
+3. **Mục tiêu đo được khi đóng GĐ2:** smoke test **0 BUG** (6 mục BUG hiện tại chuyển FIXED), test hồi quy nghiệp vụ trong CI, tag `v0.3.0-business`.
+
+**Việc phụ nên xử lý sớm (không chặn GĐ2):**
+- **10 PR của Dependabot** (#4–#13) đang nhắm vào `main`, trái quy trình `develop` → `main`. Đề xuất: thêm `target-branch: develop` vào `.github/dependabot.yml`; gộp các bản vá nhỏ (nhóm *minor-and-patch*, `actions/*`); **không** gộp vội các bản nâng **major** — `springdoc-openapi` 3.x (yêu cầu Spring Boot 4), `eslint` 10, `@vitejs/plugin-react` 6, `globals` 17 — cần thử riêng.
+- Xóa `D:\Taskify-old` sau 1–2 tuần và backup `D:\taskify-rewrite` sau ~30 ngày.
+
+---
+
+## 12. Giai đoạn 2 — Sửa lỗi nghiệp vụ & chức năng (hoàn thành 13/13)
+
+> Thực hiện 22/10/2026 trên nhánh `develop` (`a60693b` → `ea56b02`, đã push). Chờ chủ dự án merge `develop` → `main` và tạo tag `v0.3.0-business`.
+
+### 12.1. Thứ tự ưu tiên: 10 PR Dependabot hay P2-01 trước?
+
+| Tiêu chí | 10 PR Dependabot (#4–#13) | P2-01 |
+|---|---|---|
+| Có lỗ hổng bảo mật đang mở? | **Không** — đều là nâng phiên bản thường kỳ (`npm audit` = 0, không có Dependabot security alert) | — |
+| Chặn người dùng? | Không | **Có** — giảng viên không tạo được đề tài (smoke #5) |
+| Rủi ro khi gộp | 4 bản **major** có thể làm hỏng build | Thấp |
+
+**Quyết định:** làm **P2-01 trước** (`e465e30`), sau đó xử lý Dependabot (`a60693b`) trước khi sửa tiếp frontend — để mọi task sau được kiểm thử trên thư viện mới.
+
+| PR | Nâng cấp | Kết quả |
+|---|---|---|
+| #4, #5, #6 | `actions/checkout` 7, `setup-java` 6, `setup-node` 7 | ✅ Áp dụng |
+| #8 | Maven wrapper 3.10.0 | ✅ Áp dụng |
+| #9 | `jjwt` 0.13.0 | ✅ Áp dụng — 0 thay đổi API, test JWT đạt |
+| #10, #11, #12 | Nhóm npm *minor/patch*, `eslint` 10 + `@eslint/js` 10, `globals` 17 | ✅ Áp dụng — sửa 1 lỗi lint mới (`preserve-caught-error`); 34 cảnh báo mới của React Compiler để mức *warn*, xử lý ở **P3-11** |
+| #7 | `springdoc-openapi` 3.x | ❌ Từ chối — yêu cầu Spring Boot 4 (dự án dùng 3.5) |
+| #13 | `@vitejs/plugin-react` 6 | ❌ Từ chối — yêu cầu Vite 8 (dự án dùng rolldown-vite 7) |
+
+Đồng thời `.github/dependabot.yml`: thêm `target-branch: develop` cho cả 3 hệ sinh thái và bỏ qua bản major của 2 gói trên → PR sau này đi đúng quy trình `develop` → `main`.
+
+### 12.2. Kết quả từng task
+
+| Task | Đã làm | Commit | Kiểm thử |
+|---|---|---|---|
+| **P2-01** | Quyền `TOPIC_MANAGE` cho giảng viên; initializer chỉ gán quyền mặc định khi tạo vai trò lần đầu (không ghi đè chỉnh sửa của Admin); bước dữ liệu một lần cho DB cũ; người hướng dẫn phải là tài khoản giảng viên | `e465e30` | `TopicManagementIT` (8) |
+| **P2-02** | 401 → về đăng nhập kèm "phiên hết hạn"; 403 → chỉ thông báo, giữ đăng nhập; toast lỗi toàn cục (mạng, 5xx); tự đăng xuất đúng lúc JWT hết hạn | `e9fe4a9` | `ui-check` mục 6–7 |
+| **P2-03** | Nộp báo cáo kèm file đúng `fileUrl`; tải file bằng nút có token (thay 5 thẻ `<a href>`); nginx nhận file tới 25 MB; bỏ proxy `/uploads` | `33d2cac` | smoke #11, #12, #13, #21; `ui-check` mục 8 |
+| **P2-04** | Nhiều SV/đề tài theo `capacity` (D-01 = B): khóa dòng đề tài khi duyệt (không vượt chỗ khi duyệt đồng thời), `OPEN ⇄ FULL` tự cập nhật, `COMPLETED` khi mọi SV có điểm, unique `(student_id, topic_id)`; thẻ đề tài hiện "2/3 chỗ" | `90ba967` | `TopicCapacityIT` (6), smoke #9b |
+| **P2-05** | Quên mật khẩu 3 bước, mã 10 phút qua email, không dò được tài khoản, giới hạn 3 lần/15 phút/tài khoản + 10 lần/IP; đặt lại xong thu hồi mọi phiên cũ; audit | `50024ce`, `65bbbf0` | `PasswordResetIT` (7), smoke #20 |
+| **P2-06** | Email gửi **sau khi giao dịch commit**, bất đồng bộ (pool `mail-`), thử lại 3 lần; mẫu HTML tiếng Việt cho mọi email (escape dữ liệu người dùng) + bản văn bản thuần | `f812ea1` | `EmailDispatchIT` (5), `EmailTemplatesTest` (4); đăng nhập vẫn 0,13–0,39 s khi SMTP treo |
+| **P2-07** | Nhắc tiến độ bằng **một** truy vấn (thay `findAll` + N+1), chống trùng 7 ngày, giờ Việt Nam; **mới:** nhắc hạn mốc còn 2 ngày (WARNING) và ngày cuối (CRITICAL), mỗi mức 1 lần; kèm email | `1668ce9` | `ReminderServiceIT` (4) |
+| **P2-08** | So trùng lặp giữ chữ có dấu (NFC, `\p{L}`), bỏ hư từ, tính cả cặp tiếng; so với mọi báo cáo trong cùng đợt; lưu `similarity_score`, `similar_to_report_id`; GV thấy badge "Trùng lặp X% với báo cáo #…", SV không thấy | `5cc8832` | `SimilarityServiceTest` (6), `ProgressSimilarityIT` |
+| **P2-09** | 12 ràng buộc: điểm 0–10 lẻ 0,25; không ghi đè `status` khi sửa đề tài; `capacity` 1–10 (không nhỏ hơn số SV đã duyệt); deadline sai → 400 (trước đây bị bỏ qua); milestone/đợt kiểm tra ngày; tin nhắn/thảo luận/lịch/thông báo kiểm tra id + độ dài; form frontend kiểm tra sớm | `7ef3e3f` | `BusinessValidationIT` (10) |
+| **P2-10** | Route `/admin/roles` + mục sidebar; không xóa 4 vai trò hệ thống; vai trò còn người dùng → 400 kèm số người | `5936d04`, `78dad5e` | `RoleServiceTest` (+4), `ui-check-gd2` |
+| **P2-11** | Xóa ProjectPermission (D-07): entity/repo/controller/DTO; bảng `project_permissions` tự xóa nếu rỗng (DB dev + Docker đều 0 dòng) | `16aa680` | `RemovedFeaturesIT` (2) — `/api/permissions` → 404 |
+| **P2-13** | Khóa điểm khi đợt `CLOSED` (D-08); yêu cầu chấm lại → quản trị khoa/Admin duyệt (mở khóa 1–168 giờ) → GV sửa **một lần** (bắt buộc lý do) → khóa lại; quá hạn → `EXPIRED` (job mỗi giờ); lịch sử điểm; thông báo + email + audit; Excel thêm cột "Đã chấm lại"; giao diện: badge 🔒, nút yêu cầu, tab duyệt, modal lịch sử | `d2c279b` | `GradeRevisionIT` (7), `ui-check-gd2` (11 mục) |
+| **P2-12** | `FullLifecycleIT`: toàn bộ vòng đời qua API (tạo đợt → … → chấm lại); chặn 500 ở các API quản trị còn lại | `ea56b02` | 1 test end-to-end, `BusinessValidationIT` (+1) |
+
+### 12.3. Lỗi phát hiện thêm khi kiểm thử giao diện — đã sửa
+
+| # | Lỗi | Mức độ | Sửa trong |
+|---|---|---|---|
+| 1 | Form tạo đề tài của giảng viên **không gửi đợt (workspace)** → luôn 400; cũng không có ô số SV | 🔴 Chặn chức năng | P2-09: thêm chọn đợt (`GET /api/workspaces/open-for-topics`) + số SV |
+| 2 | Tạo đề tài nhận nguyên entity từ body: gửi kèm `id` sẽ **ghi đè đề tài khác** | 🟠 Toàn vẹn dữ liệu | P2-09: luôn tạo mới |
+| 3 | Trang Vai trò dùng `axios` trần — không gửi token → luôn 401 | 🔴 | `78dad5e` |
+| 4 | Trang Duyệt đăng ký không tự tải dữ liệu (phải bấm "Làm mới"), ô chọn đề tài là ô nhập mã mặc định "1"; tên SV / người duyệt hiển thị trống, tìm kiếm không hoạt động (đọc sai trường DTO) | 🟠 | P2-13 |
+| 5 | Trang Đăng ký của tôi (SV): tên GV trống, **không hiển thị điểm** | 🟡 | P2-13 |
+| 6 | Gán lớp, phân công GV, tạo user/lớp: id thiếu/sai → 500 (`Long.valueOf("null")`) | 🟡 | P2-12 |
+| 7 | Thông báo tiến độ/điểm viết không dấu ("Sinh vien gui bao cao") | 🟢 | P2-08, P2-09 |
+
+### 12.4. Kết quả kiểm thử cuối (code `ea56b02`)
+
+| Hạng mục | Kết quả |
+|---|---|
+| Test backend | **267/267** đạt (đầu GĐ2: 202) — 0 cảnh báo `javac` |
+| Phân tích mã thừa (ECJ: import/biến/hàm không dùng, dead code) | **0** cảnh báo (main + test) |
+| Smoke test toàn luồng (`scripts/smoke-test.mjs`) | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** (29 kịch bản; 6 BUG của GĐ2 → FIXED) |
+| Giao diện (`ui-check.mjs`) | 13/13 đạt |
+| Giao diện GĐ2 (`ui-check-gd2.mjs`, mới) | **18/18** đạt — tạo đề tài, trang vai trò, toàn bộ luồng khóa điểm/chấm lại |
+| WebSocket (`ws-check.mjs`) | Đạt |
+| ESLint | 0 lỗi · 34 cảnh báo (quy tắc mới React Compiler — P3-11) · build Vite đạt |
+
+Ảnh chụp: `scripts/ui-check-gd2.mjs` lưu `Plan/reports/ui-gd2-*.png` khi chạy trên máy bạn (cần chạy `smoke-test.mjs` trước).
+
+### 12.5. Còn tồn tại — đề xuất
+
+| # | Vấn đề | Mức độ | Đề xuất |
+|---|---|---|---|
+| 1 | Container backend chạy múi giờ **UTC**: thời gian lưu và hiển thị lệch 7 giờ so với giờ Việt Nam (ví dụ lịch sử điểm ghi 09:38 thay vì 16:38). Lịch nhắc việc đã chạy đúng giờ Việt Nam | 🟡 | Quyết định trước P3-01: đặt `TZ=Asia/Ho_Chi_Minh` cho backend (+ chuyển dữ liệu cũ) **hoặc** trả thời gian kèm múi giờ cho frontend. Đề xuất đưa vào P3-08/P3-12 |
+| 2 | Bảng/cột mới tạo bằng `ddl-auto` (`grade_revision_requests`, `grade_history`, `data_migrations`, 2 cột trùng lặp) và 3 bước dữ liệu trong `DataMigrationRunner` | 🟡 | Chuyển hết sang Flyway ở **P3-01** |
+| 3 | 34 cảnh báo lint React Compiler | 🟢 | **P3-11** (tách trang lớn) |
+| 4 | Chưa có giao diện tạo/sửa milestone (chỉ có API) | 🟢 | **P4-05** |
+| 5 | Tab "Báo cáo số liệu" của quản trị khoa còn số liệu cứng (84,2%, "06") | 🟢 | **P4-01** |
+| 6 | PR Dependabot #7, #13 (major không tương thích) và các PR cũ nhắm `main` | 🟢 | Sau khi merge `develop` → `main`: PR đã có bản mới hơn sẽ tự đóng; PR nào còn mở thì đóng thủ công kèm lý do ở 12.1 |
+
+### 12.6. Việc chủ dự án cần làm để đóng Giai đoạn 2
+
+1. Trên GitHub: tạo PR `develop` → `main`, chờ CI xanh (backend test, frontend lint/build, CodeQL), **merge bằng merge commit**.
+2. Tạo tag: `git fetch origin && git tag -a v0.3.0-business origin/main -m "Giai đoạn 2: sửa lỗi nghiệp vụ & chức năng" && git push origin v0.3.0-business`.
+3. Trên máy: `git checkout develop && git pull` — DB cũ được tự nâng cấp khi khởi động (thêm bảng mới, xóa `project_permissions` nếu rỗng, tính lại trạng thái đề tài).
+4. Đóng các PR Dependabot còn mở (mục 12.5 #6).
+
+**Bước tiếp theo sau đó: Giai đoạn 3 — Củng cố kỹ thuật**, bắt đầu bằng **P3-01 Flyway** (gom mọi thay đổi schema của GĐ1–GĐ2 vào migration, bỏ `ddl-auto`).
+
+---
+
+## 13. Rà soát giao diện, giờ Việt Nam, Flyway — 23/10/2026
+
+> Theo yêu cầu: kiểm tra và sửa triệt để các lỗi giao diện ở mục 12.3, xử lý 2 vấn đề còn tồn tại ở mục 12.5 (#1 múi giờ, #2 `ddl-auto`).
+> Commit trên `develop`: `d73b1e7` → `69a2f2e`.
+
+### 13.1. Rà soát lại 6 lỗi đã sửa + tìm lỗi cùng loại
+
+Cách làm: đối chiếu **mọi trường dữ liệu** mà từng trang/thành phần đọc với DTO backend thật sự trả về; tìm mọi chỗ gọi API không qua instance chung; mọi trang không tự tải dữ liệu; mọi `@RequestBody` bind thẳng entity; mọi chỗ đọc/ép kiểu dữ liệu thô từ request.
+
+| # | Lỗi đã sửa ở mục 12.3 | Kiểm tra lại |
+|---|---|---|
+| 1 | Form tạo đề tài thiếu chọn đợt | ✅ Đạt — `ui-check-gd2` tạo đề tài thật qua giao diện |
+| 2 | Gửi kèm `id` ghi đè đề tài khác | ✅ Triệt để hơn: tạo/sửa đề tài nhận `TopicRequest` (chỉ tên, mô tả, số SV, đợt) thay vì bind thẳng entity |
+| 3 | Trang Vai trò không gửi token | ✅ Không còn chỗ nào gọi API ngoài instance chung (`fetch`/`axios` trần) |
+| 4 | Trang Duyệt đăng ký không tự tải, tên SV trống | ✅ Mọi trang đều tự tải khi mở |
+| 5 | SV không thấy điểm | ✅ Đạt |
+| 6 | API quản trị trả 500 khi thiếu id | ✅ Triệt để hơn: thêm bộ xử lý lỗi chung (`InputErrorHandler`) cho mọi lỗi sai kiểu/định dạng chưa kiểm tra riêng → 400 tiếng Việt; lỗi lập trình → 500 thông báo chung, không lộ thông điệp nội bộ Java |
+
+**Lỗi cùng loại tìm thêm và đã sửa:**
+
+| # | Lỗi | Mức độ |
+|---|---|---|
+| 7 | Tab "Duyệt Đề tài" (quản trị khoa): cột giảng viên luôn trống (đọc `t.lecturer.user`, API trả `lecturerName`) | 🟠 |
+| 8 | Sửa đề tài: ô "Đợt đồ án" luôn hiện "—" (danh sách đề tài không trả tên đợt) | 🟡 |
+| 9 | Kênh trao đổi: tin nhắn của đề tài khác lẫn vào (API tin nhắn không trả đề tài nên bộ lọc luôn cho qua) | 🟠 |
+| 10 | Chuông thông báo: số chưa đọc luôn là 0 cho tới khi bấm mở | 🟡 |
+| 11 | Liên kết thông báo "Sinh viên gửi báo cáo" mở trang tiến độ nhưng không chọn đúng đề tài | 🟡 |
+| 12 | "Báo cáo số liệu" của khoa: **số liệu cứng** (84,2%, "06", "OK") → nay là tỉ lệ lấp đầy thật và số GV chưa được phân công | 🟠 |
+| 13 | API thống kê khoa trả **500** khi tài khoản chưa thuộc khoa (`Map.of` không nhận `null`) | 🟡 |
+| 14 | Hộp thư nuốt mọi lỗi CSDL và trả danh sách rỗng (che sự cố) | 🟢 |
+| 15 | Gửi JSON `null` cho tên/mã → lưu thành chữ `"null"`; `privilegeIds` sai kiểu → 500 | 🟢 |
+
+Test mới: `UiDataContractIT` (5), `InputErrorHandlerTest` (2); `ui-check-gd2.mjs` +8 kiểm tra.
+
+### 13.2. Đồng bộ giờ Việt Nam
+
+**Nguyên nhân thật:** chuỗi kết nối DB có `serverTimezone=UTC` nên driver MySQL **luôn lưu thời gian theo UTC**. Điều này đúng cho cả khi chạy bằng Docker lẫn chạy trên Windows bằng `run-backend.ps1`. Chỉ có container Docker chạy JVM theo UTC, nên giờ trả cho giao diện là giờ UTC (lệch 7 tiếng).
+
+**Cách sửa:**
+- `AppTimeZone`: JVM chạy `Asia/Ho_Chi_Minh` ngay khi khởi động. Đổi được bằng `APP_TIME_ZONE`.
+- Docker: thêm `APP_TIME_ZONE` + `TZ` cho backend, để log cũng theo giờ Việt Nam. Jackson và test cũng chạy cùng múi giờ.
+- Hộp thư chuyển từ SQL thuần sang JPQL, vì SQL thuần bỏ qua bước quy đổi giờ.
+- **Không cần chuyển dữ liệu cũ** (vốn đã lưu UTC). **Giữ nguyên** `serverTimezone=UTC` trong `DB_URL`.
+
+**Kiểm chứng:**
+- `TimeZoneIT`: 16:38 giờ Việt Nam được lưu thành 09:38 UTC và API trả lại đúng 16:38.
+- `ui-check-gd2`: giờ sửa điểm hiển thị đúng giờ Việt Nam.
+- Container: `date` → `+07`.
+
+### 13.3. P3-01 — Flyway thay `ddl-auto=update` (task đầu tiên của Giai đoạn 3)
+
+| Migration | Nội dung |
+|---|---|
+| `V1__baseline_schema.sql` | 28 bảng, sinh từ schema Hibernate của mã hiện tại. Viết dạng "chỉ tạo/thêm khi còn thiếu": DB trống thì tạo đủ; DB cũ thì bổ sung cột, chỉ mục, khóa ngoại, giá trị ENUM còn thiếu. Thay luôn `SchemaFixer` |
+| `V2__seed_roles_privileges.sql` | Quyền + 4 vai trò; quyền mặc định chỉ gán cho vai trò mới tạo (thay `RolePrivilegeInitializer`) |
+| `V3__data_fixes_gd2.sql` | 3 bước dữ liệu của GĐ2 (thay `DataMigrationRunner`). Bước đã chạy trước đây được bỏ qua nhờ mốc trong `data_migrations` |
+
+- Hibernate nay chỉ **kiểm tra** schema (`ddl-auto=validate`). DB chưa có Flyway được đánh dấu version 0 rồi chạy V1 → V3.
+- Đã thử nâng cấp thật DB tạo bởi **`v0.1.0-baseline`**, **`v0.2.0-security`** (bản đang ở `main`) và DB Docker có dữ liệu. Ở cả 3, schema sau nâng cấp **giống hệt** DB tạo mới. Các thay đổi dữ liệu đi kèm:
+  - đề tài `REGISTERED` được tính lại theo số chỗ;
+  - giảng viên được thêm quyền `TOPIC_MANAGE`;
+  - bảng ProjectPermission rỗng bị xóa;
+  - tài khoản cũ được kích hoạt sẵn.
+- Test: `FlywayMigrationIT` (3), chạy trên CSDL thử nghiệm riêng. CI dùng tài khoản root để tạo CSDL này.
+- **Quy tắc từ nay:** muốn thay đổi schema thì viết migration mới (V4, V5…). Không sửa V1–V3, không bật lại `ddl-auto=update`.
+
+### 13.4. Kết quả kiểm thử cuối (code `69a2f2e`)
+
+| Hạng mục | Kết quả |
+|---|---|
+| Test backend | **278/278** — 0 cảnh báo `javac`, ECJ 0 cảnh báo (main + test) |
+| Smoke test | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** (29 kịch bản) |
+| Giao diện | `ui-check` 13/13 · `ui-check-gd2` **26/26** · `ws-check` đạt |
+| ESLint / build | 0 lỗi · 34 cảnh báo (P3-11) · build đạt |
+
+### 13.5. Còn lại
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| 1 | Flyway 11.7 (theo Spring Boot 3.5) cảnh báo "MySQL 8.4 mới hơn phiên bản Flyway hỗ trợ" — chỉ là cảnh báo, migration chạy đúng | Nâng khi Spring Boot đưa Flyway mới (Dependabot sẽ báo) |
+| 2 | MySQL cảnh báo `tinyint(1)` (độ rộng hiển thị) khi chạy V1 lần đầu — cố ý giữ để cột `approved` vẫn là kiểu boolean | Không cần xử lý |
+| 3 | 34 cảnh báo lint React Compiler; milestone chưa có giao diện tạo | P3-11, P4-05 |
+
+**Việc của bạn** (thay mục 12.6):
+1. Merge `develop` → `main`, tạo tag `v0.3.0-business`.
+2. Lần đầu chạy code mới trên máy, Flyway tự nâng cấp DB; nên **sao lưu DB trước**:
+   `docker exec ktpm-db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" doan_ltmmt' > backup.sql`
+3. Nếu `Backend/.env` có `DB_URL` thì giữ nguyên `serverTimezone=UTC` (mặc định của `init-env.ps1`).
+
+---
+
+## 14. Giai đoạn 3 — Củng cố kỹ thuật (hoàn thành 14/14) — 23/10/2026
+
+> Commit trên `develop`: `fa28d7f` (P3-01) → commit tài liệu P3-13. Chi tiết từng task: `Plan/plan1.md` mục 7.
+
+### 14.1. Kết quả theo task
+
+| Task | Kết quả chính | Đo được |
+|---|---|---|
+| P3-01 Flyway | V1 baseline (chạy được trên DB cũ) → V6; `ddl-auto=validate` | Nâng cấp thật DB của `v0.1.0`, `v0.2.0` |
+| P3-02 Request DTO | 24 record + Bean Validation, thông báo tiếng Việt có tên trường | `@RequestBody Map` trong controller: **0** |
+| P3-03 Lỗi chuẩn | `{code, message, errors[], requestId…}` cho mọi lỗi, kể cả filter bảo mật | `ErrorFormatIT` |
+| P3-04 Enum | 8 enum, quy tắc chuyển trạng thái trong enum | `normalizeStatus`: 7 → **0** |
+| P3-05 Service | 17 service mới; controller < 120 dòng, không dùng repository | `LayeringTest` |
+| P3-06 Phân trang | `PageResponse` (size ≤ 100), tìm kiếm người dùng/audit, "Tải thêm" | `PaginationIT` |
+| P3-07 Truy vấn | Gom nhóm + EntityGraph + index V5 | Danh sách đề tài **55 → 7** truy vấn; thông báo 7 → 4; tiến độ 11 → 7; đăng ký theo đề tài 18 → 10; đăng ký của tôi 14 → 8 |
+| P3-08 Logging/health | Request id xuyên suốt, log JSON ở prod, readiness chỉ phụ thuộc DB | Stack lên `healthy` ~28 giây |
+| P3-09 Test | Testcontainers, JaCoCo, Vitest | **325** test backend · độ phủ dòng **87,6%** (service 87,0%) · **28** test frontend |
+| P3-10 CI | verify + JaCoCo check, lint/test/build, dựng stack Docker `--wait` | CI xanh trên `develop` |
+| P3-11 Frontend | Layout theo dữ liệu, route lazy, tách 8 trang, API qua `src/api`, `useLoadEffect` | Bundle **737 → 340 KB** (gzip 188 → 110); file lớn nhất 893 → **352** dòng; lint 34 cảnh báo → **0** |
+| P3-12 Tên | Taskify ở mọi chỗ người dùng/vận hành thấy | — |
+| P3-13 Tài liệu | README, ARCHITECTURE, SECURITY, ADR 0001–0010, DEPLOYMENT, CONTRIBUTING, vận hành | — |
+| P3-14 Phiên | Access 15 phút trong bộ nhớ + refresh xoay vòng cookie HttpOnly, phát hiện dùng lại | `RefreshTokenIT` (8) |
+
+### 14.2. Lỗi phát hiện trong GĐ3 và đã xử lý
+
+| # | Vấn đề | Mức độ | Xử lý |
+|---|---|---|---|
+| 1 | `EntityGraph` kiểu FETCH làm quan hệ EAGER ngoài graph thành lazy → `/api/users` 500 (OSIV tắt). Test chạy trong transaction nên không lộ | 🔴 | Đổi sang `LOAD`; thêm `QueryCountIT` không chạy trong transaction |
+| 2 | Commit `f95ef2a` lỗi biên dịch: công cụ dọn import xóa nhầm import của `SecurityConfig` (nhận nhầm `/*` trong chuỗi `"/api/**"`) | 🟠 | Sửa ở `7efe182`; từ đó luôn biên dịch + test **sau** bước dọn import, trước khi commit |
+| 3 | Giới hạn refresh 30/phút làm tải lại trang liên tục bị 429 | 🟡 | 300/phút (dev 1000) |
+| 4 | 401 sau khi refresh thất bại quay lại trang đăng nhập nhưng cookie còn hiệu lực đăng nhập lại ngay | 🟡 | `sessionExpired()` thu hồi phiên trước khi chuyển trang |
+| 5 | `.properties` tiếng Việt bị lỗi font (Spring đọc ISO-8859-1); build-info hiện năm 1980 | 🟢 | Escape `\u`; đặt `<time>` cho build-info |
+| 6 | `.env.docker.example` vẫn để `JWT_EXPIRATION=86400000` (24 giờ, trước P3-14) | 🟡 | 900000 + biến refresh token; `init-env.ps1` đặt cookie không-`Secure` cho profile dev |
+| 7 | Bản cài production mới **không có cách tạo tài khoản Admin đầu tiên** (seed chỉ chạy ở dev) | 🟠 | `AdminBootstrap`: `APP_BOOTSTRAP_ADMIN_USERNAME/EMAIL` → Admin chưa kích hoạt + mã kích hoạt qua email; chỉ khi chưa có Admin. Đã thử trên CSDL trống |
+
+### 14.3. Kiểm thử cuối
+
+| Hạng mục | Kết quả |
+|---|---|
+| `mvnw verify` | **325/325**, JaCoCo đạt ngưỡng (≥ 75% / service ≥ 80%) |
+| `npm run check` | lint **0 cảnh báo** · Vitest **28/28** · build đạt |
+| Smoke test | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** (29 kịch bản) |
+| Giao diện | `ui-check` · `ui-check-gd2` · `ui-check-gd3` đều đạt (gồm quét mọi trang/tab của 4 vai trò sau khi tách component) |
+
+### 14.4. Còn lại / chưa đạt
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| 1 | Bundle ban đầu 340 KB thô (mục tiêu 250 KB); gzip 110 KB | Phần lớn là React + router + axios; tách vendor chunk hoặc bỏ dần thư viện ít dùng ở P4-11 |
+| 2 | Còn 12 quan hệ JPA `EAGER` | Đổi `LAZY` từng quan hệ khi có `QueryCountIT` bao phủ |
+| 3 | Kịch bản Playwright chưa chạy trong CI | Đưa vào job `docker-compose-check` (cần dữ liệu seed) |
+| 4 | `/actuator/health` tổng báo DOWN khi SMTP lỗi (readiness vẫn UP — cố ý) | Đã ghi rõ trong `DEPLOYMENT.md` |
+
+### 14.5. Việc của bạn
+
+1. Merge PR `develop` → `main`, tạo tag **`v0.3.0-business`** (GĐ2) và **`v0.4.0-hardening`** (GĐ3).
+2. **Sao lưu DB trước** khi chạy bản mới (Flyway sẽ chạy V4–V6): `docker exec taskify-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -uroot doan_ltmmt' > backup.sql`. Container nay tên `taskify-*` (không còn `ktpm-*`).
+3. Truy cập qua HTTP bằng IP LAN (không phải `localhost`) thì đặt `APP_AUTH_REFRESH_COOKIE_SECURE=false` trong `.env`, nếu không trình duyệt sẽ không giữ phiên đăng nhập. Production: dùng HTTPS (`docs/DEPLOYMENT.md`).
+
+---
+
+## 15. Giai đoạn 4 — Tính năng mới & mở rộng (8/9 task thực hiện được) — 24/10/2026
+
+> Commit trên `develop`: `1f08685` (P4-03) → commit P4-10. Chi tiết từng task: `Plan/plan1.md` mục 8. P4-04 (Team) và P4-07 (Học phí) để sau v1.0 theo D-01, D-05.
+
+### 15.1. Kết quả theo task
+
+| Task | Kết quả chính | Đo được / test |
+|---|---|---|
+| P4-03 Import Excel | File mẫu, kiểm tra từng dòng (không ghi CSDL), tải danh sách lỗi, nhập dòng hợp lệ + mã kích hoạt gửi giãn cách | `UserImportIT`; giao diện: 3 dòng → 2 hợp lệ, 1 lỗi |
+| P4-02 Nhật ký hệ thống | Lọc theo nhóm/hành động/người/thời gian, IP + trình duyệt (V7), xuất CSV chống CSV-injection, tự xóa sau 12 tháng (giữ nhật ký điểm) | `AuditLogIT` |
+| P4-01 Dashboard | Số liệu thật theo vai trò, thời gian phản hồi của GV (V8), biểu đồ HTML/CSS (không thêm thư viện), xuất Excel 3 sheet | `DashboardIT`; số trên trang khớp API |
+| P4-05 Chấm theo mốc | Mốc có trọng số, nộp đúng/trễ hạn, chấm từng mốc, điểm đề xuất có trọng số (V9); lịch gồm mốc | `MilestoneGradeIT` |
+| P4-06 Cài đặt thông báo | Bật/tắt email theo nhóm, thư tổng hợp 07:30 (V10) | `NotificationSettingsIT` |
+| P4-08 Giám sát | Prometheus + Grafana (`--profile monitoring`), `/actuator/prometheus` bảo vệ bằng `X-Metrics-Token`, 6 cảnh báo | `MetricsEndpointIT`; chạy thật: target *up*, dashboard tự nạp |
+| P4-10 Nhiều instance | Relay STOMP → RabbitMQ, kênh riêng theo id người dùng, ShedLock (V11), giới hạn tần suất dùng chung qua CSDL, `docker-compose.scale.yml` ([ADR-0011](../../docs/adr/0011-chay-nhieu-instance.md)) | `RealtimeRelayIT` (2 instance + RabbitMQ), `SchedulerLockIT`, `JdbcRateLimitStoreIT`; thử thật 2 container (mục 15.3) |
+| P4-11 Giao diện + a11y | Lịch học thuật, Kênh thảo luận nhóm, Chi tiết đề tài (`GET /api/topics/{id}`); hộp thoại chuẩn, liên kết bỏ qua, focus khi đổi trang | axe-core: **0 vi phạm WCAG 2.1 A/AA** trên 21 trang × sáng/tối (trước: 70 / 249); `TopicDetailIT`; ui-check-gd4 **44/44** |
+| P4-09 Triển khai production | **Chưa làm** — cần máy chủ, tên miền, HTTPS thật | Đã có `DEPLOYMENT.md`, `AdminBootstrap`, giám sát, chế độ nhiều instance |
+
+### 15.2. Lỗi phát hiện trong GĐ4 và đã xử lý
+
+| # | Vấn đề | Mức độ | Xử lý |
+|---|---|---|---|
+| 1 | Các màu `error`, `secondary-container`, `tertiary` chưa khai báo trong theme → thông báo lỗi và nút Từ chối/Xóa (`bg-error text-white`) **không hiện màu**, gần như vô hình | 🟠 | Khai báo đủ token cho cả sáng/tối (`928fd3a`) |
+| 2 | **Chế độ tối hỏng hẳn**: `App.css` cũ (1321 dòng, không còn class nào dùng) ép màu chữ/nền của `body` → chữ tối trên nền tối (axe: 249 lỗi tương phản) | 🟠 | Xóa `App.css`; nút nền `primary`/`error` dùng `text-on-*`; `bg-white` có biến thể tối |
+| 3 | 70 vi phạm WCAG ở chế độ sáng: chữ làm mờ bằng `opacity`, 11 `<select>` + 2 ô nhập không có nhãn, 13 nút chỉ có icon không có tên, `<main>` lồng nhau | 🟡 | 81 nhãn gắn `htmlFor`, `aria-label`, một vùng `<main>`; `scripts/a11y-check.mjs` để chạy lại |
+| 4 | 7 nút/ô **không có chức năng** (tìm kiếm toàn cục, Trợ giúp, Google/SSO, gọi video, thông tin) và trạng thái "Đang hoạt động"/"Trực tuyến" luôn hiện | 🟡 | Gỡ; CSP `img-src` bỏ `www.gstatic.com` |
+| 5 | RabbitMQ từ chối đích `/topic/progress/5` ("Invalid destination") | 🟠 | Đích dạng chấm `/topic/progress.5` cho cả hai chế độ broker |
+| 6 | Với 2 instance, thông báo riêng (`/user/queue/*`) **bị mất** khi người dùng vừa tải lại trang: instance gửi chỉ biết phiên ở instance kia qua bản đồng bộ 10 giây/lần (tái hiện được sau khi khởi động lại RabbitMQ) | 🔴 khi chạy nhiều instance | Kênh riêng `/topic/notifications.{userId}`, `/topic/messages.{userId}`, chỉ chủ kênh được đăng ký → broker phát tới mọi tab trên mọi instance |
+| 7 | Bộ lọc nhật ký hiện mã thô `GRADE_MILESTONE` | 🟢 | Thêm nhãn "Chấm điểm mốc" |
+| 8 | Trang chi tiết hiện "ThS. ThS. Giảng viên" (họ tên đã có học vị) | 🟢 | Không lặp học vị |
+
+### 15.3. Kiểm thử cuối
+
+| Hạng mục | Kết quả |
+|---|---|
+| `mvnw verify` | **369/369**, JaCoCo đạt ngưỡng |
+| `npm run check` | lint **0 cảnh báo** · Vitest **41/41** · build đạt (bundle ban đầu 341 KB, gzip 111 KB; trang mới tải lười 9–17 KB) |
+| Smoke test | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** |
+| Giao diện (1 instance) | `ui-check` · `gd2` · `gd3` · `gd4` (44) · `ws-check` đều đạt |
+| Accessibility | `a11y-check.mjs`: 0 vi phạm WCAG 2.1 A/AA, 21 trang × chế độ sáng + tối |
+| **2 instance + RabbitMQ** | smoke + ui-check/gd2/gd3/gd4 đạt qua nginx chia tải (586 / 445 request); WebSocket ở `backend-2`, thao tác ở `backend` → thông báo đến đúng người (lặp 3 lần sau khi khởi động lại RabbitMQ); đăng nhập sai luân phiên bị chặn đúng ở lần 121 (ngưỡng 120 chung); mất RabbitMQ: readiness UP, đăng nhập 200, relay tự nối lại; Prometheus thấy cả 2 instance |
+
+### 15.4. Còn lại / chưa đạt
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| 1 | **P4-09** chưa làm: máy chủ, tên miền, HTTPS, sao lưu theo lịch + diễn tập khôi phục, staging, CD | Làm khi có hạ tầng; mọi phần chuẩn bị đã có trong `docs/DEPLOYMENT.md` |
+| 2 | Danh sách đề tài của sinh viên **chưa lọc theo lớp** (thấy 60 đề tài, đúng ra 35) — lệch với `SECURITY.md`; có từ trước GĐ4 | Đã tách thành việc riêng; trang chi tiết mới theo cùng quy tắc với danh sách |
+| 3 | Lịch chưa có dạng Tuần/Ngày; thảo luận chưa có "tài liệu đã chia sẻ"; đề tài chưa có trường Mục tiêu / Sản phẩm bàn giao | Bổ sung khi có yêu cầu (cần thêm cột cho đề tài) |
+| 4 | Không gian làm việc của sinh viên chỉ hiện đề tài được duyệt đầu tiên | Dùng `TopicPicker` như trang Lịch/Thảo luận |
+| 5 | Kịch bản Playwright + `a11y-check` chưa chạy trong CI; Alertmanager chưa cấu hình | Đưa vào job `docker-compose-check`; thêm Alertmanager khi có kênh nhận cảnh báo |
+
+### 15.5. Việc của bạn
+
+1. Merge PR `develop` → `main`; tạo tag **`v0.3.0-business`** (GĐ2), **`v0.4.0-hardening`** (GĐ3). Tag `v1.0.0` sau khi xong P4-09.
+2. **Sao lưu DB trước** khi chạy bản mới — Flyway sẽ chạy V4 → V11.
+3. Production: đặt `METRICS_TOKEN`, `APP_BOOTSTRAP_ADMIN_USERNAME/EMAIL` (lần đầu), dùng HTTPS (hoặc `APP_AUTH_REFRESH_COOKIE_SECURE=false` khi chạy thử qua HTTP bằng IP LAN).
+4. Kênh WebSocket đã đổi tên (P4-10): frontend và backend phải cập nhật cùng lúc (cùng một lần `docker compose up`); tab trình duyệt đang mở cần tải lại.
+5. Muốn chạy 2 instance: đặt `APP_REALTIME_RELAY_PASSCODE` rồi dùng `docker-compose.scale.yml` (`docs/DEPLOYMENT.md` §8).

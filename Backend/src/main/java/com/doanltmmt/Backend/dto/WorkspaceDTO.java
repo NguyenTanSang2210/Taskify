@@ -1,5 +1,6 @@
 package com.doanltmmt.Backend.dto;
 
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.entity.Workspace;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public class WorkspaceDTO {
     private String semester;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
-    private String status;
+    private WorkspaceStatus status;
     private boolean active;
 
     public WorkspaceDTO(Workspace ws) {

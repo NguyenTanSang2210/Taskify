@@ -3,21 +3,26 @@ import { notificationsApi } from "../api/notificationsApi";
 import { connectAndSubscribe } from "../ws/stomp";
 import InlineNotice from "../components/InlineNotice";
 import { useAuth } from "../context/AuthContext";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
   const userId = user?.id;
 
+  const PAGE_SIZE = 20;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageInfo, setPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0 });
   const [notice, setNotice] = useState(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const data = await notificationsApi.listMine(userId);
-      setItems(data || []);
+      const data = await notificationsApi.listMine(userId, { page: 0, size: PAGE_SIZE });
+      setItems(data?.items || []);
+      setPageInfo({ page: 0, totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
     } catch (e) {
       console.error(e);
     } finally {
@@ -25,14 +30,31 @@ export default function NotificationsPage() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // "Tải thêm": nối trang kế tiếp, bỏ trùng (thông báo realtime mới có thể đã đẩy các mục cũ xuống trang sau)
+  const loadMore = async () => {
+    const next = pageInfo.page + 1;
+    setLoadingMore(true);
+    try {
+      const data = await notificationsApi.listMine(userId, { page: next, size: PAGE_SIZE });
+      setItems((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...(data?.items || []).filter((x) => !seen.has(x.id))];
+      });
+      setPageInfo({ page: next, totalPages: data?.totalPages || 0, totalElements: data?.totalElements || 0 });
+    } catch (e) {
+      console.error(e);
+      setNotice({ type: "danger", message: e.message || "Không tải thêm được thông báo" });
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useLoadEffect(load);
 
   useEffect(() => {
     if (!userId) return;
     const client = connectAndSubscribe({
-      destination: "/user/queue/notifications",
+      destination: `/topic/notifications.${userId}`,
       onMessage: async (payload) => {
         const n = payload?.notification;
         if (n) {
@@ -91,11 +113,11 @@ export default function NotificationsPage() {
            <button 
              onClick={markAllAsRead} 
              disabled={loading || items.length === 0}
-             className="px-6 py-3 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+             className="px-6 py-3 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
            >
               Đánh dấu tất cả đã đọc
            </button>
-           <button onClick={load} className="p-2.5 bg-white border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-all">
+           <button aria-label="Làm mới" onClick={load} className="p-2.5 bg-white dark:bg-slate-900 border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-all">
               <span className="material-symbols-outlined">refresh</span>
            </button>
         </div>
@@ -115,12 +137,12 @@ export default function NotificationsPage() {
       {/* Notifications List Area */}
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
          {loading ? (
-           <div className="flex-grow flex flex-col items-center justify-center p-20 opacity-30 select-none">
+           <div className="flex-grow flex flex-col items-center justify-center p-20 text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
               <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mb-4"></div>
               <p className="text-[10px] font-black uppercase tracking-widest text-outline">Đang tải nhật ký...</p>
            </div>
          ) : items.length === 0 ? (
-           <div className="flex-grow flex flex-col items-center justify-center p-32 text-center opacity-30 select-none">
+           <div className="flex-grow flex flex-col items-center justify-center p-32 text-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
               <span className="material-symbols-outlined text-7xl mb-6">notifications_off</span>
               <h3 className="text-xl font-black uppercase tracking-[0.2em] text-outline">Hộp thư trống</h3>
               <p className="text-[10px] font-bold text-outline mt-2 leading-relaxed uppercase tracking-widest max-w-[280px]">Hiện tại bạn không có thông báo học thuật nào mới.</p>
@@ -155,7 +177,7 @@ export default function NotificationsPage() {
                           </div>
 
                           <div>
-                             <h3 className={`text-base font-black uppercase tracking-tight leading-snug group-hover:text-primary transition-colors ${!isRead ? 'text-on-surface' : 'text-on-surface-variant/70'}`}>
+                             <h3 className={`text-base font-black uppercase tracking-tight leading-snug group-hover:text-primary transition-colors ${!isRead ? 'text-on-surface' : 'text-on-surface-variant'}`}>
                                 {n.title}
                              </h3>
                              <p className="text-[13px] font-medium text-outline leading-relaxed mt-1.5 line-clamp-3">
@@ -167,7 +189,7 @@ export default function NotificationsPage() {
                             {!isRead && (
                                <button 
                                  onClick={() => markRead(n.id)}
-                                 className="px-5 py-2.5 bg-primary text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                 className="px-5 py-2.5 bg-primary text-on-primary rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                >
                                   Đánh dấu đã đọc
                                </button>
@@ -183,6 +205,18 @@ export default function NotificationsPage() {
                     </div>
                  );
               })}
+              {pageInfo.page < pageInfo.totalPages - 1 && (
+                 <div className="p-6 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-8 py-3 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-all border border-outline-variant/10 disabled:opacity-50"
+                    >
+                      {loadingMore ? "Đang tải…" : `Tải thêm (${items.length}/${pageInfo.totalElements})`}
+                    </button>
+                 </div>
+              )}
            </div>
          )}
       </div>

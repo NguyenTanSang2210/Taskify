@@ -9,3 +9,6 @@
 
 # Uploaded files (runtime data). The app / docker volume create this folder on demand.
 Backend/uploads/
+
+# Công cụ kiểm thử cài tạm ở thư mục gốc (vd. axe-core cho scripts/a11y-check.mjs)
+/node_modules/

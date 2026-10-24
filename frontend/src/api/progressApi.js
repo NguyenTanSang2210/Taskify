@@ -13,8 +13,9 @@ export const progressApi = {
     });
     return res.data;
   },
-  listByTopic: async (topicId) => {
-    const res = await api.get(`/progress/topic/${topicId}`);
+  // Trang { items, page, size, totalElements, totalPages }, mới nhất trước
+  listByTopic: async (topicId, { page = 0, size = 50 } = {}) => {
+    const res = await api.get(`/progress/topic/${topicId}`, { params: { page, size } });
     return res.data;
   },
   comment: async (id, { lecturerComment, status, deadline }) => {

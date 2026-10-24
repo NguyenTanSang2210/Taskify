@@ -20,6 +20,13 @@ public class AuditLog {
 
     private LocalDateTime timestamp;
 
+    /** P4-02: IP và trình duyệt của request gây ra bản ghi (null với tác vụ nền / scheduler). */
+    @Column(name = "ip_address", length = 64)
+    private String ipAddress;
+
+    @Column(name = "user_agent", length = 255)
+    private String userAgent;
+
     public AuditLog() {}
 
     public AuditLog(String action, String entityName, String entityId, String actorUsername, String details) {
@@ -46,4 +53,8 @@ public class AuditLog {
     public void setDetails(String details) { this.details = details; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getIpAddress() { return ipAddress; }
+    public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+    public String getUserAgent() { return userAgent; }
+    public void setUserAgent(String userAgent) { this.userAgent = userAgent; }
 }

@@ -1,8 +1,14 @@
 package com.doanltmmt.Backend.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -12,12 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Mặc định TỪ CHỐI: duyệt MỌI endpoint đã đăng ký trong ứng dụng và khẳng định rằng, khi không có token,
@@ -32,9 +32,13 @@ class SecurityEndpointsIT extends AbstractSecurityIT {
             "/api/auth/otp/verify",
             "/api/auth/otp/resend",
             "/api/auth/activate",
-            "/api/auth/password/initial");
+            "/api/auth/password/initial",
+            "/api/auth/password/forgot",   // P2-05
+            "/api/auth/password/reset",    // P2-05
+            "/api/auth/refresh",           // P3-14: xác thực bằng cookie refresh token
+            "/api/auth/logout");           // P3-14
 
-    @Autowired private RequestMappingHandlerMapping mapping;
+    @Autowired @Qualifier("requestMappingHandlerMapping") private RequestMappingHandlerMapping mapping;
 
     @Test
     void everyRegisteredEndpoint_requiresAuthentication_exceptTheExplicitPublicList() throws Exception {
@@ -55,7 +59,10 @@ class SecurityEndpointsIT extends AbstractSecurityIT {
                     checked++;
                     int s = mvc.perform(request(m, url)).andReturn().getResponse().getStatus();
                     boolean isPublic = m == HttpMethod.POST && PUBLIC_POST.contains(url);
-                    if (isPublic) {
+                    if (isPublic && url.equals("/api/auth/refresh")) {
+                        // không có cookie refresh → 401 là đúng nghiệp vụ; RefreshTokenIT kiểm tra gọi được không cần access token
+                        assertEquals(401, s);
+                    } else if (isPublic) {
                         assertTrue(s != 401 && s != 403, "Endpoint công khai bị chặn nhầm: " + m + " " + url + " → " + s);
                     } else if (s != 401) {
                         openEndpoints.add(m + " " + url + " → " + s);

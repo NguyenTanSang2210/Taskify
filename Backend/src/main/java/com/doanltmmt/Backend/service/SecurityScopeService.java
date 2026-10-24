@@ -20,11 +20,11 @@ public class SecurityScopeService {
     public User requireCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthenticated");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
         String username = auth.getName();
         return userRepo.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy người dùng."));
     }
 
     public boolean hasRole(String role) {
@@ -36,16 +36,16 @@ public class SecurityScopeService {
 
     public void requireDepartmentAccess(Long departmentId) {
         if (departmentId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "departmentId is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn khoa (departmentId).");
         }
         if (hasRole("ADMIN")) return;
         if (!hasRole("DEPARTMENT_ADMIN")) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này.");
         }
         User current = requireCurrentUser();
         Long currentDeptId = current.getDepartment() != null ? current.getDepartment().getId() : null;
         if (currentDeptId == null || !currentDeptId.equals(departmentId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Out of scope");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập dữ liệu này.");
         }
     }
 }

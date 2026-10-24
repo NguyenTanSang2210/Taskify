@@ -1,20 +1,23 @@
 package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.WorkspaceDTO;
+import com.doanltmmt.Backend.dto.request.WorkspaceRequest;
 import com.doanltmmt.Backend.entity.Department;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
+import com.doanltmmt.Backend.exception.ApiException;
+import com.doanltmmt.Backend.exception.ErrorCodes;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
+import com.doanltmmt.Backend.util.Inputs;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @SuppressWarnings("null")
@@ -36,6 +39,18 @@ public class WorkspaceService {
         this.auditLogService = auditLogService;
     }
 
+    /** Đợt ở trạng thái OPEN_TOPIC của khoa người dùng (Admin: mọi khoa). */
+    @Transactional(readOnly = true)
+    public List<WorkspaceDTO> listOpenForTopics() {
+        if (scope.hasRole("ADMIN")) {
+            return repo.findByStatusOrderByIdDesc(WorkspaceStatus.OPEN_TOPIC).stream().map(WorkspaceDTO::new).toList();
+        }
+        var dept = scope.requireCurrentUser().getDepartment();
+        if (dept == null) return List.of();
+        return repo.findByDepartment_IdAndStatusOrderByIdDesc(dept.getId(), WorkspaceStatus.OPEN_TOPIC).stream().map(WorkspaceDTO::new).toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<WorkspaceDTO> list(Long departmentId) {
         List<Workspace> list;
         if (departmentId == null) {
@@ -53,32 +68,34 @@ public class WorkspaceService {
         return list.stream().map(WorkspaceDTO::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public WorkspaceDTO get(Long id) {
-        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         return new WorkspaceDTO(w);
     }
 
     @Transactional
-    public WorkspaceDTO create(Map<String, Object> body) {
-        Long departmentId = body.get("departmentId") != null ? Long.valueOf(String.valueOf(body.get("departmentId"))) : null;
-        if (!scope.hasRole("ADMIN")) {
+    public WorkspaceDTO create(WorkspaceRequest body) {
+        Long departmentId;
+        if (scope.hasRole("ADMIN")) {
+            departmentId = body.departmentId();
+            if (departmentId == null) throw Inputs.badRequest("Khoa (departmentId) là bắt buộc");
+        } else {
             departmentId = scope.requireCurrentUser().getDepartment() != null ? scope.requireCurrentUser().getDepartment().getId() : null;
         }
         scope.requireDepartmentAccess(departmentId);
-        Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-        String name = String.valueOf(body.getOrDefault("name", "")).trim();
-        if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
-        
+        Department dept = deptRepo.findById(departmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khoa."));
+
         Workspace w = new Workspace();
         w.setDepartment(dept);
-        w.setName(name);
-        if (body.get("type") != null) w.setType(String.valueOf(body.get("type")).trim());
-        if (body.get("semester") != null) w.setSemester(String.valueOf(body.get("semester")).trim());
-        if (body.get("active") != null) w.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        if (body.get("startAt") != null) w.setStartAt(LocalDateTime.parse(String.valueOf(body.get("startAt"))));
-        if (body.get("endAt") != null) w.setEndAt(LocalDateTime.parse(String.valueOf(body.get("endAt"))));
-        if (w.getStatus() == null || w.getStatus().isBlank()) w.setStatus("DRAFT");
+        w.setName(body.name());
+        w.setType(body.type());
+        w.setSemester(body.semester());
+        if (body.active() != null) w.setActive(body.active());
+        w.setStartAt(body.startAt());
+        w.setEndAt(body.endAt());
+        validatePeriod(w);
         
         Workspace saved = repo.save(w);
         auditLogService.log("CREATE_WORKSPACE", "Workspace", saved.getId().toString(), "dept=" + dept.getId());
@@ -86,26 +103,24 @@ public class WorkspaceService {
     }
 
     @Transactional
-    public WorkspaceDTO update(Long id, Map<String, Object> body) {
-        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+    public WorkspaceDTO update(Long id, WorkspaceRequest body) {
+        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt."));
         scope.requireDepartmentAccess(w.getDepartment().getId());
         
-        if (w.getStatus() != null && !w.getStatus().equalsIgnoreCase("DRAFT")) {
-            if (body.get("name") != null || body.get("type") != null || body.get("semester") != null || body.get("startAt") != null || body.get("endAt") != null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace is not editable in current status");
+        if (w.getStatus() != WorkspaceStatus.DRAFT) {
+            if (body.touchesDraftOnlyFields()) {
+                throw ApiException.badRequest(ErrorCodes.WORKSPACE_PHASE, "Chỉ sửa thông tin đợt khi đợt còn là bản nháp.");
             }
         }
         
-        if (body.get("name") != null) {
-            String name = String.valueOf(body.get("name")).trim();
-            if (!name.isBlank()) w.setName(name);
-        }
-        if (body.get("type") != null) w.setType(String.valueOf(body.get("type")).trim());
-        if (body.get("semester") != null) w.setSemester(String.valueOf(body.get("semester")).trim());
-        if (body.get("active") != null) w.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
-        if (body.get("startAt") != null) w.setStartAt(LocalDateTime.parse(String.valueOf(body.get("startAt"))));
-        if (body.get("endAt") != null) w.setEndAt(LocalDateTime.parse(String.valueOf(body.get("endAt"))));
-        
+        if (body.name() != null) w.setName(body.name());
+        if (body.type() != null) w.setType(body.type());
+        if (body.semester() != null) w.setSemester(body.semester());
+        if (body.active() != null) w.setActive(body.active());
+        if (body.startAt() != null) w.setStartAt(body.startAt());
+        if (body.endAt() != null) w.setEndAt(body.endAt());
+        validatePeriod(w);
+
         Workspace saved = repo.save(w);
         auditLogService.log("UPDATE_WORKSPACE", "Workspace", saved.getId().toString(), "updated");
         return new WorkspaceDTO(saved);
@@ -113,19 +128,18 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceDTO transition(Long id, String to) {
-        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workspace not found"));
+        Workspace w = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đợt"));
         scope.requireDepartmentAccess(w.getDepartment().getId());
-        
-        String current = normalizeStatus(w.getStatus());
-        String target = normalizeStatus(to);
-        
-        if (!isValidTransition(current, target)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid transition: " + current + " -> " + target);
+
+        WorkspaceStatus current = w.getStatus();
+        WorkspaceStatus target = WorkspaceStatus.parse(to);
+        if (!current.canTransitionTo(target)) {
+            throw ApiException.badRequest(ErrorCodes.INVALID_TRANSITION, "Không thể chuyển đợt từ \"" + current.label() + "\" sang \"" + target.label() + "\"");
         }
-        
+
         requireTransitionPreconditions(w, current, target);
         w.setStatus(target);
-        
+
         Workspace saved = repo.save(w);
         auditLogService.log("TRANSITION_WORKSPACE", "Workspace", saved.getId().toString(), current + " -> " + target);
         return new WorkspaceDTO(saved);
@@ -133,45 +147,31 @@ public class WorkspaceService {
 
     @Transactional
     public WorkspaceDTO open(Long id) {
-        return transition(id, "OPEN_TOPIC");
+        return transition(id, WorkspaceStatus.OPEN_TOPIC.name());
     }
 
     @Transactional
     public WorkspaceDTO close(Long id) {
-        return transition(id, "CLOSED");
+        return transition(id, WorkspaceStatus.CLOSED.name());
     }
 
-    private String normalizeStatus(String status) {
-        if (status == null) return "DRAFT";
-        String s = status.trim().toUpperCase();
-        if (s.equals("OPEN")) return "OPEN_TOPIC";
-        return s;
-    }
-
-    private boolean isValidTransition(String from, String to) {
-        if (from.equals(to)) return true;
-        return switch (from) {
-            case "DRAFT" -> to.equals("OPEN_TOPIC");
-            case "OPEN_TOPIC" -> to.equals("OPEN_REGISTRATION") || to.equals("CLOSED");
-            case "OPEN_REGISTRATION" -> to.equals("LOCK_REGISTRATION") || to.equals("CLOSED");
-            case "LOCK_REGISTRATION" -> to.equals("IN_PROGRESS") || to.equals("CLOSED");
-            case "IN_PROGRESS" -> to.equals("CLOSED");
-            case "CLOSED" -> false;
-            default -> false;
-        };
-    }
-
-    private void requireTransitionPreconditions(Workspace w, String from, String to) {
-        if (from.equals(to)) return;
-        if (to.equals("OPEN_REGISTRATION")) {
+    private void requireTransitionPreconditions(Workspace w, WorkspaceStatus from, WorkspaceStatus to) {
+        if (from == to) return;
+        if (to == WorkspaceStatus.OPEN_REGISTRATION) {
             long activeClassCount = workspaceClassRepo.countByWorkspace_IdAndActiveTrue(w.getId());
             if (activeClassCount <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace must have at least one active class before opening registration");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần gán ít nhất một lớp cho đợt trước khi mở đăng ký");
             }
             long topicCount = topicRepo.countByWorkspace_Id(w.getId());
             if (topicCount <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workspace must have at least one topic before opening registration");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần có ít nhất một đề tài trong đợt trước khi mở đăng ký");
             }
+        }
+    }
+
+    private static void validatePeriod(Workspace w) {
+        if (w.getStartAt() != null && w.getEndAt() != null && w.getEndAt().isBefore(w.getStartAt())) {
+            throw Inputs.badRequest("Ngày kết thúc phải sau ngày bắt đầu");
         }
     }
 }

@@ -1,0 +1,65 @@
+# P4-10 — chạy 2 instance backend sau nginx (cùng máy chủ), realtime qua RabbitMQ, bộ đếm giới hạn tần suất dùng chung.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --build --wait
+#
+# Cần trong .env: APP_REALTIME_RELAY_PASSCODE (mật khẩu RabbitMQ — `openssl rand -hex 24`).
+# nginx tự chia tải: hai container cùng tên mạng "backend" → nginx dùng cả hai địa chỉ (round-robin).
+# Thêm instance thứ ba: chép khối backend-2 thành backend-3 (đổi container_name).
+
+x-relay-env: &relay-env
+  APP_REALTIME_RELAY_ENABLED: "true"
+  APP_REALTIME_RELAY_HOST: rabbitmq
+  APP_REALTIME_RELAY_PASSCODE: ${APP_REALTIME_RELAY_PASSCODE:?Thiếu APP_REALTIME_RELAY_PASSCODE trong .env (mật khẩu RabbitMQ)}
+  APP_RATE_LIMIT_STORE: jdbc
+
+services:
+  rabbitmq:
+    image: rabbitmq:4.1.4-management-alpine
+    container_name: taskify-rabbitmq
+    restart: unless-stopped
+    user: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: taskify
+      RABBITMQ_DEFAULT_PASS: ${APP_REALTIME_RELAY_PASSCODE:?Thiếu APP_REALTIME_RELAY_PASSCODE trong .env (mật khẩu RabbitMQ)}
+    volumes:
+      - ./deploy/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      # giao diện quản lý RabbitMQ — chỉ trên máy chủ
+      - "${RABBITMQ_UI_HOST_PORT:-127.0.0.1:15672}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_listener", "61613"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment: *relay-env
+
+  backend-2:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    container_name: taskify-backend-2
+    # khởi động sau instance đầu: migration Flyway, tạo Admin đầu tiên / dữ liệu demo chỉ chạy một lần
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment: *relay-env
+    # không mở cổng ra máy chủ; nginx gọi qua tên mạng "backend"
+    ports: !reset []
+    networks:
+      default:
+        aliases: [backend]
+
+  frontend:
+    depends_on:
+      backend-2:
+        condition: service_healthy
+
+volumes:
+  rabbitmq_data:

@@ -1,13 +1,20 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { registrationApi } from "../api/registrationApi";
+import { topicApi } from "../api/topicApi";
+import { useAuth } from "../context/AuthContext";
 import RegistrationTable from "../components/RegistrationTable";
+import GradeHistoryModal from "../components/GradeHistoryModal";
 import InlineNotice from "../components/InlineNotice";
 import { connectAndSubscribe } from "../ws/stomp";
+import RegistrationReviewModal from "./lecturerRegistration/RegistrationReviewModal";
+import useLoadEffect from '../hooks/useLoadEffect';
 
 export default function LecturerRegistrationPage() {
   const location = useLocation();
-  const [topicId, setTopicId] = useState("1");
+  const { user } = useAuth();
+  const [topicId, setTopicId] = useState(() => new URLSearchParams(location.search).get("topicId") || "");
+  const [topics, setTopics] = useState([]);
   const [data, setData] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -16,14 +23,18 @@ export default function LecturerRegistrationPage() {
 
   // Status for modal
   const [showModal, setShowModal] = useState(false);
-  const [modalAction, setModalAction] = useState(null); // "approve" | "reject" | "grade"
+  const [modalAction, setModalAction] = useState(null); // "approve" | "reject" | "grade" | "revision"
   const [selectedReg, setSelectedReg] = useState(null);
   const [notice, setNotice] = useState(null);
   
   const [gradeScore, setGradeScore] = useState(0);
   const [gradeFeedback, setGradeFeedback] = useState("");
+  const [gradeReason, setGradeReason] = useState(""); // lý do sửa điểm đã có / lý do yêu cầu chấm lại
+  const [historyReg, setHistoryReg] = useState(null);
+  const [modalError, setModalError] = useState("");
 
   const load = useCallback(async () => {
+    if (!topicId) return;
     try {
       const result = await registrationApi.getByTopic(topicId);
       setData(result || []);
@@ -32,18 +43,31 @@ export default function LecturerRegistrationPage() {
     }
   }, [topicId]);
 
+  // Đề tài của giảng viên để chọn; chưa chọn (không có ?topicId=) thì lấy đề tài đầu tiên
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const qId = params.get("topicId");
-    if (qId) {
-      setTopicId(qId);
-    }
-  }, [location.search]);
+    if (!user?.id) return;
+    let cancelled = false;
+    topicApi
+      .getAllTopics({ lecturerId: user.id, size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.items || [];
+        setTopics(list);
+        setTopicId((current) => current || (list[0] ? String(list[0].id) : ""));
+      })
+      .catch(() => !cancelled && setNotice({ type: "danger", message: "Không tải được danh sách đề tài." }));
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  // Tải danh sách đăng ký mỗi khi đổi đề tài (trước đây phải bấm "Làm mới" mới thấy dữ liệu)
+  useLoadEffect(load);
 
   useEffect(() => {
     if (!topicId) return;
     const client = connectAndSubscribe({
-      destination: `/topic/registration/${topicId}`,
+      destination: `/topic/registration.${topicId}`,
       onMessage: async (payload) => {
         const type = payload?.type;
         const reg = payload?.registration;
@@ -69,9 +93,17 @@ export default function LecturerRegistrationPage() {
 
   const openGradeModal = (reg) => {
     setSelectedReg(reg);
-    setGradeScore(reg.score || 0);
+    setGradeScore(reg.score ?? "");
     setGradeFeedback(reg.feedback || "");
+    setGradeReason("");
     setModalAction("grade");
+    setShowModal(true);
+  };
+
+  const openRevisionModal = (reg) => {
+    setSelectedReg(reg);
+    setGradeReason("");
+    setModalAction("revision");
     setShowModal(true);
   };
 
@@ -80,10 +112,29 @@ export default function LecturerRegistrationPage() {
     setSelectedReg(null);
     setModalAction(null);
     setRejectReason("");
+    setModalError("");
+  };
+
+  // Kiểm tra sớm ở trình duyệt — cùng quy tắc với backend (GradeService)
+  const validateModal = () => {
+    if (modalAction === "grade") {
+      const score = Number(String(gradeScore).replace(",", "."));
+      if (String(gradeScore).trim() === "" || Number.isNaN(score)) return "Vui lòng nhập điểm.";
+      if (score < 0 || score > 10) return "Điểm phải từ 0 đến 10.";
+      if (Math.abs(score * 4 - Math.round(score * 4)) > 1e-9) return "Điểm chỉ được lẻ đến 0,25 (ví dụ 7,25; 7,5; 7,75).";
+      if (selectedReg.score !== null && !gradeReason.trim()) return "Vui lòng nêu lý do chỉnh sửa điểm.";
+    }
+    if (modalAction === "revision" && !gradeReason.trim()) return "Vui lòng nêu lý do cần chấm lại.";
+    return "";
   };
 
   const handleConfirm = async () => {
     if (!selectedReg || !modalAction) return;
+    const invalid = validateModal();
+    if (invalid) {
+      setModalError(invalid);
+      return;
+    }
 
     setLoadingId(selectedReg.id);
 
@@ -93,16 +144,23 @@ export default function LecturerRegistrationPage() {
       } else if (modalAction === "reject") {
         await registrationApi.reject(selectedReg.id, rejectReason);
       } else if (modalAction === "grade") {
-        await registrationApi.grade(selectedReg.id, gradeScore, gradeFeedback);
+        const score = Number(String(gradeScore).replace(",", "."));
+        await registrationApi.grade(selectedReg.id, score, gradeFeedback, gradeReason.trim());
+      } else if (modalAction === "revision") {
+        await registrationApi.requestRevision(selectedReg.id, gradeReason.trim());
       }
 
       await load();
-      setNotice({ type: "success", message: "Cập nhật dữ liệu thành công!" });
+      setNotice({
+        type: "success",
+        message: modalAction === "revision" ? "Đã gửi yêu cầu chấm lại tới quản trị khoa." : "Cập nhật dữ liệu thành công!",
+      });
+      closeModal();
     } catch (e) {
-      setNotice({ type: "danger", message: e.message || "Thao tác thất bại." });
+      // giữ modal mở để người dùng sửa lại dữ liệu
+      setModalError(e.message || "Thao tác thất bại.");
     } finally {
       setLoadingId(null);
-      closeModal();
     }
   };
 
@@ -110,23 +168,18 @@ export default function LecturerRegistrationPage() {
     const q = search.trim().toLowerCase();
     let arr = data || [];
     if (q) {
-      arr = arr.filter((r) => {
-        const student = r.student || {};
-        const user = student.user || {};
-        return (
-          String(r.id).includes(q) ||
-          (student.studentCode || "").toLowerCase().includes(q) ||
-          (student.className || "").toLowerCase().includes(q) ||
-          (user.fullName || "").toLowerCase().includes(q)
-        );
-      });
+      arr = arr.filter((r) =>
+        String(r.id).includes(q) ||
+        (r.studentCode || "").toLowerCase().includes(q) ||
+        (r.studentName || "").toLowerCase().includes(q)
+      );
     }
 
     const cmp = {
       registered_desc: (a, b) => new Date(b.registeredAt) - new Date(a.registeredAt),
       registered_asc: (a, b) => new Date(a.registeredAt) - new Date(b.registeredAt),
-      studentCode_asc: (a, b) => String(a.student?.studentCode || "").localeCompare(String(b.student?.studentCode || "")),
-      fullName_asc: (a, b) => String(a.student?.user?.fullName || "").localeCompare(String(b.student?.user?.fullName || "")),
+      studentCode_asc: (a, b) => String(a.studentCode || "").localeCompare(String(b.studentCode || "")),
+      fullName_asc: (a, b) => String(a.studentName || "").localeCompare(String(b.studentName || ""), "vi"),
     };
     const sorter = cmp[sortBy] || cmp.registered_desc;
     return [...arr].sort(sorter);
@@ -216,18 +269,25 @@ export default function LecturerRegistrationPage() {
       {/* Control Bar */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-            <div className="lg:col-span-2 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mã Đề Tài</label>
-               <input
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-black transition-all duration-300 outline-none"
+            <div className="lg:col-span-4 space-y-1.5">
+               <label htmlFor="lecturerregistrationpage-select-274" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Đề tài</label>
+               <select id="lecturerregistrationpage-select-274"
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-black transition-all duration-300 outline-none"
                  value={topicId}
                  onChange={(e) => setTopicId(e.target.value)}
-               />
+                 aria-label="Chọn đề tài"
+               >
+                 {!topics.length && <option value="">Chưa có đề tài</option>}
+                 {topicId && !topics.some((t) => String(t.id) === String(topicId)) && <option value={topicId}>Đề tài #{topicId}</option>}
+                 {topics.map((t) => (
+                   <option key={t.id} value={t.id}>{t.title}</option>
+                 ))}
+               </select>
             </div>
             <div className="lg:col-span-3 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Sắp xếp theo</label>
-               <select
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+               <label htmlFor="lecturerregistrationpage-select-289" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Sắp xếp theo</label>
+               <select id="lecturerregistrationpage-select-289"
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
                  value={sortBy}
                  onChange={(e) => setSortBy(e.target.value)}
                >
@@ -237,12 +297,12 @@ export default function LecturerRegistrationPage() {
                  <option value="fullName_asc">Họ tên sinh viên A-Z</option>
                </select>
             </div>
-            <div className="lg:col-span-4 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm sinh viên</label>
+            <div className="lg:col-span-2 space-y-1.5">
+               <label htmlFor="lecturerregistrationpage-input-304" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm sinh viên</label>
                <div className="relative group">
                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-                 <input
-                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                 <input id="lecturerregistrationpage-input-304"
+                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                    placeholder="Mã số, tên, lớp..."
                    value={search}
                    onChange={(e) => setSearch(e.target.value)}
@@ -250,7 +310,7 @@ export default function LecturerRegistrationPage() {
                </div>
             </div>
             <div className="lg:col-span-3 flex gap-2">
-               <button onClick={load} className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+               <button onClick={load} className="flex-1 px-4 py-3 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
                   Làm mới
                </button>
                <button onClick={handleExportExcel} className="flex-1 px-4 py-3 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-all border border-outline-variant/10">
@@ -269,108 +329,23 @@ export default function LecturerRegistrationPage() {
             onApproveClick={openApproveModal}
             onRejectClick={openRejectModal}
             onGradeClick={openGradeModal}
+            onRevisionClick={openRevisionModal}
+            onHistoryClick={setHistoryReg}
           />
         </div>
       </div>
 
       {/* Modern Modal */}
       {showModal && selectedReg && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl z-10 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
-            {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-outline-variant/5 bg-surface-container-low/30">
-               <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 block">Yêu cầu xác nhận</span>
-                    <h2 className="text-xl font-black text-on-surface uppercase tracking-tight font-headline leading-none">
-                       {modalAction === "approve" ? "Phê duyệt đăng ký" : modalAction === "reject" ? "Từ chối đăng ký" : "Chấm điểm đề tài"}
-                    </h2>
-                  </div>
-                  <button onClick={closeModal} className="p-2 hover:bg-surface-container-high rounded-xl transition-colors">
-                     <span className="material-symbols-outlined">close</span>
-                  </button>
-               </div>
-            </div>
+        <RegistrationReviewModal closeModal={closeModal} gradeFeedback={gradeFeedback} gradeReason={gradeReason} gradeScore={gradeScore} handleConfirm={handleConfirm} loadingId={loadingId} modalAction={modalAction} modalError={modalError} rejectReason={rejectReason} selectedReg={selectedReg} setGradeFeedback={setGradeFeedback} setGradeReason={setGradeReason} setGradeScore={setGradeScore} setRejectReason={setRejectReason} />
+      )}
 
-            {/* Modal Body */}
-            <div className="p-8 space-y-6">
-               <div className="flex items-center gap-4 p-4 bg-surface-container-low rounded-2xl border border-outline-variant/5">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg">
-                     {selectedReg.student?.user?.fullName?.charAt(0)}
-                  </div>
-                  <div>
-                     <p className="text-sm font-black text-on-surface uppercase leading-none">{selectedReg.student?.user?.fullName}</p>
-                     <p className="text-[10px] text-outline font-bold mt-1.5 uppercase tracking-widest">MSSV: {selectedReg.student?.studentCode} • Lớp: {selectedReg.student?.className}</p>
-                  </div>
-               </div>
-
-               {modalAction !== "grade" ? (
-                  <p className="text-sm font-medium text-on-surface-variant leading-relaxed">
-                     Bạn đang chuẩn bị hệ thống để <strong>{modalAction === "approve" ? "PHÊ DUYỆT" : "TỪ CHỐI"}</strong> yêu cầu của sinh viên này. Thao tác này sẽ cập nhật trạng thái đề tài và gửi thông báo cho sinh viên.
-                  </p>
-               ) : (
-                  <div className="space-y-6">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Điểm đánh giá (Hệ 10)</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="10"
-                          className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-3xl font-black text-primary transition-all duration-300 outline-none text-center"
-                          value={gradeScore}
-                          onChange={(e) => setGradeScore(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nhận xét chi tiết</label>
-                        <textarea
-                          className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[120px]"
-                          value={gradeFeedback}
-                          onChange={(e) => setGradeFeedback(e.target.value)}
-                          placeholder="Nhận xét về quá trình thực hiện và kết quả của sinh viên..."
-                        />
-                      </div>
-                      <div className="p-4 bg-secondary-container/20 text-on-secondary-container rounded-xl flex items-center gap-3">
-                         <span className="material-symbols-outlined">info</span>
-                         <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Sau khi lưu điểm, đề tài sẽ tự động chuyển sang trạng thái HOÀN THÀNH.</p>
-                      </div>
-                  </div>
-               )}
-
-               {modalAction === "reject" && (
-                  <div className="space-y-1.5 animate-in slide-in-from-top-4 duration-300">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do từ chối (Gửi đến sinh viên)</label>
-                    <textarea
-                      className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[100px]"
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Giải thích lý do từ chối để sinh viên hiểu rõ và cải thiện..."
-                    />
-                  </div>
-               )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-8 py-6 bg-surface-container-low/30 border-t border-outline-variant/5 flex justify-end gap-3">
-               <button onClick={closeModal} className="px-6 py-3 bg-white text-on-surface-variant font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-surface-container transition-all" disabled={!!loadingId}>
-                  Hủy bỏ
-               </button>
-               <button
-                 onClick={handleConfirm}
-                 className={`px-8 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg ${
-                    modalAction === "reject" 
-                    ? "bg-error text-white shadow-error/20" 
-                    : "bg-primary text-white shadow-primary/20"
-                 } hover:scale-105 active:scale-95 disabled:opacity-50`}
-                 disabled={!!loadingId}
-               >
-                 {loadingId === selectedReg.id ? "Đang xử lý..." : modalAction === "approve" ? "Duyệt ngay" : modalAction === "reject" ? "Từ chối ngay" : "Lưu kết quả"}
-               </button>
-            </div>
-          </div>
-        </div>
+      {historyReg && (
+        <GradeHistoryModal
+          registrationId={historyReg.id}
+          title={`${historyReg.studentName || ""} — ${historyReg.studentCode || ""}`}
+          onClose={() => setHistoryReg(null)}
+        />
       )}
     </div>
   );

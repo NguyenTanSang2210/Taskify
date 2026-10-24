@@ -1,134 +1,127 @@
-# KTPM - He thong quan ly de tai va cong viec nhom
+# Taskify — Hệ thống quản lý đề tài và tiến độ đồ án
 
-## 1. Tong quan du an
-KTPM la he thong web ho tro quan ly de tai hoc thuat va cong viec nhom theo 4 vai tro:
-- ADMIN
-- DEPARTMENT_ADMIN
-- LECTURER
-- STUDENT
+[![CI](https://github.com/NguyenTanSang2210/Taskify/actions/workflows/CI.yml/badge.svg?branch=develop)](https://github.com/NguyenTanSang2210/Taskify/actions/workflows/CI.yml)
+[![CodeQL](https://github.com/NguyenTanSang2210/Taskify/actions/workflows/codeql.yml/badge.svg?branch=develop)](https://github.com/NguyenTanSang2210/Taskify/actions/workflows/codeql.yml)
+![Coverage gate](https://img.shields.io/badge/coverage%20gate-%E2%89%A575%25%20(service%20%E2%89%A580%25)-brightgreen)
+![Java](https://img.shields.io/badge/Java-21-orange) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6db33f) ![React](https://img.shields.io/badge/React-19-61dafb)
 
-He thong gom 2 khoi chinh:
-- Backend (`Backend/`): REST API + WebSocket + xu ly nghiep vu + phan quyen.
-- Frontend (`frontend/`): giao dien nguoi dung theo role, ket noi API realtime.
+Taskify hỗ trợ khoa, giảng viên và sinh viên quản lý trọn vòng đời đồ án: mở đợt, ra đề tài, đăng ký – duyệt, theo dõi tiến độ theo mốc, trao đổi realtime và chấm điểm (có khóa điểm và quy trình chấm lại).
 
-Tai lieu module chi tiet:
-- Backend: `Backend/README.md`
-- Frontend: `frontend/README.md`
+| Đăng nhập (OTP 2 bước cho vai trò quản trị) | Kanban tiến độ của sinh viên | Báo cáo số liệu của khoa |
+|---|---|---|
+| ![Đăng nhập](docs/images/login.png) | ![Kanban](docs/images/student-kanban.png) | ![Thống kê khoa](docs/images/department-stats.png) |
 
-## 2. Cach he thong hoat dong
-Luong tong quat:
-1. Nguoi dung dang nhap tren frontend.
-2. Frontend goi `POST /api/auth/login`, nhan JWT.
-3. Frontend gan JWT vao header `Authorization: Bearer <token>` cho cac request tiep theo.
-4. Backend xac thuc JWT va phan quyen theo role.
-5. Du lieu nghiep vu duoc luu trong MySQL.
-6. Su kien thong bao/tien do/thao luan duoc day realtime qua endpoint `/ws`.
+## 1. Vai trò và chức năng
 
-## 3. Cau truc thu muc
-```text
-KTPM/
-  Backend/                 # Spring Boot API + WebSocket
-  frontend/                # React + Vite UI
-  docs/                    # Tai lieu ky thuat
-  scripts/                 # Script chay nhanh
-  docker-compose.yml       # Chay full stack bang Docker
-  .env.docker.example      # Mau bien moi truong cho Docker
+| Vai trò | Làm được gì |
+|---|---|
+| `ADMIN` | Quản lý tài khoản, vai trò & quyền, khoa; thông báo toàn hệ thống; xem nhật ký kiểm toán; duyệt yêu cầu chấm lại |
+| `DEPARTMENT_ADMIN` | Quản lý đợt đồ án (workspace) và vòng đời của đợt, lớp, phân công giảng viên + quota, duyệt đề tài, báo cáo số liệu khoa |
+| `LECTURER` | Ra đề tài, duyệt đăng ký, chấm điểm (cả theo mốc), nhận xét tiến độ, đặt mốc và sự kiện trên lịch học thuật, nhắn tin/thảo luận nhóm với sinh viên |
+| `STUDENT` | Đăng ký đề tài trong đợt của lớp mình, nộp báo cáo tiến độ (Kanban) và bài theo mốc, xem lịch học thuật, thảo luận nhóm, nhận phản hồi, trao đổi với giảng viên |
+
+Chi tiết từng quy trình: [`documentation_vận_hành.md`](documentation_vận_hành.md). Ma trận phân quyền: [`docs/SECURITY.md`](docs/SECURITY.md).
+
+## 2. Kiến trúc
+
+```mermaid
+flowchart LR
+  B[Trình duyệt<br/>React 19 SPA] -- HTTPS --> N[nginx<br/>taskify-frontend]
+  N -- /api, /ws --> S[Spring Boot 3.5<br/>taskify-backend]
+  S -- JPA + Flyway --> D[(MySQL 8.4<br/>taskify-db)]
+  S -- SMTP --> M[Mail server]
+  S -. STOMP/SockJS .-> B
 ```
 
-## 4. Yeu cau moi truong (chay local khong Docker)
-- Java 21
-- Node.js 20+
-- MySQL 8+
+- **Backend** (`Backend/`): REST API + WebSocket (STOMP), Spring Security (JWT 15 phút + refresh token xoay vòng trong cookie HttpOnly), Bean Validation, Flyway, Actuator.
+- **Frontend** (`frontend/`): React 19 + Vite + Tailwind, route tải lười (lazy), mọi lời gọi API qua `src/api/*`.
+- **Hạ tầng**: Docker Compose (3 container `taskify-db`, `taskify-backend`, `taskify-frontend`) có healthcheck; tùy chọn Prometheus + Grafana (`--profile monitoring`) và chạy 2 instance backend với RabbitMQ (`docker-compose.scale.yml`, xem `docs/DEPLOYMENT.md` §8).
 
-Luu y dong bo giua cac may:
-- Dung `mvnw`/`mvnw.cmd` (Maven Wrapper), khong phu thuoc Maven global.
-- Dung `npm ci` de cai dung version theo `package-lock.json`.
-- Khong commit `.env` that, chi commit file mau `.env.example`.
+Tài liệu kỹ thuật: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (sơ đồ thành phần, ERD, vòng đời trạng thái) · [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) · [`docs/error-codes.md`](docs/error-codes.md) (định dạng lỗi API) · [`docs/adr/`](docs/adr/) (các quyết định kiến trúc) · [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-## 5. Chay du an
+## 3. Cấu trúc thư mục
 
-### Cach 1: Docker Compose (khuyen nghi)
-Tu thu muc goc cua repo:
+```text
+Taskify/
+  Backend/            # Spring Boot (Java 21): controller → service → repository, db/migration (Flyway)
+  frontend/           # React + Vite: pages/, components/, api/, hooks/, layouts/, routes/
+  docs/               # Tài liệu kỹ thuật, ADR, ảnh chụp màn hình
+  scripts/            # Script tạo .env, chạy nhanh, smoke test, kiểm thử giao diện
+  Plan/               # Kế hoạch phát triển và báo cáo theo giai đoạn
+  docker-compose.yml  # Chạy toàn bộ hệ thống
+  .env.docker.example # Mẫu biến môi trường cho Docker
+```
+
+## 4. Chạy nhanh bằng Docker (khuyến nghị)
+
+Yêu cầu: Docker Desktop (hoặc Docker Engine + Compose v2).
 
 ```powershell
-# Tao .env (va Backend/.env) voi JWT_SECRET + mat khau MySQL NGAU NHIEN, an toan.
-# Khong ghi de file da co. Them -Profile prod khi trien khai that; -OtpEmail ten@gmail.com de nhan OTP demo.
+# Tạo .env và Backend/.env với JWT_SECRET + mật khẩu MySQL ngẫu nhiên (không ghi đè file đã có).
+# Mặc định profile dev + dữ liệu demo; thêm -Profile prod khi triển khai thật, -OtpEmail ban@gmail.com để nhận OTP demo.
 .\scripts\init-env.ps1
 
-# Build va chay toan bo stack
-docker compose up --build -d
+docker compose up --build -d --wait   # --wait: chờ tới khi backend "healthy"
 ```
 
-> **Bat buoc:** `JWT_SECRET`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` khong co gia tri mac dinh — thieu la
-> `docker compose` tu choi chay, va backend khong khoi dong o profile `prod` neu dung secret cong khai trong repo.
-> Neu tu tao `.env` bang tay (`Copy-Item .env.docker.example .env`), phai dien du 3 gia tri tren.
+| Thành phần | Địa chỉ mặc định | Đổi cổng bằng biến |
+|---|---|---|
+| Giao diện | http://localhost:5175 | `FRONTEND_HOST_PORT` |
+| API | http://localhost:8081/api | `BACKEND_HOST_PORT` |
+| Health | http://localhost:8081/actuator/health/readiness | — |
+| MySQL | `localhost:3307` | `MYSQL_HOST_PORT` |
+| Prometheus / Grafana (tùy chọn) | http://127.0.0.1:9090 · http://127.0.0.1:3000 — `docker compose --profile monitoring up -d` | `PROMETHEUS_HOST_PORT`, `GRAFANA_HOST_PORT` |
 
-Mac dinh theo file mau:
-- Frontend: `http://localhost:5175`
-- Backend API: `http://localhost:8081/api`
-- MySQL: `localhost:3307`
+> **Bắt buộc:** `JWT_SECRET`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` không có giá trị mặc định — thiếu thì `docker compose` từ chối chạy, và profile `prod` không khởi động với secret công khai trong repo. Tự tạo `.env` bằng tay (`Copy-Item .env.docker.example .env`) thì phải điền đủ ba giá trị này.
 
-Neu trung cong, sua cac bien trong `.env`:
-- `FRONTEND_HOST_PORT`
-- `BACKEND_HOST_PORT`
-- `MYSQL_HOST_PORT`
+> **Cookie phiên đăng nhập:** ở profile `prod` cookie refresh có cờ `Secure`, nên phải truy cập qua **HTTPS** (xem `docs/DEPLOYMENT.md`). Chạy thử qua `http://` bằng IP LAN thì đặt `APP_AUTH_REFRESH_COOKIE_SECURE=false` (`init-env.ps1` tự đặt như vậy cho profile `dev`).
 
-Lenh quan ly:
+**Tài khoản demo** (profile `dev` + `APP_SEED_ENABLED=true`), mật khẩu `123456`:
+
+| Tài khoản | Vai trò | Ghi chú |
+|---|---|---|
+| `admin` | ADMIN | cần OTP (gửi tới `APP_SEED_OTP_EMAIL`, hoặc lấy bằng `.\scripts\get-otp.ps1 admin`) |
+| `deptadmin` | DEPARTMENT_ADMIN | cần OTP |
+| `lecturer` | LECTURER | cần OTP |
+| `student`, `student2` | STUDENT | lớp CNTT-K15 |
+
+Lệnh thường dùng:
+
 ```powershell
-docker compose ps
+docker compose ps                  # backend phải ở trạng thái (healthy)
 docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f db
-docker compose down
-docker compose down -v
+docker compose down                # dừng, giữ dữ liệu
+docker compose down -v             # dừng + XÓA dữ liệu DB (cẩn thận)
 ```
 
-### Cach 2: Chay local tung phan
+## 5. Chạy từng phần khi phát triển
 
-Backend:
+Yêu cầu: Java 21, Node.js ≥ 22.12, MySQL 8 (hoặc dùng MySQL trong compose: `docker compose up -d db`).
+
 ```powershell
-cd Backend
-.\mvnw.cmd spring-boot:run
+.\scripts\run-backend.ps1     # backend local, đọc Backend/.env (http://localhost:8080)
+.\scripts\run-frontend.ps1    # Vite dev server http://localhost:5175 (proxy /api, /ws)
 ```
 
-Frontend:
-```powershell
-cd frontend
-npm ci
-npm run dev
-```
+Hoặc chạy trực tiếp: `cd Backend; .\mvnw.cmd spring-boot:run` và `cd frontend; npm ci; npm run dev`.
 
-Kiem tra nhanh:
-```powershell
-cd Backend
-.\mvnw.cmd -q -DskipTests test-compile
-.\mvnw.cmd -q test
+Schema do **Flyway** quản lý (`Backend/src/main/resources/db/migration`, `ddl-auto=validate`). Thay đổi schema = thêm file `V<n>__mo_ta.sql` mới, không sửa migration đã phát hành. **Sao lưu DB trước khi nâng cấp** (lệnh ở `docs/DEPLOYMENT.md`).
 
-cd ..\frontend
-npm run build
-```
+## 6. Kiểm thử và chất lượng
 
-### Script nhanh co san
-Tu thu muc goc cua repo (script tu tim dung thu muc, chay tu dau cung duoc):
-```powershell
-.\scripts\init-env.ps1              # tao .env / Backend/.env voi secret ngau nhien (khong ghi de)
-.\scripts\pre-demo-check.ps1        # backend compile + test, frontend lint + build
-.\scripts\run-backend.ps1           # backend local (doc Backend/.env)
-.\scripts\run-frontend.ps1          # frontend dev server http://localhost:5175
-.\scripts\get-otp.ps1 admin         # lay ma OTP moi nhat tu DB (khi chua cau hinh email)
-node scripts/smoke-test.mjs         # smoke test toan luong nghiep vu (can stack Docker profile dev)
-```
+| Lệnh | Làm gì |
+|---|---|
+| `cd Backend; .\mvnw.cmd verify` | 369 test (unit + tích hợp trên MySQL thật qua **Testcontainers** — cần Docker; hoặc dùng MySQL có sẵn qua `DB_URL`) + kiểm tra ngưỡng JaCoCo. Báo cáo: `Backend/target/site/jacoco/index.html` |
+| `cd frontend; npm run check` | `lint` (0 cảnh báo) → `test` (Vitest + Testing Library) → `build` |
+| `node scripts/smoke-test.mjs` | Smoke test toàn luồng nghiệp vụ trên stack Docker profile dev |
+| `node scripts/ui-check*.mjs` | Kiểm thử giao diện bằng Playwright (đăng nhập theo vai trò, phân trang, realtime, quét mọi trang/tab) |
+| `node scripts/a11y-check.mjs` | Kiểm tra accessibility WCAG 2.1 AA bằng axe-core trên 21 trang, chế độ sáng và tối (cần `axe-core`, xem đầu file) |
+| `.\scripts\pre-demo-check.ps1` | Kiểm tra nhanh trước buổi demo |
 
-Du lieu demo (profile `dev` + `APP_SEED_ENABLED=true`), mat khau `123456`:
-`admin`, `deptadmin`, `lecturer` (can OTP), `student`, `student2` (lop CNTT-K15).
+CI (GitHub Actions, mỗi push/PR vào `develop`, `main`): backend `verify` + upload báo cáo JaCoCo; frontend lint/test/build; dựng cả stack bằng `docker compose up --wait` rồi gọi thử health, đăng nhập và trang chủ qua nginx. CodeQL chạy mỗi tuần.
 
-## 6. Chuc nang nghiep vu chinh
-- Quan ly workspace theo vong doi hoc ky.
-- Quan ly de tai va dang ky de tai.
-- Theo doi milestone, bao cao tien do.
-- Thao luan nhom, tin nhan va thong bao realtime.
+## 7. Đóng góp
 
-## 7. Tham khao
-- `Backend/README.md`
-- `frontend/README.md`
-- `docs/TECHNICAL_REPORT.md`
+Quy trình nhánh, quy ước commit và checklist trước khi push: [`CONTRIBUTING.md`](CONTRIBUTING.md). Báo lỗ hổng bảo mật: [`docs/SECURITY.md`](docs/SECURITY.md).
+
+Lộ trình và tiến độ: [`Plan/plan1.md`](Plan/plan1.md).

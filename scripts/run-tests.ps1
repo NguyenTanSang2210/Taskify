@@ -24,7 +24,7 @@
 #>
 param(
     [string]$TestDb = "doan_ltmmt_test",
-    [string]$Container = "ktpm-db",
+    [string]$Container = "taskify-db",
     [switch]$UseDevDb,
     [string[]]$MvnArgs = @("test")
 )

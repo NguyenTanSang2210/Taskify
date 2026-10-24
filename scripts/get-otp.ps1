@@ -1,7 +1,7 @@
 ﻿param(
     [Parameter(Mandatory = $true)][string]$Username,
     [ValidateSet("LOGIN", "ACTIVATION", "RESET_PASSWORD")][string]$Purpose = "LOGIN",
-    [string]$Container = "ktpm-db"
+    [string]$Container = "taskify-db"
 )
 
 # Lấy mã OTP mới nhất (chưa dùng) của một tài khoản từ MySQL trong Docker.

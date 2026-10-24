@@ -8,7 +8,7 @@
  * Biến môi trường (tùy chọn):
  *   API_URL       mặc định http://localhost:8081/api   (gọi thẳng backend)
  *   WEB_URL       mặc định http://localhost:5175       (đi qua nginx của frontend)
- *   DB_CONTAINER  mặc định ktpm-db                     (để đọc mã OTP từ DB)
+ *   DB_CONTAINER  mặc định taskify-db                     (để đọc mã OTP từ DB)
  *   REPORT_FILE   nếu đặt: ghi kết quả dạng Markdown ra file này
  *
  * Kết quả mỗi kịch bản:
@@ -26,7 +26,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const API = process.env.API_URL || "http://localhost:8081/api";
 const WEB = process.env.WEB_URL || "http://localhost:5175";
 const API_ORIGIN = new URL(API).origin;
-const DB_CONTAINER = process.env.DB_CONTAINER || "ktpm-db";
+const DB_CONTAINER = process.env.DB_CONTAINER || "taskify-db";
 const PASSWORD = "123456";
 const RUN = Date.now().toString().slice(-6);
 
@@ -341,7 +341,7 @@ async function main() {
   await step("14", "Giảng viên nhận xét → sinh viên nhận thông báo", async () => {
     expectStatus(await call("PUT", `/progress/${ctx.prId}/comment`, { token: ctx.lecturer.token, body: { lecturerComment: "Làm tốt, bổ sung sơ đồ use case" } }), 200, "Nhận xét");
     const ns = expectStatus(await call("GET", "/notifications/mine", { token: ctx.student.token, query: { userId: ctx.student.id } }), 200, "Thông báo");
-    const found = ns.find((n) => n.refId === ctx.prId && n.title.startsWith("GV nhan xet"));
+    const found = ns.items.find((n) => n.refId === ctx.prId && n.title.startsWith("Giảng viên nhận xét"));
     if (!found) throw new Error("Sinh viên không nhận được thông báo nhận xét");
     return `thông báo #${found.id}`;
   });
@@ -357,8 +357,10 @@ async function main() {
     const content = `Hẹn gặp thứ 5 #${RUN}`;
     expectStatus(await call("POST", "/messages/send", { token: ctx.lecturer.token, body: { recipientId: String(ctx.student.id), topicId: String(ctx.topicId), content } }), 200, "Gửi tin");
     const inbox = expectStatus(await call("GET", "/messages/inbox", { token: ctx.student.token }), 200, "Inbox");
-    if (!inbox.some((m) => m.content === content)) throw new Error("Tin nhắn không có trong inbox sinh viên");
-    return "sinh viên nhận được tin nhắn";
+    if (!inbox.items.some((m) => m.content === content)) throw new Error("Tin nhắn không có trong inbox sinh viên");
+    const conv = expectStatus(await call("GET", `/messages/conversation/${ctx.lecturer.id}`, { token: ctx.student.token, query: { topicId: ctx.topicId } }), 200, "Hội thoại");
+    if (conv.items[0]?.content !== content) throw new Error("Hội thoại không có tin nhắn mới nhất ở đầu");
+    return "sinh viên nhận được tin nhắn (inbox + hội thoại)";
   });
 
   // 17 — Chấm điểm

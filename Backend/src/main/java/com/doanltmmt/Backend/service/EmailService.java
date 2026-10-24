@@ -1,42 +1,27 @@
 package com.doanltmmt.Backend.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+/**
+ * Điểm DUY NHẤT để gửi email. Không gửi ngay: phát sự kiện để {@link MailDispatcher} gửi SAU KHI transaction
+ * hiện tại commit (rollback thì không gửi), trên luồng riêng.
+ */
 @Service
 public class EmailService {
 
-    @Autowired(required = false)
-    private JavaMailSender mailSender;
+    /** Email cần gửi; {@code htmlBody} là HTML (tạo bằng {@link EmailTemplates}). */
+    public record MailRequested(String to, String subject, String htmlBody) {
+    }
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    private final ApplicationEventPublisher events;
 
-    @Async
-    public void sendEmail(String to, String subject, String body) {
-        if (mailSender == null) {
-            System.out.println("MailSender not configured. Skipping email to " + to);
-            return;
-        }
-        if (to == null || to.isEmpty()) {
-            System.out.println("Email address is empty. Skipping.");
-            return;
-        }
+    public EmailService(ApplicationEventPublisher events) {
+        this.events = events;
+    }
 
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("Taskify <" + fromEmail + ">");
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-            System.out.println("Email sent to " + to);
-        } catch (Exception e) {
-            System.err.println("Failed to send email to " + to + ": " + e.getMessage());
-        }
+    public void sendEmail(String to, String subject, String htmlBody) {
+        if (to == null || to.isBlank()) return;
+        events.publishEvent(new MailRequested(to.trim(), subject, htmlBody));
     }
 }

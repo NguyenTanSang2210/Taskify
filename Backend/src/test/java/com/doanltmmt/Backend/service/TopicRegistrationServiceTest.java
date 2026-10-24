@@ -2,20 +2,22 @@ package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.dto.TopicRegistrationDTO;
 import com.doanltmmt.Backend.entity.*;
+import com.doanltmmt.Backend.entity.enums.EmailCategory;
+import com.doanltmmt.Backend.entity.enums.TopicStatus;
+import com.doanltmmt.Backend.entity.enums.WorkspaceStatus;
 import com.doanltmmt.Backend.repository.*;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TopicRegistrationServiceTest {
@@ -26,11 +28,12 @@ public class TopicRegistrationServiceTest {
     @Mock private LecturerRepository lecturerRepo;
     @Mock private UserRepository userRepo;
     @Mock private EventPublisher eventPublisher;
-    @Mock private NotificationRepository notificationRepo;
+    @Mock private NotificationService notifications;
     @Mock private AuditLogService auditLogService;
-    @Mock private EmailService emailService;
+    @Mock private NotificationMailer mailer;
     @Mock private SecurityScopeService scope;
     @Mock private WorkspaceClassRepository workspaceClassRepo;
+    @Mock private GradeService gradeService;
 
     @InjectMocks
     private TopicRegistrationService registrationService;
@@ -57,13 +60,13 @@ public class TopicRegistrationServiceTest {
 
         workspace = new Workspace();
         workspace.setId(1L);
-        workspace.setStatus("OPEN_REGISTRATION");
+        workspace.setStatus(WorkspaceStatus.OPEN_REGISTRATION);
 
         topic = new Topic();
         topic.setId(100L);
         topic.setWorkspace(workspace);
         topic.setCapacity(10);
-        topic.setStatus("OPEN");
+        topic.setStatus(TopicStatus.OPEN);
     }
 
     @Test
@@ -121,14 +124,14 @@ public class TopicRegistrationServiceTest {
 
         when(regRepo.findById(500L)).thenReturn(Optional.of(reg));
         when(scope.requireCurrentUser()).thenReturn(lecturerUser);
-        when(regRepo.existsByTopic_IdAndApprovedTrue(100L)).thenReturn(false);
+        when(topicRepo.findByIdForUpdate(100L)).thenReturn(Optional.of(topic));
+        when(regRepo.countByTopic_IdAndApprovedTrue(100L)).thenReturn(0L);
         when(regRepo.save(any())).thenAnswer(i -> i.getArgument(0));
-        when(notificationRepo.save(any())).thenAnswer(i -> i.getArgument(0));
 
         TopicRegistrationDTO result = registrationService.approve(500L);
 
         assertTrue(result.getApproved());
         verify(auditLogService).log(eq("APPROVE_REGISTRATION"), any(), eq("500"), any());
-        verify(emailService).sendEmail(any(), any(), any());
+        verify(mailer).send(any(), eq(EmailCategory.REGISTRATION), any());
     }
 }
