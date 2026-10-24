@@ -84,7 +84,7 @@ export default function GradeRevisionPanel() {
             Đợt đã kết thúc thì điểm bị khóa. Duyệt yêu cầu sẽ cho giảng viên sửa điểm một lần trong thời gian mở khóa.
           </p>
         </div>
-        <select
+        <select aria-label="Lọc theo trạng thái yêu cầu"
           className="rounded-xl bg-surface-container-low px-4 py-3 text-xs font-black uppercase tracking-widest outline-none"
           value={status}
           onChange={(e) => {
@@ -154,7 +154,7 @@ export default function GradeRevisionPanel() {
                       </button>
                       {it.status === "PENDING" && (
                         <>
-                          <button className="rounded-xl bg-primary px-3 py-2 text-[10px] font-black uppercase text-white" onClick={() => openReview(it, "approve")}>
+                          <button className="rounded-xl bg-primary px-3 py-2 text-[10px] font-black uppercase text-on-primary" onClick={() => openReview(it, "approve")}>
                             Duyệt
                           </button>
                           <button className="rounded-xl bg-error/10 px-3 py-2 text-[10px] font-black uppercase text-error" onClick={() => openReview(it, "reject")}>
@@ -207,7 +207,7 @@ export default function GradeRevisionPanel() {
             <div className="flex justify-end gap-3">
               <button className="rounded-xl px-5 py-3 text-xs font-black uppercase" disabled={submitting} onClick={() => setReview(null)}>Hủy</button>
               <button
-                className={`rounded-xl px-6 py-3 text-xs font-black uppercase text-white ${review.action === "approve" ? "bg-primary" : "bg-error"} disabled:opacity-50`}
+                className={`rounded-xl px-6 py-3 text-xs font-black uppercase text-on-primary ${review.action === "approve" ? "bg-primary" : "bg-error"} disabled:opacity-50`}
                 disabled={submitting}
                 onClick={submitReview}
               >

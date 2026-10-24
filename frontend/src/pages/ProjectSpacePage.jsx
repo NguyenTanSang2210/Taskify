@@ -195,7 +195,6 @@ export default function ProjectSpacePage() {
         <span className="material-symbols-outlined text-outline text-6xl mb-4">lock</span>
         <h2 className="text-2xl font-black text-on-surface uppercase tracking-widest">Truy cập bị hạn chế</h2>
         <p className="text-outline font-bold mt-2">Vui lòng đăng nhập để vào Không gian làm việc.</p>
-        <button className="mt-8 px-8 py-3 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-xl shadow-primary/20">Đến trang đăng nhập</button>
      </div>
   );
 
@@ -222,7 +221,7 @@ export default function ProjectSpacePage() {
               <span className="material-symbols-outlined text-sm">{isStudent ? 'person' : 'school'}</span>
               VAI TRÒ: {isStudent ? "SINH VIÊN" : "GIẢNG VIÊN"}
            </div>
-           <button onClick={loadProgress} className="p-2.5 bg-white border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-all">
+           <button aria-label="Làm mới" onClick={loadProgress} className="p-2.5 bg-white dark:bg-slate-900 border border-outline-variant/20 rounded-xl hover:bg-surface-container transition-all">
               <span className="material-symbols-outlined">refresh</span>
            </button>
         </div>
@@ -244,9 +243,9 @@ export default function ProjectSpacePage() {
         <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
               <div className="lg:col-span-4 space-y-1.5">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn đề tài nghiên cứu</label>
-                 <select 
-                   className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-black transition-all duration-300 outline-none cursor-pointer" 
+                 <label htmlFor="projectspacepage-select-248" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn đề tài nghiên cứu</label>
+                 <select id="projectspacepage-select-248" 
+                   className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-black transition-all duration-300 outline-none cursor-pointer" 
                    value={topicId} 
                    onChange={(e) => setTopicId(e.target.value)}
                  >
@@ -256,15 +255,15 @@ export default function ProjectSpacePage() {
                     {lecturerTopics.length === 0 && <option value="">Chưa có đề tài nào</option>}
                  </select>
               </div>
-              <div className="lg:col-span-1 hidden lg:block text-center text-outline/30">
+              <div className="lg:col-span-1 hidden lg:block text-center text-outline">
                  <span className="material-symbols-outlined">arrow_forward</span>
               </div>
               <div className="lg:col-span-4 space-y-1.5">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm nội dung / Sinh viên</label>
+                 <label htmlFor="projectspacepage-input-266" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm nội dung / Sinh viên</label>
                  <div className="relative group">
                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-                   <input
-                     className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                   <input id="projectspacepage-input-266"
+                     className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                      placeholder="Tiêu đề, tên SV, MSSV..."
                      value={search}
                      onChange={(e) => setSearch(e.target.value)}
@@ -272,9 +271,9 @@ export default function ProjectSpacePage() {
                  </div>
               </div>
               <div className="lg:col-span-3 space-y-1.5">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Phân loại trạng thái</label>
-                 <select 
-                    className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none" 
+                 <label htmlFor="projectspacepage-select-276" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Phân loại trạng thái</label>
+                 <select id="projectspacepage-select-276" 
+                    className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none" 
                     value={statusFilter} 
                     onChange={(e) => setStatusFilter(e.target.value)}
                  >

@@ -67,7 +67,7 @@ export default function MilestonePanel({ topicId, isLecturer }) {
                     </p>
                 </div>
                 {isLecturer && editing !== "new" && (
-                    <button type="button" onClick={() => setEditing("new")} className="px-5 py-2.5 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">
+                    <button type="button" onClick={() => setEditing("new")} className="px-5 py-2.5 rounded-xl bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">
                         Thêm mốc
                     </button>
                 )}

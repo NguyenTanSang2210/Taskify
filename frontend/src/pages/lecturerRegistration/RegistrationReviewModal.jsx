@@ -1,21 +1,23 @@
 import { fmtDateTime } from "../../components/GradeHistoryModal";
+import useDialog from "../../hooks/useDialog";
 
 /** Tách từ LecturerRegistrationPage.jsx (P3-11). */
 export default function RegistrationReviewModal({ closeModal, gradeFeedback, gradeReason, gradeScore, handleConfirm, loadingId, modalAction, modalError, rejectReason, selectedReg, setGradeFeedback, setGradeReason, setGradeScore, setRejectReason }) {
+  const { panelRef, titleId } = useDialog(closeModal);
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={closeModal}></div>
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl z-10 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+      <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={closeModal} aria-hidden="true"></div>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl z-10 overflow-hidden outline-none animate-in slide-in-from-bottom-8 duration-500">
         {/* Modal Header */}
         <div className="px-8 py-6 border-b border-outline-variant/5 bg-surface-container-low/30">
            <div className="flex justify-between items-start">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 block">Yêu cầu xác nhận</span>
-                <h2 className="text-xl font-black text-on-surface uppercase tracking-tight font-headline leading-none">
+                <h2 id={titleId} className="text-xl font-black text-on-surface uppercase tracking-tight font-headline leading-none">
                    {modalAction === "approve" ? "Phê duyệt đăng ký" : modalAction === "reject" ? "Từ chối đăng ký" : modalAction === "revision" ? "Yêu cầu chấm lại" : "Chấm điểm đề tài"}
                 </h2>
               </div>
-              <button onClick={closeModal} className="p-2 hover:bg-surface-container-high rounded-xl transition-colors">
+              <button aria-label="Đóng" onClick={closeModal} className="p-2 hover:bg-surface-container-high rounded-xl transition-colors">
                  <span className="material-symbols-outlined">close</span>
               </button>
            </div>
@@ -39,9 +41,9 @@ export default function RegistrationReviewModal({ closeModal, gradeFeedback, gra
                     Đợt đã kết thúc nên điểm <strong>{String(selectedReg.score ?? "").replace(".", ",")}</strong> đang bị khóa. Yêu cầu sẽ được gửi tới quản trị khoa; khi được duyệt, bạn có thể sửa điểm <strong>một lần</strong> trong thời gian được mở khóa.
                  </p>
                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do cần chấm lại *</label>
-                    <textarea
-                      className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold outline-none min-h-[110px]"
+                    <label htmlFor="registrationreviewmodal-textarea-45" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do cần chấm lại *</label>
+                    <textarea id="registrationreviewmodal-textarea-45"
+                      className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold outline-none min-h-[110px]"
                       value={gradeReason}
                       maxLength={2000}
                       onChange={(e) => setGradeReason(e.target.value)}
@@ -56,21 +58,21 @@ export default function RegistrationReviewModal({ closeModal, gradeFeedback, gra
            ) : (
               <div className="space-y-6">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Điểm đánh giá (Hệ 10)</label>
-                    <input
+                    <label htmlFor="registrationreviewmodal-input-62" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Điểm đánh giá (Hệ 10)</label>
+                    <input id="registrationreviewmodal-input-62"
                       type="number"
                       step="0.25"
                       min="0"
                       max="10"
-                      className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-3xl font-black text-primary transition-all duration-300 outline-none text-center"
+                      className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-3xl font-black text-primary transition-all duration-300 outline-none text-center"
                       value={gradeScore}
                       onChange={(e) => setGradeScore(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nhận xét chi tiết</label>
-                    <textarea
-                      className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[120px]"
+                    <label htmlFor="registrationreviewmodal-textarea-74" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nhận xét chi tiết</label>
+                    <textarea id="registrationreviewmodal-textarea-74"
+                      className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[120px]"
                       value={gradeFeedback}
                       onChange={(e) => setGradeFeedback(e.target.value)}
                       placeholder="Nhận xét về quá trình thực hiện và kết quả của sinh viên..."
@@ -78,9 +80,9 @@ export default function RegistrationReviewModal({ closeModal, gradeFeedback, gra
                   </div>
                   {selectedReg.score !== null && (
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do chỉnh sửa điểm *</label>
-                      <textarea
-                        className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold outline-none min-h-[80px]"
+                      <label htmlFor="registrationreviewmodal-textarea-84" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do chỉnh sửa điểm *</label>
+                      <textarea id="registrationreviewmodal-textarea-84"
+                        className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold outline-none min-h-[80px]"
                         value={gradeReason}
                         maxLength={2000}
                         onChange={(e) => setGradeReason(e.target.value)}
@@ -101,9 +103,9 @@ export default function RegistrationReviewModal({ closeModal, gradeFeedback, gra
     
            {modalAction === "reject" && (
               <div className="space-y-1.5 animate-in slide-in-from-top-4 duration-300">
-                <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do từ chối (Gửi đến sinh viên)</label>
-                <textarea
-                  className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[100px]"
+                <label htmlFor="registrationreviewmodal-textarea-107" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lý do từ chối (Gửi đến sinh viên)</label>
+                <textarea id="registrationreviewmodal-textarea-107"
+                  className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[100px]"
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Giải thích lý do từ chối để sinh viên hiểu rõ và cải thiện..."
@@ -118,15 +120,15 @@ export default function RegistrationReviewModal({ closeModal, gradeFeedback, gra
     
         {/* Modal Footer */}
         <div className="px-8 py-6 bg-surface-container-low/30 border-t border-outline-variant/5 flex justify-end gap-3">
-           <button onClick={closeModal} className="px-6 py-3 bg-white text-on-surface-variant font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-surface-container transition-all" disabled={!!loadingId}>
+           <button onClick={closeModal} className="px-6 py-3 bg-white dark:bg-slate-900 text-on-surface-variant font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-surface-container transition-all" disabled={!!loadingId}>
               Hủy bỏ
            </button>
            <button
              onClick={handleConfirm}
              className={`px-8 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg ${
                 modalAction === "reject" 
-                ? "bg-error text-white shadow-error/20" 
-                : "bg-primary text-white shadow-primary/20"
+                ? "bg-error text-on-primary shadow-error/20" 
+                : "bg-primary text-on-primary shadow-primary/20"
              } hover:scale-105 active:scale-95 disabled:opacity-50`}
              disabled={!!loadingId}
            >

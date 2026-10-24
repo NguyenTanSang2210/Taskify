@@ -37,7 +37,7 @@ export default function MilestoneForm({ initial, onSubmit, onCancel, busy }) {
                 <input id="ms-weight" type="number" min="0" max="100" value={form.weight} onChange={set("weight")} placeholder="Không tính điểm" className={input} />
             </div>
             <div className="md:col-span-3 flex gap-2">
-                <button type="submit" disabled={busy} className="flex-1 px-5 py-3 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 disabled:opacity-50">
+                <button type="submit" disabled={busy} className="flex-1 px-5 py-3 rounded-xl bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 disabled:opacity-50">
                     {initial ? "Lưu" : "Thêm mốc"}
                 </button>
                 {onCancel && <button type="button" onClick={onCancel} className="px-4 py-3 rounded-xl bg-surface-container text-[10px] font-black uppercase tracking-widest">Hủy</button>}

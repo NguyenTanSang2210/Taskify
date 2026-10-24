@@ -164,7 +164,7 @@ export default function StudentProgressPage() {
               onClick={() => setViewMode("kanban")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 ${
                 viewMode === "kanban"
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  ? "bg-primary text-on-primary shadow-lg shadow-primary/20"
                   : "text-outline hover:text-on-surface"
               }`}
             >
@@ -175,7 +175,7 @@ export default function StudentProgressPage() {
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 ${
                 viewMode === "list"
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  ? "bg-primary text-on-primary shadow-lg shadow-primary/20"
                   : "text-outline hover:text-on-surface"
               }`}
             >
@@ -183,7 +183,7 @@ export default function StudentProgressPage() {
               Danh sách
             </button>
           </div>
-          <button
+          <button aria-label="Làm mới"
             onClick={loadProgress}
             className="p-2.5 bg-surface-container text-on-surface-variant rounded-xl hover:bg-surface-container-high transition-all"
           >
@@ -219,7 +219,7 @@ export default function StudentProgressPage() {
 
             {!topicId ? (
               <div className="text-center py-10 space-y-4">
-                <div className="w-16 h-16 bg-surface-container rounded-full mx-auto flex items-center justify-center text-outline/30">
+                <div className="w-16 h-16 bg-surface-container rounded-full mx-auto flex items-center justify-center text-outline">
                   <span className="material-symbols-outlined text-3xl">lock</span>
                 </div>
                 <p className="text-xs font-bold text-outline leading-relaxed uppercase tracking-widest">

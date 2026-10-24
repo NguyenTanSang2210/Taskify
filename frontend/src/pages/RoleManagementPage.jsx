@@ -122,7 +122,7 @@ export default function RoleManagementPage() {
             setRoleForm({ name: "", description: "" });
             setShowRoleModal(true);
           }}
-          className="px-8 py-3.5 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+          className="px-8 py-3.5 bg-primary text-on-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
         >
           <span className="material-symbols-outlined text-lg group-hover:rotate-90 transition-transform">add</span>
           Thêm Vai trò mới
@@ -149,7 +149,7 @@ export default function RoleManagementPage() {
       {/* Matrix Table */}
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center p-32 opacity-40">
+          <div className="flex items-center justify-center p-32 text-outline [&_.material-symbols-outlined]:opacity-40">
              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
           </div>
         ) : (
@@ -167,7 +167,7 @@ export default function RoleManagementPage() {
                           {p.name.replace("_", " ")}
                        </span>
                        {/* Tooltip on hover */}
-                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-2xl z-20">
+                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold opacity-0 pointer-events-none shadow-2xl z-20">
                           {p.description || "Không có mô tả chi tiết cho quyền này."}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900"></div>
                        </div>
@@ -196,8 +196,8 @@ export default function RoleManagementPage() {
                              disabled={role.name === 'ADMIN'}
                              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                                 hasPriv 
-                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110" 
-                                : "bg-surface-container text-outline/30 hover:bg-surface-container-high"
+                                ? "bg-primary text-on-primary shadow-lg shadow-primary/20 scale-110" 
+                                : "bg-surface-container text-outline hover:bg-surface-container-high"
                              } ${role.name === 'ADMIN' ? 'cursor-not-allowed opacity-100' : 'cursor-pointer'}`}
                            >
                               <span className="material-symbols-outlined text-lg">
@@ -254,9 +254,9 @@ export default function RoleManagementPage() {
              </div>
              <div className="p-10 space-y-6">
                 <div className="space-y-1.5">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên vai trò (Unique Key)</label>
-                   <input
-                     className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all outline-none disabled:opacity-50"
+                   <label htmlFor="rolemanagementpage-input-258" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên vai trò (Unique Key)</label>
+                   <input id="rolemanagementpage-input-258"
+                     className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-black transition-all outline-none disabled:opacity-50"
                      value={roleForm.name}
                      onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value.toUpperCase() })}
                      disabled={!!editingRole}
@@ -264,9 +264,9 @@ export default function RoleManagementPage() {
                    />
                 </div>
                 <div className="space-y-1.5">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mô tả chức vụ & ảnh hưởng</label>
-                   <textarea
-                     className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-bold transition-all outline-none min-h-[120px]"
+                   <label htmlFor="rolemanagementpage-textarea-268" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mô tả chức vụ & ảnh hưởng</label>
+                   <textarea id="rolemanagementpage-textarea-268"
+                     className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-bold transition-all outline-none min-h-[120px]"
                      value={roleForm.description}
                      onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })}
                      placeholder="Mô tả cụ thể người sở hữu vai trò này sẽ có trách nhiệm và quyền hạn gì..."
@@ -274,13 +274,13 @@ export default function RoleManagementPage() {
                 </div>
              </div>
              <div className="px-10 py-8 bg-surface-container-low/30 border-t border-outline-variant/5 flex justify-end gap-3">
-                <button onClick={() => setShowRoleModal(false)} className="px-6 py-3 bg-white text-on-surface-variant font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-surface-container transition-all">
+                <button onClick={() => setShowRoleModal(false)} className="px-6 py-3 bg-white dark:bg-slate-900 text-on-surface-variant font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-surface-container transition-all">
                    Hủy
                 </button>
                 <button
                   onClick={handleSaveRole}
                   disabled={actionLoading}
-                  className="px-8 py-3 bg-primary text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                  className="px-8 py-3 bg-primary text-on-primary rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {actionLoading ? "Đang lưu..." : "Lưu dữ liệu"}
                 </button>
@@ -308,7 +308,7 @@ export default function RoleManagementPage() {
                   <button 
                     onClick={handleDeleteRole}
                     disabled={actionLoading}
-                    className="flex-1 py-3.5 bg-error text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-error/20 hover:scale-105 transition-all disabled:opacity-50"
+                    className="flex-1 py-3.5 bg-error text-on-error font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-error/20 hover:scale-105 transition-all disabled:opacity-50"
                   >
                      {actionLoading ? "Đang xóa..." : "Đồng ý xóa"}
                   </button>

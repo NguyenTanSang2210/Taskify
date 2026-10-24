@@ -3,18 +3,18 @@ export default function ProgressForm({ content, file, handleStudentSubmit, setCo
   return (
     <form onSubmit={handleStudentSubmit} className="space-y-5">
       <div className="space-y-1.5">
-        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tiêu đề báo cáo</label>
-        <input
-          className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+        <label htmlFor="progressform-input-7" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tiêu đề báo cáo</label>
+        <input id="progressform-input-7"
+          className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="VD: Báo cáo tuần 1: Nghiên cứu tài liệu"
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nội dung chi tiết</label>
-        <textarea
-          className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[120px]"
+        <label htmlFor="progressform-textarea-16" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nội dung chi tiết</label>
+        <textarea id="progressform-textarea-16"
+          className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[120px]"
           rows={4}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -22,9 +22,9 @@ export default function ProgressForm({ content, file, handleStudentSubmit, setCo
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Đính kèm tài liệu</label>
+        <label htmlFor="progressform-input-27" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Đính kèm tài liệu</label>
         <div className="relative group">
-          <input
+          <input id="progressform-input-27"
             type="file"
             className="absolute inset-0 opacity-0 cursor-pointer z-10"
             onChange={(e) => setFile(e.target.files[0])}
@@ -38,7 +38,7 @@ export default function ProgressForm({ content, file, handleStudentSubmit, setCo
         </div>
       </div>
       <button
-        className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+        className="w-full py-4 bg-primary text-on-primary rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
         type="submit"
         disabled={submitting}
       >

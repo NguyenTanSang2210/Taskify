@@ -6,6 +6,8 @@
  *   (P4-05) mốc tiến độ: giảng viên tạo mốc có trọng số, chấm theo mốc; sinh viên thấy điểm + trạng thái nộp
  *   (P4-06) cài đặt email thông báo trong Hồ sơ: tắt nhóm, chọn tổng hợp mỗi sáng
  *   (P4-02) nhật ký hệ thống: lọc nhanh "Thay đổi điểm", lọc người thực hiện, xem chi tiết, IP, xuất CSV
+ *   (P4-11) lịch học thuật (thêm/xem/xóa sự kiện, dạng danh sách trên điện thoại), kênh thảo luận nhóm,
+ *           chi tiết đề tài, a11y (liên kết bỏ qua, một vùng main, nút icon có tên, hộp thoại đóng bằng Esc)
  * Chạy trên stack Docker profile dev có dữ liệu demo (DataSeeder).
  *
  * Biến môi trường: API_URL, WEB_URL, DB_CONTAINER (taskify-db), PASSWORD (123456), EDGE_PATH, PW_MODULE, SHOT_DIR.
@@ -43,9 +45,9 @@ async function login(username) {
 }
 const browser = await chromium.launch({ executablePath: EDGE });
 // Mỗi trang một phiên mới (refresh token xoay vòng mỗi lần dùng — dùng lại cookie cũ sẽ bị coi là đánh cắp)
-async function pageAs(session) {
+async function pageAs(session, viewport = { width: 1440, height: 900 }) {
   const fresh = await login(session.username);
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: "Asia/Ho_Chi_Minh", locale: "vi-VN" });
+  const ctx = await browser.newContext({ viewport, timezoneId: "Asia/Ho_Chi_Minh", locale: "vi-VN" });
   await ctx.addCookies([{ name: "taskify_refresh", value: fresh.refreshCookie, url: new URL("/api/auth", WEB).href, httpOnly: true, sameSite: "Strict" }]);
   const page = await ctx.newPage();
   page.on("pageerror", (e) => { fails++; console.log("❌ pageerror", e.message); });
@@ -275,6 +277,152 @@ let page;
   const csvLines = csvText.trim().split(/\r?\n/);
   check(csv.suggestedFilename() === "nhat-ky-he-thong.csv" && csvLines.length > 1 && csvLines.slice(1).every((l) => l.split(",")[1] === "deptadmin"),
     "P4-02: xuất CSV theo đúng bộ lọc đang chọn", `${csvLines.length - 1} dòng`);
+  await page.context().close();
+}
+
+// ---------- P4-11: lịch học thuật, thảo luận nhóm, chi tiết đề tài, a11y ----------
+{
+  const lecturer = await login("lecturer");
+  const topicId = sql(`SELECT t.id FROM topics t JOIN topic_registration r ON r.topic_id = t.id AND r.approved = 1
+    WHERE t.lecturer_id = ${lecturer.userId} ORDER BY t.id LIMIT 1`);
+  if (!topicId) {
+    console.log("ℹ️  Bỏ qua P4-11: giảng viên demo chưa có đề tài có sinh viên được duyệt (chạy scripts/smoke-test.mjs trước).");
+  } else {
+    const tag = "P411 " + Date.now().toString(36);
+    // bộ chọn đề tài chỉ xuất hiện (sau khi tải) khi người dùng có từ 2 đề tài
+    const pickTopic = async (pg) => {
+      const picker = pg.locator("#topic-picker");
+      if (await picker.waitFor({ timeout: 5000 }).then(() => true, () => false)) await picker.selectOption(topicId);
+    };
+
+    // Lịch: GV thêm sự kiện → hiện trên lưới tháng → mở chi tiết (Esc đóng) → xóa
+    page = await pageAs(lecturer);
+    await page.goto(WEB + "/calendar");
+    await page.getByRole("heading", { name: "Lịch học thuật" }).waitFor();
+    await pickTopic(page);
+    await page.getByRole("button", { name: "Thêm sự kiện" }).click();
+    const form = page.getByRole("dialog", { name: "Thêm sự kiện" });
+    check(await page.locator("#ev-title").evaluate((el) => el === document.activeElement), "P4-11: mở form thêm sự kiện, focus vào ô tiêu đề");
+    const when = new Date();
+    when.setHours(9, 0, 0, 0);
+    const local = new Date(when.getTime() - when.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+    await form.locator("#ev-title").fill(tag);
+    await form.locator("#ev-start").fill(local);
+    await form.getByRole("button", { name: "Lưu sự kiện" }).click();
+    await page.getByText("Đã thêm sự kiện vào lịch.").waitFor();
+    const chip = page.getByRole("region", { name: /Lịch tháng/ }).getByRole("button", { name: new RegExp(tag) });
+    await chip.waitFor();
+    check(await chip.isVisible() && Number(sql(`SELECT COUNT(*) FROM calendar_events WHERE title = '${tag}'`)) === 1,
+      "P4-11: giảng viên thêm sự kiện, hiện trên lưới tháng");
+    await page.getByRole("region", { name: "Sắp tới" }).getByText(tag).waitFor();
+    check(await page.getByRole("region", { name: "Sắp tới" }).getByText(tag).isVisible(), "P4-11: sự kiện hôm nay nằm trong mục \"Sắp tới\"");
+    await page.screenshot({ path: path.join(SHOTS, "ui-gd4-calendar.png"), fullPage: true });
+    await chip.click();
+    const dlg = page.getByRole("dialog");
+    await dlg.waitFor();
+    check(await dlg.getByRole("heading", { name: tag }).isVisible(), "P4-11: bấm sự kiện mở hộp thoại chi tiết");
+    await page.keyboard.press("Escape");
+    check(!(await page.getByRole("dialog").count()) && await chip.evaluate((el) => el === document.activeElement),
+      "P4-11: Esc đóng hộp thoại, focus trở lại sự kiện");
+    await chip.click();
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: `Xóa sự kiện ${tag}` }).click();
+    await page.getByText("Đã xóa sự kiện.").waitFor();
+    check(Number(sql(`SELECT COUNT(*) FROM calendar_events WHERE title = '${tag}'`)) === 0, "P4-11: giảng viên xóa sự kiện");
+    await page.context().close();
+
+    // Điện thoại: lịch chuyển sang dạng danh sách
+    const ev = (await call("POST", "/calendar", lecturer.token, { topicId: Number(topicId), title: tag + " mobile", startTime: local, type: "DEADLINE" })).data;
+    page = await pageAs(lecturer, { width: 390, height: 844 });
+    await page.goto(WEB + "/calendar");
+    await pickTopic(page);
+    await page.getByRole("button", { name: new RegExp(tag + " mobile") }).first().waitFor();
+    check(!(await page.getByRole("region", { name: /Lịch tháng/ }).count()), "P4-11: màn hình hẹp hiện lịch dạng danh sách thay cho lưới");
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    check(overflow <= 1, "P4-11: trang lịch không cuộn ngang trên điện thoại", `${overflow}px`);
+    await page.screenshot({ path: path.join(SHOTS, "ui-gd4-calendar-mobile.png"), fullPage: true });
+    await page.context().close();
+    await call("DELETE", `/calendar/${ev.id}`, lecturer.token);
+
+    // Thảo luận: GV mở chủ đề + đăng bài, SV thành viên trả lời
+    page = await pageAs(lecturer);
+    await page.goto(WEB + "/discussion");
+    await page.getByRole("heading", { name: "Kênh thảo luận" }).waitFor();
+    await pickTopic(page);
+    await page.getByLabel("Tiêu đề chủ đề mới").fill(tag);
+    await page.getByRole("button", { name: "Tạo chủ đề" }).click();
+    await page.getByRole("heading", { name: tag }).waitFor();
+    await page.getByLabel("Nội dung trả lời").fill("Chào cả nhóm — " + tag);
+    await page.getByLabel("Nội dung trả lời").press("Control+Enter");
+    await page.getByText("Chào cả nhóm — " + tag).waitFor();
+    check(Number(sql(`SELECT COUNT(*) FROM discussion_posts p JOIN discussion_threads t ON t.id = p.thread_id WHERE t.title = '${tag}'`)) === 1,
+      "P4-11: giảng viên mở chủ đề và đăng bài (Ctrl + Enter)");
+    await page.context().close();
+
+    const member = sql(`SELECT u.username FROM topic_registration r JOIN users u ON u.id = r.student_id WHERE r.topic_id = ${topicId} AND r.approved = 1 ORDER BY r.id LIMIT 1`);
+    page = await pageAs(await login(member));
+    await page.goto(WEB + "/discussion");
+    await pickTopic(page);
+    await page.getByRole("button", { name: new RegExp(tag) }).click();
+    await page.getByText("Chào cả nhóm — " + tag).waitFor();
+    await page.getByLabel("Nội dung trả lời").fill("Em đã nhận được ạ.");
+    await page.getByRole("button", { name: "Gửi" }).click();
+    await page.getByText("Em đã nhận được ạ.").waitFor();
+    check(Number(sql(`SELECT COUNT(*) FROM discussion_posts p JOIN discussion_threads t ON t.id = p.thread_id WHERE t.title = '${tag}'`)) === 2,
+      "P4-11: sinh viên cùng đề tài thấy chủ đề và trả lời", member);
+    await page.screenshot({ path: path.join(SHOTS, "ui-gd4-discussion.png"), fullPage: true });
+
+    // Chi tiết đề tài (thành viên): mô tả, giảng viên, danh sách sinh viên thực hiện
+    await page.goto(WEB + `/topics/${topicId}`);
+    const title = sql(`SELECT title FROM topics WHERE id = ${topicId}`);
+    await page.getByRole("heading", { level: 1, name: title }).waitFor();
+    const members = page.getByRole("region", { name: /Sinh viên thực hiện/ });
+    check(await members.isVisible() && /Bạn đã được duyệt/.test(await page.locator("aside").last().innerText()),
+      "P4-11: chi tiết đề tài — thành viên thấy danh sách sinh viên và trạng thái của mình");
+    await page.waitForTimeout(700); // chờ hiệu ứng fade-in
+    await page.screenshot({ path: path.join(SHOTS, "ui-gd4-topic-detail.png"), fullPage: true });
+    await page.context().close();
+    sql(`DELETE p FROM discussion_posts p JOIN discussion_threads t ON t.id = p.thread_id WHERE t.title = '${tag}'`);
+    sql(`DELETE FROM discussion_threads WHERE title = '${tag}'`);
+  }
+
+  // Chi tiết đề tài từ danh sách (SV) + a11y chung
+  page = await pageAs(student);
+  await page.goto(WEB + "/");
+  const firstLink = page.locator("h3 a[href^='/topics/']").first();
+  await firstLink.waitFor();
+  const name = (await firstLink.innerText()).trim();
+  await firstLink.click();
+  await page.waitForURL(/\/topics\/\d+$/);
+  await page.getByText("Chỉ tiêu").waitFor(); // trang chi tiết tải lười: chờ nội dung của nó, không phải h1 của trang trước
+  check((await page.getByRole("heading", { level: 1 }).innerText()).trim().toLowerCase() === name.toLowerCase()
+    && await page.getByText("Chỉ tiêu").isVisible(), "P4-11: bấm tên đề tài trong danh sách mở trang chi tiết", name);
+
+  check(await page.evaluate(() => document.activeElement?.id) === "main-content", "P4-11: đổi trang thì focus chuyển vào nội dung chính");
+  await page.reload();
+  await page.getByRole("heading", { level: 1 }).waitFor();
+  await page.keyboard.press("Tab");
+  check((await page.evaluate(() => document.activeElement?.textContent?.trim())) === "Bỏ qua tới nội dung chính",
+    "P4-11: phím Tab đầu tiên tới liên kết \"Bỏ qua tới nội dung chính\"");
+  await page.keyboard.press("Enter");
+  check(await page.evaluate(() => document.activeElement?.id) === "main-content", "P4-11: Enter trên liên kết bỏ qua đưa focus vào nội dung chính");
+  const unnamed = [];
+  for (const route of ["/", "/dashboard", "/my-registrations", "/project-space", "/calendar", "/discussion", "/project-chat", "/notifications", "/profile"]) {
+    await page.goto(WEB + route);
+    await page.waitForLoadState("networkidle");
+    const info = await page.evaluate(() => ({
+      mains: document.querySelectorAll("main").length,
+      icons: [...document.querySelectorAll("button, a[href]")].filter((b) => {
+        if (b.getAttribute("aria-label") || b.getAttribute("title")) return false;
+        const copy = b.cloneNode(true);
+        copy.querySelectorAll(".material-symbols-outlined").forEach((i) => i.remove());
+        return !copy.textContent.trim() && b.querySelector(".material-symbols-outlined");
+      }).map((b) => b.outerHTML.slice(0, 80)),
+    }));
+    if (info.mains !== 1) unnamed.push(`${route}: ${info.mains} <main>`);
+    info.icons.forEach((h) => unnamed.push(`${route}: ${h}`));
+  }
+  check(unnamed.length === 0, "P4-11: mỗi trang đúng một vùng <main>, mọi nút chỉ có icon đều có tên", unnamed.slice(0, 3).join(" | "));
   await page.context().close();
 }
 

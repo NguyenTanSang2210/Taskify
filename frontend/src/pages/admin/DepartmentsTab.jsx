@@ -10,15 +10,15 @@ export default function DepartmentsTab({ departments, departmentCreate, setDepar
                                </div>
                                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
                                    <div className="md:col-span-3 space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mã định danh khoa</label>
-                                       <input className="w-full px-6 py-4 bg-white border-transparent focus:border-primary focus:ring-0 rounded-2xl text-sm font-black transition-all outline-none" value={departmentCreate.code} onChange={(e) => setDepartmentCreate(s => ({ ...s, code: e.target.value }))} placeholder="VD: CNTT, CK..." />
+                                       <label htmlFor="departmentstab-input-14" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mã định danh khoa</label>
+                                       <input id="departmentstab-input-14" className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-transparent focus:border-primary focus:ring-0 rounded-2xl text-sm font-black transition-all outline-none" value={departmentCreate.code} onChange={(e) => setDepartmentCreate(s => ({ ...s, code: e.target.value }))} placeholder="VD: CNTT, CK..." />
                                    </div>
                                    <div className="md:col-span-6 space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên đơn vị đầy đủ</label>
-                                       <input className="w-full px-6 py-4 bg-white border-transparent focus:border-primary focus:ring-0 rounded-2xl text-sm font-black transition-all outline-none" value={departmentCreate.name} onChange={(e) => setDepartmentCreate(s => ({ ...s, name: e.target.value }))} placeholder="VD: Công nghệ Thông tin" />
+                                       <label htmlFor="departmentstab-input-18" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên đơn vị đầy đủ</label>
+                                       <input id="departmentstab-input-18" className="w-full px-6 py-4 bg-white dark:bg-slate-900 border-transparent focus:border-primary focus:ring-0 rounded-2xl text-sm font-black transition-all outline-none" value={departmentCreate.name} onChange={(e) => setDepartmentCreate(s => ({ ...s, name: e.target.value }))} placeholder="VD: Công nghệ Thông tin" />
                                    </div>
                                    <div className="md:col-span-3">
-                                       <button onClick={createDepartment} className="w-full py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">Xác nhận tạo khoa</button>
+                                       <button onClick={createDepartment} className="w-full py-4 bg-primary text-on-primary rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">Xác nhận tạo khoa</button>
                                    </div>
                                </div>
                             </div>
@@ -48,11 +48,11 @@ export default function DepartmentsTab({ departments, departmentCreate, setDepar
                                                  <p className="text-base font-black text-on-surface uppercase tracking-tight">{d.name}</p>
                                               </td>
                                               <td className="px-8 py-5">
-                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${d.active ? 'bg-green-500/10 text-green-600' : 'bg-surface-container text-outline'}`}>
+                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${d.active ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-surface-container text-outline'}`}>
                                                     {d.active ? 'Đang hoạt động' : 'Tạm ngưng'}
                                                  </div>
                                               </td>
-                                              <td className="px-8 py-5 text-right font-black text-[10px] text-outline/30">#{d.id}</td>
+                                              <td className="px-8 py-5 text-right font-black text-[10px] text-outline">#{d.id}</td>
                                            </tr>
                                         ))}
                                     </tbody>

@@ -156,7 +156,7 @@
 | P4-08 | Observability (metrics, dashboard) | P2 | 1,5 ngày | ✅ |
 | P4-09 | Triển khai production (HTTPS, backup) | P1 | 2 ngày | ⬜ |
 | P4-10 | Mở rộng realtime (broker ngoài) | P3 | 1,5 ngày | ⬜ |
-| P4-11 | Hoàn thiện UI theo mockup `stitch/` + a11y | P2 | 3 ngày | ⬜ |
+| P4-11 | Hoàn thiện UI theo mockup `stitch/` + a11y | P2 | 3 ngày | ✅ |
 
 ---
 
@@ -1883,19 +1883,46 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 - [ ] Scheduler chạy 1 instance duy nhất: thêm **ShedLock**.
 - [ ] Rate limit & lockout chuyển sang Redis.
 
-**Theo dõi:** Trạng thái: ✅
+**Theo dõi:** Trạng thái: ⬜
 
 ---
 
-### ⬜ P4-11 — Hoàn thiện UI theo mockup `stitch/` + accessibility
+### ✅ P4-11 — Hoàn thiện UI theo mockup `stitch/` + accessibility
 
-- [ ] Đối chiếu 13 màn hình mockup trong `stitch/` với giao diện hiện tại → lập danh sách chênh lệch.
-- [ ] Hoàn thiện màn hình còn thiếu: Lịch học thuật, Kênh thảo luận nhóm, Chi tiết đề tài.
-- [ ] Responsive mobile (sidebar, bảng → thẻ).
-- [ ] Accessibility (WCAG 2.1 AA): độ tương phản, điều hướng bàn phím, `aria-label` cho nút icon, focus rõ ràng.
-- [ ] Trạng thái rỗng/đang tải/lỗi thống nhất cho mọi trang.
+- [x] Đối chiếu 13 màn hình mockup trong `stitch/` với giao diện hiện tại → bảng chênh lệch bên dưới.
+- [x] Hoàn thiện màn hình còn thiếu: **Lịch học thuật** (`/calendar`), **Kênh thảo luận nhóm** (`/discussion`), **Chi tiết đề tài** (`/topics/:id`, API mới `GET /api/topics/{id}`).
+- [x] Responsive mobile: lịch tự chuyển dạng danh sách dưới 768 px, không cuộn ngang; mọi bảng nằm trong khung cuộn ngang (sidebar thu gọn có sẵn từ P3-11). Bảng → thẻ: chưa đổi (bảng cuộn ngang đọc được trên điện thoại).
+- [x] Accessibility (WCAG 2.1 AA) — kiểm bằng **axe-core** trên 21 trang × 4 vai trò, **cả chế độ sáng và tối: 0 vi phạm** (`scripts/a11y-check.mjs`). Trước khi sửa: sáng 70 vi phạm (tương phản 57, `<select>` không nhãn 11, ô nhập không nhãn 2), tối 249.
+- [x] Trạng thái rỗng/đang tải/lỗi thống nhất: `components/PageState.jsx` (`LoadingState`, `EmptyState`, `ErrorState` có nút *Thử lại*) cho các trang mới; khối trạng thái rỗng cũ bỏ kiểu làm mờ cả khối (chữ không đọc được) — chỉ icon mờ.
 
-**Theo dõi:** Trạng thái: ✅
+**Đối chiếu mockup:**
+
+| Mockup | Giao diện Taskify | Chênh lệch / cách xử lý |
+|---|---|---|
+| Bố cục hệ thống | `AppLayout` (menu trái + thanh trên) | Bỏ ô tìm kiếm toàn cục và nút Trợ giúp — chỉ là hình, không có chức năng |
+| Danh sách đề tài | `/` (sinh viên) | Tên đề tài mở trang chi tiết |
+| Dashboard sinh viên | `/dashboard` (P4-01) | Số liệu thật thay khối giả lập |
+| Không gian làm việc (Tiến độ) | `/project-space`, `/progress` (Kanban) | — |
+| Không gian làm việc (Chat) | `/project-chat` | Bỏ nút gọi video / thông tin và trạng thái "Đang hoạt động", "Trực tuyến" (luôn hiện, không phải trạng thái thật) |
+| Kênh thảo luận nhóm | `/discussion` (**mới**) | Mockup gộp nhắn tin và thảo luận; Taskify tách: thảo luận theo chủ đề cho cả nhóm / nhắn tin riêng. Cột "Tài liệu đã chia sẻ": chưa làm |
+| Lịch học thuật | `/calendar` (**mới**) | Dạng Tháng + Danh sách, *Sắp tới*, chú thích; sự kiện + mốc. Dạng Tuần/Ngày: chưa làm |
+| chi tiết đề tài | `/topics/:id` (**mới**) | Đề tài chỉ có *mô tả* (chưa có trường Mục tiêu / Sản phẩm bàn giao / Thông số kỹ thuật) → hiện mô tả đầy đủ. "Sinh viên đang quan tâm" → "Sinh viên thực hiện", **chỉ thành viên đề tài thấy** |
+| Quản trị giảng viên | `/admin`, `/dashboard` (Admin) | — |
+| Trung tâm thông báo | `/notifications` | — |
+| đăng nhập | `/login` | Bỏ nút Google/SSO (không có SSO); CSP `img-src` bỏ `www.gstatic.com` |
+| dăng ký | — | Không làm: tắt đăng ký công khai (D-02), thay bằng kích hoạt tài khoản |
+| academic_ledger (DESIGN.md) | token màu `index.css` | Bổ sung đủ token cho chế độ tối |
+
+**Accessibility đã sửa:**
+- `components/Modal.jsx` + `hooks/useDialog.js`: `role="dialog"`, `aria-modal`, tên hộp thoại, **Esc** để đóng, giữ Tab trong hộp thoại, trả focus về nút đã mở. Áp cho hộp thoại mới, lịch sử điểm, duyệt đăng ký, form đề tài.
+- Liên kết *Bỏ qua tới nội dung chính*; đúng **một** vùng `<main>` mỗi trang (trước: lồng nhau ở Hồ sơ, Chat, Chi tiết tiến độ); đổi trang trong SPA thì focus vào nội dung mới; viền `:focus-visible` rõ ràng; `prefers-reduced-motion`; `<html lang="vi">`.
+- 81 ô nhập được gắn `<label htmlFor>`; mọi nút chỉ có icon có `aria-label` (13 nút thiếu); gỡ 7 nút không có chức năng.
+- Tương phản: bỏ chữ làm mờ bằng `opacity`/màu alpha; xanh/vàng chuyển sắc độ 700 (tối: 400); nút nền `primary`/`error` dùng `text-on-primary`/`text-on-error`; `bg-white` có biến thể tối; token `error` chế độ tối đổi để chữ trên nền đỏ đạt AA.
+- **Chế độ tối trước đây hỏng hẳn**: `App.css` (1321 dòng CSS cũ, 0 class còn dùng) ghi đè màu chữ/nền của `body` → chữ tối trên nền tối. Đã xóa file.
+
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `24/10/2026` · Commit: xem Changelog
+
+**Kết quả:** test mới `TopicDetailIT` (5), `Modal.test.jsx` (3), `calendarUtils.test.js` (6); `ui-check-gd4.mjs` thêm 16 kiểm tra P4-11 (lịch thêm/xem/xóa, điện thoại, thảo luận GV ↔ SV, chi tiết đề tài, liên kết bỏ qua, focus, `<main>`, nút icon) — 44/44 đạt; `a11y-check.mjs` 0 vi phạm cả hai chế độ.
 
 ---
 
@@ -2075,6 +2102,14 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 23/10/2026 | P3-09, P3-10 | Testcontainers, JaCoCo (≥ 75% / service ≥ 80%), Vitest; CI: verify, lint/test/build, dựng stack Docker | `56c53e8`, `54fdf0f` | |
 | 23/10/2026 | P3-11 | Layout/sidebar theo dữ liệu, route lazy (bundle 737 → 340 KB), tách 8 trang lớn, API qua `src/api`, `useLoadEffect`, lint 0 cảnh báo | `c2d1344`, `6b81a5c`, `a848ef2`, `cf2b1b6` | |
 | 23/10/2026 | P3-13 | Viết lại README + tài liệu; ARCHITECTURE, SECURITY, ADR 0001–0010, DEPLOYMENT, CONTRIBUTING; `AdminBootstrap` tạo Admin đầu tiên cho bản cài mới | xem `git log` | 325 test · smoke 0 BUG/0 FAIL · ui-check/gd2/gd3 đạt · **đóng GĐ3** |
+| 23/10/2026 | GĐ3-QA | Khai báo các màu `error`, `secondary-container`, `tertiary` còn thiếu trong theme (thông báo lỗi, nút Từ chối/Xóa trước đó không hiện màu) | `928fd3a` | |
+| 23/10/2026 | P4-03 | Nhập sinh viên/giảng viên từ Excel: file mẫu, kiểm tra từng dòng (không ghi CSDL), tải danh sách lỗi, nhập dòng hợp lệ + gửi mã kích hoạt (gửi giãn cách) | `1f08685` | `UserImportIT` |
+| 23/10/2026 | P4-02 | Trang nhật ký hệ thống: lọc theo nhóm/hành động/người/thời gian, IP + trình duyệt (V7), xuất CSV, tự xóa sau 12 tháng (giữ nhật ký điểm) | `c3865ba` | `AuditLogIT` |
+| 23/10/2026 | P4-01 | Dashboard số liệu thật theo vai trò, thời gian phản hồi của GV (V8), xuất Excel | `a716c29` | `DashboardIT` |
+| 23/10/2026 | P4-05 | Mốc có trọng số, bảng nộp bài đúng/trễ hạn, chấm theo mốc, điểm đề xuất (V9); lịch gồm mốc | `10b49b7` | `MilestoneGradeIT` |
+| 23/10/2026 | P4-06 | Cài đặt email thông báo theo nhóm + thư tổng hợp 07:30 (V10) | `cd2b437` | `NotificationSettingsIT` |
+| 24/10/2026 | P4-08 | Prometheus + Grafana (profile `monitoring`), `/actuator/prometheus` bảo vệ bằng `X-Metrics-Token`, 5 cảnh báo | `1dd91c6` | `MetricsEndpointIT` · 356 test |
+| 24/10/2026 | P4-11 | Lịch học thuật, Kênh thảo luận nhóm, Chi tiết đề tài; a11y WCAG 2.1 AA (axe 0 vi phạm cả sáng/tối); sửa chế độ tối (xóa `App.css` cũ); gỡ 7 nút không có chức năng | xem `git log` | 361 test · `TopicDetailIT`, `a11y-check.mjs` 0 vi phạm, ui-check-gd4 44/44 |
 | | | | | |
 
 ---
@@ -2092,3 +2127,4 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 1.6 | 22/10/2026 | Hoàn thành 13/13 task GĐ2 trên `develop`; cập nhật trạng thái, commit, tiêu chí hoàn thành GĐ2; báo cáo mục 12 |
 | 1.7 | 23/10/2026 | Rà soát giao diện, đồng bộ giờ Việt Nam, hoàn thành P3-01 (Flyway); báo cáo mục 13 |
 | 1.8 | 23/10/2026 | Hoàn thành 14/14 task GĐ3; cập nhật trạng thái, kết quả đo, tiêu chí hoàn thành GĐ3; báo cáo mục 14 |
+| 1.9 | 24/10/2026 | GĐ4: hoàn thành P4-01, 02, 03, 05, 06, 08, 11 (7 task không cần hạ tầng ngoài); P4-09, P4-10 còn lại; báo cáo mục 15 |

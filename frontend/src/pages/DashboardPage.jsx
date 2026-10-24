@@ -86,7 +86,7 @@ export default function DashboardPage() {
                 {/* Card 1 */}
                 <div className="group bg-white dark:bg-slate-900 p-6 rounded-3xl border border-outline-variant/10 shadow-sm hover:shadow-xl transition-all">
                     <div className="flex items-center gap-4 mb-6">
-                       <div className="w-12 h-12 rounded-2xl bg-primary/5 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                       <div className="w-12 h-12 rounded-2xl bg-primary/5 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-all duration-500">
                           <span className="material-symbols-outlined text-2xl">rocket_launch</span>
                        </div>
                        <div>

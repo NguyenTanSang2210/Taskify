@@ -171,7 +171,7 @@ export default function LecturerTopicsPage() {
         </div>
         <button 
           onClick={openCreate}
-          className="px-8 py-3.5 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+          className="px-8 py-3.5 bg-primary text-on-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
         >
           <span className="material-symbols-outlined text-lg group-hover:rotate-90 transition-transform">add</span>
           Tạo đề tài mới
@@ -193,11 +193,11 @@ export default function LecturerTopicsPage() {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
             <div className="md:col-span-5 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm đề tài</label>
+               <label htmlFor="lecturertopicspage-input-199" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm đề tài</label>
                <div className="relative group">
                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-                 <input
-                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                 <input id="lecturertopicspage-input-199"
+                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                    placeholder="Nhập từ khóa hoặc tiêu đề..."
                    value={query}
                    onChange={(e) => {
@@ -208,9 +208,9 @@ export default function LecturerTopicsPage() {
                </div>
             </div>
             <div className="md:col-span-3 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Trạng thái hệ thống</label>
-               <select
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+               <label htmlFor="lecturertopicspage-select-212" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Trạng thái hệ thống</label>
+               <select id="lecturertopicspage-select-212"
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
                  value={status}
                  onChange={(e) => {
                    setPage(0);
@@ -224,9 +224,9 @@ export default function LecturerTopicsPage() {
                </select>
             </div>
             <div className="md:col-span-2 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Hiển thị</label>
-               <select
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+               <label htmlFor="lecturertopicspage-select-228" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Hiển thị</label>
+               <select id="lecturertopicspage-select-228"
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
                  value={size}
                  onChange={(e) => {
                    setPage(0);

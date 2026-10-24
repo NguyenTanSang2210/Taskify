@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function TopicCard({ topic, onRegister, loading }) {
   const isOpen = topic.status === "OPEN";
@@ -10,7 +11,7 @@ export default function TopicCard({ topic, onRegister, loading }) {
   const renderActionButton = () => {
     if (registrationStatus === "CHO_DUYET") {
       return (
-        <span className="px-4 py-2 bg-amber-500/10 text-amber-600 text-[10px] font-black rounded-xl uppercase tracking-widest border border-amber-500/10 flex items-center gap-2">
+        <span className="px-4 py-2 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-black rounded-xl uppercase tracking-widest border border-amber-500/10 flex items-center gap-2">
           <span className="material-symbols-outlined text-sm">pending</span>
           Đang chờ duyệt
         </span>
@@ -18,7 +19,7 @@ export default function TopicCard({ topic, onRegister, loading }) {
     }
     if (registrationStatus === "DA_DUYET") {
       return (
-        <span className="px-4 py-2 bg-green-500/10 text-green-600 text-[10px] font-black rounded-xl uppercase tracking-widest border border-green-500/10 flex items-center gap-2">
+        <span className="px-4 py-2 bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] font-black rounded-xl uppercase tracking-widest border border-green-500/10 flex items-center gap-2">
           <span className="material-symbols-outlined text-sm">verified</span>
           Đã được duyệt
         </span>
@@ -37,8 +38,8 @@ export default function TopicCard({ topic, onRegister, loading }) {
       <button
         className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 ${
           !isOpen || loading
-            ? "bg-surface-container text-outline/40 cursor-not-allowed border border-outline-variant/10"
-            : "bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 hover:shadow-primary/30"
+            ? "bg-surface-container text-outline cursor-not-allowed border border-outline-variant/10"
+            : "bg-primary text-on-primary shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 hover:shadow-primary/30"
         }`}
         disabled={!isOpen || loading}
         onClick={() => onRegister(topic.id)}
@@ -64,7 +65,7 @@ export default function TopicCard({ topic, onRegister, loading }) {
              {topic.workspaceName || "Đề tài"}
            </span>
            {isOpen && (
-              <span className="px-3 py-1 bg-green-500/5 text-green-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-green-500/10 flex items-center gap-1.5">
+              <span className="px-3 py-1 bg-green-500/5 text-green-700 dark:text-green-400 text-[9px] font-black rounded-lg uppercase tracking-widest border border-green-500/10 flex items-center gap-1.5">
                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                  Mở đăng ký
               </span>
@@ -72,7 +73,7 @@ export default function TopicCard({ topic, onRegister, loading }) {
         </div>
         
         {!isOpen && (
-           <span className="px-3 py-1 bg-surface-container-high text-outline/60 text-[9px] font-black rounded-lg uppercase tracking-widest border border-outline-variant/5">
+           <span className="px-3 py-1 bg-surface-container-high text-outline text-[9px] font-black rounded-lg uppercase tracking-widest border border-outline-variant/5">
              {isFull ? "Đã đủ sinh viên" : "Đã đóng"}
            </span>
         )}
@@ -80,24 +81,24 @@ export default function TopicCard({ topic, onRegister, loading }) {
 
       <div className="relative z-10 flex-grow">
          <h3 className="text-xl font-black leading-tight text-on-surface mb-4 group-hover:text-primary transition-colors font-headline uppercase tracking-tight">
-           {topic.title}
+           <Link to={`/topics/${topic.id}`} className="hover:underline">{topic.title}</Link>
          </h3>
          
-         <p className="text-[13px] font-medium text-on-surface-variant mb-8 line-clamp-3 leading-relaxed opacity-70 group-hover:opacity-100 transition-opacity">
+         <p className="text-[13px] font-medium text-on-surface-variant mb-8 line-clamp-3 leading-relaxed">
            {topic.description}
          </p>
       </div>
 
       <div className="mt-auto pt-6 border-t border-outline-variant/5 relative z-10">
         <div className="flex items-center gap-4 mb-6 p-4 bg-surface-container-low/30 rounded-[1.5rem] border border-outline-variant/5 transition-colors group-hover:bg-primary/[0.03]">
-          <div className="w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center font-black text-sm shadow-lg shadow-primary/10 border border-white/20 overflow-hidden shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-primary text-on-primary flex items-center justify-center font-black text-sm shadow-lg shadow-primary/10 border border-white/20 overflow-hidden shrink-0">
             {topic.lecturerName?.charAt(0) || "L"}
           </div>
           <div>
             <p className="text-[11px] font-black text-on-surface leading-none uppercase tracking-[0.1em]">
               {topic.lecturerName}
             </p>
-            <p className="text-[9px] text-outline font-black mt-1.5 uppercase tracking-widest opacity-60">Giảng viên hướng dẫn</p>
+            <p className="text-[9px] text-outline font-black mt-1.5 uppercase tracking-widest">Giảng viên hướng dẫn</p>
           </div>
         </div>
 

@@ -53,7 +53,8 @@ Response là DTO (không trả entity), nên không lộ hash mật khẩu hay t
 | **Vai trò & quyền** | Quản lý | ✅ | ❌ | ❌ | ❌ |
 | **Khoa** | CRUD | ✅ | ❌ (xem 🔸 Dept) | ❌ | ❌ |
 | **Lớp, Workspace, Phân công GV** | CRUD, chuyển trạng thái | ✅ | 🔸 Dept | ❌ | ❌ |
-| **Đề tài** | Xem danh sách | ✅ | 🔸 Dept | ✅ | ✅ (workspace của lớp mình) |
+| **Đề tài** | Xem danh sách | ✅ | 🔸 Dept | ✅ | ✅ (workspace của lớp mình) ⚠️ *code hiện chưa lọc theo lớp — đang xử lý riêng* |
+| | Xem chi tiết `GET /api/topics/{id}` (P4-11) — như danh sách; email công việc của GV hiện để liên hệ; **danh sách SV thực hiện chỉ trả cho thành viên** | ✅ | 🔸 Dept (khoa khác → 404) | ✅ | ✅ |
 | | Tạo / sửa / xóa / mở / đóng | ✅ | 🔸 Dept | 🔸 Own | ❌ |
 | **Đăng ký đề tài** | Đăng ký / hủy | ❌ | ❌ | ❌ | 🔸 Self |
 | | Xem danh sách đăng ký của đề tài | ✅ | 🔸 Dept | 🔸 Own | ❌ |

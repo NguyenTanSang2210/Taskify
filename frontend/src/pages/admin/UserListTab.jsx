@@ -7,24 +7,24 @@ export default function UserListTab({ loading, users, userPage, setUserPage, use
                     <div className="p-8 space-y-8 animate-in fade-in duration-500">
                         <div className="flex flex-col md:flex-row gap-6 items-end bg-surface-container-low/20 p-6 rounded-[2rem]">
                             <div className="flex-grow space-y-1.5">
-                               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc theo Khoa/Viện</label>
-                               <select className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={selectedDepartmentId} onChange={(e) => { setSelectedDepartmentId(e.target.value); setUserPage(0); }}>
+                               <label htmlFor="userlisttab-select-11" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc theo Khoa/Viện</label>
+                               <select id="userlisttab-select-11" className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={selectedDepartmentId} onChange={(e) => { setSelectedDepartmentId(e.target.value); setUserPage(0); }}>
                                   <option value="">Chọn khoa...</option>
                                   {departments.map(d => <option key={d.id} value={String(d.id)}>{d.code} - {d.name}</option>)}
                                </select>
                             </div>
                             <div className="flex-grow space-y-1.5">
-                               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc theo vai trò</label>
-                               <select className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-xs font-black uppercase tracking-widest outline-none" value={selectedUserRole} onChange={(e) => { setSelectedUserRole(e.target.value); setUserPage(0); }}>
+                               <label htmlFor="userlisttab-select-18" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc theo vai trò</label>
+                               <select id="userlisttab-select-18" className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-transparent focus:border-primary focus:ring-0 rounded-xl text-xs font-black uppercase tracking-widest outline-none" value={selectedUserRole} onChange={(e) => { setSelectedUserRole(e.target.value); setUserPage(0); }}>
                                   <option value="">Tất cả vai trò</option>
                                   {roles.map(r => <option key={r.id} value={r.name}>{getRoleLabel(r.name)}</option>)}
                                </select>
                             </div>
                             <form className="flex-grow space-y-1.5" onSubmit={(e) => { e.preventDefault(); setUserQuery(userQueryInput.trim()); setUserPage(0); }}>
-                               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm</label>
-                               <input className="w-full px-4 py-3 bg-white border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-bold transition-all outline-none" value={userQueryInput} onChange={(e) => setUserQueryInput(e.target.value)} placeholder="Tên đăng nhập, họ tên, email… (Enter)" />
+                               <label htmlFor="userlisttab-input-25" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm</label>
+                               <input id="userlisttab-input-25" className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-bold transition-all outline-none" value={userQueryInput} onChange={(e) => setUserQueryInput(e.target.value)} placeholder="Tên đăng nhập, họ tên, email… (Enter)" />
                             </form>
-                            <button onClick={loadUsers} className="px-8 py-3 bg-white border border-outline-variant/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-surface-container transition-all flex items-center gap-2">
+                            <button onClick={loadUsers} className="px-8 py-3 bg-white dark:bg-slate-900 border border-outline-variant/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-surface-container transition-all flex items-center gap-2">
                                <span className="material-symbols-outlined text-lg">refresh</span> Làm mới
                             </button>
                         </div>
@@ -50,11 +50,11 @@ export default function UserListTab({ loading, users, userPage, setUserPage, use
                                             </td>
                                             <td className="px-6 py-5">
                                                <p className="text-sm font-black text-on-surface uppercase tracking-tight">{u.fullName}</p>
-                                               <p className="text-[10px] text-outline font-bold lowercase opacity-60">{u.email || "No email"}</p>
+                                               <p className="text-[10px] text-outline font-bold lowercase">{u.email || "No email"}</p>
                                             </td>
                                             <td className="px-6 py-5 max-w-[200px]">
                                                <span className="text-[11px] font-black text-secondary uppercase tracking-tighter leading-tight">
-                                                  {u.department ? `${u.department.code} - ${u.department.name}` : <span className="text-outline/30 italic">Hệ thống chung</span>}
+                                                  {u.department ? `${u.department.code} - ${u.department.name}` : <span className="text-outline italic">Hệ thống chung</span>}
                                                </span>
                                             </td>
                                             <td className="px-6 py-5">
@@ -68,7 +68,7 @@ export default function UserListTab({ loading, users, userPage, setUserPage, use
                                                 </select>
                                             </td>
                                             <td className="px-6 py-5">
-                                               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${u.active ? 'bg-green-500/10 text-green-600' : 'bg-error/10 text-error'}`}>
+                                               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${u.active ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-error/10 text-error'}`}>
                                                   <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                                   {u.active ? 'Hoạt động' : 'Tạm khóa'}
                                                </div>
@@ -91,7 +91,7 @@ export default function UserListTab({ loading, users, userPage, setUserPage, use
                                                {u.role && u.role.name !== 'ADMIN' && (
                                                  <button 
                                                     onClick={() => toggleUserStatus(u)}
-                                                    className={`p-2.5 rounded-xl transition-all shadow-sm ${u.active ? 'bg-error/5 text-error hover:bg-error hover:text-white' : 'bg-green-500/5 text-green-600 hover:bg-green-600 hover:text-white'}`}
+                                                    className={`p-2.5 rounded-xl transition-all shadow-sm ${u.active ? 'bg-error/5 text-error hover:bg-error hover:text-on-error' : 'bg-green-500/5 text-green-700 dark:text-green-400 hover:bg-green-600 hover:text-on-error'}`}
                                                     title={u.active ? 'Khóa tài khoản' : 'Mở khóa'}
                                                  >
                                                     <span className="material-symbols-outlined text-lg">{u.active ? 'lock' : 'lock_open'}</span>
@@ -102,7 +102,7 @@ export default function UserListTab({ loading, users, userPage, setUserPage, use
                                     ))}
                                     {users.length === 0 && (
                                        <tr>
-                                          <td colSpan="6" className="py-32 text-center opacity-30 select-none">
+                                          <td colSpan="6" className="py-32 text-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
                                              <span className="material-symbols-outlined text-5xl mb-4">search_off</span>
                                              <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Không tìm thấy thành viên nào<br/>khớp với tiêu chí lọc.</p>
                                           </td>

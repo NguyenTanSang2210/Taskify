@@ -14,16 +14,16 @@ export default function ProgressSubmitPanel({ content, file, handleStudentSubmit
           </div>
     
           {!studentCanSubmit ? (
-            <div className="text-center py-10 space-y-4 opacity-40">
+            <div className="text-center py-10 space-y-4 text-outline [&_.material-symbols-outlined]:opacity-40">
                <span className="material-symbols-outlined text-5xl">lock</span>
                <p className="text-xs font-bold text-outline leading-relaxed uppercase tracking-[0.2em]">Cần có đề tài được phê duyệt để bắt đầu nộp báo cáo.</p>
             </div>
           ) : (
             <form onSubmit={handleStudentSubmit} className="space-y-6">
               <div className="space-y-1.5">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tiêu đề báo cáo</label>
-                 <input
-                   className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                 <label htmlFor="progresssubmitpanel-input-25" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tiêu đề báo cáo</label>
+                 <input id="progresssubmitpanel-input-25"
+                   className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                    value={title}
                    onChange={(e) => setTitle(e.target.value)}
                    placeholder="VD: Báo cáo tuần 1: Xây dựng Database"
@@ -31,9 +31,9 @@ export default function ProgressSubmitPanel({ content, file, handleStudentSubmit
                  />
               </div>
               <div className="space-y-1.5">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nội dung thực hiện</label>
-                 <textarea
-                   className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[160px]"
+                 <label htmlFor="progresssubmitpanel-textarea-35" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Nội dung thực hiện</label>
+                 <textarea id="progresssubmitpanel-textarea-35"
+                   className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none min-h-[160px]"
                    rows={5}
                    value={content}
                    onChange={(e) => setContent(e.target.value)}
@@ -41,9 +41,9 @@ export default function ProgressSubmitPanel({ content, file, handleStudentSubmit
                  />
               </div>
               <div className="space-y-1.5">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tài liệu đính kèm</label>
+                 <label htmlFor="progresssubmitpanel-input-46" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tài liệu đính kèm</label>
                  <div className="relative group">
-                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={(e) => setFile(e.target.files[0])} />
+                    <input id="progresssubmitpanel-input-46" type="file" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={(e) => setFile(e.target.files[0])} />
                     <div className="w-full px-4 py-4 border-2 border-dashed border-outline-variant/30 group-hover:border-primary group-hover:bg-primary/[0.02] rounded-xl flex items-center justify-center gap-3 transition-all">
                        <span className="material-symbols-outlined text-outline group-hover:text-primary">upload_file</span>
                        <span className="text-[10px] font-black uppercase tracking-widest text-outline group-hover:text-primary truncate">
@@ -53,7 +53,7 @@ export default function ProgressSubmitPanel({ content, file, handleStudentSubmit
                  </div>
               </div>
               <button 
-                 className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50" 
+                 className="w-full py-4 bg-primary text-on-primary rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50" 
                  type="submit" 
                  disabled={submitting}
               >

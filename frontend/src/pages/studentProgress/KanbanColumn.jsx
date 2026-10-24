@@ -50,7 +50,7 @@ export default function KanbanColumn({ status, cards, onMove, updatingId }) {
       {/* Drop zone visual */}
       {dragOver && (
         <div className={`mx-2 mb-3 rounded-xl border-2 border-dashed ${cfg.border} h-20 flex items-center justify-center`}>
-          <span className={`text-[10px] font-black uppercase tracking-widest ${cfg.color} opacity-60`}>
+          <span className={`text-[10px] font-black uppercase tracking-widest ${cfg.color}`}>
             Thả vào đây
           </span>
         </div>
@@ -59,7 +59,7 @@ export default function KanbanColumn({ status, cards, onMove, updatingId }) {
       {/* Cards */}
       <div className="flex-1 px-2 pb-4 space-y-3 overflow-y-auto">
         {cards.length === 0 && !dragOver ? (
-          <div className="flex flex-col items-center justify-center h-40 opacity-30">
+          <div className="flex flex-col items-center justify-center h-40 text-outline [&_.material-symbols-outlined]:opacity-40">
             <span className={`material-symbols-outlined text-4xl ${cfg.color}`}>{cfg.icon}</span>
             <p className="text-[10px] font-black uppercase tracking-widest text-outline mt-2">Trống</p>
           </div>

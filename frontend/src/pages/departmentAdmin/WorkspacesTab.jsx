@@ -17,23 +17,23 @@ export default function WorkspacesTab({ workspaces, wsCreate, setWsCreate, creat
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-end">
                                 <div className="lg:col-span-4 space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên chu kỳ Workspace</label>
-                                    <input className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={wsCreate.name} onChange={(e) => setWsCreate(s => ({ ...s, name: e.target.value }))} placeholder="VD: Khóa luận tốt nghiệp 2024" />
+                                    <label htmlFor="workspacestab-input-21" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên chu kỳ Workspace</label>
+                                    <input id="workspacestab-input-21" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={wsCreate.name} onChange={(e) => setWsCreate(s => ({ ...s, name: e.target.value }))} placeholder="VD: Khóa luận tốt nghiệp 2024" />
                                 </div>
                                 <div className="lg:col-span-2 space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Loại hình</label>
-                                    <input className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={wsCreate.type} onChange={(e) => setWsCreate(s => ({ ...s, type: e.target.value }))} placeholder="KLTN/DA2" />
+                                    <label htmlFor="workspacestab-input-25" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Loại hình</label>
+                                    <input id="workspacestab-input-25" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={wsCreate.type} onChange={(e) => setWsCreate(s => ({ ...s, type: e.target.value }))} placeholder="KLTN/DA2" />
                                 </div>
                                 <div className="lg:col-span-2 space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Học kỳ</label>
-                                    <input className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={wsCreate.semester} onChange={(e) => setWsCreate(s => ({ ...s, semester: e.target.value }))} placeholder="HK1-2024" />
+                                    <label htmlFor="workspacestab-input-29" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Học kỳ</label>
+                                    <input id="workspacestab-input-29" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={wsCreate.semester} onChange={(e) => setWsCreate(s => ({ ...s, semester: e.target.value }))} placeholder="HK1-2024" />
                                 </div>
                                 <div className="lg:col-span-2 space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Ngày bắt đầu</label>
-                                    <input type="datetime-local" className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-[11px] font-bold outline-none" value={wsCreate.startAt} onChange={(e) => setWsCreate(s => ({ ...s, startAt: e.target.value }))} />
+                                    <label htmlFor="workspacestab-input-33" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Ngày bắt đầu</label>
+                                    <input id="workspacestab-input-33" type="datetime-local" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-[11px] font-bold outline-none" value={wsCreate.startAt} onChange={(e) => setWsCreate(s => ({ ...s, startAt: e.target.value }))} />
                                 </div>
                                 <div className="lg:col-span-2">
-                                   <button onClick={createWorkspace} className="w-full py-3.5 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Tạo Workspace</button>
+                                   <button onClick={createWorkspace} className="w-full py-3.5 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Tạo Workspace</button>
                                 </div>
                             </div>
                         </section>
@@ -73,7 +73,7 @@ export default function WorkspacesTab({ workspaces, wsCreate, setWsCreate, creat
                                                           {next && (
                                                              <button 
                                                                 onClick={() => transitionWorkspace(w.id, next)}
-                                                                className="px-4 py-2 bg-primary text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-primary/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                                                className="px-4 py-2 bg-primary text-on-primary rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-primary/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                                              >
                                                                 <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                                                                 Tiến tới: {getWorkspaceStatusLabel(next)}
@@ -82,7 +82,7 @@ export default function WorkspacesTab({ workspaces, wsCreate, setWsCreate, creat
                                                           {w.status !== 'CLOSED' && (
                                                              <button 
                                                                 onClick={() => transitionWorkspace(w.id, 'CLOSED')}
-                                                                className="px-4 py-2 bg-error/5 text-error border border-error/10 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-error hover:text-white transition-all"
+                                                                className="px-4 py-2 bg-error/5 text-error border border-error/10 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-error hover:text-on-error transition-all"
                                                              >
                                                                 Đóng ngay
                                                              </button>

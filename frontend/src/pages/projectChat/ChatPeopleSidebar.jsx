@@ -8,7 +8,7 @@ export default function ChatPeopleSidebar({ loadChatInbox, recipientCandidates, 
        
        <div className="flex-grow overflow-y-auto p-4 space-y-2">
           {recipientCandidates.length === 0 ? (
-            <div className="py-10 text-center opacity-30">
+            <div className="py-10 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                <span className="material-symbols-outlined text-4xl mb-2">person_off</span>
                <p className="text-[10px] font-black uppercase tracking-widest">Không có người nhận</p>
             </div>
@@ -19,7 +19,7 @@ export default function ChatPeopleSidebar({ loadChatInbox, recipientCandidates, 
                   onClick={() => setSelectedRecipientId(c.id)}
                   className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 ${
                     selectedRecipientId === c.id 
-                    ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                    ? "bg-primary text-on-primary shadow-lg shadow-primary/20" 
                     : "hover:bg-surface-container text-on-surface-variant"
                   }`}
                >
@@ -30,9 +30,6 @@ export default function ChatPeopleSidebar({ loadChatInbox, recipientCandidates, 
                   </div>
                   <div className="text-left overflow-hidden">
                      <p className="text-[11px] font-black uppercase tracking-widest truncate">{c.name}</p>
-                     <p className={`text-[9px] font-bold uppercase tracking-tight mt-0.5 truncate ${
-                        selectedRecipientId === c.id ? "text-white/60" : "text-outline"
-                     }`}>Trực tuyến</p>
                   </div>
                </button>
             ))

@@ -33,7 +33,7 @@ export default function TopicsTab({ topics, page, setPage, totalPages, toggleTop
                                                {t.workspaceName && <p className="text-[9px] font-black text-outline uppercase mt-0.5">{t.workspaceName}</p>}
                                             </td>
                                             <td className="px-8 py-6">
-                                               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${t.status === 'OPEN' ? 'bg-green-500/10 text-green-600' : 'bg-surface-container text-outline'}`}>
+                                               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${t.status === 'OPEN' ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-surface-container text-outline'}`}>
                                                   <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                                   {getTopicStatusLabel(t.status)}
                                                </div>
@@ -54,7 +54,7 @@ export default function TopicsTab({ topics, page, setPage, totalPages, toggleTop
                                             <td className="px-8 py-6 text-right">
                                                <button 
                                                   onClick={() => toggleTopicStatus(t)}
-                                                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${t.status === 'OPEN' || t.status === 'FULL' ? 'bg-error/5 text-error hover:bg-error hover:text-white' : 'bg-primary/5 text-primary hover:bg-primary hover:text-white'}`}
+                                                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${t.status === 'OPEN' || t.status === 'FULL' ? 'bg-error/5 text-error hover:bg-error hover:text-on-primary' : 'bg-primary/5 text-primary hover:bg-primary hover:text-on-primary'}`}
                                                >
                                                   {t.status === 'OPEN' || t.status === 'FULL' ? 'Đóng đề tài' : 'Mở đề tài'}
                                                </button>
@@ -66,13 +66,13 @@ export default function TopicsTab({ topics, page, setPage, totalPages, toggleTop
                         </div>
                         {totalPages > 1 && (
                            <div className="pt-8 flex justify-center gap-2">
-                              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="w-10 h-10 rounded-xl bg-white border border-outline-variant/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all disabled:opacity-20">
+                              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-outline-variant/10 flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all disabled:opacity-20">
                                  <span className="material-symbols-outlined">chevron_left</span>
                               </button>
                               <div className="px-6 h-10 flex items-center justify-center bg-surface-container rounded-xl text-[11px] font-black uppercase tracking-widest text-on-surface-variant">
                                  Trang {page + 1}
                               </div>
-                              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} className="w-10 h-10 rounded-xl bg-white border border-outline-variant/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all disabled:opacity-20">
+                              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-outline-variant/10 flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all disabled:opacity-20">
                                  <span className="material-symbols-outlined">chevron_right</span>
                               </button>
                            </div>

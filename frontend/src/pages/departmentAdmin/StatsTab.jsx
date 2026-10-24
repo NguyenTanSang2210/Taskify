@@ -27,11 +27,11 @@ export default function StatsTab({ deptStats, fillRateLabel }) {
                                  Các đề tài của khoa có tổng <strong>{deptStats?.capacityTotal ?? 0}</strong> chỗ, đã duyệt <strong>{deptStats?.approvedTotal ?? 0}</strong> sinh viên.
                               </p>
                               <div className="pt-4 flex gap-4">
-                                 <div className="px-6 py-3 bg-white rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col">
+                                 <div className="px-6 py-3 bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col">
                                     <span className="text-[8px] font-black uppercase tracking-widest text-outline">TỈ LỆ LẤP ĐẦY</span>
                                     <span className="text-lg font-black text-primary">{fillRateLabel}</span>
                                  </div>
-                                 <div className="px-6 py-3 bg-white rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col">
+                                 <div className="px-6 py-3 bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col">
                                     <span className="text-[8px] font-black uppercase tracking-widest text-outline">GIẢNG VIÊN CHƯA ĐƯỢC PHÂN CÔNG</span>
                                     <span className="text-lg font-black text-secondary">{deptStats?.lecturersWithoutAssignment ?? 0}</span>
                                  </div>

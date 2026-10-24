@@ -51,7 +51,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
       <td className="px-6 py-4">
         <div className="flex flex-col">
           <span className="text-xs font-bold text-on-surface">{new Date(item.createdAt).toLocaleDateString()}</span>
-          <span className="text-[10px] text-outline font-medium opacity-60">
+          <span className="text-[10px] text-outline font-medium">
             {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
@@ -85,7 +85,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-col gap-3 min-w-[160px]">
-          <select 
+          <select aria-label="Trạng thái báo cáo"
             className="w-full bg-surface-container border-none rounded-xl text-[11px] font-black uppercase tracking-widest text-on-surface-variant focus:ring-2 focus:ring-primary/20 py-2 cursor-pointer transition-all"
             value={status} 
             onChange={(e) => setStatus(e.target.value)}
@@ -103,7 +103,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
                   </span>
                 )}
              </div>
-             <input 
+             <input aria-label="Hạn hoàn thành"
                 type="datetime-local" 
                 className={`w-full bg-surface-container border-none rounded-xl text-[11px] font-bold text-on-surface focus:ring-2 focus:ring-primary/20 py-1.5 transition-all ${isOverdue ? 'ring-1 ring-error/50 bg-error/5 text-error' : ''}`}
                 value={deadline}
@@ -113,7 +113,7 @@ export default function ProgressRow({ item, loadingId, onSave }) {
         </div>
       </td>
       <td className="px-6 py-4">
-        <textarea
+        <textarea aria-label="Nhận xét của giảng viên"
           className="w-full bg-surface-container border-none rounded-xl text-xs font-medium text-on-surface-variant focus:ring-2 focus:ring-primary/20 p-3 transition-all min-h-[80px] placeholder:text-outline/50"
           value={comment}
           onChange={(e) => setComment(e.target.value)}

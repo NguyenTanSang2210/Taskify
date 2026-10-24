@@ -5,7 +5,7 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
       {loading ? (
-          <div className="flex-grow flex items-center justify-center p-20 opacity-40">
+          <div className="flex-grow flex items-center justify-center p-20 text-outline [&_.material-symbols-outlined]:opacity-40">
              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
           </div>
       ) : error ? (
@@ -15,7 +15,7 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
              <button onClick={() => load()} className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline">Thử lại</button>
           </div>
       ) : items.length === 0 ? (
-          <div className="flex-grow flex flex-col items-center justify-center p-24 text-center opacity-40">
+          <div className="flex-grow flex flex-col items-center justify-center p-24 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
              <span className="material-symbols-outlined text-7xl mb-4">move_to_inbox</span>
              <h3 className="text-xl font-black uppercase tracking-widest">Chưa có đề tài nào</h3>
              <p className="text-xs font-bold mt-2">Bắt đầu bằng cách tạo đề tài nghiên cứu đầu tiên của bạn.</p>
@@ -40,7 +40,7 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                      return (
                        <tr key={t.id} className="group hover:bg-primary/[0.02] transition-colors">
                           <td className="px-8 py-6 max-w-sm">
-                             <p className="text-sm font-black text-on-surface uppercase tracking-tight leading-snug group-hover:text-primary transition-colors">{t.title}</p>
+                             <Link to={`/topics/${t.id}`} className="block text-sm font-black text-on-surface uppercase tracking-tight leading-snug hover:text-primary hover:underline transition-colors">{t.title}</Link>
                              <p className="text-[11px] text-outline mt-1.5 font-medium line-clamp-1">{t.description || "Không có mô tả chi tiết."}</p>
                           </td>
                           <td className="px-8 py-6">
@@ -53,10 +53,10 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                              <span className="text-sm font-black text-on-surface">{t.registrationCount ?? 0}</span>
                           </td>
                           <td className="px-6 py-6 text-center">
-                             <span className={`text-sm font-black ${t.pendingCount > 0 ? "text-secondary" : "text-outline/30"}`}>{t.pendingCount ?? 0}</span>
+                             <span className={`text-sm font-black ${t.pendingCount > 0 ? "text-secondary" : "text-outline"}`}>{t.pendingCount ?? 0}</span>
                           </td>
                           <td className="px-6 py-6 text-center">
-                             <span className={`text-sm font-black ${t.approvedCount > 0 ? "text-primary" : "text-outline/30"}`} title="Đã duyệt / số chỗ">{t.approvedCount ?? 0}/{t.capacity || 1}</span>
+                             <span className={`text-sm font-black ${t.approvedCount > 0 ? "text-primary" : "text-outline"}`} title="Đã duyệt / số chỗ">{t.approvedCount ?? 0}/{t.capacity || 1}</span>
                           </td>
                           <td className="px-8 py-6 text-right">
                              <div className="flex justify-end gap-2">
@@ -69,7 +69,7 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                                 </Link>
                                 <button 
                                   onClick={() => openEdit(t)}
-                                  className="p-2.5 rounded-xl bg-surface-container hover:bg-primary hover:text-white transition-all shadow-sm"
+                                  className="p-2.5 rounded-xl bg-surface-container hover:bg-primary hover:text-on-primary transition-all shadow-sm"
                                   title="Chỉnh sửa đề tài"
                                 >
                                    <span className="material-symbols-outlined text-lg">edit</span>
@@ -96,7 +96,7 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                                 <button 
                                   onClick={() => handleDelete(t.id)} 
                                   disabled={actionLoadingId === t.id}
-                                  className="p-2.5 rounded-xl bg-surface-container hover:bg-error hover:text-white transition-all shadow-sm disabled:opacity-50"
+                                  className="p-2.5 rounded-xl bg-surface-container hover:bg-error hover:text-on-error transition-all shadow-sm disabled:opacity-50"
                                   title="Xóa đề tài"
                                 >
                                    <span className="material-symbols-outlined text-lg">delete</span>
@@ -120,8 +120,8 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                 <button
                   className={`p-2 rounded-xl transition-all ${
                     page <= 0 
-                    ? "bg-surface-container-high/50 text-outline/30 cursor-not-allowed" 
-                    : "bg-white border border-outline-variant/20 text-on-surface hover:bg-primary hover:text-white"
+                    ? "bg-surface-container-high/50 text-outline cursor-not-allowed" 
+                    : "bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-primary hover:text-on-primary"
                   }`}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={page <= 0}
@@ -135,7 +135,7 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                         key={i}
                         onClick={() => setPage(i)}
                         className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${
-                          page === i ? "bg-primary text-white" : "text-outline hover:bg-surface-container"
+                          page === i ? "bg-primary text-on-primary" : "text-outline hover:bg-surface-container"
                         }`}
                       >
                         {i + 1}
@@ -146,8 +146,8 @@ export default function TopicTable({ actionLoadingId, error, getStatusInfo, hand
                 <button
                   className={`p-2 rounded-xl transition-all ${
                     page + 1 >= totalPages
-                    ? "bg-surface-container-high/50 text-outline/30 cursor-not-allowed" 
-                    : "bg-white border border-outline-variant/20 text-on-surface hover:bg-primary hover:text-white"
+                    ? "bg-surface-container-high/50 text-outline cursor-not-allowed" 
+                    : "bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-primary hover:text-on-primary"
                   }`}
                   onClick={() => setPage((p) => (p + 1 < totalPages ? p + 1 : p))}
                   disabled={page + 1 >= totalPages}

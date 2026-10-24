@@ -19,6 +19,9 @@ const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const ProjectSpacePage = lazy(() => import("../pages/ProjectSpacePage"));
 const ProjectChatPage = lazy(() => import("../pages/ProjectChatPage"));
+const CalendarPage = lazy(() => import("../pages/CalendarPage"));
+const DiscussionPage = lazy(() => import("../pages/DiscussionPage"));
+const TopicDetailPage = lazy(() => import("../pages/TopicDetailPage"));
 const LoginPage = lazy(() => import("../pages/LoginPage"));
 
 export function PageFallback() {
@@ -68,6 +71,9 @@ export default function AppRoutes({ roleName }) {
         <Route path="/department-admin" element={only("DEPARTMENT_ADMIN", <DepartmentAdminPage />)} />
         <Route path="/project-space" element={only(["STUDENT", "LECTURER"], <ProjectSpacePage />)} />
         <Route path="/project-chat" element={only(["STUDENT", "LECTURER"], <ProjectChatPage />)} />
+        <Route path="/calendar" element={only(["STUDENT", "LECTURER"], <CalendarPage />)} />
+        <Route path="/discussion" element={only(["STUDENT", "LECTURER"], <DiscussionPage />)} />
+        <Route path="/topics/:id" element={only(roleName || "STUDENT", <TopicDetailPage />)} />
         <Route path="/profile" element={only(roleName || "STUDENT", <ProfilePage />)} />
       </Routes>
     </Suspense>

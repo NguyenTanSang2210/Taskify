@@ -69,9 +69,9 @@
     --color-outline: #f1f5f9; /* Near white for maximum dark mode label visibility */
     --color-outline-variant: #94a3b8; /* Slate 400 */
 
-    /* Đỏ trung bình: đọc được cả chữ trắng trên nền đỏ (nút) lẫn chữ đỏ trên nền tối */
-    --color-error: #ef4444;
-    --color-on-error: #ffffff;
+    /* Đỏ sáng + chữ đỏ thẫm trên nền đỏ (P4-11: chữ trắng trên #ef4444 chỉ đạt 3.8:1, chưa đủ WCAG AA) */
+    --color-error: #f87171;
+    --color-on-error: #450a0a;
     --color-error-container: #7f1d1d;
     --color-on-error-container: #fee2e2;
     --color-error-dim: #fca5a5;
@@ -150,6 +150,21 @@
   
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* P4-11 (a11y): viền focus rõ ràng khi điều hướng bằng bàn phím (chuột bấm không hiện) */
+  :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Global Placeholder Clarity */

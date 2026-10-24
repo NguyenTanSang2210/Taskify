@@ -20,7 +20,7 @@ export default function StudentMilestoneList({ board }) {
                         <div className="flex items-center gap-3 shrink-0">
                             <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${st.tone}`}>{st.label}</span>
                             <span className="text-lg font-black tabular-nums w-10 text-right" aria-label="Điểm">{c.score ?? "—"}</span>
-                            <Link to={`/progress-detail?milestoneId=${m.id}`} className="px-4 py-2 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest">
+                            <Link to={`/progress-detail?milestoneId=${m.id}`} className="px-4 py-2 rounded-xl bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest">
                                 {c.submittedAt ? "Nộp lại" : "Nộp bài"}
                             </Link>
                         </div>

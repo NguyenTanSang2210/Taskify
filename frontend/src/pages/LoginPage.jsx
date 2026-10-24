@@ -316,7 +316,7 @@ export default function LoginPage() {
         <div className="flex flex-col md:flex-row justify-between items-center px-12 gap-6 max-w-7xl mx-auto text-outline">
           <div className="flex flex-col items-center md:items-start gap-1">
              <p className="text-[10px] font-black uppercase tracking-[0.2em]">© 2024 Taskify: Academic Management System</p>
-             <p className="text-[9px] font-bold uppercase tracking-widest opacity-60">Hệ thống quản lý đề tài và nghiên cứu khoa học</p>
+             <p className="text-[9px] font-bold uppercase tracking-widest">Hệ thống quản lý đề tài và nghiên cứu khoa học</p>
           </div>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest">
             <a href="#" className="hover:text-primary transition-colors">Hỗ trợ</a>

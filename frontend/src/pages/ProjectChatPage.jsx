@@ -242,8 +242,8 @@ export default function ProjectChatPage() {
         
         {isLecturer && (
            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-outline-variant/10 shadow-sm">
-              <span className="text-[10px] font-black text-outline uppercase tracking-widest shrink-0">Đề tài:</span>
-              <select 
+              <label htmlFor="chat-topic" className="text-[10px] font-black text-outline uppercase tracking-widest shrink-0">Đề tài:</label>
+              <select id="chat-topic"
                 className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase tracking-widest text-primary cursor-pointer outline-none max-w-[200px]" 
                 value={topicId} 
                 onChange={(e) => setTopicId(e.target.value)}

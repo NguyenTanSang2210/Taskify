@@ -157,7 +157,7 @@ export default function LecturerProgressPage() {
               <span className="material-symbols-outlined text-sm">update</span>
               Realtime Sync
            </div>
-           <button onClick={loadProgress} className="p-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+           <button aria-label="Làm mới" onClick={loadProgress} className="p-2.5 bg-primary text-on-primary rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
               <span className="material-symbols-outlined">refresh</span>
            </button>
         </div>
@@ -178,9 +178,9 @@ export default function LecturerProgressPage() {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
             <div className="lg:col-span-4 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn đề tài đang xem</label>
-               <select 
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-black transition-all duration-300 outline-none cursor-pointer" 
+               <label htmlFor="lecturerprogresspage-select-182" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn đề tài đang xem</label>
+               <select id="lecturerprogresspage-select-182" 
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-black transition-all duration-300 outline-none cursor-pointer" 
                  value={topicId} 
                  onChange={e => setTopicId(e.target.value)}
                 >
@@ -194,11 +194,11 @@ export default function LecturerProgressPage() {
                <span className="material-symbols-outlined">chevron_right</span>
             </div>
             <div className="lg:col-span-4 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm nội dung</label>
+               <label htmlFor="lecturerprogresspage-input-200" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm nội dung</label>
                <div className="relative group">
                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-                 <input
-                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                 <input id="lecturerprogresspage-input-200"
+                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                    placeholder="Tiêu đề, tên SV, MSSV..."
                    value={search}
                    onChange={e => setSearch(e.target.value)}
@@ -206,9 +206,9 @@ export default function LecturerProgressPage() {
                </div>
             </div>
             <div className="lg:col-span-3 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc trạng thái</label>
-               <select 
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none" 
+               <label htmlFor="lecturerprogresspage-select-210" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Lọc trạng thái</label>
+               <select id="lecturerprogresspage-select-210" 
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none" 
                  value={statusFilter} 
                  onChange={e => setStatusFilter(e.target.value)}
                >
@@ -251,14 +251,14 @@ export default function LecturerProgressPage() {
             <tbody className="divide-y divide-outline-variant/5">
               {loading ? (
                 <tr>
-                   <td colSpan="6" className="py-20 text-center opacity-40">
+                   <td colSpan="6" className="py-20 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                       <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
                       <p className="text-[10px] font-black uppercase tracking-widest">Đang tải dữ liệu tiến độ...</p>
                    </td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                   <td colSpan="6" className="py-32 text-center opacity-40">
+                   <td colSpan="6" className="py-32 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                       <span className="material-symbols-outlined text-6xl mb-4">checklist</span>
                       <h3 className="text-lg font-black uppercase tracking-widest">Không có dữ liệu</h3>
                       <p className="text-xs font-bold mt-2">Chưa có báo cáo nào khớp với tiêu chí tìm kiếm.</p>

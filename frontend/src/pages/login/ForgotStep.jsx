@@ -12,16 +12,16 @@ export default function ForgotStep({ backToLogin, loading, setUsername, username
         </p>
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập hoặc email</label>
-        <input
-          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+        <label htmlFor="forgotstep-input-16" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập hoặc email</label>
+        <input id="forgotstep-input-16"
+          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoFocus
           required
         />
       </div>
-      <button className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50" disabled={loading || !username.trim()} type="submit">
+      <button className="w-full py-4 bg-primary text-on-primary rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50" disabled={loading || !username.trim()} type="submit">
         {loading ? "Đang gửi..." : "Gửi mã đặt lại"}
       </button>
       <button className="w-full text-[10px] font-black text-outline uppercase tracking-widest hover:text-primary transition-colors" type="button" onClick={() => backToLogin()}>

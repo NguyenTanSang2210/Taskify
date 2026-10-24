@@ -83,7 +83,7 @@ export default function NotificationSettingsTab() {
                 )}
             </fieldset>
 
-            <button type="submit" disabled={saving} className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="px-10 py-4 bg-primary text-on-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 disabled:opacity-50">
                 {saving ? "Đang lưu..." : "Lưu cài đặt"}
             </button>
         </form>

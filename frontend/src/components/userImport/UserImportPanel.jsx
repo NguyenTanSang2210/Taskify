@@ -101,7 +101,7 @@ export default function UserImportPanel({ departments = null }) {
                     <div className="flex gap-2">
                         {KINDS.map((k) => (
                             <button key={k.id} type="button" onClick={() => changeKind(k.id)} aria-pressed={kind === k.id}
-                                className={`${button} ${kind === k.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-surface-container-low text-outline hover:text-on-surface"}`}>
+                                className={`${button} ${kind === k.id ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "bg-surface-container-low text-outline hover:text-on-surface"}`}>
                                 <span className="material-symbols-outlined text-lg" aria-hidden="true">{k.icon}</span>
                                 {k.label}
                             </button>
@@ -143,7 +143,7 @@ export default function UserImportPanel({ departments = null }) {
                     <span className="material-symbols-outlined text-lg" aria-hidden="true">download</span>
                     Tải file mẫu
                 </button>
-                <button type="button" onClick={check} disabled={busy || !file || needsDepartment} className={`${button} bg-primary text-white shadow-lg shadow-primary/20`}>
+                <button type="button" onClick={check} disabled={busy || !file || needsDepartment} className={`${button} bg-primary text-on-primary shadow-lg shadow-primary/20`}>
                     <span className="material-symbols-outlined text-lg" aria-hidden="true">fact_check</span>
                     {busy && !report ? "Đang kiểm tra..." : "Kiểm tra file"}
                 </button>
@@ -163,7 +163,7 @@ export default function UserImportPanel({ departments = null }) {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        <button type="button" onClick={commit} disabled={busy || report.valid === 0} className={`${button} bg-primary text-white shadow-lg shadow-primary/20`}>
+                        <button type="button" onClick={commit} disabled={busy || report.valid === 0} className={`${button} bg-primary text-on-primary shadow-lg shadow-primary/20`}>
                             <span className="material-symbols-outlined text-lg" aria-hidden="true">group_add</span>
                             {busy ? "Đang nhập..." : `Nhập ${report.valid} tài khoản hợp lệ`}
                         </button>

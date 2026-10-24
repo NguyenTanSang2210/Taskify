@@ -4,9 +4,9 @@ export default function AssignmentsTab({ workspaces, selectedWorkspaceId, setSel
                     <div className="p-10 space-y-10 animate-in slide-in-from-bottom-4 duration-500">
                         <section className="bg-surface-container-low/40 p-8 rounded-[2rem] border border-outline-variant/10 flex flex-col md:flex-row items-center gap-8">
                              <div className="flex-grow space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn Workspace Cấu hình</label>
-                                <select 
-                                   className="w-full px-6 py-4 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-2xl text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer" 
+                                <label htmlFor="assignmentstab-select-8" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn Workspace Cấu hình</label>
+                                <select id="assignmentstab-select-8" 
+                                   className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-2xl text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer" 
                                    value={selectedWorkspaceId} 
                                    onChange={(e) => { setSelectedWorkspaceId(e.target.value); loadAssignments(Number(e.target.value)); }}
                                 >
@@ -28,29 +28,29 @@ export default function AssignmentsTab({ workspaces, selectedWorkspaceId, setSel
                                  
                                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                                     <div className="md:col-span-4 space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Giảng viên phụ trách</label>
-                                       <select className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-xs font-black uppercase tracking-widest outline-none cursor-pointer" value={assignForm.lecturerId} onChange={(e) => setAssignForm(s => ({ ...s, lecturerId: e.target.value }))} disabled={!canConfigureSelectedWorkspace}>
+                                       <label htmlFor="assignmentstab-select-32" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Giảng viên phụ trách</label>
+                                       <select id="assignmentstab-select-32" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-xs font-black uppercase tracking-widest outline-none cursor-pointer" value={assignForm.lecturerId} onChange={(e) => setAssignForm(s => ({ ...s, lecturerId: e.target.value }))} disabled={!canConfigureSelectedWorkspace}>
                                           <option value="">-- Chọn danh sách --</option>
                                           {lecturers.map(l => <option key={l.id} value={l.id}>{l.fullName} ({l.username})</option>)}
                                        </select>
                                     </div>
                                     <div className="md:col-span-2 space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Vai trò</label>
-                                       <select className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer" value={assignForm.type} onChange={(e) => setAssignForm(s => ({ ...s, type: e.target.value }))} disabled={!canConfigureSelectedWorkspace}>
+                                       <label htmlFor="assignmentstab-select-39" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Vai trò</label>
+                                       <select id="assignmentstab-select-39" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer" value={assignForm.type} onChange={(e) => setAssignForm(s => ({ ...s, type: e.target.value }))} disabled={!canConfigureSelectedWorkspace}>
                                           <option value="MAIN">HƯỚNG DẪN CHÍNH</option>
                                           <option value="ASSISTANT">TRỢ GIẢNG</option>
                                        </select>
                                     </div>
                                     <div className="md:col-span-2 space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Hạn ngạch nhóm (Quota)</label>
-                                       <input type="number" className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={assignForm.quotaMaxGroups} onChange={(e) => setAssignForm(s => ({ ...s, quotaMaxGroups: e.target.value }))} disabled={!canConfigureSelectedWorkspace} />
+                                       <label htmlFor="assignmentstab-input-46" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Hạn ngạch nhóm (Quota)</label>
+                                       <input id="assignmentstab-input-46" type="number" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-black transition-all outline-none" value={assignForm.quotaMaxGroups} onChange={(e) => setAssignForm(s => ({ ...s, quotaMaxGroups: e.target.value }))} disabled={!canConfigureSelectedWorkspace} />
                                     </div>
                                     <div className="md:col-span-3 space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Ghi chú phân bổ</label>
-                                       <input className="w-full px-5 py-3.5 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-medium transition-all outline-none" value={assignForm.reason} onChange={(e) => setAssignForm(s => ({ ...s, reason: e.target.value }))} disabled={!canConfigureSelectedWorkspace} placeholder="..." />
+                                       <label htmlFor="assignmentstab-input-50" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Ghi chú phân bổ</label>
+                                       <input id="assignmentstab-input-50" className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-xl text-sm font-medium transition-all outline-none" value={assignForm.reason} onChange={(e) => setAssignForm(s => ({ ...s, reason: e.target.value }))} disabled={!canConfigureSelectedWorkspace} placeholder="..." />
                                     </div>
                                     <div className="md:col-span-1">
-                                       <button onClick={assignLecturer} disabled={!canConfigureSelectedWorkspace} className="w-full py-4 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-20 flex items-center justify-center">
+                                       <button aria-label="Phân công giảng viên" onClick={assignLecturer} disabled={!canConfigureSelectedWorkspace} className="w-full py-4 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-20 flex items-center justify-center">
                                           <span className="material-symbols-outlined">key</span>
                                        </button>
                                     </div>
@@ -92,14 +92,14 @@ export default function AssignmentsTab({ workspaces, selectedWorkspaceId, setSel
                                                 </td>
                                                 <td className="px-8 py-4 rounded-r-2xl text-right">
                                                    <div className="inline-flex items-center gap-4">
-                                                      <div className={`px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${a.active ? 'bg-green-500/10 text-green-600' : 'bg-surface-container text-outline'}`}>
+                                                      <div className={`px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${a.active ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-surface-container text-outline'}`}>
                                                          {a.active ? 'Hợp lệ' : 'Vô hiệu'}
                                                       </div>
                                                       {a.active && (
                                                          <button 
                                                             onClick={() => revokeAssignment(a.id)}
                                                             disabled={!canConfigureSelectedWorkspace}
-                                                            className="w-10 h-10 rounded-xl bg-error/5 text-error hover:bg-error hover:text-white transition-all flex items-center justify-center disabled:opacity-20"
+                                                            className="w-10 h-10 rounded-xl bg-error/5 text-error hover:bg-error hover:text-on-error transition-all flex items-center justify-center disabled:opacity-20"
                                                          >
                                                             <span className="material-symbols-outlined text-lg">person_remove</span>
                                                          </button>
@@ -110,7 +110,7 @@ export default function AssignmentsTab({ workspaces, selectedWorkspaceId, setSel
                                           ))}
                                           {assignments.length === 0 && (
                                              <tr>
-                                                <td colSpan="4" className="py-20 text-center opacity-30 select-none">
+                                                <td colSpan="4" className="py-20 text-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
                                                    <p className="text-[10px] font-black uppercase tracking-widest">Không có giảng viên được phân công</p>
                                                 </td>
                                              </tr>

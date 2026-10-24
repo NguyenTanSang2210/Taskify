@@ -45,7 +45,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
             {data.length === 0 && (
               <tr>
                 <td colSpan="7" className="px-8 py-24 text-center">
-                  <div className="flex flex-col items-center gap-4 opacity-30 grayscale select-none">
+                  <div className="flex flex-col items-center gap-4 text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
                     <span className="material-symbols-outlined text-6xl">person_search</span>
                     <p className="text-xs font-black uppercase tracking-[0.2em] leading-relaxed">Chưa có sinh viên đăng ký<br/>tham gia đề tài này</p>
                   </div>
@@ -78,7 +78,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                   <td className="px-8 py-5">
                      <div className="flex flex-col">
                       <span className="text-[11px] font-black text-on-surface uppercase tracking-tight">{new Date(r.registeredAt).toLocaleDateString()}</span>
-                      <span className="text-[9px] text-outline font-black uppercase tracking-widest opacity-60">
+                      <span className="text-[9px] text-outline font-black uppercase tracking-widest">
                          {new Date(r.registeredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -98,7 +98,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                          Chờ duyệt
                       </div>
                     ) : r.approved === true ? (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-600 text-[9px] font-black uppercase tracking-widest border border-green-500/10">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 text-[9px] font-black uppercase tracking-widest border border-green-500/10">
                          <span className="material-symbols-outlined text-[14px]">verified</span>
                          Đã duyệt
                       </div>
@@ -113,7 +113,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                     {r.score !== null ? (
                       <span className="px-4 py-2 bg-secondary text-white rounded-xl text-xs font-black shadow-lg shadow-secondary/20">{fmtScore(r.score)}</span>
                     ) : (
-                      <span className="text-outline/30 font-black uppercase tracking-widest text-[9px]">Chưa chấm</span>
+                      <span className="text-outline font-black uppercase tracking-widest text-[9px]">Chưa chấm</span>
                     )}
                     <GradeStatus r={r} />
                   </td>
@@ -122,7 +122,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                       {r.approved === null && (
                         <>
                           <button
-                            className="p-2.5 rounded-xl bg-primary text-white hover:scale-110 active:scale-95 transition-all shadow-xl shadow-primary/20"
+                            className="p-2.5 rounded-xl bg-primary text-on-primary hover:scale-110 active:scale-95 transition-all shadow-xl shadow-primary/20"
                             disabled={loadingId === r.id}
                             onClick={() => onApproveClick(r)}
                             title="Chấp thuận đăng ký"
@@ -130,7 +130,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                             <span className="material-symbols-outlined text-lg">check</span>
                           </button>
                           <button
-                            className="p-2.5 rounded-xl bg-error/5 text-error border border-error/10 hover:bg-error hover:text-white hover:scale-110 active:scale-95 transition-all"
+                            className="p-2.5 rounded-xl bg-error/5 text-error border border-error/10 hover:bg-error hover:text-on-error hover:scale-110 active:scale-95 transition-all"
                             disabled={loadingId === r.id}
                             onClick={() => onRejectClick(r)}
                             title="Từ chối đăng ký"
@@ -161,7 +161,7 @@ export default function RegistrationTable({ data, onApproveClick, onRejectClick,
                       )}
                       {r.score !== null && onHistoryClick && (
                         <button
-                          className="p-2.5 rounded-xl bg-surface-container text-on-surface-variant hover:bg-primary hover:text-white hover:scale-110 active:scale-95 transition-all"
+                          className="p-2.5 rounded-xl bg-surface-container text-on-surface-variant hover:bg-primary hover:text-on-primary hover:scale-110 active:scale-95 transition-all"
                           onClick={() => onHistoryClick(r)}
                           title="Lịch sử điểm"
                         >

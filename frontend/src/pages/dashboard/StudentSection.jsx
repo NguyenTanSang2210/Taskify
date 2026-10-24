@@ -13,7 +13,7 @@ export default function StudentSection({ stats }) {
             <section className={`${panel} text-center md:text-left`} aria-label="Đề tài của tôi">
                 <h2 className="text-2xl font-black text-on-surface uppercase tracking-tight font-headline">Bạn chưa đăng ký đề tài</h2>
                 <p className="text-sm text-on-surface-variant font-medium mt-2">Khám phá danh sách đề tài của các đợt mà lớp bạn tham gia để bắt đầu.</p>
-                <Link to="/" className="inline-block mt-5 px-8 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20">Xem danh sách đề tài</Link>
+                <Link to="/" className="inline-block mt-5 px-8 py-3 bg-primary text-on-primary rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20">Xem danh sách đề tài</Link>
             </section>
         );
     }
@@ -48,7 +48,7 @@ export default function StudentSection({ stats }) {
                 )}
             </section>
             <div className="flex flex-wrap gap-3">
-                <Link to="/progress" className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">Theo dõi tiến độ</Link>
+                <Link to="/progress" className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">Theo dõi tiến độ</Link>
                 <Link to="/project-chat" className="px-6 py-2.5 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest">Trao đổi với giảng viên</Link>
             </div>
         </section>

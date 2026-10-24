@@ -47,7 +47,7 @@ export default function LecturerSection({ stats }) {
                 </section>
             </div>
             <div className="flex flex-wrap gap-3">
-                <Link to="/lecturer" className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">Duyệt đăng ký</Link>
+                <Link to="/lecturer" className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20">Duyệt đăng ký</Link>
                 <Link to="/lecturer-progress" className="px-6 py-2.5 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest">Nhận xét tiến độ</Link>
             </div>
         </section>

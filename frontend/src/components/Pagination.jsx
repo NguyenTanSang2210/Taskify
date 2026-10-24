@@ -6,7 +6,7 @@ export default function Pagination({ page = 0, totalPages = 0, totalElements, on
     ) : null;
   }
   const btn =
-    "w-9 h-9 rounded-xl border border-outline-variant/20 bg-white flex items-center justify-center hover:bg-surface-container disabled:opacity-30 disabled:cursor-not-allowed transition-all";
+    "w-9 h-9 rounded-xl border border-outline-variant/20 bg-white dark:bg-slate-900 flex items-center justify-center hover:bg-surface-container disabled:opacity-30 disabled:cursor-not-allowed transition-all";
   return (
     <nav className="flex items-center justify-end gap-3 px-2" aria-label="Phân trang">
       <span className="text-[10px] font-black uppercase tracking-widest text-outline">

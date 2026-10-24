@@ -270,9 +270,9 @@ export default function LecturerRegistrationPage() {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm">
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
             <div className="lg:col-span-4 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Đề tài</label>
-               <select
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-black transition-all duration-300 outline-none"
+               <label htmlFor="lecturerregistrationpage-select-274" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Đề tài</label>
+               <select id="lecturerregistrationpage-select-274"
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-black transition-all duration-300 outline-none"
                  value={topicId}
                  onChange={(e) => setTopicId(e.target.value)}
                  aria-label="Chọn đề tài"
@@ -285,9 +285,9 @@ export default function LecturerRegistrationPage() {
                </select>
             </div>
             <div className="lg:col-span-3 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Sắp xếp theo</label>
-               <select
-                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+               <label htmlFor="lecturerregistrationpage-select-289" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Sắp xếp theo</label>
+               <select id="lecturerregistrationpage-select-289"
+                 className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
                  value={sortBy}
                  onChange={(e) => setSortBy(e.target.value)}
                >
@@ -298,11 +298,11 @@ export default function LecturerRegistrationPage() {
                </select>
             </div>
             <div className="lg:col-span-2 space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm sinh viên</label>
+               <label htmlFor="lecturerregistrationpage-input-304" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm sinh viên</label>
                <div className="relative group">
                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-                 <input
-                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                 <input id="lecturerregistrationpage-input-304"
+                   className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                    placeholder="Mã số, tên, lớp..."
                    value={search}
                    onChange={(e) => setSearch(e.target.value)}
@@ -310,7 +310,7 @@ export default function LecturerRegistrationPage() {
                </div>
             </div>
             <div className="lg:col-span-3 flex gap-2">
-               <button onClick={load} className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+               <button onClick={load} className="flex-1 px-4 py-3 bg-primary text-on-primary rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
                   Làm mới
                </button>
                <button onClick={handleExportExcel} className="flex-1 px-4 py-3 bg-surface-container text-on-surface-variant rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-surface-container-high transition-all border border-outline-variant/10">

@@ -14,18 +14,18 @@ export default function ActivateStep({ activationCode, backToLogin, confirmPassw
         </p>
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập hoặc email</label>
-        <input
-          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+        <label htmlFor="activatestep-input-18" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Tên đăng nhập hoặc email</label>
+        <input id="activatestep-input-18"
+          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
         />
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã kích hoạt (6 chữ số)</label>
-        <input
-          className="w-full text-center text-2xl tracking-[0.5em] font-black py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl transition-all duration-300 outline-none"
+        <label htmlFor="activatestep-input-27" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã kích hoạt (6 chữ số)</label>
+        <input id="activatestep-input-27"
+          className="w-full text-center text-2xl tracking-[0.5em] font-black py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl transition-all duration-300 outline-none"
           value={activationCode}
           onChange={(e) => setActivationCode(e.target.value.replace(/\D/g, ""))}
           placeholder="000000"
@@ -36,10 +36,10 @@ export default function ActivateStep({ activationCode, backToLogin, confirmPassw
         />
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
-        <input
+        <label htmlFor="activatestep-input-40" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
+        <input id="activatestep-input-40"
           type="password"
-          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           autoComplete="new-password"
@@ -48,10 +48,10 @@ export default function ActivateStep({ activationCode, backToLogin, confirmPassw
         <PasswordChecklist password={newPassword} username={username} />
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
-        <input
+        <label htmlFor="activatestep-input-52" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
+        <input id="activatestep-input-52"
           type="password"
-          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           autoComplete="new-password"
@@ -59,7 +59,7 @@ export default function ActivateStep({ activationCode, backToLogin, confirmPassw
         />
       </div>
       <button
-        className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
+        className="w-full py-4 bg-primary text-on-primary rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
         disabled={loading || activationCode.length !== 6 || !isPasswordValid(newPassword, username) || !confirmPassword}
         type="submit"
       >

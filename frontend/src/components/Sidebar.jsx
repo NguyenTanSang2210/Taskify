@@ -56,7 +56,7 @@ export default function Sidebar({ roleName, collapsed, onToggleCollapsed, mobile
       <button
         className={toggleButton}
         onClick={() => onToggleCollapsed(!collapsed)}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
       >
         <span className="material-symbols-outlined text-lg">{collapsed ? "last_page" : "first_page"}</span>
       </button>

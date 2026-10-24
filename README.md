@@ -17,8 +17,8 @@ Taskify hỗ trợ khoa, giảng viên và sinh viên quản lý trọn vòng đ
 |---|---|
 | `ADMIN` | Quản lý tài khoản, vai trò & quyền, khoa; thông báo toàn hệ thống; xem nhật ký kiểm toán; duyệt yêu cầu chấm lại |
 | `DEPARTMENT_ADMIN` | Quản lý đợt đồ án (workspace) và vòng đời của đợt, lớp, phân công giảng viên + quota, duyệt đề tài, báo cáo số liệu khoa |
-| `LECTURER` | Ra đề tài, duyệt đăng ký, chấm điểm, nhận xét tiến độ, đặt mốc (milestone), nhắn tin/thảo luận với sinh viên |
-| `STUDENT` | Đăng ký đề tài trong đợt của lớp mình, nộp báo cáo tiến độ (Kanban), nhận phản hồi, trao đổi với giảng viên |
+| `LECTURER` | Ra đề tài, duyệt đăng ký, chấm điểm (cả theo mốc), nhận xét tiến độ, đặt mốc và sự kiện trên lịch học thuật, nhắn tin/thảo luận nhóm với sinh viên |
+| `STUDENT` | Đăng ký đề tài trong đợt của lớp mình, nộp báo cáo tiến độ (Kanban) và bài theo mốc, xem lịch học thuật, thảo luận nhóm, nhận phản hồi, trao đổi với giảng viên |
 
 Chi tiết từng quy trình: [`documentation_vận_hành.md`](documentation_vận_hành.md). Ma trận phân quyền: [`docs/SECURITY.md`](docs/SECURITY.md).
 
@@ -111,10 +111,11 @@ Schema do **Flyway** quản lý (`Backend/src/main/resources/db/migration`, `ddl
 
 | Lệnh | Làm gì |
 |---|---|
-| `cd Backend; .\mvnw.cmd verify` | 325 test (unit + tích hợp trên MySQL thật qua **Testcontainers** — cần Docker; hoặc dùng MySQL có sẵn qua `DB_URL`) + kiểm tra ngưỡng JaCoCo. Báo cáo: `Backend/target/site/jacoco/index.html` |
+| `cd Backend; .\mvnw.cmd verify` | 361 test (unit + tích hợp trên MySQL thật qua **Testcontainers** — cần Docker; hoặc dùng MySQL có sẵn qua `DB_URL`) + kiểm tra ngưỡng JaCoCo. Báo cáo: `Backend/target/site/jacoco/index.html` |
 | `cd frontend; npm run check` | `lint` (0 cảnh báo) → `test` (Vitest + Testing Library) → `build` |
 | `node scripts/smoke-test.mjs` | Smoke test toàn luồng nghiệp vụ trên stack Docker profile dev |
 | `node scripts/ui-check*.mjs` | Kiểm thử giao diện bằng Playwright (đăng nhập theo vai trò, phân trang, realtime, quét mọi trang/tab) |
+| `node scripts/a11y-check.mjs` | Kiểm tra accessibility WCAG 2.1 AA bằng axe-core trên 21 trang, chế độ sáng và tối (cần `axe-core`, xem đầu file) |
 | `.\scripts\pre-demo-check.ps1` | Kiểm tra nhanh trước buổi demo |
 
 CI (GitHub Actions, mỗi push/PR vào `develop`, `main`): backend `verify` + upload báo cáo JaCoCo; frontend lint/test/build; dựng cả stack bằng `docker compose up --wait` rồi gọi thử health, đăng nhập và trang chủ qua nginx. CodeQL chạy mỗi tuần.

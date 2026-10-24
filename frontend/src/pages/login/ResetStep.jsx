@@ -14,9 +14,9 @@ export default function ResetStep({ backToLogin, confirmPassword, loading, newPa
         </p>
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã xác nhận (6 chữ số)</label>
-        <input
-          className="w-full text-center text-2xl tracking-[0.5em] font-black py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl transition-all duration-300 outline-none"
+        <label htmlFor="resetstep-input-18" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mã xác nhận (6 chữ số)</label>
+        <input id="resetstep-input-18"
+          className="w-full text-center text-2xl tracking-[0.5em] font-black py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl transition-all duration-300 outline-none"
           value={resetCode}
           onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ""))}
           placeholder="000000"
@@ -28,10 +28,10 @@ export default function ResetStep({ backToLogin, confirmPassword, loading, newPa
         />
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
-        <input
+        <label htmlFor="resetstep-input-32" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Mật khẩu mới</label>
+        <input id="resetstep-input-32"
           type="password"
-          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           autoComplete="new-password"
@@ -40,10 +40,10 @@ export default function ResetStep({ backToLogin, confirmPassword, loading, newPa
         <PasswordChecklist password={newPassword} username={username} />
       </div>
       <div className="space-y-1.5">
-        <label className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
-        <input
+        <label htmlFor="resetstep-input-44" className="block text-xs font-black tracking-[0.2em] text-outline uppercase ml-2 mb-1">Nhập lại mật khẩu mới</label>
+        <input id="resetstep-input-44"
           type="password"
-          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+          className="w-full px-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           autoComplete="new-password"
@@ -51,7 +51,7 @@ export default function ResetStep({ backToLogin, confirmPassword, loading, newPa
         />
       </div>
       <button
-        className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
+        className="w-full py-4 bg-primary text-on-primary rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
         disabled={loading || resetCode.length !== 6 || !isPasswordValid(newPassword, username) || !confirmPassword}
         type="submit"
       >

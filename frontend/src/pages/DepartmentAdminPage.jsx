@@ -62,7 +62,7 @@ export default function DepartmentAdminPage() {
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-2.5 px-6 py-3 rounded-[1.5rem] text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
                             activeTab === tab.id 
-                            ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                            ? "bg-primary text-on-primary shadow-lg shadow-primary/20" 
                             : "hover:bg-surface-container text-outline hover:text-on-surface"
                         }`}
                     >
@@ -75,7 +75,7 @@ export default function DepartmentAdminPage() {
             {/* Main Content Rendering Layer */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden min-h-[500px]">
                 {loading && activeTab !== 'stats' && activeTab !== 'gradeRevisions' && activeTab !== 'importUsers' && (
-                    <div className="py-32 flex flex-col items-center justify-center opacity-30 select-none">
+                    <div className="py-32 flex flex-col items-center justify-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
                         <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mb-4"></div>
                         <p className="text-[10px] font-black uppercase tracking-widest">Đang trích xuất dữ liệu...</p>
                     </div>

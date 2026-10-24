@@ -11,7 +11,7 @@ export default function AuditFilters({ draft, setDraft, options, onApply, onRese
             <div className="flex flex-wrap gap-2" role="group" aria-label="Nhóm hành động">
                 {AUDIT_CATEGORIES.map((c) => (
                     <button key={c.id || "all"} type="button" aria-pressed={draft.category === c.id} onClick={() => onCategory(c.id)}
-                        className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${draft.category === c.id ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-surface-container-low text-outline hover:text-on-surface"}`}>
+                        className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${draft.category === c.id ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "bg-surface-container-low text-outline hover:text-on-surface"}`}>
                         {c.label}
                     </button>
                 ))}
@@ -45,7 +45,7 @@ export default function AuditFilters({ draft, setDraft, options, onApply, onRese
                 </div>
             </div>
             <div className="flex flex-wrap gap-3">
-                <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">
+                <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">
                     <span className="material-symbols-outlined text-lg" aria-hidden="true">filter_alt</span>Lọc
                 </button>
                 <button type="button" onClick={onReset} className="px-6 py-3 rounded-2xl bg-surface-container-low text-on-surface text-[10px] font-black uppercase tracking-widest hover:bg-surface-container">

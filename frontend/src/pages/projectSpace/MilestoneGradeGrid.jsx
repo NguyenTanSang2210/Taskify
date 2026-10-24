@@ -47,7 +47,7 @@ export default function MilestoneGradeGrid({ board, onGrade, onEdit, onDelete, b
                                                 <textarea rows={2} value={editing.feedback} onChange={(e) => setEditing({ ...editing, feedback: e.target.value })}
                                                     placeholder="Nhận xét" aria-label="Nhận xét" className="w-full px-2 py-1.5 bg-surface-container-low rounded-lg text-xs" />
                                                 <div className="flex gap-2">
-                                                    <button type="submit" disabled={busy} className="px-3 py-1.5 rounded-lg bg-primary text-white text-[10px] font-black uppercase">Lưu</button>
+                                                    <button type="submit" disabled={busy} className="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-[10px] font-black uppercase">Lưu</button>
                                                     <button type="button" onClick={() => setEditing(null)} className="px-3 py-1.5 rounded-lg bg-surface-container text-[10px] font-black uppercase">Hủy</button>
                                                 </div>
                                             </form>

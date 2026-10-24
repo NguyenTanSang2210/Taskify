@@ -6,9 +6,9 @@ export default function WorkspaceClassesTab({ workspaces, selectedWorkspaceId, s
                     <div className="p-10 space-y-10 animate-in slide-in-from-bottom-4 duration-500">
                         <section className="bg-surface-container-low/40 p-8 rounded-[2rem] border border-outline-variant/10 flex flex-col md:flex-row items-center gap-8">
                              <div className="flex-grow space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn đối tượng Workspace</label>
-                                <select 
-                                   className="w-full px-6 py-4 bg-white border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-2xl text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer" 
+                                <label htmlFor="workspaceclassestab-select-10" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Chọn đối tượng Workspace</label>
+                                <select id="workspaceclassestab-select-10" 
+                                   className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-outline-variant/10 focus:border-primary focus:ring-0 rounded-2xl text-[11px] font-black uppercase tracking-widest outline-none cursor-pointer" 
                                    value={selectedWorkspaceId} 
                                    onChange={(e) => { setSelectedWorkspaceId(e.target.value); loadWorkspaceClasses(Number(e.target.value)); }}
                                 >
@@ -47,14 +47,14 @@ export default function WorkspaceClassesTab({ workspaces, selectedWorkspaceId, s
                                             <button 
                                                onClick={() => unassignClassFromWorkspace(Number(selectedWorkspaceId), wc.academicClass?.id)}
                                                disabled={!canConfigureSelectedWorkspace}
-                                               className="w-10 h-10 rounded-xl bg-error/5 text-error hover:bg-error hover:text-white transition-all flex items-center justify-center disabled:opacity-20"
+                                               className="w-10 h-10 rounded-xl bg-error/5 text-error hover:bg-error hover:text-on-error transition-all flex items-center justify-center disabled:opacity-20"
                                             >
                                                <span className="material-symbols-outlined text-lg">link_off</span>
                                             </button>
                                          </div>
                                       ))}
                                       {workspaceClasses.length === 0 && (
-                                         <div className="p-12 text-center opacity-30">
+                                         <div className="p-12 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                                             <p className="text-[10px] font-black uppercase tracking-widest">Không có lớp học nào liên kết</p>
                                          </div>
                                       )}
@@ -79,14 +79,14 @@ export default function WorkspaceClassesTab({ workspaces, selectedWorkspaceId, s
                                             <button 
                                                onClick={() => assignClassToWorkspace(Number(selectedWorkspaceId), c.id)}
                                                disabled={!canConfigureSelectedWorkspace}
-                                               className="w-10 h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center disabled:opacity-20"
+                                               className="w-10 h-10 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center disabled:opacity-20"
                                             >
                                                <span className="material-symbols-outlined text-lg">add</span>
                                             </button>
                                          </div>
                                       ))}
                                       {availableClassesToAssign.length === 0 && (
-                                         <div className="p-12 text-center opacity-30">
+                                         <div className="p-12 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                                             <p className="text-[10px] font-black uppercase tracking-widest">Đã gán hết danh sách lớp</p>
                                          </div>
                                       )}
@@ -94,7 +94,7 @@ export default function WorkspaceClassesTab({ workspaces, selectedWorkspaceId, s
                                 </div>
                             </div>
                         ) : (
-                           <div className="py-20 text-center opacity-30">
+                           <div className="py-20 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                               <span className="material-symbols-outlined text-6xl mb-4">settings_suggest</span>
                               <p className="text-[11px] font-black uppercase tracking-[0.2em]">Chọn một Workspace để bắt đầu thiết kế luồng sinh viên</p>
                            </div>

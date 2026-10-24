@@ -35,14 +35,14 @@ export default function ProgressHistoryPanel({ filteredItems, handleLecturerUpda
                 <tbody className="divide-y divide-outline-variant/5">
                    {loading ? (
                       <tr>
-                         <td colSpan={isLecturer ? 6 : 5} className="py-20 text-center opacity-40">
+                         <td colSpan={isLecturer ? 6 : 5} className="py-20 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                             <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
                             <p className="text-[10px] font-black uppercase tracking-widest">Đang đồng bộ dữ liệu...</p>
                          </td>
                       </tr>
                    ) : filteredItems.length === 0 ? (
                       <tr>
-                         <td colSpan={isLecturer ? 6 : 5} className="py-32 text-center opacity-40">
+                         <td colSpan={isLecturer ? 6 : 5} className="py-32 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
                             <span className="material-symbols-outlined text-6xl mb-4">move_item</span>
                             <h3 className="text-lg font-black uppercase tracking-widest">Không có dữ liệu</h3>
                             <p className="text-xs font-bold mt-2 uppercase tracking-tight">Chưa có hoạt động nào trong không gian này.</p>
@@ -61,7 +61,7 @@ export default function ProgressHistoryPanel({ filteredItems, handleLecturerUpda
                           <tr key={it.id} className="group hover:bg-primary/[0.01] transition-colors">
                              <td className="px-8 py-6">
                                 <p className="text-[11px] font-black text-on-surface uppercase">{new Date(it.createdAt).toLocaleDateString('vi-VN')}</p>
-                                <p className="text-[10px] font-bold text-outline mt-1 uppercase opacity-60">{new Date(it.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                                <p className="text-[10px] font-bold text-outline mt-1 uppercase">{new Date(it.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
                              </td>
                              <td className="px-8 py-6">
                                 <p className="text-sm font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors">{it.title}</p>
@@ -69,7 +69,7 @@ export default function ProgressHistoryPanel({ filteredItems, handleLecturerUpda
                              </td>
                              <td className="px-8 py-6 text-center">
                                 <div className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                   it.status === "DONE" ? "bg-primary text-white" :
+                                   it.status === "DONE" ? "bg-primary text-on-primary" :
                                    it.status === "IN_PROGRESS" ? "bg-secondary-container text-on-secondary-container" : "bg-surface-container text-outline"
                                 }`}>
                                    {it.status}
@@ -87,14 +87,14 @@ export default function ProgressHistoryPanel({ filteredItems, handleLecturerUpda
                                       )}
                                    </div>
                                 ) : (
-                                   <span className="text-[10px] font-black uppercase tracking-widest text-outline/30 italic">Đang đợi giảng viên đánh giá...</span>
+                                   <span className="text-[10px] font-black uppercase tracking-widest text-outline italic">Đang đợi giảng viên đánh giá...</span>
                                 )}
                              </td>
                              <td className="px-8 py-6 text-right">
                                 {it.fileUrl ? (
                                    <FileDownloadButton
                                       fileUrl={it.fileUrl}
-                                      className="p-2.5 rounded-xl bg-surface-container text-primary hover:bg-primary hover:text-white transition-all shadow-sm inline-flex"
+                                      className="p-2.5 rounded-xl bg-surface-container text-primary hover:bg-primary hover:text-on-primary transition-all shadow-sm inline-flex"
                                    >
                                       <span className="material-symbols-outlined text-lg">download</span>
                                    </FileDownloadButton>

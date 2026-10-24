@@ -16,7 +16,7 @@ export default function ProgressTable({ items }) {
       <tbody className="divide-y divide-outline-variant/5">
         {items.length === 0 ? (
           <tr>
-            <td colSpan="4" className="py-32 text-center opacity-40">
+            <td colSpan="4" className="py-32 text-center text-outline [&_.material-symbols-outlined]:opacity-40">
               <span className="material-symbols-outlined text-6xl mb-4">history_toggle_off</span>
               <h3 className="text-lg font-black uppercase tracking-widest">Trống</h3>
               <p className="text-xs font-bold mt-2 uppercase tracking-tight">Cần nộp báo cáo đầu tiên để bắt đầu theo dõi.</p>
@@ -62,7 +62,7 @@ export default function ProgressTable({ items }) {
                       )}
                     </div>
                   ) : (
-                    <span className="text-[10px] font-black uppercase tracking-widest text-outline/30 italic">Đang chờ phản hồi...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-outline italic">Đang chờ phản hồi...</span>
                   )}
                 </td>
               </tr>

@@ -105,12 +105,12 @@ export default function StudentTopicPage() {
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-outline-variant/10 shadow-sm space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
           <div className="md:col-span-6 space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm đề tài</label>
+            <label htmlFor="studenttopicpage-input-111" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tìm kiếm đề tài</label>
             <div className="relative group">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-              <input
+              <input id="studenttopicpage-input-111"
                 type="text"
-                className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-sm font-bold transition-all duration-300 outline-none"
+                className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-sm font-bold transition-all duration-300 outline-none"
                 placeholder="Nhập từ khóa, tên đề tài, giảng viên..."
                 value={query}
                 onChange={(e) => {
@@ -122,9 +122,9 @@ export default function StudentTopicPage() {
           </div>
 
           <div className="md:col-span-3 space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Trạng thái đăng ký</label>
-            <select
-              className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+            <label htmlFor="studenttopicpage-select-126" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Trạng thái đăng ký</label>
+            <select id="studenttopicpage-select-126"
+              className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
               value={status}
               onChange={(e) => {
                 setPage(0);
@@ -139,9 +139,9 @@ export default function StudentTopicPage() {
           </div>
 
           <div className="md:col-span-3 space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Hiển thị</label>
-            <select
-              className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
+            <label htmlFor="studenttopicpage-select-143" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Hiển thị</label>
+            <select id="studenttopicpage-select-143"
+              className="w-full px-4 py-3 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 cursor-pointer outline-none"
               value={size}
               onChange={(e) => {
                 setPage(0);
@@ -177,7 +177,7 @@ export default function StudentTopicPage() {
            <button onClick={() => load()} className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline">Thử lại</button>
         </div>
       ) : topics.length === 0 ? (
-        <div className="py-32 flex flex-col items-center justify-center text-center opacity-40">
+        <div className="py-32 flex flex-col items-center justify-center text-center text-outline [&_.material-symbols-outlined]:opacity-40">
            <span className="material-symbols-outlined text-7xl mb-4">search_off</span>
            <h3 className="text-xl font-black uppercase tracking-widest">Không tìm thấy đề tài</h3>
            <p className="text-xs font-bold mt-2">Vui lòng thử lại với từ khóa hoặc bộ lọc khác.</p>
@@ -206,8 +206,8 @@ export default function StudentTopicPage() {
               <button
                 className={`p-2 rounded-xl transition-all ${
                   page <= 0 
-                  ? "bg-surface-container text-outline/30 cursor-not-allowed" 
-                  : "bg-white border border-outline-variant/20 text-on-surface hover:bg-primary-container hover:text-white"
+                  ? "bg-surface-container text-outline cursor-not-allowed" 
+                  : "bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-primary-container hover:text-white"
                 }`}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page <= 0}
@@ -222,7 +222,7 @@ export default function StudentTopicPage() {
                       key={i}
                       onClick={() => setPage(i)}
                       className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${
-                        page === i ? "bg-primary text-white" : "text-outline hover:bg-surface-container"
+                        page === i ? "bg-primary text-on-primary" : "text-outline hover:bg-surface-container"
                       }`}
                     >
                       {i + 1}
@@ -233,8 +233,8 @@ export default function StudentTopicPage() {
               <button
                 className={`p-2 rounded-xl transition-all ${
                   page + 1 >= totalPages
-                  ? "bg-surface-container text-outline/30 cursor-not-allowed" 
-                  : "bg-white border border-outline-variant/20 text-on-surface hover:bg-primary-container hover:text-white"
+                  ? "bg-surface-container text-outline cursor-not-allowed" 
+                  : "bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-primary-container hover:text-white"
                 }`}
                 onClick={() => setPage((p) => (p + 1 < totalPages ? p + 1 : p))}
                 disabled={page + 1 >= totalPages}

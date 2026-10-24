@@ -26,7 +26,7 @@ export default function AdminPage() {
                 <div className="flex items-center gap-3">
                    <Link 
                      to="/roles"
-                     className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl shadow-sm text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary hover:text-white transition-all"
+                     className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl shadow-sm text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary hover:text-on-primary transition-all"
                    >
                       <span className="material-symbols-outlined text-sm">key</span>
                       Quản lý Quyền hạn
@@ -63,7 +63,7 @@ export default function AdminPage() {
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-3 px-8 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                             activeTab === tab.id 
-                            ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                            ? "bg-primary text-on-primary shadow-lg shadow-primary/20" 
                             : "hover:bg-surface-container text-outline hover:text-on-surface"
                         }`}
                     >
@@ -76,7 +76,7 @@ export default function AdminPage() {
             {/* Content Area Rendering */}
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden min-h-[500px]">
                 {loading && activeTab !== 'userList' && (
-                    <div className="py-32 flex flex-col items-center justify-center opacity-30 select-none">
+                    <div className="py-32 flex flex-col items-center justify-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
                         <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mb-4"></div>
                         <p className="text-[10px] font-black uppercase tracking-widest">Đang tải dữ liệu cấu hình...</p>
                     </div>
@@ -95,7 +95,7 @@ export default function AdminPage() {
             
             {/* System Tip */}
             <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 flex items-center gap-4">
-               <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
+               <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined">analytics</span>
                </div>
                <p className="text-xs font-bold text-on-surface-variant leading-relaxed">

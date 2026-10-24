@@ -1,5 +1,4 @@
 // src/App.jsx
-import "./App.css";
 import { BrowserRouter } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import AppLayout from "./layouts/AppLayout";

@@ -78,18 +78,24 @@ Khác: *Danh mục Lớp* (tạo lớp của khoa), *Duyệt Đề tài* (xem/đ
 - **Theo dõi tiến độ**: xem báo cáo của sinh viên theo đề tài (tải thêm báo cáo cũ), tải file đính kèm, viết nhận xét.
 - **Chấm điểm**: thang 0–10 cho **từng sinh viên** khi đợt *Đang thực hiện*. Đề tài chuyển *Hoàn thành* khi mọi sinh viên đã duyệt đều có điểm. Xem lịch sử điểm của từng sinh viên.
 - **Xuất Excel**: danh sách đăng ký và điểm (toàn bộ đề tài mình hướng dẫn hoặc một đề tài).
-- **Không gian làm việc / Trao đổi học thuật**: thảo luận theo đề tài, nhắn tin riêng với sinh viên của đề tài, thông báo cho đề tài.
+- **Lịch học thuật** (menu *Lịch học thuật*): chọn đề tài → lịch tháng gồm sự kiện của đề tài và các **mốc** (tự hiện, sửa ở *Không gian làm việc*). *Thêm sự kiện*: họp/sự kiện hoặc hạn chót, thời gian, mô tả; bấm một sự kiện để xem chi tiết hoặc **xóa**. Có dạng *Danh sách* (trên điện thoại tự chuyển sang dạng này) và mục *Sắp tới*.
+- **Thảo luận nhóm** (menu *Thảo luận nhóm*): kênh chung của từng đề tài với các sinh viên được duyệt — mở chủ đề mới, trả lời trong chủ đề (Ctrl + Enter để gửi). Trao đổi riêng với một sinh viên: *Kênh trao đổi*.
+- **Trang chi tiết đề tài**: bấm tên đề tài ở *Quản lý đề tài* — mô tả, thông tin đợt, số chỗ đã duyệt / chờ duyệt, danh sách sinh viên thực hiện.
+- **Không gian làm việc / Kênh trao đổi**: nhắn tin riêng với sinh viên của đề tài, thông báo cho đề tài.
 
 ---
 
 ## 5. Sinh viên
 
 - **Danh sách đề tài**: xem đề tài của các đợt mà lớp mình tham gia; lọc theo trạng thái, tìm theo tên/giảng viên; xem số chỗ còn lại.
+- **Chi tiết đề tài**: bấm tên đề tài để xem mô tả đầy đủ, giảng viên (học vị, khoa, email liên hệ), thông tin đợt, số chỗ; đăng ký ngay trên trang này. Khi đã được duyệt, trang hiện thêm các bạn cùng thực hiện.
 - **Đăng ký**: chỉ khi đợt *Mở đăng ký* và đề tài còn chỗ. Mỗi đợt chỉ có **một** đăng ký đang chờ hoặc đã duyệt; muốn đổi đề tài thì hủy đăng ký đang chờ trước (*Đăng ký của tôi*).
 - **Mốc**: ở *Không gian làm việc*, khối *Mốc tiến độ* liệt kê hạn chót, trọng số, trạng thái (chưa nộp / đúng hạn / nộp trễ), điểm và nhận xét của từng mốc; nút *Nộp bài* mở trang nộp cho mốc đó.
 - **Theo dõi tiến độ**: khi đợt *Đang thực hiện* và đăng ký đã được duyệt — tạo báo cáo (tiêu đề, nội dung, file đính kèm tối đa 20 MB: pdf, Word, Excel, PowerPoint, zip, rar, ảnh png/jpg, txt), kéo thả trên bảng **Kanban** (Cần làm / Đang thực hiện / Hoàn thành) hoặc xem dạng danh sách. Nhận xét của giảng viên hiện ngay trên thẻ.
 - **Kết quả**: xem trạng thái đăng ký, điểm và ngày cập nhật điểm.
-- **Trao đổi**: nhắn tin với giảng viên hướng dẫn, tham gia thảo luận của đề tài.
+- **Lịch học thuật**: xem các buổi họp, hạn chót và mốc của đề tài theo tháng hoặc danh sách; mục *Sắp tới* liệt kê việc gần nhất.
+- **Thảo luận nhóm**: mở chủ đề, trả lời cùng giảng viên và các bạn cùng đề tài.
+- **Trao đổi học thuật**: nhắn tin riêng với giảng viên hướng dẫn.
 
 ---
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { registrationApi } from "../api/registrationApi";
+import Modal from "./Modal";
 
 const fmtDateTime = (v) => (v ? new Date(v).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }) : "—");
 const fmtScore = (s) => (s === null || s === undefined ? "—" : String(s).replace(".", ","));
@@ -21,19 +22,8 @@ export default function GradeHistoryModal({ registrationId, title, onClose }) {
   }, [registrationId]);
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900">
-        <div className="flex items-start justify-between border-b border-outline-variant/10 px-8 py-6">
-          <div>
-            <span className="mb-1 block text-[10px] font-black uppercase tracking-widest text-primary">Lịch sử điểm</span>
-            <h2 className="text-lg font-black text-on-surface">{title}</h2>
-          </div>
-          <button onClick={onClose} className="rounded-xl p-2 hover:bg-surface-container-high" aria-label="Đóng">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div className="max-h-[60vh] overflow-auto p-6">
+    <Modal eyebrow="Lịch sử điểm" title={title} onClose={onClose} size="max-w-3xl">
+        <div className="overflow-x-auto">
           {error && <p className="text-sm font-bold text-error">{error}</p>}
           {!error && items === null && <p className="text-sm text-outline">Đang tải...</p>}
           {items?.length === 0 && <p className="text-sm text-outline">Chưa có lần chấm điểm nào.</p>}
@@ -70,8 +60,7 @@ export default function GradeHistoryModal({ registrationId, title, onClose }) {
             </table>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

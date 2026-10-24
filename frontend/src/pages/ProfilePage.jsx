@@ -94,7 +94,7 @@ export default function ProfilePage() {
     };
 
     if (!user) return (
-       <div className="flex flex-col items-center justify-center p-20 text-center opacity-30 select-none">
+       <div className="flex flex-col items-center justify-center p-20 text-center text-outline [&_.material-symbols-outlined]:opacity-40 select-none">
           <span className="material-symbols-outlined text-7xl mb-4">account_circle</span>
           <h2 className="text-xl font-black uppercase tracking-widest text-outline">Truy cập bị từ chối</h2>
           <p className="text-xs font-bold text-outline mt-2 uppercase tracking-tight">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
@@ -150,7 +150,7 @@ export default function ProfilePage() {
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-sm text-center relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-full h-24 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
                         <div className="relative mt-4">
-                           <div className="w-24 h-24 rounded-[2rem] bg-primary text-white flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-slate-900 shadow-xl">
+                           <div className="w-24 h-24 rounded-[2rem] bg-primary text-on-primary flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-slate-900 shadow-xl">
                               <span className="text-3xl font-black uppercase">{user.fullName?.charAt(0)}</span>
                            </div>
                            <h2 className="text-xl font-black text-on-surface uppercase tracking-tight">{user.fullName}</h2>
@@ -164,21 +164,21 @@ export default function ProfilePage() {
 
                     <div className="bg-white dark:bg-slate-900 p-2 rounded-[2rem] border border-outline-variant/10 shadow-sm space-y-1">
                         <button 
-                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'info' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
+                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'info' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
                             onClick={() => setActiveTab('info')}
                         >
                             <span className="material-symbols-outlined">person</span>
                             <span className="text-[11px] font-black uppercase tracking-[0.2em]">Thông tin chung</span>
                         </button>
                         <button 
-                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'password' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
+                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'password' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
                             onClick={() => setActiveTab('password')}
                         >
                             <span className="material-symbols-outlined">security</span>
                             <span className="text-[11px] font-black uppercase tracking-[0.2em]">Bảo mật & Mật khẩu</span>
                         </button>
                         <button 
-                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'notifications' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
+                            className={`w-full flex items-center gap-4 p-5 rounded-[1.5rem] transition-all duration-300 ${activeTab === 'notifications' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'hover:bg-surface-container text-outline hover:text-on-surface'}`}
                             onClick={() => setActiveTab('notifications')}
                         >
                             <span className="material-symbols-outlined">notifications</span>
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                 </aside>
 
                 {/* Content Area */}
-                <main className="lg:col-span-8">
+                <section className="lg:col-span-8">
                     <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-outline-variant/10 shadow-sm min-h-[500px] animate-in slide-in-from-right-4 duration-500">
                         {activeTab === 'info' && (
                             <form onSubmit={handleUpdateInfo} className="space-y-8">
@@ -205,14 +205,14 @@ export default function ProfilePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Tên đăng nhập / MSSV</label>
-                                        <div className="px-6 py-4 bg-surface-container-low rounded-2xl border border-outline-variant/5 text-sm font-black text-outline/50 flex items-center gap-3 select-none">
+                                        <div className="px-6 py-4 bg-surface-container-low rounded-2xl border border-outline-variant/5 text-sm font-black text-outline flex items-center gap-3 select-none">
                                            <span className="material-symbols-outlined text-lg">badge</span>
                                            {username}
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Vai trò hệ thống</label>
-                                        <div className="px-6 py-4 bg-surface-container-low rounded-2xl border border-outline-variant/5 text-sm font-black text-outline/50 flex items-center gap-3 select-none">
+                                        <div className="px-6 py-4 bg-surface-container-low rounded-2xl border border-outline-variant/5 text-sm font-black text-outline flex items-center gap-3 select-none">
                                            <span className="material-symbols-outlined text-lg">policy</span>
                                            {roleName}
                                         </div>
@@ -220,12 +220,12 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Họ và tên đầy đủ</label>
+                                    <label htmlFor="profilepage-input-226" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Họ và tên đầy đủ</label>
                                     <div className="relative group">
                                        <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">edit_note</span>
-                                       <input 
+                                       <input id="profilepage-input-226" 
                                           type="text" 
-                                          className="w-full pl-16 pr-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
+                                          className="w-full pl-16 pr-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
                                           value={fullName}
                                           onChange={(e) => setFullName(e.target.value)}
                                           required
@@ -235,12 +235,12 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Địa chỉ Email liên hệ</label>
+                                    <label htmlFor="profilepage-input-241" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Địa chỉ Email liên hệ</label>
                                     <div className="relative group">
                                        <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">mail</span>
-                                       <input 
+                                       <input id="profilepage-input-241" 
                                           type="email" 
-                                          className="w-full pl-16 pr-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
+                                          className="w-full pl-16 pr-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
                                           value={email}
                                           onChange={(e) => setEmail(e.target.value)}
                                           required
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                                 <div className="pt-6 border-t border-outline-variant/5 flex justify-end">
                                     <button 
                                        type="submit" 
-                                       className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50" 
+                                       className="px-10 py-4 bg-primary text-on-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50" 
                                        disabled={loading}
                                     >
                                         {loading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <span className="material-symbols-outlined">save</span>}
@@ -272,12 +272,12 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mật khẩu hiện tại</label>
+                                    <label htmlFor="profilepage-input-278" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mật khẩu hiện tại</label>
                                     <div className="relative group">
                                        <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-error transition-colors">lock_open</span>
-                                       <input 
+                                       <input id="profilepage-input-278" 
                                           type="password" 
-                                          className="w-full pl-16 pr-6 py-4 bg-surface-container-low border-transparent focus:border-error focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
+                                          className="w-full pl-16 pr-6 py-4 bg-surface-container-low border-transparent focus:border-error focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
                                           value={oldPassword}
                                           onChange={(e) => setOldPassword(e.target.value)}
                                           required
@@ -288,10 +288,10 @@ export default function ProfilePage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                    <div className="space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mật khẩu mới</label>
-                                       <input 
+                                       <label htmlFor="profilepage-input-292" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Mật khẩu mới</label>
+                                       <input id="profilepage-input-292" 
                                           type="password" 
-                                          className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
+                                          className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
                                           value={newPassword}
                                           onChange={(e) => setNewPassword(e.target.value)}
                                           required
@@ -300,10 +300,10 @@ export default function ProfilePage() {
                                        <PasswordChecklist password={newPassword} username={user?.username} />
                                    </div>
                                    <div className="space-y-1.5">
-                                       <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Xác nhận lại</label>
-                                       <input 
+                                       <label htmlFor="profilepage-input-304" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Xác nhận lại</label>
+                                       <input id="profilepage-input-304" 
                                           type="password" 
-                                          className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-white rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
+                                          className="w-full px-6 py-4 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 focus:bg-surface-container-lowest rounded-2xl text-sm font-black transition-all duration-300 outline-none" 
                                           value={confirmPassword}
                                           onChange={(e) => setConfirmPassword(e.target.value)}
                                           required
@@ -316,13 +316,13 @@ export default function ProfilePage() {
                                    <div className="w-10 h-10 bg-primary/10 rounded-xl text-primary flex items-center justify-center shrink-0">
                                       <span className="material-symbols-outlined">shield</span>
                                    </div>
-                                   <p className="text-[11px] font-bold text-on-surface-variant opacity-70">Lưu ý: Bạn sẽ không cần đăng nhập lại sau khi đổi mật khẩu nếu phiên làm việc hiện tại vẫn còn hiệu lực.</p>
+                                   <p className="text-[11px] font-bold text-on-surface-variant">Lưu ý: Bạn sẽ không cần đăng nhập lại sau khi đổi mật khẩu nếu phiên làm việc hiện tại vẫn còn hiệu lực.</p>
                                 </div>
 
                                 <div className="pt-6 border-t border-outline-variant/5 flex justify-end">
                                     <button 
                                        type="submit" 
-                                       className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50" 
+                                       className="px-10 py-4 bg-primary text-on-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50" 
                                        disabled={loading}
                                     >
                                         {loading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : <span className="material-symbols-outlined">key</span>}
@@ -332,7 +332,7 @@ export default function ProfilePage() {
                             </form>
                         )}
                     </div>
-                </main>
+                </section>
             </div>
         </div>
     );
