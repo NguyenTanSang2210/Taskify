@@ -1,0 +1,3060 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sơ đồ kiến trúc Taskify</title>
+<style>
+:root { --bg:#f7f7f9; --panel:#ffffff; --fg:#1d1d22; --muted:#5d6070; --line:#e2e3ea; --accent:#2f5bd3; --code:#f0f1f5; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#15161a; --panel:#1d1f25; --fg:#e8e9ee; --muted:#a2a5b3; --line:#2e313a; --accent:#7ea2ff; --code:#262932; }
+}
+:root[data-theme="dark"] { --bg:#15161a; --panel:#1d1f25; --fg:#e8e9ee; --muted:#a2a5b3; --line:#2e313a; --accent:#7ea2ff; --code:#262932; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.layout { display:flex; min-height:100vh; }
+nav { width:290px; flex:none; position:sticky; top:0; height:100vh; overflow:auto; padding:20px 14px; border-right:1px solid var(--line); background:var(--panel); }
+nav h1 { font-size:16px; margin:0 0 12px; }
+nav a { display:block; padding:7px 10px; border-radius:8px; color:var(--muted); text-decoration:none; font-size:13.5px; }
+nav a.active, nav a:hover { background:var(--code); color:var(--fg); }
+nav button { margin-top:14px; width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); cursor:pointer; }
+main { flex:1; min-width:0; padding:28px 40px 80px; }
+article { max-width:1180px; margin:0 auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:8px 36px 36px; }
+article[hidden] { display:none; }
+h1,h2,h3 { line-height:1.3; }
+h2 { margin-top:2.2em; padding-top:.6em; border-top:1px solid var(--line); }
+a { color:var(--accent); }
+code { background:var(--code); padding:1px 5px; border-radius:5px; font-size:.9em; }
+pre { background:var(--code); padding:12px; border-radius:8px; overflow:auto; }
+table { border-collapse:collapse; width:100%; margin:12px 0; font-size:14px; display:block; overflow-x:auto; }
+th,td { border:1px solid var(--line); padding:6px 9px; vertical-align:top; text-align:left; }
+th { background:var(--code); }
+blockquote { margin:12px 0; padding:8px 14px; border-left:4px solid var(--accent); background:var(--code); border-radius:0 8px 8px 0; }
+.diagram { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin:14px 0; overflow:auto; text-align:center; }
+.diagram svg { max-width:100%; height:auto; }
+.diagram.error { background:#fff4f4; color:#a00; text-align:left; white-space:pre-wrap; font-family:monospace; font-size:12px; }
+@media (max-width: 860px) {
+  .layout { display:block; }
+  nav { position:static; width:auto; height:auto; border-right:0; border-bottom:1px solid var(--line); }
+  main { padding:16px; }
+  article { padding:4px 16px 24px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+<h1>Taskify — Kiến trúc &amp; luồng</h1>
+<a href="#f-readme" data-target="f-readme">Bộ sơ đồ kiến trúc &amp; luồng nghiệp vụ Taskify</a><a href="#f-01-tong-quan-he-thong" data-target="f-01-tong-quan-he-thong">01 — Tổng quan hệ thống</a><a href="#f-02-kien-truc-backend" data-target="f-02-kien-truc-backend">02 — Kiến trúc Backend (Spring Boot 3.5 · Java 21)</a><a href="#f-03-kien-truc-frontend" data-target="f-03-kien-truc-frontend">03 — Kiến trúc Frontend (React 19 · Vite · Tailwind)</a><a href="#f-04-luong-xac-thuc" data-target="f-04-luong-xac-thuc">04 — Luồng A: Xác thực &amp; phiên đăng nhập</a><a href="#f-05-luong-quan-tri" data-target="f-05-luong-quan-tri">05 — Luồng B: Quản trị người dùng &amp; tổ chức</a><a href="#f-06-luong-dot-de-tai-dang-ky" data-target="f-06-luong-dot-de-tai-dang-ky">06 — Luồng C · D · E: Đợt đồ án, Đề tài, Đăng ký</a><a href="#f-07-luong-tien-do-moc" data-target="f-07-luong-tien-do-moc">07 — Luồng F · G: Tiến độ, File, Mốc tiến độ</a><a href="#f-08-luong-cham-diem" data-target="f-08-luong-cham-diem">08 — Luồng H: Chấm điểm, khóa điểm, chấm lại</a><a href="#f-09-luong-giao-tiep-thong-bao" data-target="f-09-luong-giao-tiep-thong-bao">09 — Luồng I: Giao tiếp, thông báo, email</a><a href="#f-10-luong-bao-cao-van-hanh" data-target="f-10-luong-bao-cao-van-hanh">10 — Luồng J · K: Dashboard, thống kê, kiểm toán, vận hành</a>
+<button type="button" id="theme">Đổi giao diện sáng / tối</button>
+</nav>
+<main id="main"></main>
+</div>
+<script type="text/markdown" data-id="f-readme" data-file="README.md">
+# Bộ sơ đồ kiến trúc & luồng nghiệp vụ Taskify
+
+> Lập ngày 24/10/2026 từ mã nguồn hiện tại (nhánh `develop`, sau commit `b6bf889` — đóng Giai đoạn 3).
+> Sơ đồ viết bằng **Mermaid**: xem trực tiếp trên GitHub, hoặc trong VS Code bằng Markdown Preview (cần extension *Markdown Preview Mermaid Support*), hoặc mở file [`so-do-kien-truc.html`](so-do-kien-truc.html) bằng trình duyệt (gộp toàn bộ tài liệu, tự vẽ sơ đồ).
+
+## Mục lục
+
+| File | Nội dung |
+|---|---|
+| [01-tong-quan-he-thong.md](01-tong-quan-he-thong.md) | Ngữ cảnh hệ thống, triển khai Docker, chế độ dev, đường đi của một request, vòng đời trọn một đợt đồ án (luồng lớn nhất) |
+| [02-kien-truc-backend.md](02-kien-truc-backend.md) | Phân tầng, bản đồ controller → service → repository, chuỗi filter bảo mật, 3 lớp phân quyền, realtime, email, job định kỳ, xử lý lỗi, quan sát, mô hình dữ liệu, mọi máy trạng thái |
+| [03-kien-truc-frontend.md](03-kien-truc-frontend.md) | Khởi động ứng dụng, quản lý phiên, interceptor axios, WebSocket client, route theo vai trò, bản đồ trang → component → API, các API chưa có giao diện |
+| [04-luong-xac-thuc.md](04-luong-xac-thuc.md) | A — Đăng nhập, OTP, đổi mật khẩu lần đầu, kích hoạt, quên mật khẩu, làm mới phiên, đăng xuất, tạo Admin đầu tiên |
+| [05-luong-quan-tri.md](05-luong-quan-tri.md) | B — Tài khoản, nhập Excel, khoa, lớp, vai trò & quyền, hồ sơ, cài đặt email |
+| [06-luong-dot-de-tai-dang-ky.md](06-luong-dot-de-tai-dang-ky.md) | C — Đợt đồ án · D — Đề tài · E — Đăng ký đề tài |
+| [07-luong-tien-do-moc.md](07-luong-tien-do-moc.md) | F — Tải file, báo cáo tiến độ, Kanban, nhận xét, kiểm tra trùng lặp · G — Mốc, nộp theo mốc, chấm điểm mốc |
+| [08-luong-cham-diem.md](08-luong-cham-diem.md) | H — Chấm điểm tổng kết, khóa điểm, chấm lại, lịch sử điểm, xuất Excel |
+| [09-luong-giao-tiep-thong-bao.md](09-luong-giao-tiep-thong-bao.md) | I — Tin nhắn, thông báo trong app, email (ngay / tổng hợp), thảo luận, thông báo chung, lịch |
+| [10-luong-bao-cao-van-hanh.md](10-luong-bao-cao-van-hanh.md) | J — Dashboard & thống kê · K — Nhật ký kiểm toán, nhắc hạn tự động, job dọn dẹp, giới hạn tần suất, quan sát, CI/CD |
+
+## Số liệu dự án (đếm từ mã nguồn)
+
+| Hạng mục | Số lượng |
+|---|---|
+| Controller REST | 23 (113 endpoint) |
+| Service | 45 (+ 3 lớp `importer`) |
+| Entity / bảng nghiệp vụ | 31 entity, 9 enum trạng thái |
+| Repository | 31 |
+| Migration Flyway | V1 → V10 |
+| Job định kỳ (`@Scheduled`) | 9 |
+| Kênh realtime STOMP | 4 |
+| Trang React (route) | 17 trang + 6 bước đăng nhập |
+| Module API phía frontend | 20 file `src/api/*` |
+| Test backend | 66 file (325 test) |
+
+## Danh mục chức năng (từ nhỏ tới lớn)
+
+Ký hiệu cột **UI**: ✅ có giao diện · ⚠️ chỉ có API (frontend có/không có hàm gọi nhưng chưa trang nào dùng).
+
+### A. Xác thực & phiên đăng nhập — [04](04-luong-xac-thuc.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| A1 | Kiểm tra chính sách mật khẩu (8–64 ký tự, ≤72 byte, có chữ + số, không chứa username) | mọi | dùng nội bộ + `PasswordChecklist` | ✅ |
+| A2 | Đăng nhập bằng mật khẩu (giới hạn IP + khóa cặp username/IP) | mọi | `POST /api/auth/login` | ✅ |
+| A3 | Xác thực 2 bước OTP email (ADMIN, DEPARTMENT_ADMIN, LECTURER) | 3 vai trò quản lý | `POST /api/auth/otp/verify`, `/otp/resend` | ✅ |
+| A4 | Đổi mật khẩu bắt buộc khi dùng mật khẩu tạm | mọi | `POST /api/auth/password/initial` | ✅ |
+| A5 | Kích hoạt tài khoản bằng mã email (72 giờ) | mọi | `POST /api/auth/activate` | ✅ |
+| A6 | Quên mật khẩu → đặt lại bằng mã (10 phút) | mọi | `POST /api/auth/password/forgot`, `/reset` | ✅ |
+| A7 | Làm mới phiên (refresh token xoay vòng, phát hiện dùng lại) | mọi | `POST /api/auth/refresh` | ✅ (tự động) |
+| A8 | Khôi phục phiên khi tải lại trang, làm mới chủ động, đồng bộ nhiều tab | mọi | `/auth/refresh` | ✅ (tự động) |
+| A9 | Đăng xuất phiên hiện tại | mọi | `POST /api/auth/logout` | ✅ |
+| A10 | Đăng xuất mọi thiết bị | mọi | `POST /api/auth/logout-all` | ⚠️ |
+| A11 | Xác thực từng request bằng JWT + `tokenVersion` | mọi | filter | ✅ |
+| A12 | Tạo ADMIN đầu tiên cho bản cài mới | hệ thống | biến môi trường | — |
+
+### B. Quản trị người dùng & tổ chức — [05](05-luong-quan-tri.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| B1 | Tạo tài khoản (mật khẩu tạm **hoặc** mã kích hoạt) + hồ sơ SV/GV | ADMIN | `POST /api/users` | ✅ |
+| B2 | Danh bạ, tìm kiếm, lọc vai trò, phân trang | ADMIN, DEPT_ADMIN | `GET /api/users`, `/users/by-department` | ✅ |
+| B3 | Khóa / mở tài khoản (thu hồi token ngay) | ADMIN | `PUT /api/users/{id}/status` | ✅ |
+| B4 | Đổi vai trò (thu hồi token mang vai trò cũ) | ADMIN | `PUT /api/users/{id}/role` | ✅ |
+| B5 | Gửi lại mã kích hoạt (chờ 60 giây) | ADMIN | `POST /api/users/{id}/resend-activation` | ✅ |
+| B6 | Nhập SV/GV từ Excel: tải mẫu → xem trước → nhập | ADMIN, DEPT_ADMIN | `/api/users/import/*` | ✅ |
+| B7 | Quản lý khoa (tạo, sửa, bật/tắt) | ADMIN | `/api/departments` | ✅ tạo · ⚠️ sửa/bật-tắt |
+| B8 | Quản lý lớp sinh hoạt | ADMIN, DEPT_ADMIN | `/api/classes` | ✅ tạo · ⚠️ sửa |
+| B9 | Vai trò & quyền hạn (tạo, gán quyền, xóa vai trò không phải hệ thống) | ADMIN | `/api/roles` | ✅ · ⚠️ tạo quyền |
+| B10 | Hồ sơ cá nhân: xem, sửa, đổi mật khẩu | mọi | `/api/users/{id}`, `/profile`, `/password` | ✅ |
+| B11 | Cài đặt email thông báo (bật/tắt nhóm, gửi ngay / tổng hợp) | mọi | `/api/notification-settings` | ✅ |
+
+### C. Đợt đồ án (workspace) — [06](06-luong-dot-de-tai-dang-ky.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| C1 | Tạo đợt | ADMIN, DEPT_ADMIN | `POST /api/workspaces` | ✅ |
+| C2 | Sửa đợt (trường quan trọng chỉ khi DRAFT) | ADMIN, DEPT_ADMIN | `PUT /api/workspaces/{id}` | ⚠️ |
+| C3 | Chuyển trạng thái đợt (6 trạng thái, có điều kiện tiên quyết) | ADMIN, DEPT_ADMIN | `POST /api/workspaces/{id}/transition` | ✅ |
+| C4 | Gán / gỡ lớp khỏi đợt | ADMIN, DEPT_ADMIN | `/api/workspace-classes/assign`, `/unassign` | ✅ |
+| C5 | Phân công giảng viên + quota, thu hồi phân công | ADMIN, DEPT_ADMIN | `/api/assignments/assign`, `/revoke` | ✅ |
+| C6 | Danh sách đợt đang mở ra đề tài (cho GV) | GV, khoa | `GET /api/workspaces/open-for-topics` | ✅ |
+
+### D. Đề tài
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| D1 | Tạo đề tài trong đợt `OPEN_TOPIC` | GV (quyền `TOPIC_MANAGE`), ADMIN | `POST /api/topics/create` | ✅ |
+| D2 | Sửa / xóa đề tài (capacity ≥ số SV đã duyệt) | GV chủ đề tài, khoa, ADMIN | `PUT`, `DELETE /api/topics/{id}` | ✅ |
+| D3 | Đóng / mở lại đề tài | GV, khoa, ADMIN | `POST /api/topics/{id}/open`, `/close` | ✅ |
+| D4 | Danh sách, tìm kiếm, lọc, kèm số đăng ký & trạng thái đăng ký của SV | mọi | `GET /api/topics` | ✅ |
+
+### E. Đăng ký đề tài
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| E1 | SV đăng ký (8 điều kiện kiểm tra) | SV | `POST /api/registration/register` | ✅ |
+| E2 | SV hủy đăng ký đang chờ | SV | `POST /api/registration/cancel/{id}` | ✅ |
+| E3 | GV duyệt (khóa dòng đề tài chống vượt capacity) | GV | `POST /api/registration/approve/{id}` | ✅ |
+| E4 | GV từ chối kèm lý do | GV | `POST /api/registration/reject/{id}` | ✅ |
+| E5 | Xem đăng ký của tôi / của đề tài | SV / GV, khoa | `GET /api/registration/mine`, `/topic/{id}` | ✅ |
+| E6 | Đẩy realtime thay đổi đăng ký | GV, khoa | `/topic/registration/{topicId}` | ✅ |
+
+### F. Tiến độ — [07](07-luong-tien-do-moc.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| F1 | Tải file lên (13 định dạng, kiểm tra magic bytes, ≤20 MB) | mọi | `POST /api/upload` | ✅ |
+| F2 | Tải file xuống có kiểm quyền | chủ file, GV đề tài, ADMIN | `GET /api/secure/files/{name}` | ✅ |
+| F3 | Kiểm tra trùng lặp nội dung (cosine, ngưỡng 80 %) | hệ thống | trong F4 | ✅ (hiện điểm cho GV) |
+| F4 | SV nộp báo cáo tiến độ (kèm file, gắn mốc) | SV | `POST /api/progress/create` | ✅ |
+| F5 | SV kéo thẻ Kanban đổi trạng thái | SV | `PATCH /api/progress/{id}/status` | ✅ |
+| F6 | GV nhận xét / đổi trạng thái / hạn | GV, ADMIN | `PUT /api/progress/{id}/comment` | ✅ |
+| F7 | Xem tiến độ theo SV / theo đề tài | SV, GV, khoa | `GET /api/progress/student/{id}`, `/topic/{id}` | ✅ |
+| F8 | Đẩy realtime tiến độ | thành viên đề tài | `/topic/progress/{topicId}` | ✅ |
+
+### G. Mốc tiến độ (milestone)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| G1 | Tạo / sửa / xóa mốc (trọng số, hạn trong khoảng đợt) | GV chủ đề tài, ADMIN | `/api/milestones` | ✅ |
+| G2 | SV nộp bài theo mốc | SV | `POST /api/progress/create` + `milestoneId` | ✅ |
+| G3 | Bảng điểm mốc: nộp đúng/trễ hạn, điểm gợi ý theo trọng số | thành viên đề tài | `GET /api/milestones/board` | ✅ |
+| G4 | Chấm điểm từng mốc | GV chủ đề tài | `PUT /api/milestones/{id}/grades/{studentId}` | ✅ |
+
+### H. Chấm điểm & chấm lại — [08](08-luong-cham-diem.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| H1 | Tính trạng thái chấm (`OPEN/LOCKED/UNLOCKED/NOT_GRADING`) | hệ thống | trong DTO | ✅ |
+| H2 | Chấm / sửa điểm tổng kết (thang 10, bước 0,25) | GV hướng dẫn | `POST /api/registration/grade/{id}` | ✅ |
+| H3 | Đề tài tự chuyển `COMPLETED` khi mọi SV có điểm | hệ thống | trong H2 | ✅ |
+| H4 | GV gửi yêu cầu chấm lại (đợt đã đóng) | GV | `POST /api/registration/{id}/grade-revisions` | ✅ |
+| H5 | Khoa/ADMIN duyệt (mở khóa N giờ) / từ chối | DEPT_ADMIN, ADMIN | `/api/grade-revisions/{id}/approve`, `/reject` | ✅ |
+| H6 | Tự khóa lại khi quá hạn mở khóa | scheduler | mỗi giờ | — |
+| H7 | Lịch sử điểm | GV, khoa, ADMIN | `GET /api/registration/{id}/grade-history` | ✅ |
+| H8 | Xuất Excel danh sách đăng ký + điểm | GV, khoa, ADMIN | `GET /api/export/excel` | ✅ |
+
+### I. Giao tiếp & thông báo — [09](09-luong-giao-tiep-thong-bao.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| I1 | Tin nhắn 1–1 giữa thành viên cùng đề tài (realtime) | SV, GV | `/api/messages/*`, `/user/queue/messages` | ✅ · ⚠️ hộp thư `inbox` |
+| I2 | Thông báo trong app: chuông, trang thông báo, đánh dấu đã đọc (realtime) | mọi | `/api/notifications/*`, `/user/queue/notifications` | ✅ |
+| I3 | Gửi thông báo thủ công | GV (cho SV của mình), ADMIN | `POST /api/notifications/create` | ⚠️ |
+| I4 | Email thông báo theo cài đặt: gửi ngay hoặc xếp hàng tổng hợp | hệ thống | `NotificationMailer` | — |
+| I5 | Thư tổng hợp mỗi sáng 07:30 | scheduler | — | — |
+| I6 | Hạ tầng gửi email bất đồng bộ sau commit (thử lại, giãn nhịp) | hệ thống | `MailDispatcher` | — |
+| I7 | Thảo luận nhóm theo chủ đề | thành viên đề tài | `/api/discuss/*` | ⚠️ |
+| I8 | Thông báo chung (theo đề tài / toàn hệ thống) | GV, ADMIN | `/api/announcements` | ⚠️ |
+| I9 | Lịch sự kiện đề tài (gộp cả mốc) | thành viên / GV | `/api/calendar` | ⚠️ |
+
+### J. Dashboard & thống kê — [10](10-luong-bao-cao-van-hanh.md)
+| Mã | Chức năng | Vai trò | Endpoint chính | UI |
+|---|---|---|---|---|
+| J1 | Dashboard GV: việc cần làm, SV im lặng 7 ngày, mốc sắp tới | GV | `GET /api/dashboard/lecturer` | ✅ |
+| J2 | Dashboard SV: đăng ký hiện tại, tiến độ Kanban, mốc sắp tới | SV | `GET /api/dashboard/student` | ✅ |
+| J3 | Thống kê tổng hợp theo khoa/đợt + xuất Excel | ADMIN, DEPT_ADMIN | `GET /api/dashboard/overview`, `/overview/export` | ✅ |
+| J4 | Số liệu nhanh của khoa (tỉ lệ lấp đầy, GV chưa phân công) | DEPT_ADMIN | `GET /api/dashboard/department-admin` | ✅ |
+| J5 | Số liệu nhanh toàn hệ thống | ADMIN | `GET /api/dashboard/admin` | ⚠️ |
+
+### K. Kiểm toán & vận hành
+| Mã | Chức năng | Vai trò | Endpoint / cơ chế | UI |
+|---|---|---|---|---|
+| K1 | Ghi nhật ký kiểm toán mọi thao tác ghi (hơn 60 mã hành động) | hệ thống | `AuditLogService` | — |
+| K2 | Tra cứu, lọc theo nhóm, xuất CSV nhật ký | ADMIN | `/api/audit`, `/options`, `/export` | ✅ · ⚠️ `/recent` |
+| K3 | Nhắc báo cáo tiến độ (09:00) và nhắc hạn mốc (08:00) | scheduler | `ReminderService` | — |
+| K4 | Dọn dẹp định kỳ: refresh token, bộ đếm đăng nhập, file mồ côi, nhật ký cũ | scheduler | 03:15–03:45 | — |
+| K5 | Giới hạn tần suất (rate limit) theo IP / người dùng | hệ thống | `RateLimiter` | — |
+| K6 | Định dạng lỗi chung + mã lỗi nghiệp vụ | hệ thống | `GlobalExceptionHandler` | ✅ (toast, lỗi theo ô) |
+| K7 | Request id, log JSON, health, Prometheus, Grafana | vận hành | Actuator, Micrometer | — |
+| K8 | CI (verify, lint/test/build, dựng stack), CodeQL | vận hành | GitHub Actions | — |
+
+</script><script type="text/markdown" data-id="f-01-tong-quan-he-thong" data-file="01-tong-quan-he-thong.md">
+# 01 — Tổng quan hệ thống
+
+[← Mục lục](README.md)
+
+## 1.1 Sơ đồ ngữ cảnh (ai dùng hệ thống, hệ thống nói chuyện với ai)
+
+```mermaid
+flowchart LR
+  ADMIN(["👤 ADMIN<br/>Quản trị hệ thống"])
+  DEPT(["👤 DEPARTMENT_ADMIN<br/>Quản trị khoa"])
+  GV(["👤 LECTURER<br/>Giảng viên"])
+  SV(["👤 STUDENT<br/>Sinh viên"])
+  OPS(["🛠 Người vận hành"])
+
+  subgraph TASKIFY["Hệ thống Taskify"]
+    APP["Ứng dụng web<br/>quản lý đề tài & tiến độ đồ án"]
+  end
+
+  SMTP[["Máy chủ SMTP<br/>(Gmail...)"]]
+  PROM[["Prometheus + Grafana<br/>(tùy chọn)"]]
+  GH[["GitHub Actions<br/>CI · CodeQL"]]
+
+  ADMIN -- "tài khoản, khoa, vai trò, nhật ký,<br/>duyệt chấm lại" --> APP
+  DEPT -- "đợt, lớp, phân công GV,<br/>duyệt đề tài, thống kê" --> APP
+  GV -- "ra đề tài, duyệt đăng ký, mốc,<br/>nhận xét, chấm điểm, nhắn tin" --> APP
+  SV -- "đăng ký đề tài, nộp tiến độ,<br/>Kanban, nhắn tin" --> APP
+  APP -- "OTP, kích hoạt, thông báo,<br/>thư tổng hợp" --> SMTP
+  SMTP -. email .-> ADMIN & DEPT & GV & SV
+  PROM -- "GET /actuator/prometheus<br/>(X-Metrics-Token)" --> APP
+  OPS --> PROM
+  GH -- "build, test, dựng stack" --> APP
+```
+
+## 1.2 Sơ đồ triển khai (Docker Compose)
+
+```mermaid
+flowchart TB
+  subgraph HOST["Máy chủ Docker"]
+    direction TB
+    subgraph FE["container taskify-frontend · nginx · cổng 5175→80"]
+      STATIC["/usr/share/nginx/html<br/>React build (dist/)"]
+      NGX["nginx<br/>• try_files → index.html (SPA)<br/>• /api/ → backend:8080<br/>• /ws/ → backend:8080 (Upgrade)<br/>• gắn X-Request-Id, X-Forwarded-*<br/>• CSP, X-Frame-Options DENY, nosniff"]
+    end
+    subgraph BE["container taskify-backend · Spring Boot 3.5 / Java 21 · cổng 8081→8080"]
+      SPRING["REST API /api/**<br/>STOMP /ws (SockJS)<br/>Actuator /actuator/**"]
+      UP[("volume ./Backend/uploads<br/>file người dùng tải lên")]
+      LOGS[("volume backend_logs<br/>log JSON xoay vòng (prod)")]
+    end
+    subgraph DBC["container taskify-db · MySQL 8.4 · cổng 3307→3306"]
+      MYSQL[("mysql_data<br/>schema do Flyway V1–V10 quản lý")]
+    end
+    subgraph MON["profile monitoring (tùy chọn)"]
+      P["taskify-prometheus :9090<br/>alerts.yml"]
+      G["taskify-grafana :3000<br/>dashboard taskify-overview"]
+    end
+  end
+  BROWSER["Trình duyệt"] -->|"HTTP(S) :5175"| NGX
+  NGX --> STATIC
+  NGX -->|"/api, /ws"| SPRING
+  SPRING -->|"JDBC HikariCP"| MYSQL
+  SPRING --- UP
+  SPRING --- LOGS
+  SPRING -->|SMTP 587 STARTTLS| MAIL[["SMTP"]]
+  P -->|scrape| SPRING
+  G --> P
+
+  DBC -. "healthcheck mysqladmin ping" .-> DBC
+  BE -. "depends_on: db healthy<br/>healthcheck /actuator/health/readiness" .-> DBC
+  FE -. "depends_on: backend healthy" .-> BE
+```
+
+**Thứ tự khởi động:** `db` (healthy) → `backend` chạy Flyway migrate, `AdminBootstrap`, `StoredFileMaintenance.backfill`, (dev) `DataSeeder` → readiness `UP` → `frontend`.
+
+**Biến bắt buộc** (không có giá trị mặc định, thiếu thì compose từ chối chạy): `JWT_SECRET`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`. Tạo bằng `scripts/init-env.ps1`.
+
+## 1.3 Chế độ phát triển (không Docker)
+
+```mermaid
+flowchart LR
+  B["Trình duyệt<br/>localhost:5175"] --> V["Vite dev server<br/>npm run dev"]
+  V -->|"proxy /api, /ws"| S["Spring Boot local<br/>mvnw spring-boot:run · :8080<br/>profile dev (+ DataSeeder nếu APP_SEED_ENABLED)"]
+  S --> D[("MySQL<br/>local hoặc docker compose up -d db")]
+  S -.-> SW["Swagger UI /swagger-ui.html<br/>(chỉ khi app.swagger.public=true)"]
+```
+
+Script hỗ trợ: `scripts/run-backend.ps1`, `scripts/run-frontend.ps1`, `scripts/get-otp.ps1 <user>` (lấy OTP demo từ DB), `scripts/smoke-test.mjs`, `scripts/ui-check*.mjs` (Playwright), `scripts/pre-demo-check.ps1`.
+
+## 1.4 Đường đi của một request REST (từ đầu tới cuối)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as Người dùng
+  participant R as React page / hook
+  participant AX as api.js (axios)
+  participant NG as nginx
+  participant RF as RequestIdFilter
+  participant SEC as Spring Security<br/>JwtAuthenticationFilter
+  participant C as Controller<br/>@PreAuthorize + @Valid
+  participant S as Service @Transactional<br/>SecurityScope / TopicAccess
+  participant DB as MySQL
+  participant EV as EventPublisher / EmailService
+  participant WS as STOMP broker
+
+  U->>R: thao tác (bấm nút)
+  R->>AX: gọi hàm trong src/api/*.js
+  AX->>NG: HTTP + Authorization: Bearer (token trong bộ nhớ)
+  NG->>RF: proxy + X-Request-Id
+  RF->>SEC: MDC requestId
+  SEC->>SEC: parse JWT (scope ACCESS, tv khớp tokenVersion, tài khoản bật)
+  SEC->>C: SecurityContext có AuthUser
+  C->>C: kiểm tra vai trò, validate body (record request)
+  C->>S: gọi service
+  S->>S: kiểm tra phạm vi khoa / quyền trên đề tài / trạng thái đợt
+  S->>DB: đọc / ghi (JPA, khóa dòng khi cần)
+  S->>EV: đăng ký sự kiện realtime + email (chờ commit)
+  S-->>C: DTO
+  Note over S,DB: COMMIT transaction
+  EV-->>WS: afterCommit → đẩy sự kiện
+  EV-->>EV: MailDispatcher gửi email trên luồng mail-*
+  C-->>AX: 200 JSON (hoặc lỗi {code, message, errors, requestId})
+  AX-->>R: dữ liệu / Error chuẩn hóa (status, code, fieldErrors)
+  R-->>U: cập nhật giao diện / toast
+  WS-->>R: client khác đang subscribe nhận sự kiện → tải lại
+```
+
+## 1.5 Luồng lớn nhất — vòng đời trọn một đợt đồ án
+
+Sơ đồ này nối mọi chức năng lại theo đúng thứ tự diễn ra trong thực tế. Chi tiết từng bước ở các file 04–10.
+
+```mermaid
+flowchart TB
+  classDef admin fill:#fde2e2,stroke:#c0392b,color:#000
+  classDef dept fill:#fff2cc,stroke:#b7950b,color:#000
+  classDef gv fill:#dbeafe,stroke:#1d4ed8,color:#000
+  classDef sv fill:#dcfce7,stroke:#15803d,color:#000
+  classDef sys fill:#ede9fe,stroke:#6d28d9,color:#000
+
+  subgraph P0["Chuẩn bị hệ thống"]
+    A0["ADMIN đầu tiên (bootstrap / seed)"]:::sys --> A1["ADMIN tạo khoa"]:::admin
+    A1 --> A2["ADMIN / khoa tạo lớp"]:::admin
+    A2 --> A3["Tạo tài khoản lẻ hoặc nhập Excel<br/>SV, GV, quản trị khoa"]:::admin
+    A3 --> A4["Người dùng kích hoạt bằng mã email<br/>hoặc đổi mật khẩu tạm"]:::sys
+  end
+
+  subgraph P1["DRAFT — Bản nháp"]
+    B1["Khoa tạo đợt (tên, loại, học kỳ, thời gian)"]:::dept
+    B1 --> B2["Gán lớp vào đợt"]:::dept
+    B1 --> B3["Phân công GV + quota"]:::dept
+  end
+
+  subgraph P2["OPEN_TOPIC — Mở ra đề tài"]
+    C1["GV tạo / sửa / xóa đề tài (capacity 1–10)"]:::gv
+    C2["Khoa xem, đóng / mở đề tài"]:::dept
+  end
+
+  subgraph P3["OPEN_REGISTRATION — Mở đăng ký"]
+    D1["SV xem danh sách đề tài, đăng ký"]:::sv
+    D2["SV hủy đăng ký đang chờ"]:::sv
+    D3["GV duyệt / từ chối → thông báo + email"]:::gv
+    D1 --> D3
+  end
+
+  subgraph P4["LOCK_REGISTRATION — Khóa đăng ký"]
+    E1["Không nhận đăng ký mới<br/>GV vẫn duyệt / từ chối phần còn lại"]:::gv
+  end
+
+  subgraph P5["IN_PROGRESS — Đang thực hiện"]
+    F1["GV đặt mốc (trọng số, hạn)"]:::gv
+    F2["SV nộp báo cáo / bài theo mốc, kéo Kanban"]:::sv
+    F3["Hệ thống chấm độ trùng lặp, đẩy realtime"]:::sys
+    F4["GV nhận xét, chấm điểm mốc"]:::gv
+    F5["Nhắc tự động: 7 ngày không nộp, mốc sắp hết hạn"]:::sys
+    F6["Nhắn tin GV ↔ SV trong đề tài"]:::gv
+    F7["GV chấm điểm tổng kết → đề tài COMPLETED"]:::gv
+    F1 --> F2 --> F3 --> F4 --> F7
+    F5 -.-> F2
+  end
+
+  subgraph P6["CLOSED — Kết thúc"]
+    G1["Điểm bị khóa"]:::sys
+    G2["GV gửi yêu cầu chấm lại"]:::gv
+    G3["Khoa / ADMIN duyệt (mở khóa ≤ 168 giờ) hoặc từ chối"]:::dept
+    G4["GV sửa điểm một lần → USED<br/>quá hạn → EXPIRED"]:::gv
+    G5["Thống kê khoa, xuất Excel điểm, nhật ký kiểm toán"]:::dept
+    G1 --> G2 --> G3 --> G4
+  end
+
+  P0 --> P1
+  P1 -->|"transition OPEN_TOPIC"| P2
+  P2 -->|"transition OPEN_REGISTRATION<br/>(cần ≥1 lớp và ≥1 đề tài)"| P3
+  P3 -->|"transition LOCK_REGISTRATION"| P4
+  P4 -->|"transition IN_PROGRESS"| P5
+  P5 -->|"transition CLOSED"| P6
+  P2 -. "đóng sớm" .-> P6
+  P3 -. "đóng sớm" .-> P6
+  P4 -. "đóng sớm" .-> P6
+```
+
+## 1.6 Công nghệ
+
+| Lớp | Công nghệ |
+|---|---|
+| Frontend | React 19, Vite, Tailwind CSS, React Router, axios, `@stomp/stompjs` + `sockjs-client` (tải lười), Vitest + Testing Library, ESLint (React Compiler, `--max-warnings 0`) |
+| Backend | Java 21, Spring Boot 3.5 (Web, Security, Data JPA, Validation, WebSocket, Mail, Actuator), JJWT (HS256), Flyway, Apache POI (Excel), Micrometer Prometheus, springdoc OpenAPI, JaCoCo, Testcontainers |
+| Dữ liệu | MySQL 8.4, thời gian lưu UTC, ứng dụng chạy giờ `Asia/Ho_Chi_Minh` |
+| Hạ tầng | Docker Compose (db, backend, frontend, + prometheus, grafana), nginx, GitHub Actions (CI, CodeQL) |
+
+</script><script type="text/markdown" data-id="f-02-kien-truc-backend" data-file="02-kien-truc-backend.md">
+# 02 — Kiến trúc Backend (Spring Boot 3.5 · Java 21)
+
+[← Mục lục](README.md)
+
+Gói gốc: `Backend/src/main/java/com/doanltmmt/Backend`.
+
+## 2.1 Phân tầng
+
+```mermaid
+flowchart TB
+  subgraph WEB["Tầng Web — controller/, dto/request, dto/response"]
+    direction LR
+    C1["23 @RestController<br/>≤ 120 dòng, không inject repository<br/>(LayeringTest kiểm tra tự động)"]
+    C2["Record request + Bean Validation<br/>@Valid / @Validated(OnCreate)<br/>ValidationMessages.properties"]
+    C3["@PreAuthorize theo vai trò<br/>hasRole / hasAnyRole / hasAuthority('TOPIC_MANAGE')"]
+  end
+  subgraph BIZ["Tầng Nghiệp vụ — service/, service/importer/"]
+    direction LR
+    S1["Service @Transactional<br/>(GET: readOnly)"]
+    S2["Kiểm quyền theo dữ liệu<br/>SecurityScopeService (khoa)<br/>TopicAccessService (đề tài)"]
+    S3["Dịch vụ dùng chung<br/>AuditLog · Notification · NotificationMailer<br/>EmailService · EventPublisher · OtpService · SimilarityService"]
+  end
+  subgraph DATA["Tầng Dữ liệu — repository/, entity/, entity/enums/"]
+    direction LR
+    R1["31 Spring Data JPA repository<br/>EntityGraph, truy vấn gom nhóm,<br/>khóa dòng FOR UPDATE"]
+    R2["31 entity · trạng thái là enum<br/>quy tắc chuyển nằm trong enum"]
+    R3["Flyway V1–V10<br/>ddl-auto=validate, open-in-view=false"]
+  end
+  subgraph INFRA["Tầng Hạ tầng — config/, security/, exception/, scheduler/"]
+    direction LR
+    I1["SecurityConfig · JWT · refresh cookie<br/>RateLimiter · PasswordPolicy"]
+    I2["WebSocketConfig + interceptor STOMP"]
+    I3["GlobalExceptionHandler · ApiException · ErrorCodes"]
+    I4["RequestIdFilter · AppMetrics · AsyncConfig<br/>AdminBootstrap · StoredFileMaintenance"]
+    I5["GradeRevisionScheduler · ReminderScheduler"]
+  end
+  WEB --> BIZ --> DATA
+  INFRA -. "cắt ngang" .-> WEB
+  INFRA -. "cắt ngang" .-> BIZ
+  DATA --> DB[("MySQL 8.4")]
+```
+
+## 2.2 Bản đồ module: Controller → Service → Repository
+
+```mermaid
+flowchart LR
+  classDef ctrl fill:#dbeafe,stroke:#1d4ed8,color:#000
+  classDef svc fill:#dcfce7,stroke:#15803d,color:#000
+  classDef shared fill:#fef3c7,stroke:#b45309,color:#000
+
+  subgraph AUTH["Xác thực"]
+    AuthController:::ctrl --> AuthService:::svc
+    AuthController --> SessionCookies:::svc
+    SessionCookies --> RefreshTokenService:::svc
+    AuthService --> OtpService:::shared
+    AuthService --> LoginThrottleService:::svc
+    AuthService --> RefreshTokenService
+  end
+
+  subgraph ORG["Tổ chức & tài khoản"]
+    UserController:::ctrl --> UserService:::svc
+    UserImportController:::ctrl --> UserImportService:::svc
+    UserImportService --> ImportWorkbook:::svc
+    RoleController:::ctrl --> RoleService:::svc
+    DepartmentController:::ctrl --> DepartmentService:::svc
+    AcademicClassController:::ctrl --> AcademicClassService:::svc
+  end
+
+  subgraph WSP["Đợt đồ án"]
+    WorkspaceController:::ctrl --> WorkspaceService:::svc
+    WorkspaceClassController:::ctrl --> WorkspaceClassService:::svc
+    LecturerAssignmentController:::ctrl --> LecturerAssignmentService:::svc
+  end
+
+  subgraph TOP["Đề tài & đăng ký & điểm"]
+    TopicController:::ctrl --> TopicService:::svc
+    TopicRegistrationController:::ctrl --> TopicRegistrationService:::svc
+    TopicRegistrationController --> GradeService:::svc
+    GradeRevisionController:::ctrl --> GradeService
+    TopicRegistrationService --> GradeService
+    ExportController:::ctrl --> ExportService:::svc
+  end
+
+  subgraph PRG["Tiến độ & mốc & file"]
+    ProgressController:::ctrl --> ProgressService:::svc
+    ProgressService --> SimilarityService:::shared
+    MilestoneController:::ctrl --> MilestoneService:::svc
+    MilestoneController --> MilestoneGradeService:::svc
+    FileUploadController:::ctrl --> FileStorageService:::svc
+    FileStorageService --> FileContentValidator:::svc
+    SecureFileController:::ctrl --> FileDownloadService:::svc
+  end
+
+  subgraph COM["Giao tiếp"]
+    MessageController:::ctrl --> MessageService:::svc
+    DiscussionController:::ctrl --> DiscussionService:::svc
+    AnnouncementController:::ctrl --> AnnouncementService:::svc
+    CalendarController:::ctrl --> CalendarService:::svc
+    NotificationController:::ctrl --> NotificationService:::shared
+    NotificationSettingsController:::ctrl --> NotificationSettingsService:::svc
+  end
+
+  subgraph RPT["Báo cáo & kiểm toán"]
+    DashboardController:::ctrl --> DashboardService:::svc
+    DashboardController --> DashboardOverviewService:::svc
+    AuditLogController:::ctrl --> AuditLogQueryService:::svc
+  end
+```
+
+Các service dùng chung (màu vàng) được gọi từ hầu hết service nghiệp vụ:
+
+```mermaid
+flowchart LR
+  classDef shared fill:#fef3c7,stroke:#b45309,color:#000
+  BIZ["Service nghiệp vụ<br/>(Topic, Registration, Grade, Progress,<br/>Milestone, Message, Workspace, User...)"]
+  BIZ --> SSS["SecurityScopeService<br/>requireCurrentUser · hasRole · requireDepartmentAccess"]:::shared
+  BIZ --> TAS["TopicAccessService<br/>isOwner · isMember · requireOwner · requireMember"]:::shared
+  BIZ --> ALS["AuditLogService.log(action, entity, id, details[, actor])"]:::shared
+  BIZ --> NS["NotificationService.notify / publish"]:::shared
+  BIZ --> NM["NotificationMailer.send(user, EmailCategory, mail)"]:::shared
+  BIZ --> EP["EventPublisher<br/>progressCreated/Updated · registrationChanged<br/>notificationCreated · messageCreated"]:::shared
+  NS --> EP
+  NM --> ES["EmailService.sendEmail → MailRequested event"]:::shared
+  ES --> MD["MailDispatcher<br/>@Async + AFTER_COMMIT"]:::shared
+  EP --> SMT["SimpMessagingTemplate<br/>(afterCommit)"]
+  BIZ --> ET["EmailTemplates (HTML + plain text)"]:::shared
+```
+
+## 2.3 Chuỗi filter bảo mật HTTP
+
+```mermaid
+flowchart TB
+  REQ["HTTP request"] --> RID["RequestIdFilter (HIGHEST_PRECEDENCE)<br/>nhận X-Request-Id hợp lệ [A-Za-z0-9._-]{1,64} hoặc sinh 16 ký tự<br/>→ MDC, header phản hồi, body lỗi"]
+  RID --> CORS["CORS (app.cors.allowed-origins)"]
+  CORS --> JWT["JwtAuthenticationFilter<br/>Authorization: Bearer → TokenAuthenticator"]
+  JWT --> TA{"TokenAuthenticator.authenticate"}
+  TA -->|"chữ ký HS256, hạn, iss=taskify,<br/>scope=ACCESS, user tồn tại,<br/>active & activated, tv == tokenVersion"| OK["SecurityContext = AuthUser<br/>(eraseCredentials)"]
+  TA -->|"sai bất kỳ điều kiện nào"| ANON["đi tiếp KHÔNG xác thực"]
+  OK --> AUTHZ
+  ANON --> AUTHZ
+  AUTHZ{"authorizeHttpRequests"}
+  AUTHZ -->|"/error, OPTIONS /api/**,<br/>POST 9 endpoint /api/auth/* công khai,<br/>/ws/**, GET /actuator/health/**, /info"| PERMIT["permitAll"]
+  AUTHZ -->|"GET /actuator/prometheus"| MT["MetricsTokenAuthorization<br/>X-Metrics-Token == METRICS_TOKEN<br/>(so sánh thời gian hằng)"]
+  AUTHZ -->|"swagger (chỉ khi app.swagger.public)"| PERMIT
+  AUTHZ -->|"còn lại"| NEED["authenticated()"]
+  NEED -->|"chưa xác thực"| E401["401 UNAUTHORIZED<br/>SecurityErrorHandlers.unauthorized"]
+  NEED --> PRE["@PreAuthorize ở controller"]
+  PRE -->|"sai vai trò"| E403["403 FORBIDDEN"]
+  PRE --> CTRL["Controller → Service"]
+```
+
+`csrf` tắt vì API dùng header Bearer (không dùng session/cookie). Riêng cookie refresh có chống CSRF riêng: `SameSite=Strict` + kiểm tra `Origin` (`RefreshCookie.requireSameOrigin`). `sessionCreationPolicy = STATELESS`.
+
+## 2.4 Ba lớp phân quyền
+
+```mermaid
+flowchart LR
+  R["Request đã xác thực"] --> L1
+  subgraph L1["Lớp 1 — Vai trò (controller)"]
+    PA["@PreAuthorize<br/>vd. hasRole('LECTURER')"]
+  end
+  L1 --> L2
+  subgraph L2["Lớp 2 — Phạm vi khoa (SecurityScopeService)"]
+    RD["requireDepartmentAccess(deptId)<br/>ADMIN: qua · DEPT_ADMIN: đúng khoa mình · khác: 403"]
+    SELF["chính chủ: currentUser.id == studentId / lecturerId"]
+  end
+  L2 --> L3
+  subgraph L3["Lớp 3 — Theo đối tượng (TopicAccessService) chống IDOR"]
+    OWN["isOwner(topic,user)<br/>ADMIN luôn · DEPT_ADMIN cùng khoa của đợt · LECTURER là GV hướng dẫn"]
+    MEM["isMember(topic,user)<br/>owner + STUDENT có đăng ký ĐÃ DUYỆT"]
+  end
+  L3 --> L4
+  subgraph L4["Lớp 4 — Giai đoạn đợt (enum WorkspaceStatus)"]
+    PH["allowsTopicEditing · allowsTopicOpenClose<br/>allowsConfiguration · allowsRegistrationReview<br/>== IN_PROGRESS / CLOSED"]
+  end
+  L4 --> OKK["Thực thi nghiệp vụ"]
+```
+
+### Ma trận vai trò (rút gọn theo nhóm endpoint)
+
+| Nhóm | ADMIN | DEPARTMENT_ADMIN | LECTURER | STUDENT |
+|---|:-:|:-:|:-:|:-:|
+| Tài khoản (`/users` tạo, khóa, đổi vai trò) | ✔ | — | — | — |
+| Danh sách người dùng theo khoa, nhập Excel | ✔ | ✔ (khoa mình) | — | — |
+| Vai trò & quyền, khoa, nhật ký kiểm toán | ✔ | — | — | — |
+| Lớp, đợt, gán lớp, phân công GV | ✔ | ✔ (khoa mình) | — | — |
+| Tạo / sửa / đóng-mở đề tài | ✔ | ✔ (khoa mình) | ✔ (đề tài của mình, quyền `TOPIC_MANAGE`) | — |
+| Duyệt / từ chối đăng ký, chấm điểm, gửi yêu cầu chấm lại | — | — | ✔ (đề tài của mình) | — |
+| Duyệt yêu cầu chấm lại | ✔ | ✔ (khoa mình, không tự duyệt) | — | — |
+| Đăng ký / hủy, nộp tiến độ, Kanban | — | — | — | ✔ (của mình) |
+| Nhận xét tiến độ, mốc, lịch, thông báo theo đề tài | ✔ | (xem) | ✔ (đề tài của mình) | (xem nếu đã duyệt) |
+| Tin nhắn, thảo luận | thành viên đề tài | thành viên đề tài | thành viên đề tài | thành viên đề tài |
+| Dashboard | admin, overview | department-admin, overview | lecturer | student |
+| Hồ sơ, thông báo, cài đặt email, tải file | ✔ | ✔ | ✔ | ✔ |
+
+Quyền (privilege) mặc định từ migration V2: `USER_MANAGE`, `ROLE_MANAGE`, `DEPT_MANAGE`, `TOPIC_MANAGE`, `REGISTRATION_MANAGE`, `SYSTEM_REPORT`. Mã nguồn hiện chỉ kiểm tra trực tiếp `TOPIC_MANAGE` (ở `TopicController`); các quyền khác mang tính mô tả, phân quyền thực tế dựa vào vai trò.
+
+## 2.5 Kiến trúc realtime (STOMP over SockJS)
+
+```mermaid
+flowchart LR
+  subgraph CLIENT["Trình duyệt"]
+    STC["ws/stomp.js<br/>connectAndSubscribe(destination)"]
+  end
+  subgraph SERVER["Backend"]
+    EP["/ws (SockJS)<br/>setAllowedOrigins(app.cors.allowed-origins)"]
+    INT["WebSocketAuthChannelInterceptor<br/>(clientInboundChannel)"]
+    BRK["SimpleBroker trong bộ nhớ<br/>/topic, /queue · prefix user /user"]
+    PUB["EventPublisher<br/>(gửi sau commit)"]
+    MET["AppMetrics<br/>taskify_websocket_sessions"]
+  end
+  STC -- "CONNECT + Authorization: Bearer" --> EP --> INT
+  INT -- "CONNECT: TokenAuthenticator (cùng quy tắc HTTP)" --> BRK
+  INT -- "SUBSCRIBE: chỉ 4 đích hợp lệ" --> BRK
+  INT -- "SEND: luôn từ chối" --> X["MessagingException"]
+  PUB --> BRK
+  BRK -- "/user/queue/notifications<br/>/user/queue/messages" --> STC
+  BRK -- "/topic/progress/{topicId}<br/>/topic/registration/{topicId}" --> STC
+  EP -. "SessionConnected / Disconnect" .-> MET
+```
+
+| Kênh | Kiểm tra khi SUBSCRIBE | Sự kiện | Nơi phát |
+|---|---|---|---|
+| `/user/queue/notifications` | chính người dùng (định tuyến theo Principal) | `NOTIFICATION_CREATED` | `NotificationService.publish` |
+| `/user/queue/messages` | chính người dùng | `MESSAGE_CREATED` (gửi cho cả người gửi và người nhận) | `MessageService.send` |
+| `/topic/progress/{id}` | `TopicAccessService.isMember` | `PROGRESS_CREATED`, `PROGRESS_UPDATED` | `ProgressService.create/updateStatus/addComment` |
+| `/topic/registration/{id}` | `TopicAccessService.isOwner` | `REGISTRATION_CREATED`, `REGISTRATION_UPDATED`, `REGISTRATION_CANCELLED` | `TopicRegistrationService` |
+
+## 2.6 Kiến trúc gửi email
+
+```mermaid
+flowchart TB
+  subgraph SEC["Email bảo mật — luôn gửi ngay"]
+    OTP["OtpService.issue<br/>LOGIN · ACTIVATION · RESET_PASSWORD"]
+  end
+  subgraph NOTI["Email thông báo — theo cài đặt người nhận"]
+    BIZ["TopicRegistration · Grade · Progress · Reminder<br/>NotificationMailer.send(user, category, mail)"]
+    CHK{"NotificationSettings<br/>của người nhận"}
+    BIZ --> CHK
+    CHK -->|"nhóm bị tắt"| SKIP["bỏ qua email<br/>(thông báo trong app vẫn có)"]
+    CHK -->|"emailDigest = true"| Q[("email_digest_items<br/>hàng chờ")]
+    CHK -->|"gửi ngay / chưa cài đặt"| ES
+    CRON["@Scheduled 07:30 VN<br/>sendDigests()"] --> Q
+    Q -->|"gộp mọi mục của 1 người<br/>→ 1 thư, xóa mục đã gửi"| ES
+  end
+  OTP --> ES["EmailService.sendEmail<br/>publishEvent(MailRequested)"]
+  ES --> TEL{"@TransactionalEventListener<br/>AFTER_COMMIT (fallbackExecution)"}
+  TEL -->|"rollback → không gửi"| DROP["huỷ"]
+  TEL --> EXE["mailExecutor (core 2, max 5, queue 5000,<br/>CallerRunsPolicy, mang MDC requestId)"]
+  EXE --> MD["MailDispatcher.onMailRequested<br/>• chưa cấu hình JavaMailSender → bỏ qua + cảnh báo<br/>• pace(): cách nhau ≥ 200 ms toàn ứng dụng<br/>• thử tối đa 3 lần, chờ 2s × lần"]
+  MD --> SMTP[["SMTP"]]
+  MD --> M["counter taskify_mail_sent_total{result}"]
+```
+
+Nhóm email (`EmailCategory`): `REGISTRATION` (kết quả đăng ký), `PROGRESS` (báo cáo & nhận xét), `GRADE` (điểm & chấm lại), `REMINDER` (nhắc hạn tự động).
+
+## 2.7 Phát sự kiện sau commit
+
+```mermaid
+sequenceDiagram
+  participant S as Service (@Transactional)
+  participant EP as EventPublisher
+  participant TSM as TransactionSynchronizationManager
+  participant DB as MySQL
+  participant BR as STOMP broker
+  S->>DB: INSERT/UPDATE
+  S->>EP: progressCreated(pr)
+  EP->>EP: dựng payload NGAY (còn trong transaction, entity còn nạp được)
+  EP->>TSM: registerSynchronization(afterCommit → convertAndSend)
+  alt commit thành công
+    DB-->>S: COMMIT
+    TSM->>BR: convertAndSend(destination, payload)
+  else ném lỗi → rollback
+    DB-->>S: ROLLBACK
+    Note over TSM,BR: không có sự kiện ma
+  end
+```
+
+## 2.8 Job định kỳ
+
+```mermaid
+gantt
+  title Lịch job @Scheduled trong một ngày (giờ Việt Nam)
+  dateFormat HH:mm
+  axisFormat %H:%M
+  section Dọn dẹp đêm
+  Xóa bộ đếm đăng nhập hết hạn (03h15) :03:15, 10m
+  Xóa refresh token cũ > 30 ngày (03h30) :03:30, 10m
+  Xóa file mồ côi > 24 giờ (03h30) :03:30, 10m
+  Xóa nhật ký > 12 tháng, giữ GRADE_ (03h45) :03:45, 10m
+  section Thông báo buổi sáng
+  Thư tổng hợp email (07h30) :07:30, 10m
+  Nhắc hạn mốc — còn 2 ngày / hết hạn hôm nay (08h00) :08:00, 10m
+  Nhắc báo cáo — 7 ngày chưa nộp (09h00) :09:00, 10m
+  section Lặp lại
+  Hết hạn mở khóa điểm (phút 05 mỗi giờ) :00:05, 5m
+```
+
+| Job | Lớp | Lịch | Việc làm |
+|---|---|---|---|
+| Dọn cửa sổ rate limit | `RateLimiter.evictExpired` | mỗi 60 giây | xóa cửa sổ đã hết hạn trong RAM |
+| Hết hạn chấm lại | `GradeRevisionScheduler` → `GradeService.expireOverdue` | `0 5 * * * *` | `APPROVED` quá `unlockUntil` → `EXPIRED`, báo GV |
+| Nhắc hạn mốc | `ReminderScheduler.remindMilestoneDeadlines` | 08:00 VN | WARNING trước 2 ngày, CRITICAL đúng ngày |
+| Nhắc báo cáo | `ReminderScheduler.remindWeeklyProgress` | 09:00 VN | SV 7 ngày chưa nộp, chống nhắc trùng |
+| Thư tổng hợp | `NotificationMailer.sendDigests` | 07:30 VN | 1 thư / người |
+| Bộ đếm đăng nhập | `LoginThrottleService.cleanUp` | 03:15 | xóa bộ đếm hết ý nghĩa |
+| Refresh token | `RefreshTokenService.cleanup` | 03:30 | xóa token hết hạn/thu hồi quá 30 ngày |
+| File mồ côi | `StoredFileMaintenance.purgeOrphans` | 03:30 | file chưa gắn báo cáo sau 24 giờ |
+| Nhật ký | `AuditLogQueryService.purgeExpired` | 03:45 | xóa > 12 tháng, giữ nhật ký điểm |
+
+Chạy một lần khi khởi động (`ApplicationRunner`): `AdminBootstrap` (tạo ADMIN đầu tiên), `StoredFileMaintenance.backfill` (tạo hồ sơ file cho báo cáo cũ), `DataSeeder` (chỉ profile `dev` + `APP_SEED_ENABLED=true`).
+
+## 2.9 Xử lý lỗi
+
+```mermaid
+flowchart LR
+  T1["ApiException(code, message)<br/>vd. WORKSPACE_PHASE, TOPIC_FULL,<br/>DUPLICATE_REGISTRATION, GRADE_LOCKED,<br/>INVALID_TRANSITION, IMPORT_FILE_INVALID"] --> H
+  T2["ResponseStatusException"] --> H
+  T3["MethodArgumentNotValid / ConstraintViolation"] --> H
+  T4["TooManyRequestsException (+ Retry-After)"] --> H
+  T5["AccessDenied / Authentication"] --> H
+  T6["DataIntegrityViolation"] --> H
+  T7["Exception bất kỳ"] --> H
+  H["GlobalExceptionHandler<br/>+ ApiErrorAttributes cho /error<br/>+ SecurityErrorHandlers cho filter"] --> B["ErrorBodies.of(...)<br/>{timestamp, status, code, error,<br/>message (tiếng Việt), path, errors[], requestId}"]
+  B --> FE["api.js chuẩn hóa → Error{status, code, fieldErrors, data}<br/>403: toast cảnh báo · 5xx/mất mạng: toast lỗi · 401: làm mới phiên"]
+```
+
+| Ngoại lệ | HTTP | `code` |
+|---|---|---|
+| Validation body | 400 | `VALIDATION_FAILED` (kèm `errors[]` theo trường) |
+| JSON sai, thiếu tham số, sai kiểu | 400 | `MALFORMED_REQUEST` |
+| `IllegalArgumentException`, `ClassCastException` | 400 | `INVALID_INPUT` |
+| Trùng khóa / vi phạm ràng buộc | 409 | `DATA_CONFLICT` |
+| Lỗi nghiệp vụ | 400 | mã riêng như bảng trên |
+| Không xác định | 500 | `INTERNAL_ERROR` (không lộ stacktrace / SQL) |
+
+## 2.10 Quan sát hệ thống
+
+```mermaid
+flowchart LR
+  APP["Backend"] --> LOG["Log có [requestId]<br/>prod: JSON logstash ra console + file xoay vòng"]
+  APP --> H["/actuator/health/readiness<br/>(readinessState + db) → healthcheck Docker"]
+  APP --> I["/actuator/info → phiên bản build"]
+  APP --> PR["/actuator/prometheus (X-Metrics-Token)<br/>JVM · HTTP histogram + SLO 100ms/300ms/1s/3s<br/>HikariCP · taskify_db_up · taskify_websocket_sessions<br/>taskify_mail_sent_total{result}"]
+  PR --> PROM["Prometheus + alerts.yml"] --> GRAF["Grafana dashboard taskify-overview"]
+```
+
+## 2.11 Mô hình dữ liệu (ERD)
+
+```mermaid
+erDiagram
+  DEPARTMENTS ||--o{ USERS : "thuộc khoa"
+  ROLES ||--o{ USERS : "vai trò"
+  ROLES }o--o{ PRIVILEGES : "roles_privileges"
+  USERS ||--o| LECTURERS : "hồ sơ GV (id = user.id)"
+  USERS ||--o| STUDENTS : "hồ sơ SV (id = user.id)"
+  DEPARTMENTS ||--o{ ACADEMIC_CLASSES : "lớp"
+  ACADEMIC_CLASSES ||--o{ STUDENTS : "SV thuộc lớp"
+  DEPARTMENTS ||--o{ WORKSPACES : "đợt đồ án"
+  WORKSPACES ||--o{ WORKSPACE_CLASSES : "lớp tham gia (active)"
+  ACADEMIC_CLASSES ||--o{ WORKSPACE_CLASSES : ""
+  WORKSPACES ||--o{ LECTURER_ASSIGNMENTS : "phân công + quota"
+  LECTURERS ||--o{ LECTURER_ASSIGNMENTS : ""
+  WORKSPACES ||--o{ TOPICS : "đề tài"
+  LECTURERS ||--o{ TOPICS : "hướng dẫn"
+  TOPICS ||--o{ TOPIC_REGISTRATION : "≤ capacity SV được duyệt"
+  STUDENTS ||--o{ TOPIC_REGISTRATION : "đăng ký"
+  LECTURERS |o--o{ TOPIC_REGISTRATION : "reviewer"
+  TOPIC_REGISTRATION ||--o{ GRADE_HISTORY : "mỗi lần lưu điểm"
+  TOPIC_REGISTRATION ||--o{ GRADE_REVISION_REQUESTS : "yêu cầu chấm lại"
+  GRADE_REVISION_REQUESTS |o--o{ GRADE_HISTORY : "lần sửa dùng yêu cầu"
+  TOPICS ||--o{ MILESTONES : "mốc"
+  TOPICS ||--o{ PROGRESS_REPORT : "báo cáo"
+  STUDENTS ||--o{ PROGRESS_REPORT : "người nộp"
+  MILESTONES |o--o{ PROGRESS_REPORT : "bài nộp theo mốc"
+  MILESTONES ||--o{ MILESTONE_GRADES : "điểm mốc"
+  STUDENTS ||--o{ MILESTONE_GRADES : ""
+  TOPICS ||--o{ DISCUSSION_THREADS : "chủ đề"
+  DISCUSSION_THREADS ||--o{ DISCUSSION_POSTS : "bài viết"
+  USERS ||--o{ DISCUSSION_POSTS : "tác giả"
+  TOPICS ||--o{ MESSAGES : "ngữ cảnh"
+  USERS ||--o{ MESSAGES : "gửi / nhận"
+  TOPICS |o--o{ ANNOUNCEMENTS : "null = toàn hệ thống"
+  TOPICS ||--o{ CALENDAR_EVENTS : "lịch"
+  USERS ||--o{ NOTIFICATIONS : "thông báo"
+  USERS ||--o| NOTIFICATION_SETTINGS : "cài đặt email"
+  USERS ||--o{ EMAIL_DIGEST_ITEMS : "chờ thư tổng hợp"
+  USERS ||--o{ REFRESH_TOKENS : "phiên (familyId)"
+  USERS ||--o{ OTP_TOKENS : "mã OTP theo mục đích"
+
+  USERS {
+    bigint id PK
+    string username UK
+    string email UK
+    string password "bcrypt"
+    bool active "khóa/mở"
+    bool activated "đã kích hoạt"
+    bool mustChangePassword
+    int tokenVersion "thu hồi token"
+  }
+  WORKSPACES {
+    bigint id PK
+    string name
+    string type
+    string semester
+    enum status "WorkspaceStatus"
+    datetime startAt
+    datetime endAt
+  }
+  TOPICS {
+    bigint id PK
+    string title
+    text description
+    int capacity "1..10"
+    enum status "TopicStatus"
+  }
+  TOPIC_REGISTRATION {
+    bigint id PK
+    bool approved "null=chờ, 1=duyệt, 0=từ chối"
+    double score "0..10 bước 0.25"
+    text feedback
+    string rejectReason
+    datetime registeredAt
+    datetime reviewedAt
+  }
+  PROGRESS_REPORT {
+    bigint id PK
+    string title
+    text content
+    string fileUrl
+    enum status "TODO/IN_PROGRESS/DONE"
+    double similarityScore
+    bigint similarToReportId
+    text lecturerComment
+    datetime commentedAt
+    datetime deadline
+  }
+  MILESTONES {
+    bigint id PK
+    string title
+    datetime startDate
+    datetime deadline
+    int weight "trọng số"
+  }
+  GRADE_REVISION_REQUESTS {
+    bigint id PK
+    enum status "PENDING/APPROVED/REJECTED/USED/EXPIRED"
+    string reason
+    string reviewNote
+    datetime unlockUntil
+  }
+  NOTIFICATIONS {
+    bigint id PK
+    enum type "INFO/REMINDER/SYSTEM"
+    enum severity "INFO/WARNING/CRITICAL"
+    string refType
+    bigint refId
+    string linkPath
+    datetime dueAt
+    datetime readAt
+  }
+```
+
+Bảng độc lập (không khóa ngoại): `audit_logs` (ghi tên người thực hiện, IP, trình duyệt), `login_throttle` (khóa = SHA-256 của username|IP), `stored_files` (chủ file, `refType/refId` khi đã gắn báo cáo), `data_migrations`, `flyway_schema_history`.
+
+Lịch sử migration: V1 baseline · V2 vai trò/quyền mặc định · V3 sửa dữ liệu GĐ2 · V4 chuẩn hóa enum trạng thái · V5 index truy vấn · V6 refresh token · V7 IP/trình duyệt trong nhật ký · V8 thời điểm nhận xét tiến độ · V9 trọng số + điểm theo mốc · V10 cài đặt email + hàng chờ thư tổng hợp.
+
+## 2.12 Toàn bộ máy trạng thái
+
+### Đợt đồ án — `WorkspaceStatus`
+```mermaid
+stateDiagram-v2
+  [*] --> DRAFT: tạo đợt
+  DRAFT --> OPEN_TOPIC: mở ra đề tài
+  OPEN_TOPIC --> OPEN_REGISTRATION: mở đăng ký (cần ≥1 lớp active và ≥1 đề tài)
+  OPEN_REGISTRATION --> LOCK_REGISTRATION: khóa đăng ký
+  LOCK_REGISTRATION --> IN_PROGRESS: bắt đầu thực hiện
+  IN_PROGRESS --> CLOSED: kết thúc
+  OPEN_TOPIC --> CLOSED: đóng sớm
+  OPEN_REGISTRATION --> CLOSED: đóng sớm
+  LOCK_REGISTRATION --> CLOSED: đóng sớm
+  CLOSED --> [*]
+  note right of DRAFT
+    DRAFT, OPEN_TOPIC: gán lớp, phân công GV
+    chỉ DRAFT: sửa các trường thông tin đợt
+  end note
+  note right of IN_PROGRESS
+    nộp tiến độ, nhận xét,
+    chấm điểm mốc, chấm điểm
+  end note
+```
+
+### Đề tài — `TopicStatus`
+```mermaid
+stateDiagram-v2
+  [*] --> OPEN: GV tạo (đợt OPEN_TOPIC)
+  OPEN --> FULL: số SV duyệt = capacity
+  FULL --> OPEN: từ chối SV đã duyệt / tăng capacity
+  OPEN --> CLOSED: GV / khoa đóng
+  FULL --> CLOSED: GV / khoa đóng
+  CLOSED --> OPEN: mở lại (tự tính lại FULL)
+  OPEN --> COMPLETED: mọi SV đã duyệt có điểm
+  FULL --> COMPLETED: mọi SV đã duyệt có điểm
+  CLOSED --> COMPLETED: mọi SV đã duyệt có điểm
+```
+
+### Đăng ký — `TopicRegistration.approved`
+```mermaid
+stateDiagram-v2
+  [*] --> PENDING: SV đăng ký (approved = null)
+  PENDING --> [*]: SV hủy (xóa bản ghi, chỉ khi OPEN_REGISTRATION)
+  PENDING --> APPROVED: GV duyệt (approved = true)
+  PENDING --> REJECTED: GV từ chối + lý do (approved = false)
+  APPROVED --> REJECTED: GV từ chối lại (đề tài có thể còn chỗ)
+  APPROVED --> GRADED: GV chấm điểm (score ≠ null)
+  GRADED --> GRADED: sửa điểm (bắt buộc lý do, ghi GradeHistory)
+```
+
+### Báo cáo tiến độ — `ProgressStatus` (Kanban)
+```mermaid
+stateDiagram-v2
+  [*] --> TODO: SV nộp
+  TODO --> IN_PROGRESS
+  IN_PROGRESS --> DONE
+  DONE --> IN_PROGRESS
+  IN_PROGRESS --> TODO
+  TODO --> DONE
+  DONE --> TODO
+  note right of TODO
+    SV chủ báo cáo kéo thẻ (PATCH /status)
+    GV cũng có thể đặt trạng thái khi nhận xét
+  end note
+```
+
+### Trạng thái chấm điểm — `GradeState` (tính động)
+```mermaid
+stateDiagram-v2
+  [*] --> NOT_GRADING: đợt chưa IN_PROGRESS
+  NOT_GRADING --> OPEN: đợt → IN_PROGRESS
+  OPEN --> LOCKED: đợt → CLOSED
+  LOCKED --> UNLOCKED: yêu cầu chấm lại APPROVED, còn hạn
+  UNLOCKED --> LOCKED: GV sửa điểm (USED) / quá hạn (EXPIRED)
+```
+
+### Yêu cầu chấm lại — `GradeRevisionStatus`
+```mermaid
+stateDiagram-v2
+  [*] --> PENDING: GV gửi (điểm LOCKED, đã có điểm, chưa có PENDING khác)
+  PENDING --> APPROVED: khoa/ADMIN duyệt, unlockUntil = now + 1..168 giờ (mặc định 72)
+  PENDING --> REJECTED: khoa/ADMIN từ chối
+  APPROVED --> USED: GV sửa điểm một lần
+  APPROVED --> EXPIRED: scheduler mỗi giờ
+```
+
+### Mã OTP — `OtpToken`
+```mermaid
+stateDiagram-v2
+  [*] --> ACTIVE: issue() — hủy mã cũ cùng mục đích
+  ACTIVE --> USED: nhập đúng (OK)
+  ACTIVE --> ACTIVE: nhập sai, attempts < 5 (INVALID)
+  ACTIVE --> LOCKED_USED: attempts đạt 5 (LOCKED)
+  ACTIVE --> EXPIRED_USED: quá hạn (LOGIN 5 phút · RESET 10 phút · ACTIVATION 72 giờ)
+  ACTIVE --> REPLACED: cấp mã mới
+```
+
+### Refresh token — `RefreshToken`
+```mermaid
+stateDiagram-v2
+  [*] --> LIVE: issue() sau đăng nhập (familyId mới, TTL 7 ngày)
+  LIVE --> ROTATED: /refresh → revokedAt + replacedById, cấp token mới cùng họ
+  ROTATED --> ROTATED: dùng lại trong 30 giây (2 tab) → cấp thêm token, không báo động
+  ROTATED --> FAMILY_KILLED: dùng lại sau 30 giây → thu hồi MỌI phiên + tokenVersion+1 + audit REFRESH_TOKEN_REUSE
+  LIVE --> REVOKED: logout · logout-all · đổi/đặt lại mật khẩu
+  LIVE --> REVOKED: hết hạn / tokenVersion lệch / tài khoản khóa
+  REVOKED --> [*]: cleanup sau 30 ngày
+```
+
+### Tài khoản — `User`
+```mermaid
+stateDiagram-v2
+  [*] --> CHUA_KICH_HOAT: Admin tạo không mật khẩu / nhập Excel / bootstrap (activated=false)
+  [*] --> MAT_KHAU_TAM: Admin tạo có mật khẩu tạm (mustChangePassword=true)
+  CHUA_KICH_HOAT --> HOAT_DONG: kích hoạt bằng mã email
+  MAT_KHAU_TAM --> HOAT_DONG: đổi mật khẩu ở lần đăng nhập đầu
+  HOAT_DONG --> BI_KHOA: Admin khóa (active=false, tokenVersion+1)
+  BI_KHOA --> HOAT_DONG: Admin mở
+  HOAT_DONG --> HOAT_DONG: đổi vai trò / đổi mật khẩu / logout-all (tokenVersion+1)
+```
+
+</script><script type="text/markdown" data-id="f-03-kien-truc-frontend" data-file="03-kien-truc-frontend.md">
+# 03 — Kiến trúc Frontend (React 19 · Vite · Tailwind)
+
+[← Mục lục](README.md)
+
+Thư mục gốc: `frontend/src`.
+
+## 3.1 Cấu trúc thư mục và trách nhiệm
+
+```mermaid
+flowchart TB
+  MAIN["main.jsx<br/>StrictMode → AuthProvider → App + Toaster"] --> APP["App.jsx<br/>chờ ready → PublicRoutes hoặc AppLayout + AppRoutes"]
+  APP --> ROUTES["routes/AppRoutes.jsx<br/>React.lazy + Suspense (mỗi trang 1 chunk)<br/>RequireRole bọc route theo vai trò"]
+  APP --> LAYOUT["layouts/AppLayout.jsx<br/>Sidebar (config/navigation.js) · TopBar · NotificationsBell"]
+  ROUTES --> PAGES["pages/*.jsx — 17 trang"]
+  PAGES --> SUB["pages/&lt;trang&gt;/<br/>hook dữ liệu useXxx.js + component tab/khối"]
+  PAGES --> COMP["components/<br/>TopicCard · RegistrationTable · ProgressRow · Pagination<br/>GradeHistoryModal · GradeRevisionPanel · FileDownloadButton<br/>PasswordChecklist · InlineNotice · userImport/*"]
+  SUB --> HOOKS["hooks/useLoadEffect.js (tải sau render)<br/>hooks/useMediaQuery.js"]
+  PAGES --> API["api/*.js — 20 module<br/>(không trang nào gọi axios trực tiếp)"]
+  SUB --> API
+  COMP --> API
+  API --> AX["api.js — axios instance<br/>baseURL /api · withCredentials · interceptor"]
+  AX --> SES["auth/session.js<br/>access token trong bộ nhớ · refreshSession · revokeSession"]
+  PAGES --> WS["ws/stomp.js<br/>connectAndSubscribe (thư viện tải lười)"]
+  WS --> SES
+  CTX["context/AuthContext.jsx<br/>user · token · ready · login · logout · updateUser · updateToken"] --> SES
+  APP --> CTX
+  CONST["constants/status.js · constants/auditActions.js<br/>toast.js · Toaster.jsx"] -.-> PAGES
+```
+
+## 3.2 Khởi động ứng dụng và khôi phục phiên
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant B as Trình duyệt
+  participant AP as AuthProvider
+  participant SS as auth/session.js
+  participant BE as /api/auth/refresh
+  participant APP as App.jsx
+  B->>AP: mount
+  AP->>AP: xóa khóa cũ localStorage (token, temp_user, temp_token)
+  AP->>SS: refreshSession() — 1 promise dùng chung
+  SS->>BE: POST (cookie taskify_refresh HttpOnly)
+  alt cookie còn hiệu lực
+    BE-->>SS: {token, userId, username, fullName, role} + Set-Cookie mới
+    SS->>SS: setAccessToken(token) → báo listeners
+    AP->>AP: user = localStorage.user ∪ dữ liệu mới, lưu lại
+  else không có / hết hạn
+    BE-->>SS: 401 + xóa cookie
+    AP->>AP: clearLocal()
+  end
+  AP->>APP: ready = true
+  alt có user và token
+    APP->>B: AppLayout + AppRoutes theo vai trò
+  else
+    APP->>B: PublicRoutes (chỉ /login)
+  end
+```
+
+## 3.3 Quản lý access token trong suốt phiên
+
+```mermaid
+flowchart TB
+  subgraph MEM["Bộ nhớ (biến module auth/session.js)"]
+    TOK["accessToken (JWT 15 phút)"]
+    LST["listeners: AuthContext.setToken, WebSocket"]
+  end
+  subgraph LS["localStorage"]
+    USR["key 'user' = {id, username, fullName, role}<br/>(chỉ thông tin hiển thị)"]
+  end
+  subgraph COOKIE["Cookie HttpOnly (JS không đọc được)"]
+    RT["taskify_refresh · Path=/api/auth · SameSite=Strict · Secure (prod)"]
+  end
+
+  LOGIN["Đăng nhập xong (LoginPage)"] -->|"login(user, token)"| TOK
+  LOGIN --> USR
+  TIMER["Hẹn giờ trong AuthContext:<br/>exp − 60 giây (tối thiểu 5 giây)"] -->|"refreshSession()"| RT
+  E401["Request bị 401"] -->|"interceptor: refresh 1 lần rồi gửi lại"| RT
+  RT -->|"token mới"| TOK
+  TOK --> LST
+  OTHER["Tab khác đổi key 'user'"] -->|"storage event"| SYNC{"newValue?"}
+  SYNC -->|"null → tab khác đăng xuất"| CLR["xóa token + user ở tab này"]
+  SYNC -->|"có, tab này chưa có token"| RT
+  LOGOUT["logout()"] -->|"POST /auth/logout"| RT
+  LOGOUT --> CLR
+```
+
+## 3.4 Interceptor axios (`src/api.js`)
+
+```mermaid
+flowchart TB
+  REQ["Gọi hàm api/*.js"] --> RI["request interceptor<br/>gắn Authorization: Bearer accessToken"]
+  RI --> HTTP["HTTP /api/..."]
+  HTTP --> RES{"Kết quả"}
+  RES -->|"2xx"| OK["trả response.data"]
+  RES -->|"401 và không phải /auth/*"| RETRY{"đã retry?"}
+  RETRY -->|"chưa"| REF["refreshSession() → gửi lại request với token mới"]
+  REF -->|"thành công"| OK
+  REF -->|"thất bại"| EXP
+  RETRY -->|"rồi"| EXP["sessionExpired():<br/>xóa localStorage.user → revokeSession()<br/>→ /login?reason=expired"]
+  RES -->|"403"| W["toast cảnh báo<br/>(thông báo tiếng Việt từ server, hoặc câu mặc định)<br/>KHÔNG đăng xuất"]
+  RES -->|"5xx / mất mạng"| D["toast lỗi chung"]
+  RES -->|"4xx khác"| N
+  W --> N["reject Error chuẩn hóa:<br/>message · status · url · data · code · fieldErrors{field: msg}"]
+  D --> N
+  EXP --> N
+```
+
+## 3.5 WebSocket client (`src/ws/stomp.js`)
+
+```mermaid
+sequenceDiagram
+  participant P as Trang / component
+  participant W as connectAndSubscribe
+  participant L as import() @stomp/stompjs + sockjs-client
+  participant S as Backend /ws
+  P->>W: {destination, onMessage, onStatus}
+  W-->>P: handle {deactivate()} (trả ngay)
+  W->>L: tải lười (chỉ lần đầu, ~84 KB)
+  L-->>W: Client, SockJS
+  W->>S: beforeConnect: lấy access token MỚI NHẤT → CONNECT Authorization
+  S-->>W: CONNECTED
+  W->>S: SUBSCRIBE destination
+  S-->>W: MESSAGE (JSON) → onMessage(payload)
+  alt STOMP ERROR (token hết hạn / không đủ quyền)
+    W->>W: deactivate
+    W->>W: refreshSession() rồi activate lại MỘT lần
+    Note over W: vẫn lỗi → dừng hẳn (không thử lại mỗi 3 giây)
+  else mất mạng
+    W->>S: tự kết nối lại sau 3 giây (heartbeat 10s/10s)
+  end
+  P->>W: unmount → deactivate()
+```
+
+Nơi dùng realtime:
+
+| Kênh | Trang / component | Phản ứng |
+|---|---|---|
+| `/user/queue/notifications` | `NotificationsBell`, `NotificationsPage` | chèn thông báo mới, tăng số chưa đọc |
+| `/user/queue/messages` | `ProjectChatPage` | thêm tin `MESSAGE_CREATED` vào hội thoại đang mở |
+| `/topic/progress/{topicId}` | `StudentProgressPage`, `LecturerProgressPage`, `ProjectSpacePage` | tải lại danh sách báo cáo |
+| `/topic/registration/{topicId}` | `LecturerRegistrationPage` | tải lại danh sách đăng ký |
+
+## 3.6 Định tuyến theo vai trò
+
+```mermaid
+flowchart LR
+  subgraph PUB["Chưa đăng nhập — PublicRoutes"]
+    L["/login → LoginPage<br/>bước: login · otp · changePassword · activate · forgot · reset"]
+    ANY["* → /login"]
+  end
+
+  subgraph ALL["Mọi vai trò"]
+    HOME{"/"}
+    DASH["/dashboard → DashboardPage"]
+    NOTI["/notifications → NotificationsPage"]
+    PROF["/profile → ProfilePage<br/>tab: info · password · notifications"]
+  end
+  HOME -->|"ADMIN / DEPT / GV"| DASH
+  HOME -->|"STUDENT"| ST["StudentTopicPage"]
+
+  subgraph SV["STUDENT"]
+    ST
+    MR["/my-registrations → StudentMyRegistrationsPage"]
+    PG["/progress → StudentProgressPage (Kanban / bảng)"]
+    PD["/progress-detail?milestoneId → StudentProgressDetailPage"]
+  end
+
+  subgraph GV["LECTURER"]
+    LT["/lecturer-topics → LecturerTopicsPage"]
+    LRG["/lecturer → LecturerRegistrationPage"]
+    LP["/lecturer-progress → LecturerProgressPage"]
+  end
+
+  subgraph SHARED["STUDENT + LECTURER"]
+    PS["/project-space → ProjectSpacePage"]
+    PC["/project-chat → ProjectChatPage"]
+  end
+
+  subgraph AD["ADMIN"]
+    A["/admin → AdminPage<br/>(DEPT_ADMIN vào đây → chuyển /department-admin)"]
+    AR["/admin/roles → RoleManagementPage"]
+    AA["/admin/audit → AuditLogPage"]
+  end
+
+  subgraph DA["DEPARTMENT_ADMIN"]
+    DP["/department-admin → DepartmentAdminPage"]
+  end
+```
+
+`RequireRole`: khi `ready=false` không quyết định gì (tránh đá ra khi đang khôi phục phiên); sai vai trò → `Navigate /login`. Backend vẫn kiểm tra lại mọi quyền — route guard chỉ để điều hướng.
+
+Menu (`config/navigation.js`) dựng từ dữ liệu: mục **Tổng quan**, nhóm theo vai trò (`ROLE_SECTIONS`), **Hồ sơ của tôi**; tiêu đề cổng theo vai trò (`PORTAL_TITLES`).
+
+## 3.7 Bản đồ trang → component → API
+
+```mermaid
+flowchart LR
+  classDef page fill:#dbeafe,stroke:#1d4ed8,color:#000
+  classDef api fill:#dcfce7,stroke:#15803d,color:#000
+
+  LoginPage:::page --> authApi["auth.js"]:::api
+  DashboardPage:::page --> dashboardApi["dashboardApi"]:::api
+  StudentTopicPage:::page --> topicApi["topicApi"]:::api
+  StudentTopicPage --> registrationApi["registrationApi"]:::api
+  StudentMyRegistrationsPage:::page --> registrationApi
+  StudentProgressPage:::page --> progressApi["progressApi"]:::api
+  StudentProgressPage --> fileApi["fileApi"]:::api
+  StudentProgressPage --> registrationApi
+  StudentProgressDetailPage:::page --> milestoneApi["milestoneApi"]:::api
+  StudentProgressDetailPage --> fileApi
+  StudentProgressDetailPage --> progressApi
+  LecturerTopicsPage:::page --> topicApi
+  LecturerRegistrationPage:::page --> registrationApi
+  LecturerProgressPage:::page --> progressApi
+  LecturerProgressPage --> topicApi
+  ProjectSpacePage:::page --> progressApi
+  ProjectSpacePage --> milestoneApi
+  ProjectSpacePage --> fileApi
+  ProjectSpacePage --> registrationApi
+  ProjectSpacePage --> topicApi
+  ProjectChatPage:::page --> messageApi["messageApi"]:::api
+  ProjectChatPage --> registrationApi
+  ProjectChatPage --> topicApi
+  NotificationsPage:::page --> notificationsApi["notificationsApi"]:::api
+  ProfilePage:::page --> userApi["userApi"]:::api
+  ProfilePage --> notificationsApi
+  AdminPage:::page --> userApi
+  AdminPage --> departmentApi["departmentApi"]:::api
+  AdminPage --> importApi["importApi"]:::api
+  AdminPage --> registrationApi
+  RoleManagementPage:::page --> roleApi["roleApi"]:::api
+  AuditLogPage:::page --> auditApi["auditApi"]:::api
+  DepartmentAdminPage:::page --> workspaceApi["workspaceApi"]:::api
+  DepartmentAdminPage --> departmentApi
+  DepartmentAdminPage --> userApi
+  DepartmentAdminPage --> topicApi
+  DepartmentAdminPage --> dashboardApi
+  DepartmentAdminPage --> importApi
+  DepartmentAdminPage --> registrationApi
+```
+
+### Chi tiết từng trang
+
+| Trang | Thành phần con | Gọi API | Realtime |
+|---|---|---|---|
+| `LoginPage` | `login/LoginStep`, `OtpStep`, `ChangePasswordStep`, `ActivateStep`, `ForgotStep`, `ResetStep`, `PasswordChecklist` | `auth.login`, `verifyOtp`, `resendOtp`, `changeInitialPassword`, `activate`, `forgotPassword`, `resetPassword` | — |
+| `DashboardPage` | `dashboard/LecturerSection`, `StudentSection`, `OverviewSection`, `charts` | `getLecturerStats` / `getStudentStats` / `getOverview` + `exportOverview` (ADMIN, DEPT) | — |
+| `StudentTopicPage` | `TopicCard`, `Pagination` | `topicApi.getAllTopics(studentId…)`, `registrationApi.registerTopic` | — |
+| `StudentMyRegistrationsPage` | thẻ theo trạng thái Chờ / Đã duyệt / Bị từ chối | `registrationApi.getMine`, `cancel` | — |
+| `StudentProgressPage` | `studentProgress/KanbanColumn`, `KanbanCard`, `ProgressForm`, `ProgressTable`, `kanbanConfig` | `getMine`, `progressApi.listByStudent`, `create`, `updateStatus`, `fileApi.upload` | `/topic/progress/{id}` |
+| `StudentProgressDetailPage` | form nộp theo mốc, đồng hồ hạn | `milestoneApi.get`, `fileApi.upload`, `progressApi.create(milestoneId)` | — |
+| `LecturerTopicsPage` | `lecturerTopics/TopicTable`, `TopicFormModal`, `topicForm` | `getAllTopics(lecturerId)`, `workspacesOpenForTopics`, `create`, `update`, `remove`, `open`, `close` | — |
+| `LecturerRegistrationPage` | `RegistrationTable`, `lecturerRegistration/RegistrationReviewModal`, `GradeHistoryModal` | `getByTopic`, `approve`, `reject`, `grade`, `requestRevision`, `gradeHistory`, `exportExcel` | `/topic/registration/{id}` |
+| `LecturerProgressPage` | `ProgressRow`, `FileDownloadButton` | `getAllTopics`, `listByTopic`, `comment` | `/topic/progress/{id}` |
+| `ProjectSpacePage` | `projectSpace/MilestonePanel`, `MilestoneForm`, `MilestoneGradeGrid`, `StudentMilestoneList`, `ProgressSubmitPanel`, `ProgressHistoryPanel` | `milestoneApi.board/create/update/delete/grade`, `progressApi.*`, `fileApi.upload` | `/topic/progress/{id}` |
+| `ProjectChatPage` | `projectChat/ChatPeopleSidebar`, `ChatConversation` | `getMine` / `getByTopic` (danh sách người nhận), `messageApi.conversation` (phân trang), `send` | `/user/queue/messages` |
+| `NotificationsPage` | danh sách + lọc | `listMine`, `markRead`, `markAllRead` | `/user/queue/notifications` |
+| `ProfilePage` | `profile/NotificationSettingsTab` | `userApi.get`, `updateProfile`, `changePassword`, `getSettings`, `saveSettings` | — |
+| `AdminPage` | `admin/CreateUserTab`, `UserListTab`, `DepartmentsTab`, `userImport/UserImportPanel`, `GradeRevisionPanel`, hook `useAdmin` | `userApi.*`, `departmentApi.list/create/listClasses`, `importApi.*`, `registrationApi.listRevisions/approveRevision/rejectRevision`, `gradeHistory` | — |
+| `RoleManagementPage` | ma trận vai trò × quyền | `roleApi.getAllRoles/getAllPrivileges/createRole/updateRole/deleteRole` | — |
+| `AuditLogPage` | `auditLog/AuditFilters`, `AuditTable` | `auditApi.search`, `options`, `exportCsv` | — |
+| `DepartmentAdminPage` | `departmentAdmin/WorkspacesTab`, `ClassesTab`, `WorkspaceClassesTab`, `AssignmentsTab`, `TopicsTab`, `StatsTab`, `UserImportPanel`, `GradeRevisionPanel`, hook `useDepartmentAdmin` | `workspaceApi.*`, `departmentApi.*`, `userApi.getByDepartment`, `topicApi.getAllTopics/open/close`, `dashboardApi.getDepartmentAdminStats` | — |
+
+## 3.8 Tách trang lớn: trang → hook dữ liệu → tab
+
+```mermaid
+flowchart LR
+  DAP["DepartmentAdminPage.jsx<br/>(chỉ điều phối tab)"] --> UDA["useDepartmentAdmin.js<br/>state + toàn bộ lời gọi API + notice"]
+  UDA --> T1["WorkspacesTab"]
+  UDA --> T2["ClassesTab"]
+  UDA --> T3["WorkspaceClassesTab"]
+  UDA --> T4["AssignmentsTab"]
+  UDA --> T5["TopicsTab"]
+  UDA --> T6["StatsTab"]
+  DAP --> T7["UserImportPanel (tự quản state)"]
+  DAP --> T8["GradeRevisionPanel (tự quản state)"]
+
+  AP["AdminPage.jsx"] --> UA["useAdmin.js"]
+  UA --> A1["CreateUserTab"]
+  UA --> A2["UserListTab"]
+  UA --> A3["DepartmentsTab"]
+  AP --> T7
+  AP --> T8
+```
+
+Quy tắc chung (GĐ3 — P3-11): tệp lớn nhất ≤ 353 dòng; `useLoadEffect` tải dữ liệu sau render (không `setState` đồng bộ trong effect, thỏa React Compiler); `npm run lint` chặn mọi cảnh báo.
+
+## 3.9 API backend chưa có giao diện
+
+Những endpoint dưới đây đã chạy ở backend (một số đã có hàm trong `src/api/*`) nhưng **chưa trang nào gọi** — cần lưu ý khi làm tài liệu hoặc lên kế hoạch giai đoạn sau.
+
+| Endpoint | Hàm frontend sẵn có | Ghi chú |
+|---|---|---|
+| `GET/POST /api/discuss/threads`, `/threads/{id}/posts` | `discussApi.threads/createThread/posts/addPost` | thảo luận nhóm theo chủ đề |
+| `GET/POST /api/announcements` | `announcementApi` | thông báo chung theo đề tài / toàn hệ thống |
+| `GET/POST/DELETE /api/calendar` | `calendarApi` | lịch đề tài (đã gộp mốc) |
+| `GET /api/messages/inbox` | `messageApi.inbox` | hộp thư gom nhóm theo hội thoại |
+| `POST /api/notifications/create` | — | gửi thông báo thủ công |
+| `POST /api/auth/logout-all` | — | đăng xuất mọi thiết bị |
+| `GET /api/dashboard/admin` | `dashboardApi.getAdminStats` | số liệu nhanh toàn hệ thống |
+| `GET /api/audit/recent` | — | nhật ký gần đây |
+| `POST /api/roles/privileges` | `roleApi.createPrivilege` | tạo quyền mới |
+| `PUT /api/departments/{id}`, `/status` | — | sửa / bật-tắt khoa |
+| `PUT /api/classes/{id}` | — | sửa lớp |
+| `GET/PUT /api/workspaces/{id}`, `/open`, `/close` | — | xem / sửa đợt (UI dùng `/transition`) |
+
+</script><script type="text/markdown" data-id="f-04-luong-xac-thuc" data-file="04-luong-xac-thuc.md">
+# 04 — Luồng A: Xác thực & phiên đăng nhập
+
+[← Mục lục](README.md)
+
+Thành phần chính: `LoginPage` (+ 6 bước trong `pages/login/`) · `AuthContext` · `auth/session.js` · `AuthController` · `AuthService` · `OtpService` · `LoginThrottleService` · `RateLimiter` · `RefreshTokenService` · `SessionCookies` · `RefreshCookie` · `JwtTokenProvider` · `TokenAuthenticator`.
+
+## Tổng quan các bước đăng nhập (máy trạng thái phía giao diện)
+
+```mermaid
+stateDiagram-v2
+  [*] --> login
+  login --> otp: OTP_REQUIRED (ADMIN, DEPT_ADMIN, LECTURER)
+  login --> changePassword: PASSWORD_CHANGE_REQUIRED (mật khẩu tạm)
+  login --> DA_DANG_NHAP: AUTHENTICATED (STUDENT)
+  changePassword --> otp: vai trò cần OTP
+  changePassword --> DA_DANG_NHAP: STUDENT
+  otp --> DA_DANG_NHAP: mã đúng
+  otp --> login: hết phiên tạm (10 phút) / sai 5 lần
+  login --> activate: "Kích hoạt tài khoản"
+  activate --> login: kích hoạt xong
+  login --> forgot: "Quên mật khẩu"
+  forgot --> reset: đã gửi mã (luôn báo thành công)
+  reset --> login: đặt lại xong
+  DA_DANG_NHAP --> [*]
+```
+
+Ba loại JWT (`JwtTokenProvider.Scope`), cùng khóa HS256, claim `sub`, `iss=taskify`, `userId`, `scope`, `tv`:
+
+| Scope | Thời hạn | Dùng được cho | Cấp ở |
+|---|---|---|---|
+| `ACCESS` | 15 phút (`JWT_EXPIRATION`) | mọi API nghiệp vụ, CONNECT WebSocket | `issueSession`, `refresh`, `changePassword` |
+| `OTP_PENDING` | 10 phút | `/auth/otp/verify`, `/auth/otp/resend` | sau mật khẩu đúng, vai trò cần OTP |
+| `PWD_CHANGE` | 10 phút | `/auth/password/initial` | sau mật khẩu đúng, `mustChangePassword=true` |
+
+---
+
+## A1. Chính sách mật khẩu
+
+```mermaid
+flowchart LR
+  IN["mật khẩu + username"] --> C1{"rỗng?"}
+  C1 -->|có| E["400: gộp mọi lỗi bằng '; '"]
+  C1 -->|không| C2["độ dài 8–64 ký tự"]
+  C2 --> C3["≤ 72 byte UTF-8 (giới hạn bcrypt, chữ có dấu tốn nhiều byte)"]
+  C3 --> C4["có ≥1 chữ cái"]
+  C4 --> C5["có ≥1 chữ số"]
+  C5 --> C6["không chứa username (không phân biệt hoa thường)"]
+  C6 --> R{"có vi phạm?"}
+  R -->|có| E
+  R -->|không| OK["hợp lệ"]
+```
+Áp dụng ở: đổi mật khẩu lần đầu, kích hoạt, đặt lại mật khẩu, đổi mật khẩu trong hồ sơ, Admin đặt mật khẩu tạm. Frontend hiển thị trực quan bằng `PasswordChecklist`. Riêng "không trùng mật khẩu hiện tại" kiểm tra ở nơi đổi mật khẩu (cần so băm).
+
+## A2. Đăng nhập bằng mật khẩu
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Người dùng
+  participant FE as LoginPage / LoginStep
+  participant C as AuthController
+  participant A as AuthService
+  participant RL as RateLimiter (RAM)
+  participant TH as LoginThrottleService (DB)
+  participant AM as AuthenticationManager (bcrypt)
+  participant AL as AuditLogService
+  participant SC as SessionCookies
+
+  U->>FE: username + mật khẩu
+  FE->>C: POST /api/auth/login
+  C->>A: login(request, clientIp)
+  A->>RL: check("login", ip, 10/phút)
+  alt vượt giới hạn
+    RL-->>FE: 429 + Retry-After
+  end
+  A->>TH: assertNotLocked(username, ip)
+  alt cặp (username, IP) đang bị khóa
+    TH-->>FE: 429 "thử lại sau khoảng N phút" (kể cả khi mật khẩu đúng)
+  end
+  A->>AM: authenticate(username, password)
+  alt sai mật khẩu / không tồn tại / bị khóa / chưa kích hoạt
+    A->>TH: recordFailure → khóa 10 phút nếu 5 lần sai trong 15 phút
+    A->>AL: LOGIN_FAILED (+ LOGIN_LOCKED)
+    A-->>FE: 401 "Sai tên đăng nhập hoặc mật khẩu" (thông báo chung, chống dò tài khoản)
+  end
+  A->>TH: recordSuccess → xóa bộ đếm
+  A->>A: continueAfterPassword(user)
+  alt mustChangePassword
+    A-->>FE: PASSWORD_CHANGE_REQUIRED + preAuthToken (PWD_CHANGE)
+  else vai trò ADMIN / DEPARTMENT_ADMIN / LECTURER
+    A->>A: OtpService.issue(LOGIN) → email OTP
+    A-->>FE: OTP_REQUIRED + preAuthToken (OTP_PENDING) + email che n***@gmail.com + cooldown 60s
+  else STUDENT
+    A->>AL: LOGIN_SUCCESS
+    A-->>C: AUTHENTICATED + access token
+    C->>SC: start() → RefreshTokenService.issue (họ token mới)
+    SC-->>FE: Set-Cookie taskify_refresh (HttpOnly, SameSite=Strict, Path=/api/auth, 7 ngày)
+    FE->>FE: AuthContext.login(user, token) → vào ứng dụng
+  end
+```
+
+Bộ đếm khóa đăng nhập lưu ở bảng `login_throttle` với khóa SHA-256 của `username|IP`: khóa theo **cặp** để kẻ xấu ở IP khác không khóa được tài khoản người khác; lưu DB nên còn nguyên sau khi khởi động lại.
+
+## A3. Xác thực 2 bước bằng OTP
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as GV / Quản trị
+  participant FE as OtpStep
+  participant A as AuthService
+  participant O as OtpService
+  participant DB as otp_tokens
+  participant M as Email
+
+  Note over A,O: Khi đăng nhập: issue() hủy mã LOGIN cũ, tạo mã 6 số (SecureRandom), hạn 5 phút, lưu DB rồi mới gửi email
+  O->>DB: INSERT (used=false, attempts=0)
+  O->>M: EmailTemplates.loginOtp(code)
+  U->>FE: nhập 6 số
+  FE->>A: POST /auth/otp/verify {preAuthToken, otp}
+  A->>A: rate limit otp-verify 10/phút/IP
+  A->>A: requirePreAuthUser: token đúng scope OTP_PENDING, user active + activated, tv khớp
+  A->>O: verify(user, LOGIN, code)
+  O->>DB: lấy mã còn hiệu lực mới nhất (trong transaction)
+  alt hết hạn
+    O-->>A: EXPIRED → "Mã OTP đã hết hạn, gửi lại mã mới"
+  else attempts ≥ 5
+    O-->>A: LOCKED → "Sai quá nhiều lần, đăng nhập lại" (audit OTP_LOCKED)
+  else so sánh thời gian hằng — đúng
+    O->>DB: used = true
+    O-->>A: OK
+    A-->>FE: access token + cookie refresh (giống A2 nhánh STUDENT)
+  else sai
+    O->>DB: attempts + 1 (đạt 5 → used = true)
+    O-->>A: INVALID → "Bạn còn N lần thử" (audit OTP_FAILED)
+  end
+
+  opt Gửi lại mã
+    U->>FE: bấm "Gửi lại" (nút đếm ngược 60s)
+    FE->>A: POST /auth/otp/resend {preAuthToken}
+    A->>A: rate limit 5 lần / 10 phút / IP
+    A->>O: issueWithCooldown → 429 nếu mã gần nhất < 60 giây
+    O->>M: mã mới (mã cũ bị hủy)
+  end
+```
+
+## A4. Đổi mật khẩu bắt buộc lần đầu (mật khẩu tạm)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Người dùng có mật khẩu tạm
+  participant FE as ChangePasswordStep
+  participant A as AuthService
+  participant DB as users
+  U->>FE: mật khẩu mới (kiểm tra PasswordChecklist)
+  FE->>A: POST /auth/password/initial {preAuthToken, newPassword}
+  A->>A: rate limit · token PWD_CHANGE hợp lệ · user.mustChangePassword = true
+  A->>A: PasswordPolicy + không trùng mật khẩu hiện tại
+  A->>DB: password = bcrypt(new), mustChangePassword = false, tokenVersion + 1
+  Note over A,DB: tokenVersion + 1 → token PWD_CHANGE vừa dùng cũng hết hiệu lực
+  A->>A: audit PASSWORD_INITIAL_SET
+  A->>A: continueAfterPassword → OTP (nếu vai trò cần) hoặc cấp phiên
+  A-->>FE: OTP_REQUIRED hoặc AUTHENTICATED
+```
+
+## A5. Kích hoạt tài khoản
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant ADM as Admin / Import Excel / Bootstrap
+  participant O as OtpService
+  actor U as Người dùng mới
+  participant FE as ActivateStep
+  participant A as AuthService
+  ADM->>O: issue(user, ACTIVATION) — mã 6 số hạn 72 giờ
+  O-->>U: email "Kích hoạt tài khoản Taskify"
+  U->>FE: tên đăng nhập HOẶC email + mã + mật khẩu mới
+  FE->>A: POST /auth/activate
+  A->>A: rate limit 10 lần / 10 phút / IP
+  A->>A: tìm user theo username, rồi theo email
+  A->>A: PasswordPolicy TRƯỚC khi tiêu thụ mã (mật khẩu yếu không làm mất mã)
+  alt không tồn tại / đã kích hoạt / bị khóa / mã sai
+    A-->>FE: 401 "Mã kích hoạt không đúng hoặc đã hết hạn" (cùng một câu cho mọi lỗi)
+  else hợp lệ
+    A->>A: password mới, activated = true, mustChangePassword = false, tokenVersion + 1
+    A->>A: audit ACTIVATE_ACCOUNT
+    A-->>FE: thành công → quay về bước đăng nhập
+  end
+```
+
+## A6. Quên mật khẩu → đặt lại
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Người dùng
+  participant FE as ForgotStep / ResetStep
+  participant A as AuthService
+  participant O as OtpService
+  participant RT as RefreshTokenService
+  U->>FE: username hoặc email
+  FE->>A: POST /auth/password/forgot
+  A->>A: rate limit 10 / 15 phút / IP và 3 / 15 phút / định danh
+  alt tài khoản không tồn tại / khóa / chưa kích hoạt / không email / đang trong 60s chờ
+    A-->>FE: im lặng bỏ qua
+  else hợp lệ
+    A->>O: issue(RESET_PASSWORD) — hạn 10 phút
+    A->>A: audit PASSWORD_RESET_REQUESTED
+  end
+  A-->>FE: luôn "Nếu tài khoản tồn tại, mã đã được gửi" (chống dò)
+  U->>FE: mã + mật khẩu mới
+  FE->>A: POST /auth/password/reset
+  A->>A: PasswordPolicy trước, rồi verify mã
+  alt mã sai
+    A-->>FE: 400 "Mã xác nhận không đúng hoặc đã hết hạn" (audit PASSWORD_RESET_FAILED)
+  else đúng
+    A->>A: đổi mật khẩu, tokenVersion + 1
+    A->>RT: revokeAll(userId) — đăng xuất mọi thiết bị
+    A->>A: audit PASSWORD_RESET_DONE
+    A-->>FE: thành công → đăng nhập lại
+  end
+```
+
+## A7. Làm mới phiên (refresh token xoay vòng)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant FE as auth/session.js
+  participant C as AuthController /refresh
+  participant SC as SessionCookies
+  participant RC as RefreshCookie
+  participant A as AuthService
+  participant R as RefreshTokenService
+  participant DB as refresh_tokens
+  FE->>C: POST /api/auth/refresh (cookie, withCredentials)
+  C->>SC: refresh()
+  SC->>RC: requireSameOrigin — Origin phải được phép hoặc cùng host (chống CSRF)
+  SC->>A: refresh(raw, userAgent, ip)
+  A->>A: rate limit 300 / phút / IP
+  A->>R: rotate(raw)
+  R->>DB: tìm theo SHA-256(raw)
+  alt không tìm thấy
+    R-->>SC: 401
+  else token đã bị thu hồi và đã được thay
+    alt bị thay trong 30 giây gần đây (2 tab cùng làm mới) và vẫn dùng được
+      R->>DB: tạo token mới cùng familyId
+    else quá 30 giây → nghi bị đánh cắp
+      R->>DB: thu hồi MỌI token của user
+      R->>R: tokenVersion + 1 (access token đang lưu hành cũng chết)
+      R->>R: audit REFRESH_TOKEN_REUSE
+      R-->>SC: 401
+    end
+  else hết hạn / user khóa / tokenVersion lệch
+    R->>DB: revokedAt = now (không rollback khi ném 401)
+    R-->>SC: 401
+  else hợp lệ
+    R->>DB: token mới (256 bit ngẫu nhiên, chỉ lưu băm), cũ: revokedAt + replacedById
+  end
+  A-->>SC: access token mới + raw token mới
+  SC-->>FE: Set-Cookie mới + {token, userId, username, fullName, role}
+  Note over SC,FE: 401 → SessionCookies xóa cookie để trình duyệt không gửi lại
+```
+
+## A8. Khôi phục phiên, làm mới chủ động, đồng bộ nhiều tab
+
+```mermaid
+flowchart TB
+  subgraph RELOAD["Tải lại trang"]
+    R1["AuthProvider mount"] --> R2["refreshSession()"]
+    R2 -->|"OK"| R3["user + token → ready"]
+    R2 -->|"401"| R4["clearLocal → ready → /login"]
+  end
+  subgraph PRO["Làm mới chủ động"]
+    P1["token đổi"] --> P2["đọc exp trong JWT"]
+    P2 --> P3["setTimeout(exp − 60s, tối thiểu 5s)"]
+    P3 --> P4["refreshSession()"]
+    P4 -->|"lỗi"| P5["clearLocal → /login?reason=expired"]
+  end
+  subgraph REACT["Phản ứng khi gặp 401"]
+    Q1["request bất kỳ 401"] --> Q2["interceptor: refreshSession() 1 lần<br/>(nhiều request chờ chung 1 promise)"]
+    Q2 --> Q3["gửi lại request"]
+    Q2 -->|"lỗi"| Q4["sessionExpired → logout server + /login"]
+  end
+  subgraph TABS["Nhiều tab"]
+    T1["tab A đăng xuất → xóa localStorage.user"] --> T2["tab B nhận storage event → xóa token, user"]
+    T3["tab A đăng nhập → ghi user"] --> T4["tab B chưa có token → refreshSession() bằng cookie chung"]
+  end
+```
+
+## A9 · A10. Đăng xuất / đăng xuất mọi thiết bị
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Người dùng
+  participant FE as TopBar / AuthContext
+  participant C as AuthController
+  participant R as RefreshTokenService
+  participant A as AuthService
+  U->>FE: Đăng xuất
+  FE->>C: POST /auth/logout (cookie)
+  C->>C: requireSameOrigin
+  C->>R: revoke(raw) — chỉ phiên này
+  C-->>FE: xóa cookie
+  FE->>FE: setAccessToken(null), xóa localStorage.user → /login
+  Note over U,A: Đăng xuất mọi thiết bị (API có, chưa có nút trên UI)
+  U->>C: POST /auth/logout-all (Bearer)
+  C->>A: logoutAll(username)
+  A->>A: tokenVersion + 1 → mọi access token chết ngay
+  A->>R: revokeAll(userId)
+  A->>A: audit LOGOUT_ALL
+  C-->>U: xóa cookie
+```
+
+## A11. Xác thực từng request & thu hồi tức thì bằng `tokenVersion`
+
+```mermaid
+flowchart LR
+  E1["Đổi mật khẩu"] --> TV["users.tokenVersion + 1"]
+  E2["Đặt lại mật khẩu"] --> TV
+  E3["Kích hoạt / đổi mật khẩu lần đầu"] --> TV
+  E4["Admin khóa tài khoản"] --> TV
+  E5["Admin đổi vai trò"] --> TV
+  E6["Đăng xuất mọi thiết bị"] --> TV
+  E7["Phát hiện refresh token bị dùng lại"] --> TV
+  TV --> CHK["Mỗi request: claim tv trong JWT == tokenVersion hiện tại?"]
+  CHK -->|"lệch"| DENY["coi như không đăng nhập → 401<br/>refresh token có tokenVersion cũ cũng bị từ chối"]
+  CHK -->|"khớp + active + activated + scope ACCESS"| ALLOW["SecurityContext = AuthUser"]
+```
+Cùng một `TokenAuthenticator` dùng cho filter HTTP và `CONNECT` WebSocket nên hai nơi không bao giờ lệch nhau.
+
+## A12. Tạo ADMIN đầu tiên cho bản cài mới
+
+```mermaid
+flowchart TB
+  S["Backend khởi động (ApplicationRunner)"] --> C0{"có APP_BOOTSTRAP_ADMIN_USERNAME<br/>hoặc _EMAIL?"}
+  C0 -->|"không"| X0["bỏ qua"]
+  C0 -->|"có"| C1{"đã có tài khoản vai trò ADMIN?"}
+  C1 -->|"có"| X1["bỏ qua + log 'có thể xóa biến'"]
+  C1 -->|"chưa"| C2{"đủ username và email hợp lệ,<br/>chưa bị tài khoản khác dùng?"}
+  C2 -->|"không"| X2["bỏ qua + cảnh báo"]
+  C2 -->|"có"| MK["tạo ADMIN: activated = false,<br/>mật khẩu ngẫu nhiên không ai biết"]
+  MK --> AU["audit BOOTSTRAP_ADMIN (actor SYSTEM)"]
+  AU --> OTP["OtpService.issue(ACTIVATION) → email"]
+  OTP --> ACT["Người quản trị dùng luồng A5 để tự đặt mật khẩu"]
+```
+Môi trường dev dùng `DataSeeder` thay thế: tạo khoa CNTT, lớp CNTT-K15, đợt mẫu và các tài khoản `admin`, `deptadmin`, `lecturer`, `student`, `student2` (mật khẩu `123456`; email dạng `ten+admin@gmail.com` để nhận OTP thật).
+
+</script><script type="text/markdown" data-id="f-05-luong-quan-tri" data-file="05-luong-quan-tri.md">
+# 05 — Luồng B: Quản trị người dùng & tổ chức
+
+[← Mục lục](README.md)
+
+Thành phần chính: `AdminPage` (`useAdmin`, `CreateUserTab`, `UserListTab`, `DepartmentsTab`) · `UserImportPanel` · `RoleManagementPage` · `ProfilePage` (+ `NotificationSettingsTab`) · `UserService` · `UserImportService` + `ImportWorkbook` + `ImportKind` · `DepartmentService` · `AcademicClassService` · `RoleService` · `NotificationSettingsService`.
+
+## B1. Tạo tài khoản
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor AD as ADMIN
+  participant FE as CreateUserTab (useAdmin)
+  participant C as UserController
+  participant S as UserService
+  participant DB as users / students / lecturers
+  participant O as OtpService
+  AD->>FE: username, họ tên, email, SĐT, vai trò, khoa,<br/>(SV) mã SV + lớp · (GV) học vị, chuyên ngành,<br/>mật khẩu tạm (tùy chọn)
+  FE->>C: POST /api/users
+  C->>S: create(body)
+  alt không nhập mật khẩu
+    S->>S: bắt buộc email hợp lệ (để gửi mã kích hoạt)
+  else có mật khẩu tạm
+    S->>S: PasswordPolicy
+  end
+  S->>S: có vai trò · username chưa có · email chưa dùng
+  S->>S: không phải ADMIN → bắt buộc thuộc khoa
+  S->>S: STUDENT → bắt buộc mã SV + lớp, lớp cùng khoa
+  S->>DB: INSERT users<br/>activated = (có mật khẩu) · mustChangePassword = (có mật khẩu)<br/>không mật khẩu → bcrypt(UUID ngẫu nhiên)
+  opt vai trò STUDENT
+    S->>DB: INSERT students (id = user.id, studentCode, academicClass)
+  end
+  opt vai trò LECTURER
+    S->>DB: INSERT lecturers (id = user.id, department, degree, speciality)
+  end
+  S->>S: audit CREATE_USER
+  opt không mật khẩu
+    S->>O: issue(ACTIVATION) → email mã 72 giờ (gửi sau commit)
+  end
+  S-->>FE: UserDTO
+```
+
+Hai cách cấp tài khoản và hệ quả ở lần đăng nhập đầu:
+
+```mermaid
+flowchart LR
+  A["Admin tạo"] --> Q{"đặt mật khẩu tạm?"}
+  Q -->|"có"| T["activated = true<br/>mustChangePassword = true"] --> L1["Đăng nhập bằng mật khẩu tạm<br/>→ bắt buộc đổi (A4)"]
+  Q -->|"không"| N["activated = false<br/>email mã kích hoạt"] --> L2["Người dùng kích hoạt (A5)<br/>tự đặt mật khẩu"]
+```
+
+## B2 – B5. Danh bạ & thao tác trên tài khoản
+
+```mermaid
+flowchart TB
+  subgraph LIST["UserListTab"]
+    F["Bộ lọc: vai trò, từ khóa (username / họ tên / email), khoa, phân trang"]
+    F -->|"ADMIN"| G1["GET /api/users?role&q&page&size"]
+    F -->|"lọc theo khoa (ADMIN, DEPT_ADMIN)"| G2["GET /api/users/by-department?departmentId&role&q"]
+  end
+  LIST --> ACT{"Thao tác trên 1 dòng"}
+  ACT -->|"Khóa / mở"| S1["PUT /api/users/{id}/status?active<br/>khóa → tokenVersion + 1 (đá khỏi mọi phiên ngay)<br/>audit LOCK_USER / UNLOCK_USER"]
+  ACT -->|"Đổi vai trò"| S2["PUT /api/users/{id}/role?roleId<br/>tokenVersion + 1 (token mang vai trò cũ hết hiệu lực)<br/>audit UPDATE_USER_ROLE"]
+  ACT -->|"Gửi lại mã kích hoạt"| S3["POST /api/users/{id}/resend-activation<br/>chỉ khi chưa kích hoạt và có email<br/>chờ 60 giây giữa 2 lần (429)<br/>audit RESEND_ACTIVATION"]
+```
+
+Quyền xem hồ sơ (`GET /api/users/{id}`): **đầy đủ** (email, SĐT, vai trò, khoa) cho chính chủ, ADMIN, quản trị khoa cùng khoa; người khác chỉ thấy `id` + họ tên.
+
+## B6. Nhập sinh viên / giảng viên từ Excel
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Q as ADMIN / DEPARTMENT_ADMIN
+  participant FE as UserImportPanel
+  participant C as UserImportController
+  participant S as UserImportService
+  participant WB as ImportWorkbook (Apache POI)
+  participant DB as MySQL
+  participant O as OtpService → Mail
+  Q->>FE: chọn loại STUDENT / LECTURER, khoa (ADMIN), tùy chọn "tạo lớp còn thiếu"
+  FE->>C: GET /api/users/import/template?kind
+  C-->>FE: file mẫu .xlsx (tiêu đề + dòng ví dụ)
+  Q->>FE: chọn file đã điền
+  FE->>C: POST /api/users/import/preview (multipart)
+  C->>S: preview(file, kind, departmentId, createMissingClasses)
+  S->>S: resolveDepartment — DEPT_ADMIN chỉ khoa mình
+  S->>WB: read: .xlsx · ≤ 5 MB · ≤ 2000 dòng · đủ cột bắt buộc (nhận tên cột bỏ dấu)
+  S->>DB: tìm username / email đã tồn tại (1 truy vấn mỗi loại)
+  S->>S: kiểm từng dòng (xem bảng dưới)
+  S-->>FE: ImportReport {total, valid, invalid, rows[], newClasses[]} (KHÔNG ghi gì)
+  FE->>FE: ImportPreviewTable + tải CSV các dòng lỗi (errorsCsv.js)
+  Q->>FE: Xác nhận nhập
+  FE->>C: POST /api/users/import (cùng file)
+  C->>S: commit — phân tích lại y hệt
+  alt không có dòng hợp lệ
+    S-->>FE: 400 IMPORT_FILE_INVALID
+  end
+  S->>DB: (STUDENT) tạo lớp còn thiếu nếu được phép
+  S->>DB: tạo user chưa kích hoạt + students / lecturers (1 transaction, bỏ qua dòng lỗi)
+  S->>O: issue(ACTIVATION) cho từng tài khoản (email gửi sau commit, giãn nhịp 200 ms)
+  S->>S: audit IMPORT_USERS (created, skipped, newClasses)
+  S-->>FE: ImportReport committed = true, created = N
+```
+
+| Cột (SV) | Cột (GV) | Kiểm tra |
+|---|---|---|
+| MSSV* | Mã giảng viên* | ≤ 50 ký tự, chỉ `[A-Za-z0-9._-]`, chưa có tài khoản, không trùng trong file |
+| Họ tên* | Họ tên* | ≤ 100 ký tự |
+| Email* | Email* | định dạng hợp lệ, ≤ 100, chưa dùng, không trùng trong file |
+| Mã lớp* | Học vị, Chuyên ngành | lớp phải có trong khoa và đang hoạt động (hoặc được phép tạo mới) · học vị ≤ 100, chuyên ngành ≤ 255 |
+| Số điện thoại | Số điện thoại | ≤ 20 ký tự |
+
+## B7 · B8. Khoa và lớp
+
+```mermaid
+flowchart LR
+  subgraph DEPT["Khoa (ADMIN)"]
+    D1["GET /api/departments<br/>(ADMIN, DEPT_ADMIN)"]
+    D2["POST /api/departments<br/>{code, name, ...} → CREATE_DEPARTMENT"]
+    D3["PUT /api/departments/{id} → UPDATE_DEPARTMENT ⚠️"]
+    D4["PUT /api/departments/{id}/status?active<br/>ENABLE / DISABLE_DEPARTMENT ⚠️"]
+  end
+  subgraph CLS["Lớp sinh hoạt (ADMIN, DEPT_ADMIN)"]
+    C1["GET /api/classes?departmentId<br/>DEPT_ADMIN: chỉ khoa mình"]
+    C2["POST /api/classes {departmentId, code, name}<br/>→ CREATE_CLASS"]
+    C3["PUT /api/classes/{id} → UPDATE_CLASS ⚠️"]
+  end
+  DEPT --> CLS
+  CLS --> USE["Dùng khi: tạo SV (B1), nhập Excel (B6),<br/>gán lớp vào đợt (C4), kiểm tra SV đăng ký (E1)"]
+```
+⚠️ = có API, chưa có nút trên giao diện. UI: `DepartmentsTab` (AdminPage), `ClassesTab` (DepartmentAdminPage).
+
+## B9. Vai trò & quyền hạn
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor AD as ADMIN
+  participant FE as RoleManagementPage
+  participant S as RoleService
+  FE->>S: GET /api/roles + GET /api/roles/privileges
+  S-->>FE: ma trận vai trò × quyền
+  AD->>FE: tạo vai trò mới
+  FE->>S: POST /api/roles {name, description}
+  S->>S: tên in hoa không dấu [A-Z0-9_] 2–50 ký tự (vd. THU_KY), chưa tồn tại → CREATE_ROLE
+  AD->>FE: tích / bỏ quyền, sửa mô tả
+  FE->>S: PUT /api/roles/{id} {description, privilegeIds}
+  S->>S: UPDATE_ROLE
+  AD->>FE: xóa vai trò
+  FE->>S: DELETE /api/roles/{id}
+  alt vai trò hệ thống (ADMIN, DEPARTMENT_ADMIN, LECTURER, STUDENT)
+    S-->>FE: 400 không được xóa
+  else đang có người dùng
+    S-->>FE: 400 vai trò đang gán cho N người dùng
+  else
+    S->>S: DELETE_ROLE
+  end
+  Note over AD,S: POST /api/roles/privileges (tạo quyền mới) có API, chưa có UI
+```
+
+## B10. Hồ sơ cá nhân
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Người dùng
+  participant FE as ProfilePage
+  participant C as UserController
+  participant S as UserService
+  participant SC as SessionCookies
+  U->>FE: mở tab "Thông tin"
+  FE->>C: GET /api/users/{myId}
+  U->>FE: sửa họ tên, email, SĐT
+  FE->>C: PUT /api/users/{id}/profile
+  C->>S: chỉ sửa chính mình · email hợp lệ, chưa ai dùng → UPDATE_PROFILE
+  FE->>FE: AuthContext.updateUser
+  U->>FE: tab "Mật khẩu": hiện tại + mới
+  FE->>C: PUT /api/users/{id}/password
+  C->>S: chỉ chính mình · mật khẩu hiện tại đúng · mới ≠ cũ · PasswordPolicy
+  S->>S: tokenVersion + 1, revokeAll refresh tokens, CHANGE_PASSWORD
+  S-->>C: access token mới
+  C->>SC: restart() → cookie refresh mới cho chính thiết bị này
+  C-->>FE: {token}
+  FE->>FE: updateToken(token) — vẫn đăng nhập, mọi thiết bị khác bị đăng xuất
+```
+
+## B11. Cài đặt email thông báo
+
+```mermaid
+flowchart LR
+  T["ProfilePage → tab Thông báo<br/>NotificationSettingsTab"] -->|"GET /api/notification-settings"| G["NotificationSettingsDTO<br/>(chưa có bản ghi → mặc định bật hết, gửi ngay)<br/>+ số mục đang chờ tổng hợp"]
+  T -->|"PUT /api/notification-settings"| P["{emailDigest, registration, progress, grade, reminder}"]
+  P --> EFF["NotificationMailer đọc cài đặt cho từng email:<br/>nhóm tắt → bỏ · digest → xếp hàng 07:30 · còn lại → gửi ngay"]
+  NOTE["Email bảo mật (OTP, kích hoạt, đặt lại mật khẩu)<br/>KHÔNG bị ảnh hưởng"] -.-> EFF
+```
+
+</script><script type="text/markdown" data-id="f-06-luong-dot-de-tai-dang-ky" data-file="06-luong-dot-de-tai-dang-ky.md">
+# 06 — Luồng C · D · E: Đợt đồ án, Đề tài, Đăng ký
+
+[← Mục lục](README.md)
+
+Thành phần chính: `DepartmentAdminPage` (`useDepartmentAdmin`, `WorkspacesTab`, `WorkspaceClassesTab`, `AssignmentsTab`, `TopicsTab`) · `LecturerTopicsPage` · `StudentTopicPage` · `StudentMyRegistrationsPage` · `LecturerRegistrationPage` · `WorkspaceService` · `WorkspaceClassService` · `LecturerAssignmentService` · `TopicService` · `TopicRegistrationService`.
+
+---
+
+# C. Đợt đồ án (workspace)
+
+## C1 · C2. Tạo và sửa đợt
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor K as DEPT_ADMIN / ADMIN
+  participant FE as WorkspacesTab
+  participant S as WorkspaceService
+  participant SC as SecurityScopeService
+  K->>FE: tên, loại, học kỳ, thời gian bắt đầu / kết thúc
+  FE->>S: POST /api/workspaces
+  alt ADMIN
+    S->>S: bắt buộc body.departmentId
+  else DEPT_ADMIN
+    S->>S: departmentId = khoa của chính mình
+  end
+  S->>SC: requireDepartmentAccess(departmentId)
+  S->>S: endAt ≥ startAt
+  S->>S: status = DRAFT · audit CREATE_WORKSPACE
+  S-->>FE: WorkspaceDTO
+  Note over K,S: Sửa đợt — PUT /api/workspaces/{id} (API, chưa có UI)
+  K->>S: PUT {name?, type?, semester?, active?, startAt?, endAt?}
+  alt đợt khác DRAFT và body chạm tên / loại / học kỳ / ngày
+    S-->>K: 400 WORKSPACE_PHASE "Chỉ sửa thông tin đợt khi đợt còn là bản nháp"
+  else
+    S->>S: cập nhật, kiểm ngày · audit UPDATE_WORKSPACE
+  end
+```
+
+## C3. Chuyển trạng thái đợt
+
+```mermaid
+flowchart TB
+  IN["POST /api/workspaces/{id}/transition?to=...<br/>(open = OPEN_TOPIC, close = CLOSED)"] --> AC["requireDepartmentAccess(khoa của đợt)"]
+  AC --> P["WorkspaceStatus.parse(to)<br/>nhận chữ thường và tên cũ OPEN = OPEN_TOPIC"]
+  P --> T{"current.canTransitionTo(target)?"}
+  T -->|"không"| E1["400 INVALID_TRANSITION<br/>'Không thể chuyển đợt từ X sang Y'"]
+  T -->|"có"| PRE{"target = OPEN_REGISTRATION?"}
+  PRE -->|"có"| C1{"≥ 1 lớp active trong đợt?"}
+  C1 -->|"không"| E2["400 'Cần gán ít nhất một lớp'"]
+  C1 -->|"có"| C2{"≥ 1 đề tài trong đợt?"}
+  C2 -->|"không"| E3["400 'Cần có ít nhất một đề tài'"]
+  C2 -->|"có"| SAVE
+  PRE -->|"không"| SAVE["status = target<br/>audit TRANSITION_WORKSPACE 'X -> Y'"]
+```
+
+Mỗi trạng thái mở khóa những thao tác gì:
+
+```mermaid
+flowchart LR
+  DRAFT["DRAFT"] --- A1["sửa thông tin đợt<br/>gán lớp · phân công GV"]
+  OT["OPEN_TOPIC"] --- A2["gán lớp · phân công GV<br/>GV tạo / sửa / xóa đề tài<br/>đóng / mở đề tài"]
+  OR["OPEN_REGISTRATION"] --- A3["SV đăng ký / hủy<br/>GV duyệt / từ chối<br/>đóng / mở đề tài"]
+  LKR["LOCK_REGISTRATION"] --- A4["GV duyệt / từ chối phần còn lại"]
+  IP["IN_PROGRESS"] --- A5["nộp tiến độ · nhận xét<br/>chấm điểm mốc · chấm điểm tổng kết"]
+  CL["CLOSED"] --- A6["điểm khóa · chấm lại có duyệt<br/>xem thống kê, xuất Excel"]
+  DRAFT --> OT --> OR --> LKR --> IP --> CL
+```
+
+## C4. Gán / gỡ lớp vào đợt
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor K as DEPT_ADMIN / ADMIN
+  participant FE as WorkspaceClassesTab
+  participant S as WorkspaceClassService
+  FE->>S: GET /api/workspace-classes?workspaceId
+  K->>FE: chọn lớp → Gán
+  FE->>S: POST /assign {workspaceId, classId}
+  S->>S: quyền khoa của đợt
+  S->>S: đợt ở DRAFT / OPEN_TOPIC, nếu không → WORKSPACE_PHASE
+  S->>S: lớp phải cùng khoa với đợt
+  S->>S: tìm liên kết cũ → bật lại active = true (hoặc tạo mới)
+  S->>S: audit ASSIGN_CLASS_TO_WORKSPACE
+  K->>FE: Gỡ lớp
+  FE->>S: POST /unassign → active = false (giữ bản ghi) · UNASSIGN_CLASS_FROM_WORKSPACE
+```
+Lớp active của đợt quyết định **sinh viên nào được đăng ký** đề tài trong đợt (E1).
+
+## C5. Phân công giảng viên + quota
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor K as DEPT_ADMIN / ADMIN
+  participant FE as AssignmentsTab
+  participant S as LecturerAssignmentService
+  FE->>FE: tải GV của khoa (GET /users/by-department?role=LECTURER)
+  FE->>S: GET /api/assignments?workspaceId
+  K->>FE: chọn GV, loại MAIN / ASSISTANT, hạn mức nhóm (0 = không giới hạn), lý do
+  FE->>S: POST /api/assignments/assign
+  S->>S: quyền khoa · đợt DRAFT / OPEN_TOPIC
+  S->>S: GV cùng khoa với đợt (ADMIN được bỏ qua)
+  S->>S: chưa có hồ sơ lecturers → tạo
+  S->>S: upsert theo (workspace, lecturer, type): quota, active = true, reason
+  S->>S: audit ASSIGN_LECTURER
+  K->>FE: Thu hồi
+  FE->>S: POST /api/assignments/revoke {assignmentId, reason} → active = false · REVOKE_LECTURER_ASSIGNMENT
+```
+> Ghi chú hiện trạng: `quotaMaxGroups` và phân công được lưu và hiển thị (dashboard đếm "GV chưa được phân công"), nhưng **chưa được kiểm tra** khi giảng viên tạo đề tài hay duyệt đăng ký — GV cùng khoa vẫn tạo được đề tài trong đợt kể cả khi chưa được phân công.
+
+## C6. Khoa duyệt đề tài (đóng / mở)
+
+```mermaid
+flowchart LR
+  T["TopicsTab (DepartmentAdminPage)"] -->|"GET /api/topics (tự lọc khoa của DEPT_ADMIN)"| L["danh sách đề tài + số đăng ký"]
+  L -->|"Đóng"| C["POST /api/topics/{id}/close"]
+  L -->|"Mở lại"| O["POST /api/topics/{id}/open"]
+  C --> R["TopicService.canModifyTopic: DEPT_ADMIN đúng khoa<br/>đợt OPEN_TOPIC / OPEN_REGISTRATION"]
+  O --> R
+```
+
+---
+
+# D. Đề tài
+
+## D1 · D2. GV tạo / sửa / xóa đề tài
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên
+  participant FE as LecturerTopicsPage + TopicFormModal
+  participant S as TopicService
+  participant DB as topics
+  FE->>S: GET /api/workspaces/open-for-topics (đợt OPEN_TOPIC của khoa mình)
+  GV->>FE: chọn đợt, tên, mô tả, số SV (capacity)
+  FE->>S: POST /api/topics/create?lecturerId=me
+  S->>S: @PreAuthorize hasAuthority TOPIC_MANAGE hoặc ADMIN
+  S->>S: LECTURER chỉ tạo cho chính mình (lecturerId == currentUser)
+  S->>S: bỏ qua id trong body (luôn tạo mới)
+  S->>S: tên 1–255 · mô tả ≤ 10.000 · capacity 1–10 (mặc định 1)
+  S->>S: đợt tồn tại và đang OPEN_TOPIC, nếu không → WORKSPACE_PHASE
+  S->>S: DEPT_ADMIN: đợt thuộc khoa mình
+  S->>S: người hướng dẫn phải là tài khoản LECTURER cùng khoa với đợt
+  S->>DB: status = OPEN · audit CREATE_TOPIC
+  GV->>FE: Sửa
+  FE->>S: PUT /api/topics/{id}?lecturerId
+  S->>S: canModifyTopic · đợt OPEN_TOPIC
+  S->>S: capacity mới ≥ số SV đã duyệt → refreshCapacityStatus (OPEN / FULL)
+  S->>S: trạng thái KHÔNG nhận từ body · audit UPDATE_TOPIC
+  GV->>FE: Xóa
+  FE->>S: DELETE /api/topics/{id} · canModifyTopic · đợt OPEN_TOPIC · DELETE_TOPIC
+```
+
+`canModifyTopic(topic, lecturerId)`: ADMIN luôn được · DEPT_ADMIN nếu đề tài thuộc khoa mình · LECTURER nếu `lecturerId` là chính mình **và** là GV hướng dẫn của đề tài.
+
+## D3. Đóng / mở đề tài
+
+```mermaid
+flowchart LR
+  O["POST /topics/{id}/open"] --> G["canModifyTopic + đợt OPEN_TOPIC / OPEN_REGISTRATION"]
+  C["POST /topics/{id}/close"] --> G
+  G -->|"open"| S1["status = OPEN → refreshCapacityStatus(số SV duyệt)<br/>đủ chỗ → FULL"]
+  G -->|"close"| S2["status = CLOSED<br/>(không nhận đăng ký mới)"]
+```
+
+## D4. Danh sách & tìm kiếm đề tài
+
+```mermaid
+flowchart TB
+  Q["GET /api/topics?studentId&q&status&lecturerId&page&size"] --> SP["Specification JPA:<br/>status = ? · lecturer.id = ? · lower(title) LIKE %q%"]
+  SP --> DA{"DEPT_ADMIN (không ADMIN)?"}
+  DA -->|"có"| F["thêm điều kiện workspace.department = khoa mình<br/>(chưa thuộc khoa → trang rỗng)"]
+  DA -->|"không"| PG
+  F --> PG["phân trang, sắp id giảm dần"]
+  PG --> AGG["1 truy vấn gom nhóm: total / pending / approved / rejected theo topicIds"]
+  AGG --> MY{"có studentId?"}
+  MY -->|"có"| ST["1 truy vấn: trạng thái đăng ký mới nhất của SV theo từng đề tài<br/>CHUA_DANG_KY · CHO_DUYET · DA_DUYET · TU_CHOI"]
+  MY -->|"không"| OUT
+  ST --> OUT["PageResponse{items[id, title, description, status, capacity,<br/>workspaceId/Name, lecturerName/Id, các đếm, registrationStatus]}"]
+```
+Dùng ở: `StudentTopicPage` (thẻ `TopicCard` + nút Đăng ký), `LecturerTopicsPage` (lọc `lecturerId`), `TopicsTab` của khoa, chọn đề tài ở `LecturerProgressPage` / `ProjectSpacePage` / `ProjectChatPage`.
+
+---
+
+# E. Đăng ký đề tài
+
+## E1. Sinh viên đăng ký — chuỗi kiểm tra
+
+```mermaid
+flowchart TB
+  A["StudentTopicPage → Đăng ký<br/>POST /api/registration/register?studentId&topicId"] --> K1{"studentId == người đang đăng nhập?"}
+  K1 -->|"không"| X1["403"]
+  K1 -->|"có"| K2{"đề tài FULL?"}
+  K2 -->|"có"| X2["400 TOPIC_FULL"]
+  K2 -->|"không"| K3{"đề tài OPEN?"}
+  K3 -->|"không"| X3["400 'Đề tài không mở đăng ký'"]
+  K3 -->|"có"| K4{"đợt OPEN_REGISTRATION?"}
+  K4 -->|"không"| X4["400 WORKSPACE_PHASE"]
+  K4 -->|"có"| K5{"SV đã xếp lớp?"}
+  K5 -->|"không"| X5["400"]
+  K5 -->|"có"| K6{"lớp của SV active trong đợt?"}
+  K6 -->|"không"| X6["403 'Lớp của bạn không thuộc đợt'"]
+  K6 -->|"có"| K7{"đã có đề tài ĐƯỢC DUYỆT trong đợt?"}
+  K7 -->|"có"| X7["400 DUPLICATE_REGISTRATION"]
+  K7 -->|"không"| K8{"đang có đăng ký CHỜ DUYỆT trong đợt?"}
+  K8 -->|"có"| X8["400 DUPLICATE_REGISTRATION"]
+  K8 -->|"không"| K9{"đã từng đăng ký chính đề tài này<br/>(kể cả bị từ chối)?"}
+  K9 -->|"có"| X9["400 DUPLICATE_REGISTRATION"]
+  K9 -->|"không"| K10{"số SV đã duyệt ≥ capacity?"}
+  K10 -->|"có"| X10["400 TOPIC_FULL"]
+  K10 -->|"không"| OK["INSERT approved = null (chờ duyệt)<br/>REGISTRATION_CREATED → /topic/registration/{id}<br/>audit REGISTER_TOPIC"]
+```
+
+## E2. Sinh viên hủy đăng ký
+
+```mermaid
+sequenceDiagram
+  actor SV as Sinh viên
+  participant FE as StudentMyRegistrationsPage
+  participant S as TopicRegistrationService
+  FE->>S: GET /api/registration/mine?studentId (kèm gradeState, điểm)
+  SV->>FE: Hủy (chỉ thẻ "Chờ phê duyệt")
+  FE->>S: POST /api/registration/cancel/{regId}
+  S->>S: đúng chủ đăng ký · approved == null · đợt OPEN_REGISTRATION
+  S->>S: DELETE bản ghi · audit CANCEL_REGISTRATION
+  S-->>FE: OK
+  S-)S: afterCommit → REGISTRATION_CANCELLED tới GV đang xem
+```
+
+## E3 · E4. Giảng viên duyệt / từ chối
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên
+  participant FE as LecturerRegistrationPage + RegistrationReviewModal
+  participant S as TopicRegistrationService
+  participant DB as MySQL
+  participant N as NotificationService
+  participant M as NotificationMailer
+  participant WS as /topic/registration/{topicId}
+  FE->>WS: subscribe (chỉ owner đề tài được phép)
+  FE->>S: GET /api/registration/topic/{topicId}
+  GV->>FE: Duyệt
+  FE->>S: POST /api/registration/approve/{regId}
+  S->>S: người gọi là GV hướng dẫn của đề tài · chưa duyệt
+  S->>DB: SELECT topic FOR UPDATE (khóa dòng — 2 lượt duyệt đồng thời không vượt capacity)
+  S->>S: đợt OPEN_REGISTRATION / LOCK_REGISTRATION, nếu không → WORKSPACE_PHASE
+  S->>DB: đếm SV đã duyệt < capacity, nếu không → TOPIC_FULL
+  S->>DB: approved = true, reviewer, reviewedAt
+  S->>DB: refreshCapacityStatus → OPEN / FULL
+  S->>WS: REGISTRATION_UPDATED (sau commit)
+  S->>N: "Đăng ký đề tài đã được duyệt" → /my-registrations
+  S->>M: email nhóm REGISTRATION
+  S->>S: audit APPROVE_REGISTRATION
+  GV->>FE: Từ chối + lý do
+  FE->>S: POST /api/registration/reject/{regId}?reason
+  S->>S: GV hướng dẫn · đợt cho phép duyệt
+  S->>DB: approved = false, rejectReason, reviewer
+  S->>DB: refreshCapacityStatus (SV đã duyệt bị từ chối → đề tài có thể còn chỗ)
+  S->>N: "Đăng ký đề tài bị từ chối" + lý do
+  S->>M: email REGISTRATION · audit REJECT_REGISTRATION
+```
+
+## E5 · E6. Xem đăng ký và cập nhật realtime
+
+```mermaid
+flowchart LR
+  subgraph SV["Sinh viên"]
+    M1["GET /registration/mine<br/>(chỉ chính mình)"] --> M2["GradeService.describe(reg, forReviewer = false)<br/>+ gradeState, scoreRevisedAt"]
+  end
+  subgraph GV["GV / khoa / ADMIN"]
+    T1["GET /registration/topic/{id}<br/>ADMIN: mọi đề tài · DEPT: khoa mình · GV: đề tài mình"] --> T2["describe(reg, forReviewer = true)<br/>+ số lần sửa điểm, yêu cầu chấm lại gần nhất"]
+  end
+  EV["registerTopic / approve / reject / cancel"] -->|"EventPublisher.registrationChanged"| CH["/topic/registration/{topicId}"]
+  CH --> LRP["LecturerRegistrationPage tải lại danh sách"]
+```
+
+</script><script type="text/markdown" data-id="f-07-luong-tien-do-moc" data-file="07-luong-tien-do-moc.md">
+# 07 — Luồng F · G: Tiến độ, File, Mốc tiến độ
+
+[← Mục lục](README.md)
+
+Thành phần chính: `StudentProgressPage` (Kanban) · `StudentProgressDetailPage` (nộp theo mốc) · `LecturerProgressPage` · `ProjectSpacePage` (`MilestonePanel`, `MilestoneForm`, `MilestoneGradeGrid`, `StudentMilestoneList`, `ProgressSubmitPanel`, `ProgressHistoryPanel`) · `FileDownloadButton` · `FileUploadController` · `FileStorageService` · `FileContentValidator` · `FileDownloadService` · `ProgressService` · `SimilarityService` · `MilestoneService` · `MilestoneGradeService`.
+
+---
+
+# F. Tiến độ & file
+
+## F1. Tải file lên
+
+```mermaid
+flowchart TB
+  U["fileApi.upload(file) — multipart"] --> C["POST /api/upload (isAuthenticated)"]
+  C --> RL["RateLimiter: 30 lần / 10 phút / NGƯỜI DÙNG<br/>(không theo IP — phòng máy chung NAT)"]
+  RL --> S1{"file rỗng?"}
+  S1 -->|"có"| E1["400"]
+  S1 -->|"không"| S2{"> 20 MB (header) hoặc nội dung thực > 20 MB?"}
+  S2 -->|"có"| E2["413 PAYLOAD_TOO_LARGE"]
+  S2 -->|"không"| S3["sanitizeOriginalName:<br/>bỏ đường dẫn, ký tự điều khiển, ký tự cấm trong tên file,<br/>dấu chấm đầu, cắt ≤ 200 ký tự"]
+  S3 --> S4{"đuôi thuộc 13 loại?<br/>pdf doc docx xls xlsx ppt pptx zip rar png jpg jpeg txt"}
+  S4 -->|"không"| E3["400 định dạng không hỗ trợ"]
+  S4 -->|"có"| S5{"magic bytes khớp đuôi?<br/>%PDF- · OLE2 (doc/xls/ppt) · PK 03 04 (docx/xlsx/pptx/zip) · Rar! · PNG · FF D8 FF · txt = UTF-8 không có byte 0"}
+  S5 -->|"không"| E4["400 'Nội dung file không khớp với đuôi'"]
+  S5 -->|"có"| S6["ghi uploads/{uuid}.{đuôi}<br/>(kiểm tra đường dẫn vẫn nằm trong thư mục gốc)"]
+  S6 --> S7["INSERT stored_files<br/>ownerId = người tải, refType = null (chưa gắn)"]
+  S7 --> OUT["{fileId, fileName, originalName, fileUrl: /api/secure/files/{uuid.ext}}"]
+  S7 -. "chưa gắn vào báo cáo sau 24 giờ" .-> PURGE["StoredFileMaintenance.purgeOrphans (03:30) xóa file + hồ sơ"]
+```
+
+## F2. Tải file xuống có kiểm quyền
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as Người dùng
+  participant B as FileDownloadButton → api/download.js
+  participant C as SecureFileController
+  participant S as FileDownloadService
+  participant T as TopicAccessService
+  U->>B: bấm tải
+  B->>C: GET /api/secure/files/{name} (axios blob + Bearer)
+  C->>S: open(name)
+  S->>S: tìm stored_files theo storedName (không có → 404)
+  alt ADMIN hoặc chủ file
+    S-->>C: cho phép
+  else file gắn PROGRESS_REPORT
+    S->>T: isOwner(report.topic, me) — GV hướng dẫn / khoa cùng khoa
+    T-->>S: true / false
+  else
+    S-->>C: 403 (SV KHÔNG tải được file của SV khác)
+  end
+  S->>S: resolve trong thư mục upload, đọc được?
+  C-->>B: file + Content-Disposition attachment, filename = tên gốc (UTF-8)
+  B->>U: lưu file (saveBlob, tên lấy từ header)
+```
+
+## F3. Kiểm tra trùng lặp nội dung báo cáo
+
+```mermaid
+flowchart LR
+  IN["nội dung báo cáo mới"] --> N["chuẩn hóa NFC, chữ thường (vi)<br/>bỏ dấu câu, giữ mọi chữ Unicode"]
+  N --> TK["tách tiếng, bỏ hư từ<br/>(và, của, là, các, the, of ...)"]
+  TK --> TF["vector tần suất:<br/>từng tiếng + cặp tiếng liền nhau (hệ thống, cơ sở)"]
+  CAND["ứng viên: MỌI báo cáo trong cùng đợt<br/>(của chính SV và SV khác)"] --> TF2["vector từng ứng viên"]
+  TF --> COS["cosine similarity"]
+  TF2 --> COS
+  COS --> BEST["báo cáo giống nhất"]
+  BEST --> SAVE["lưu similarityScore (3 chữ số) + similarToReportId"]
+  BEST -->|"≥ 0,8"| ALERT["audit SIMILARITY_ALERT 'Giống N% với báo cáo #id'"]
+  SAVE --> VIEW["GV / khoa thấy điểm trùng (ProgressReportDTO.forReviewer)<br/>SV không thấy"]
+```
+
+## F4. Sinh viên nộp báo cáo tiến độ
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor SV as Sinh viên
+  participant FE as StudentProgressPage / ProjectSpacePage
+  participant UP as /api/upload
+  participant S as ProgressService
+  participant DB as MySQL
+  participant SIM as SimilarityService
+  participant EV as EventPublisher
+  participant N as NotificationService
+  participant M as NotificationMailer
+  FE->>FE: lấy đề tài đã duyệt (registration/mine)
+  SV->>FE: tiêu đề (≤ 200), nội dung (≤ 20.000), file (tùy chọn)
+  opt có file
+    FE->>UP: upload → fileUrl
+  end
+  FE->>S: POST /api/progress/create?studentId&topicId {title, content, fileUrl, deadline, milestoneId}
+  S->>S: studentId == mình · có đăng ký ĐÃ DUYỆT với đề tài
+  S->>S: đợt IN_PROGRESS, nếu không → WORKSPACE_PHASE
+  opt fileUrl
+    S->>DB: stored_files: phải của chính SV (403) và chưa gắn báo cáo khác (409)
+  end
+  opt milestoneId
+    S->>DB: mốc tồn tại (404) và thuộc đúng đề tài (400)
+  end
+  S->>SIM: mostSimilar(content, ứng viên trong đợt)
+  S->>DB: INSERT progress_report status = TODO, similarityScore, similarToReportId
+  S->>DB: claim file (UPDATE ... WHERE refType IS NULL) — 0 dòng → 409, rollback toàn bộ
+  S->>S: audit CREATE_PROGRESS (+ SIMILARITY_ALERT nếu ≥ 80 %)
+  S->>EV: PROGRESS_CREATED → /topic/progress/{topicId}
+  S->>N: GV: "Sinh viên gửi báo cáo" → /lecturer-progress?topicId#pr-id
+  S->>M: email GV (nhóm PROGRESS)
+  S->>N: SV: "Đã gửi báo cáo" → /progress?topicId#pr-id
+  S-->>FE: ProgressReportDTO
+```
+
+## F5. Kanban — sinh viên đổi trạng thái
+
+```mermaid
+sequenceDiagram
+  actor SV as Sinh viên
+  participant K as KanbanColumn / KanbanCard
+  participant S as ProgressService
+  participant WS as /topic/progress/{topicId}
+  K->>K: hiển thị 3 cột TODO · IN_PROGRESS · DONE (kanbanConfig), % hoàn thành = DONE / tổng
+  SV->>K: kéo thẻ sang cột khác (hoặc chọn ở chế độ bảng ProgressTable)
+  K->>S: PATCH /api/progress/{id}/status {status}
+  S->>S: chỉ SV sở hữu báo cáo · ProgressStatus.parse
+  S->>S: lưu · audit UPDATE_PROGRESS_STATUS
+  S-->>WS: PROGRESS_UPDATED
+  WS-->>K: các tab / GV đang mở đề tài tải lại
+```
+> Ghi chú hiện trạng: đổi trạng thái Kanban **không kiểm tra giai đoạn đợt** (khác với nộp báo cáo và nhận xét, vốn yêu cầu `IN_PROGRESS`).
+
+## F6. Giảng viên nhận xét báo cáo
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên
+  participant FE as LecturerProgressPage / ProgressHistoryPanel
+  participant S as ProgressService
+  participant N as NotificationService
+  participant M as NotificationMailer
+  FE->>S: GET /api/topics?lecturerId=me → chọn đề tài
+  FE->>S: GET /api/progress/topic/{topicId}?page&size (forReviewer: có điểm trùng)
+  FE->>FE: subscribe /topic/progress/{topicId}
+  GV->>FE: nhận xét (≤ 5000), trạng thái, hạn
+  FE->>S: PUT /api/progress/{id}/comment
+  S->>S: GV hướng dẫn đề tài (hoặc ADMIN) · đợt IN_PROGRESS
+  S->>S: cập nhật status / lecturerComment / deadline<br/>commentedAt = lần nhận xét đầu tiên (dùng đo thời gian phản hồi)
+  S->>S: audit UPDATE_PROGRESS · PROGRESS_UPDATED
+  S->>N: SV "Giảng viên nhận xét báo cáo #id"
+  S->>M: email SV (nhóm PROGRESS)
+```
+
+## F7. Ai xem được tiến độ của ai
+
+```mermaid
+flowchart LR
+  A["GET /progress/student/{studentId}?topicId"] --> R{"vai trò"}
+  R -->|"STUDENT"| R1["chỉ studentId == mình"]
+  R -->|"DEPT_ADMIN"| R2["SV thuộc khoa mình"]
+  R -->|"LECTURER"| R3["bắt buộc topicId, là GV hướng dẫn đề tài"]
+  R -->|"ADMIN"| R4["mọi SV"]
+  R1 --> V1["ProgressReportDTO.from (không có điểm trùng)"]
+  R2 --> V2["ProgressReportDTO.forReviewer"]
+  R3 --> V2
+  R4 --> V2
+  B["GET /progress/topic/{topicId} (phân trang)"] --> B1["ADMIN · DEPT_ADMIN cùng khoa · GV hướng dẫn"] --> V2
+```
+
+---
+
+# G. Mốc tiến độ (milestone)
+
+## G1. Tạo / sửa / xóa mốc
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên
+  participant FE as MilestonePanel + MilestoneForm (ProjectSpacePage)
+  participant S as MilestoneService
+  participant T as TopicAccessService
+  GV->>FE: tên (≤ 255), mô tả (≤ 5000), bắt đầu, hạn chót*, trọng số 0–100
+  FE->>S: POST /api/milestones
+  S->>T: requireOwner(topic)
+  S->>S: hạn chót ≥ bắt đầu · cả hai nằm trong [startAt, endAt] của đợt (nếu đợt có ngày)
+  S->>S: audit CREATE_MILESTONE
+  GV->>FE: sửa → PUT /api/milestones/{id} (chỉ trường gửi lên) · UPDATE_MILESTONE
+  GV->>FE: xóa → DELETE /api/milestones/{id}
+  alt mốc đã có bài nộp
+    S-->>FE: 400 "đã có bài nộp — hãy sửa tên/hạn thay vì xóa"
+  else
+    S->>S: xóa · DELETE_MILESTONE
+  end
+```
+Mốc cũng xuất hiện trong lịch đề tài (`CalendarService.list` gộp sự kiện + mốc) và trong nhắc hạn tự động (K3).
+
+## G2. Sinh viên nộp bài theo mốc
+
+```mermaid
+sequenceDiagram
+  actor SV as Sinh viên
+  participant L as StudentMilestoneList (ProjectSpacePage)
+  participant D as StudentProgressDetailPage
+  participant S as ProgressService
+  SV->>L: chọn mốc
+  L->>D: /progress-detail?milestoneId
+  D->>D: GET /api/milestones/{id} (requireMember) → hiện hạn, đếm ngược thời gian còn lại
+  SV->>D: tiêu đề, nội dung, file
+  D->>D: tự upload file nếu chưa upload
+  D->>S: POST /api/progress/create {..., milestoneId, deadline = hạn mốc}
+  S->>S: như F4 + mốc phải thuộc đề tài
+  D->>SV: thành công → quay về /progress
+```
+
+## G3. Bảng điểm mốc (board)
+
+```mermaid
+flowchart TB
+  Q["GET /api/milestones/board?topicId"] --> M["requireMember(topic)"]
+  M --> W{"là owner?"}
+  W -->|"có (GV / khoa / ADMIN)"| SA["mọi SV đã duyệt, sắp theo mã SV"]
+  W -->|"không (SV)"| SS["chỉ dòng của chính mình"]
+  SA --> D
+  SS --> D
+  D["1 truy vấn bài nộp theo (mốc, SV):<br/>lần nộp ĐẦU (quyết định đúng/trễ hạn) + báo cáo MỚI NHẤT (để mở xem)"]
+  D --> G["1 truy vấn điểm mốc của đề tài"]
+  G --> CELL["Ô (mốc × SV): reportId mới nhất, firstSubmittedAt,<br/>late = lần đầu > hạn chót, score, feedback"]
+  CELL --> SUG["Điểm gợi ý = Σ(điểm × trọng số) / Σ trọng số đã chấm<br/>(làm tròn 2 chữ số) · complete = mọi mốc có trọng số đã chấm"]
+  SUG --> OUT["MilestoneBoardDTO {milestones, weightTotal,<br/>canGrade = owner và đợt IN_PROGRESS, rows}"]
+  OUT --> UI["MilestoneGradeGrid (GV) / StudentMilestoneList (SV)"]
+```
+Điểm gợi ý **chỉ để tham khảo** — GV vẫn tự nhập điểm tổng kết (H2).
+
+## G4. Chấm điểm mốc
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên
+  participant FE as MilestoneGradeGrid
+  participant S as MilestoneGradeService
+  participant N as NotificationService
+  GV->>FE: nhập điểm 0–10 + nhận xét (≤ 5000) cho ô (mốc, SV)
+  FE->>S: PUT /api/milestones/{id}/grades/{studentId}
+  S->>S: requireOwner(topic) · đợt IN_PROGRESS (WORKSPACE_PHASE)
+  S->>S: SV phải có đăng ký đã duyệt trong đề tài (INVALID_INPUT)
+  S->>S: upsert milestone_grades (gradedBy, gradedAt)
+  S->>S: audit GRADE_MILESTONE "score=cũ -> mới"
+  S->>N: SV "Đã có điểm mốc ..." → /project-space
+  S-->>FE: Cell mới → bảng tính lại điểm gợi ý
+```
+
+</script><script type="text/markdown" data-id="f-08-luong-cham-diem" data-file="08-luong-cham-diem.md">
+# 08 — Luồng H: Chấm điểm, khóa điểm, chấm lại
+
+[← Mục lục](README.md)
+
+Thành phần chính: `LecturerRegistrationPage` + `RegistrationReviewModal` · `GradeHistoryModal` · `GradeRevisionPanel` (tab "Yêu cầu chấm lại" ở `AdminPage` và `DepartmentAdminPage`) · `GradeService` · `GradeRevisionScheduler` · `ExportService`. Quyết định thiết kế: [ADR-0008](../../docs/adr/0008-khoa-diem-va-cham-lai.md).
+
+## Toàn cảnh
+
+```mermaid
+flowchart LR
+  subgraph IP["Đợt IN_PROGRESS — GradeState OPEN"]
+    G1["GV chấm lần đầu"] --> G2["GV sửa điểm (bắt buộc lý do)"]
+  end
+  subgraph CL["Đợt CLOSED — GradeState LOCKED"]
+    R1["GV gửi yêu cầu chấm lại + lý do"] --> R2{"Khoa / ADMIN xét"}
+    R2 -->|"duyệt, mở khóa 1–168 giờ"| UN["GradeState UNLOCKED"]
+    R2 -->|"từ chối"| LK["vẫn LOCKED"]
+    UN -->|"GV sửa 1 lần (bắt buộc lý do)"| US["yêu cầu USED → LOCKED"]
+    UN -->|"quá hạn (job mỗi giờ)"| EX["yêu cầu EXPIRED → LOCKED"]
+  end
+  IP -->|"transition CLOSED"| CL
+  G1 & G2 & US --> HIS[("grade_history<br/>mọi lần lưu điểm")]
+```
+
+## H1. Trạng thái chấm điểm (tính động)
+
+```mermaid
+flowchart TB
+  IN["GradeService.gradeState(reg, now)"] --> W{"trạng thái đợt"}
+  W -->|"IN_PROGRESS"| OPEN["OPEN — chấm / sửa tự do"]
+  W -->|"CLOSED"| A{"có yêu cầu APPROVED<br/>và unlockUntil > now?"}
+  A -->|"có"| UNL["UNLOCKED"]
+  A -->|"không"| LCK["LOCKED"]
+  W -->|"khác"| NG["NOT_GRADING — chưa đến giai đoạn chấm"]
+  OPEN & UNL & LCK & NG --> DTO["TopicRegistrationDTO.gradeState<br/>(+ scoreRevisedAt; với người xét: scoreRevisionCount, latestRevision)"]
+  DTO --> UI["RegistrationReviewModal bật/tắt ô điểm, nút 'Yêu cầu chấm lại'"]
+```
+
+## H2 · H3. Chấm / sửa điểm tổng kết
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên hướng dẫn
+  participant FE as RegistrationReviewModal
+  participant S as GradeService
+  participant DB as MySQL
+  participant N as NotificationService
+  participant M as NotificationMailer (GRADE)
+  GV->>FE: điểm, nhận xét, lý do (khi sửa)
+  FE->>S: POST /api/registration/grade/{regId} {score, feedback, reason}
+  S->>DB: SELECT registration FOR UPDATE
+  S->>S: người gọi là GV hướng dẫn · đăng ký đã duyệt
+  S->>S: parseScore: số (nhận dấu phẩy), 0–10, bội số 0,25 (7,25 · 7,5 · 7,75)
+  alt OPEN
+    S->>S: đã có điểm mà thiếu lý do → 400
+  else UNLOCKED
+    S->>S: bắt buộc lý do, lấy yêu cầu đang mở khóa
+  else LOCKED
+    S-->>FE: 400 GRADE_LOCKED "hãy gửi yêu cầu chấm lại"
+  else NOT_GRADING
+    S-->>FE: 400 WORKSPACE_PHASE
+  end
+  S->>DB: INSERT grade_history (old/new score, old/new feedback, changedBy, reason, revisionRequest)
+  S->>DB: registration.score, feedback
+  opt dùng yêu cầu chấm lại
+    S->>DB: revision.status = USED (mỗi lần duyệt chỉ sửa 1 lần)
+  end
+  opt mọi SV đã duyệt của đề tài đều có điểm
+    S->>DB: topic.status = COMPLETED
+  end
+  alt chấm lần đầu
+    S->>N: SV "Đề tài đã có điểm tổng kết" · audit GRADE_TOPIC
+    S->>M: email "graded"
+  else sửa điểm
+    S->>N: SV "Điểm đã được cập nhật cũ → mới" · audit GRADE_CHANGED (+ yêu cầu, lý do)
+    S->>M: email "gradeChanged"
+  end
+  S-->>FE: DTO đã describe
+```
+
+## H4. Giảng viên gửi yêu cầu chấm lại
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor GV as Giảng viên
+  participant S as GradeService
+  participant U as UserRepository
+  participant N as NotificationService
+  participant M as NotificationMailer
+  GV->>S: POST /api/registration/{regId}/grade-revisions {reason}
+  S->>S: khóa dòng đăng ký · là GV hướng dẫn
+  S->>S: UNLOCKED → 400 "hãy sửa điểm trước"
+  S->>S: khác LOCKED → 400 "chỉ khi đợt đã đóng"
+  S->>S: chưa có điểm → 400 · đã có PENDING → 400
+  S->>S: INSERT grade_revision_requests status = PENDING
+  S->>U: mọi DEPARTMENT_ADMIN của khoa chứa đợt
+  loop từng quản trị khoa
+    S->>N: "Yêu cầu chấm lại điểm" → /department-admin?tab=grade-revisions
+    S->>M: email gradeRevisionRequested
+  end
+  S->>S: audit GRADE_REVISION_REQUESTED
+```
+
+## H5. Khoa / ADMIN duyệt hoặc từ chối
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor K as DEPT_ADMIN / ADMIN
+  participant FE as GradeRevisionPanel
+  participant S as GradeService
+  participant N as NotificationService
+  participant M as NotificationMailer
+  FE->>S: GET /api/grade-revisions?status&page&size<br/>(DEPT_ADMIN: chỉ khoa mình)
+  K->>FE: xem lịch sử điểm (GradeHistoryModal) rồi quyết định
+  alt Duyệt
+    FE->>S: POST /grade-revisions/{id}/approve {unlockHours 1–168 (mặc định 72), note}
+  else Từ chối
+    FE->>S: POST /grade-revisions/{id}/reject {note bắt buộc}
+  end
+  S->>S: quyền khoa của đợt · yêu cầu còn PENDING
+  S->>S: KHÔNG được tự duyệt yêu cầu của chính mình (403)
+  S->>S: APPROVED + unlockUntil = now + giờ · hoặc REJECTED
+  S->>S: reviewedBy, reviewedAt
+  S->>N: GV "Yêu cầu chấm lại đã được duyệt — sửa được đến HH:mm dd/MM/yyyy" / "bị từ chối"
+  S->>M: email gradeRevisionReviewed
+  S->>S: audit GRADE_REVISION_APPROVED / REJECTED
+```
+
+## H6. Tự khóa lại khi hết hạn mở khóa
+
+```mermaid
+sequenceDiagram
+  participant J as GradeRevisionScheduler (cron 0 5 * * * *)
+  participant S as GradeService.expireOverdue
+  participant N as NotificationService
+  J->>S: mỗi giờ, phút thứ 5
+  S->>S: tìm APPROVED có unlockUntil < now
+  loop từng yêu cầu
+    S->>S: status = EXPIRED
+    S->>N: GV "Hết hạn mở khóa điểm — điểm được khóa lại"
+    S->>S: audit GRADE_REVISION_EXPIRED
+  end
+```
+
+## H7. Lịch sử điểm
+
+```mermaid
+flowchart LR
+  B["GradeHistoryModal"] -->|"GET /api/registration/{regId}/grade-history"| S["GradeService.history"]
+  S --> P{"vai trò"}
+  P -->|"LECTURER"| P1["phải là GV hướng dẫn"]
+  P -->|"DEPT_ADMIN / ADMIN"| P2["requireDepartmentAccess khoa của đợt"]
+  P1 & P2 --> L["grade_history mới nhất trước:<br/>thời điểm · người sửa · điểm cũ → mới · nhận xét · lý do · yêu cầu chấm lại liên quan"]
+```
+Nhật ký kiểm toán nhóm `GRADE_*` **không bị xóa** bởi chính sách lưu trữ 12 tháng (K4).
+
+## H8. Xuất Excel danh sách đăng ký & điểm
+
+```mermaid
+flowchart LR
+  BTN["LecturerRegistrationPage → Xuất Excel"] -->|"GET /api/export/excel?topicId (blob)"| E["ExportService.registrationsWorkbook"]
+  E --> Q{"topicId?"}
+  Q -->|"bỏ trống"| A{"ADMIN?"}
+  A -->|"có"| ALL["toàn bộ đăng ký hệ thống"]
+  A -->|"không"| X["400 'Vui lòng chọn đề tài'"]
+  Q -->|"có"| OWN["requireOwner(topic) → đăng ký của đề tài"]
+  ALL & OWN --> XL["Sheet Registrations (Apache POI):<br/>ID · Đề tài · Sinh viên · Mã SV · Giảng viên ·<br/>Trạng thái · Điểm · Nhận xét · Đã chấm lại (số lần)"]
+```
+
+</script><script type="text/markdown" data-id="f-09-luong-giao-tiep-thong-bao" data-file="09-luong-giao-tiep-thong-bao.md">
+# 09 — Luồng I: Giao tiếp, thông báo, email
+
+[← Mục lục](README.md)
+
+Thành phần chính: `ProjectChatPage` (`ChatPeopleSidebar`, `ChatConversation`) · `NotificationsBell` · `NotificationsPage` · `NotificationSettingsTab` · `MessageService` · `NotificationService` · `NotificationMailer` · `EmailService` · `MailDispatcher` · `EmailTemplates` · `DiscussionService` · `AnnouncementService` · `CalendarService` · `EventPublisher`.
+
+## I1. Tin nhắn 1–1 trong phạm vi đề tài
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor A as Người gửi (SV / GV)
+  participant FE as ProjectChatPage
+  participant S as MessageService
+  participant T as TopicAccessService
+  participant EV as EventPublisher
+  actor B as Người nhận
+  FE->>FE: SV: đề tài đã duyệt → người nhận = GV hướng dẫn
+  FE->>FE: GV: chọn đề tài → người nhận = SV ĐÃ DUYỆT (registration/topic)
+  FE->>FE: subscribe /user/queue/messages
+  A->>FE: chọn người trong ChatPeopleSidebar
+  FE->>S: GET /api/messages/conversation/{peerId}?topicId&page (mới nhất trước)
+  S->>T: requireMember(topic) khi có topicId
+  S-->>FE: trang tin nhắn → client đảo thứ tự hiển thị, "tải tin cũ hơn" = page + 1
+  A->>FE: gõ tin (≤ 5000 ký tự)
+  FE->>S: POST /api/messages/send {recipientId, topicId, content}
+  S->>T: người gửi là thành viên đề tài
+  S->>T: người NHẬN cũng là thành viên (isMember) — chặn nhắn người ngoài
+  S->>S: lưu (sender, recipient, topic, workspace) · audit SEND_MESSAGE
+  S->>EV: messageCreated (sau commit)
+  EV-->>FE: MESSAGE_CREATED → /user/queue/messages (người gửi, các tab khác)
+  EV-->>B: MESSAGE_CREATED → /user/queue/messages (người nhận)
+```
+`GET /api/messages/inbox` (danh sách hội thoại gần nhất) có API, giao diện hiện chưa dùng.
+
+## I2. Thông báo trong ứng dụng
+
+```mermaid
+flowchart TB
+  subgraph SRC["Nguồn tạo thông báo (NotificationService.notify / publish)"]
+    S1["Đăng ký được duyệt / bị từ chối → SV"]
+    S2["SV nộp báo cáo → GV và SV"]
+    S3["GV nhận xét báo cáo → SV"]
+    S4["Có điểm / điểm thay đổi → SV"]
+    S5["Điểm mốc → SV"]
+    S6["Yêu cầu chấm lại → quản trị khoa<br/>Kết quả xét / hết hạn → GV"]
+    S7["Nhắc hạn tự động (REMINDER, WARNING / CRITICAL) → SV"]
+    S8["Gửi thủ công (ADMIN / GV) ⚠️"]
+  end
+  SRC --> SAVE[("notifications<br/>type · severity · title · content · refType/refId · linkPath · dueAt · readAt")]
+  SAVE --> EV["EventPublisher.notificationCreated (sau commit)"]
+  EV --> Q["/user/queue/notifications"]
+  Q --> BELL["NotificationsBell: chèn đầu danh sách (giữ 6), số chưa đọc + 1"]
+  Q --> PAGE["NotificationsPage: chèn vào danh sách"]
+  BELL -->|"bấm 1 thông báo"| RD["POST /notifications/read/{id} → điều hướng linkPath"]
+  BELL -->|"đánh dấu tất cả"| RA["POST /notifications/read-all?userId"]
+  BELL -->|"mount"| INIT["GET /notifications/recent?limit=6 + /count"]
+  PAGE -->|"tải"| MINE["GET /notifications/mine?userId&page&size"]
+```
+Đọc thông báo: mọi vai trò chỉ đọc của **chính mình** (bỏ qua `userId` gửi lên); chỉ ADMIN xem được thông báo người khác. `markRead`: chỉ chủ thông báo hoặc ADMIN.
+
+### I3. Gửi thông báo thủ công (API, chưa có UI)
+
+```mermaid
+flowchart LR
+  P["POST /api/notifications/create?userId&title&content&type"] --> R{"vai trò"}
+  R -->|"ADMIN"| OK["gửi cho bất kỳ ai"]
+  R -->|"LECTURER"| C{"người nhận là SV đã đăng ký<br/>đề tài do GV này hướng dẫn?"}
+  C -->|"không"| X["403"]
+  C -->|"có"| OK
+  OK --> PUB["publish → realtime · audit CREATE_NOTIFICATION"]
+```
+
+## I4 · I5 · I6. Email: gửi ngay, tổng hợp hằng ngày, hạ tầng gửi
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant BIZ as Service nghiệp vụ
+  participant NM as NotificationMailer
+  participant DB as notification_settings / email_digest_items
+  participant ES as EmailService
+  participant TX as Transaction
+  participant MD as MailDispatcher (luồng mail-*)
+  participant SMTP as SMTP
+  BIZ->>NM: send(user, category, EmailTemplates.xxx)
+  NM->>DB: đọc cài đặt người nhận
+  alt không có email / nhóm bị tắt
+    NM-->>BIZ: bỏ qua
+  else chế độ tổng hợp
+    NM->>DB: INSERT email_digest_items (subject, body dạng text)
+  else gửi ngay
+    NM->>ES: sendEmail(to, subject, html)
+    ES->>ES: publishEvent(MailRequested)
+  end
+  TX-->>MD: AFTER_COMMIT → @Async(mailExecutor)
+  MD->>MD: pace(): cách email trước ≥ 200 ms
+  loop tối đa 3 lần
+    MD->>SMTP: gửi MIME (HTML + plain text, From "Taskify")
+    alt lỗi SMTP
+      MD->>MD: chờ 2s × lần thử
+    end
+  end
+  MD->>MD: taskify_mail_sent_total{result=success|failure}
+  Note over NM,SMTP: 07:30 hằng ngày — sendDigests(): mỗi người có mục chờ nhận MỘT thư gộp, rồi xóa các mục đã gửi
+```
+
+Danh mục mẫu email (`EmailTemplates`):
+
+| Nhóm | Mẫu | Người nhận |
+|---|---|---|
+| Bảo mật (luôn gửi) | `loginOtp`, `activation`, `resetPassword` | chính người dùng |
+| `REGISTRATION` | `registrationApproved`, `registrationRejected` | SV |
+| `PROGRESS` | `progressSubmitted` | GV |
+| `PROGRESS` | `progressFeedback` | SV |
+| `GRADE` | `graded`, `gradeChanged` | SV |
+| `GRADE` | `gradeRevisionRequested` | quản trị khoa |
+| `GRADE` | `gradeRevisionReviewed` | GV |
+| `REMINDER` | `progressReminder`, `milestoneReminder` | SV |
+| (tổng hợp) | `digest` | người bật chế độ tổng hợp |
+
+## I7. Thảo luận nhóm theo chủ đề (API, chưa có UI)
+
+```mermaid
+sequenceDiagram
+  actor U as Thành viên đề tài
+  participant S as DiscussionService
+  participant T as TopicAccessService
+  U->>S: GET /api/discuss/threads?topicId
+  S->>T: requireMember
+  S-->>U: chủ đề mới nhất trước
+  U->>S: POST /api/discuss/threads {topicId, title} → CREATE_THREAD
+  U->>S: GET /api/discuss/threads/{id}/posts?page (cũ → mới, như cuộc trò chuyện)
+  U->>S: POST /api/discuss/threads/{id}/posts {content} → CREATE_POST
+```
+
+## I8. Thông báo chung — announcements (API, chưa có UI)
+
+```mermaid
+flowchart LR
+  L["GET /api/announcements?topicId"] --> Q{"có topicId?"}
+  Q -->|"không"| SYS["thông báo toàn hệ thống (topic = null) — ai đăng nhập cũng xem"]
+  Q -->|"có"| MEM["requireMember → thông báo của đề tài"]
+  C["POST /api/announcements {title, content, topicId?}<br/>(LECTURER, ADMIN)"] --> Q2{"có topicId?"}
+  Q2 -->|"có"| OWN["requireOwner(topic)"]
+  Q2 -->|"không"| ADM{"ADMIN?"}
+  ADM -->|"không"| X["403 chỉ quản trị hệ thống"]
+  ADM -->|"có"| SAVE
+  OWN --> SAVE["lưu · audit CREATE_ANNOUNCEMENT"]
+```
+
+## I9. Lịch đề tài (API, chưa có UI)
+
+```mermaid
+flowchart LR
+  L["GET /api/calendar?topicId"] --> M["requireMember"]
+  M --> MERGE["sự kiện (MEETING / MILESTONE / DEADLINE)<br/>+ mọi mốc của đề tài (CalendarEventDTO.fromMilestone)<br/>sắp theo thời gian bắt đầu"]
+  C["POST /api/calendar {topicId, title, description, startTime, endTime, type}<br/>(LECTURER, ADMIN)"] --> O["requireOwner · type mặc định MEETING<br/>audit CREATE_CAL_EVENT"]
+  D["DELETE /api/calendar/{id}"] --> O2["requireOwner · DELETE_CAL_EVENT"]
+```
+
+</script><script type="text/markdown" data-id="f-10-luong-bao-cao-van-hanh" data-file="10-luong-bao-cao-van-hanh.md">
+# 10 — Luồng J · K: Dashboard, thống kê, kiểm toán, vận hành
+
+[← Mục lục](README.md)
+
+Thành phần chính: `DashboardPage` (`LecturerSection`, `StudentSection`, `OverviewSection`, `charts`) · `StatsTab` · `AuditLogPage` (`AuditFilters`, `AuditTable`) · `DashboardService` · `DashboardOverviewService` · `DashboardQueryRepository` · `AuditLogService` · `AuditLogQueryService` · `ReminderService` · `RateLimiter` · `RequestIdFilter` · `AppMetrics`.
+
+---
+
+# J. Dashboard & thống kê
+
+## Trang Tổng quan chọn nội dung theo vai trò
+
+```mermaid
+flowchart LR
+  D["DashboardPage"] --> R{"vai trò"}
+  R -->|"LECTURER"| L["GET /api/dashboard/lecturer → LecturerSection"]
+  R -->|"STUDENT"| S["GET /api/dashboard/student → StudentSection"]
+  R -->|"ADMIN / DEPARTMENT_ADMIN"| O["GET /api/dashboard/overview → OverviewSection (+ xuất Excel)"]
+  DA["DepartmentAdminPage → tab Báo cáo số liệu"] --> DS["GET /api/dashboard/department-admin → StatsTab"]
+  AD["(chưa dùng) GET /api/dashboard/admin"] -.-> X["tổng user, đề tài, SV, đề tài OPEN"]
+```
+
+## J1. Dashboard giảng viên
+
+```mermaid
+flowchart TB
+  Q["DashboardService.getLecturerStats (userId = mình)"] --> C1["số đề tài đang hướng dẫn"]
+  Q --> C2["số SV đã duyệt"]
+  Q --> C3["số đăng ký chờ duyệt"]
+  Q --> C4["số báo cáo chưa nhận xét"]
+  Q --> L1["≤ 10 SV 'im lặng' — 7 ngày chưa gửi báo cáo<br/>(kèm lần nộp gần nhất theo SV × đề tài)"]
+  Q --> L2["≤ 10 mốc sắp đến hạn trong 14 ngày"]
+  C1 & C2 & C3 & C4 & L1 & L2 --> UI["LecturerSection: thẻ số + danh sách việc cần làm"]
+```
+
+## J2. Dashboard sinh viên
+
+```mermaid
+flowchart TB
+  Q["getStudentStats (studentId = userId)"] --> P["chọn đăng ký hiện tại:<br/>ĐÃ DUYỆT → CHỜ DUYỆT → mới nhất (bị từ chối)"]
+  P --> N{"có?"}
+  N -->|"không"| E["trống: gợi ý đi đăng ký"]
+  N -->|"có"| I["đề tài, GV, đợt, trạng thái, điểm"]
+  I --> A{"APPROVED?"}
+  A -->|"không"| E2["không có tiến độ / mốc"]
+  A -->|"có"| K["đếm báo cáo TODO / IN_PROGRESS / DONE → % hoàn thành"]
+  K --> M["≤ 5 mốc sắp tới của đề tài"]
+  M --> UI["StudentSection"]
+```
+
+## J3. Thống kê tổng hợp (ADMIN / quản trị khoa)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Q as ADMIN / DEPT_ADMIN
+  participant FE as OverviewSection
+  participant S as DashboardOverviewService
+  participant R as DashboardQueryRepository
+  Q->>FE: chọn khoa (chỉ ADMIN), đợt
+  FE->>S: GET /api/dashboard/overview?departmentId&workspaceId
+  S->>S: ADMIN: khoa tùy chọn (trống = toàn hệ thống) · DEPT_ADMIN: luôn khoa mình (khác → 403)
+  S->>S: đợt phải thuộc khoa đang xem (403)
+  S->>R: đề tài theo trạng thái (GROUP BY)
+  S->>R: đăng ký chờ / duyệt / từ chối
+  S->>R: histogram điểm 10 khoảng [0,1) … [9,10] + điểm trung bình
+  S->>R: tổng SV (theo đợt / khoa / toàn hệ thống) và SV đã có đề tài
+  S->>R: tải GV: số đề tài, số SV (top N)
+  S->>R: thời gian phản hồi = commentedAt − createdAt (giờ, trung bình) + số báo cáo chưa nhận xét
+  S-->>FE: Overview {topics, students{total, withTopic, %}, registrations{..., graded, % đã chấm},<br/>scores{avg, histogram}, lecturerLoad, feedback, danh sách khoa, đợt}
+  FE->>FE: charts.jsx vẽ biểu đồ
+  Q->>FE: Xuất Excel
+  FE->>S: GET /api/dashboard/overview/export (cùng tham số)
+  S-->>FE: .xlsx 3 sheet: Tổng quan · Phân bố điểm · Giảng viên
+```
+Mọi số liệu là truy vấn `COUNT` / `GROUP BY` (dựa vào index V5), không cache.
+
+## J4. Số liệu nhanh của khoa
+
+```mermaid
+flowchart LR
+  T["StatsTab"] -->|"GET /api/dashboard/department-admin"| S["getDepartmentAdminStats"]
+  S --> V["số đợt · số user · số SV · số đề tài · đề tài OPEN<br/>tổng capacity · tổng SV đã duyệt<br/>tỉ lệ lấp đầy = duyệt / capacity (%)<br/>số GV chưa được phân công đợt nào"]
+  S -. "tài khoản chưa thuộc khoa" .-> Z["mọi số = 0, fillRate = null (không lỗi 500)"]
+```
+
+---
+
+# K. Kiểm toán & vận hành
+
+## K1. Ghi nhật ký kiểm toán
+
+```mermaid
+flowchart LR
+  BIZ["Mọi service ghi dữ liệu"] -->|"log(action, entity, entityId, details)"| A["AuditLogService"]
+  AUTH["Luồng đăng nhập / OTP / kích hoạt<br/>(chưa có SecurityContext)"] -->|"log(..., actor)"| A
+  A --> ROW[("audit_logs<br/>timestamp · actorUsername (hoặc SYSTEM) · action · entityName · entityId · details<br/>· IP · trình duyệt (V7)")]
+```
+
+Các nhóm mã hành động:
+
+| Nhóm (bộ lọc) | Ví dụ mã |
+|---|---|
+| `AUTH` | `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGIN_LOCKED`, `OTP_FAILED`, `OTP_LOCKED`, `LOGOUT_ALL`, `PASSWORD_INITIAL_SET`, `PASSWORD_RESET_REQUESTED/DONE/FAILED`, `ACTIVATE_ACCOUNT`, `ACTIVATION_FAILED`, `REFRESH_TOKEN_REUSE`, `CHANGE_PASSWORD` |
+| `ACCOUNT` | `CREATE_USER`, `UPDATE_USER_ROLE`, `LOCK_USER`, `UNLOCK_USER`, `UPDATE_PROFILE`, `RESEND_ACTIVATION`, `IMPORT_USERS`, `BOOTSTRAP_ADMIN`, `CREATE_ROLE`, `UPDATE_ROLE`, `DELETE_ROLE`, `CREATE_PRIVILEGE` |
+| `GRADE` (giữ vĩnh viễn) | `GRADE_TOPIC`, `GRADE_CHANGED`, `GRADE_MILESTONE`, `GRADE_REVISION_REQUESTED/APPROVED/REJECTED/EXPIRED` |
+| khác | `CREATE/UPDATE/TRANSITION_WORKSPACE`, `ASSIGN/UNASSIGN_CLASS_*`, `ASSIGN_LECTURER`, `REVOKE_LECTURER_ASSIGNMENT`, `CREATE/UPDATE/DELETE_TOPIC`, `REGISTER_TOPIC`, `APPROVE/REJECT/CANCEL_REGISTRATION`, `CREATE_PROGRESS`, `UPDATE_PROGRESS(_STATUS)`, `SIMILARITY_ALERT`, `CREATE/UPDATE/DELETE_MILESTONE`, `SEND_MESSAGE`, `CREATE_THREAD`, `CREATE_POST`, `CREATE_ANNOUNCEMENT`, `CREATE/DELETE_CAL_EVENT`, `CREATE_NOTIFICATION`, `CREATE/UPDATE_DEPARTMENT`, `ENABLE/DISABLE_DEPARTMENT`, `CREATE/UPDATE_CLASS`, `SYSTEM_REMINDER` |
+
+## K2. Tra cứu & xuất nhật ký (ADMIN)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor AD as ADMIN
+  participant FE as AuditLogPage
+  participant S as AuditLogQueryService
+  FE->>S: GET /api/audit/options → danh sách action, entity đã có
+  AD->>FE: lọc: người thực hiện, hành động, nhóm (AUTH / ACCOUNT / GRADE), đối tượng, id, từ – đến
+  FE->>S: GET /api/audit?... &page&size (mới nhất trước, "đến" không bao gồm)
+  S-->>FE: PageResponse → AuditTable (nhãn tiếng Việt: constants/auditActions.js)
+  AD->>FE: Xuất CSV
+  FE->>S: GET /api/audit/export?... (cùng bộ lọc)
+  S-->>FE: CSV UTF-8 có BOM (Excel hiện đúng tiếng Việt), tối đa 10.000 dòng
+```
+`GET /api/audit/recent` có API, chưa có UI. Chính sách lưu trữ: job 03:45 xóa bản ghi cũ hơn `APP_AUDIT_RETENTION_MONTHS` (mặc định 12) **trừ** `GRADE_*`.
+
+## K3. Nhắc hạn tự động
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant J as ReminderScheduler (giờ Việt Nam)
+  participant R as ReminderService
+  participant DB as MySQL
+  participant N as NotificationService
+  participant M as NotificationMailer (REMINDER)
+  Note over J: 08:00 — nhắc hạn mốc
+  J->>R: remindMilestoneDeadlines(now)
+  R->>DB: mốc hết hạn vào ngày (hôm nay + 2) trong đợt đang hoạt động → WARNING
+  R->>DB: mốc hết hạn hôm nay → CRITICAL
+  loop mỗi mốc × mỗi SV đã duyệt của đề tài
+    R->>DB: đã nhắc mức này cho mốc này chưa? (trong 3 ngày gần đây)
+    alt chưa
+      R->>N: REMINDER "Mốc sắp hết hạn" / "hết hạn hôm nay" (dueAt = hạn mốc, link /progress)
+      R->>M: email milestoneReminder
+    end
+  end
+  R->>R: audit SYSTEM_REMINDER "Nhắc hạn mốc: N lượt"
+  Note over J: 09:00 — nhắc báo cáo tiến độ
+  J->>R: remindMissingProgress(now)
+  R->>DB: đăng ký đã duyệt, đợt IN_PROGRESS, 7 ngày không có báo cáo
+  loop mỗi đăng ký
+    R->>DB: đã nhắc WARNING cho đăng ký này trong 7 ngày?
+    alt chưa
+      R->>N: REMINDER "Nhắc gửi báo cáo tiến độ" (dueAt = ngày mai)
+      R->>M: email progressReminder
+    end
+  end
+  R->>R: audit SYSTEM_REMINDER "Nhắc báo cáo: N sinh viên"
+```
+
+## K4. Dọn dẹp định kỳ
+
+```mermaid
+flowchart LR
+  subgraph NIGHT["03:15 → 03:45 hằng đêm"]
+    J1["03:15 LoginThrottleService.cleanUp<br/>bộ đếm quá cửa sổ & hết khóa"]
+    J2["03:30 RefreshTokenService.cleanup<br/>token hết hạn / thu hồi > 30 ngày"]
+    J3["03:30 StoredFileMaintenance.purgeOrphans<br/>file chưa gắn báo cáo > 24 giờ (xóa đĩa + DB)"]
+    J4["03:45 AuditLogQueryService.purgeExpired<br/>nhật ký > 12 tháng, giữ GRADE_*"]
+  end
+  RAM["mỗi 60 giây RateLimiter.evictExpired<br/>cửa sổ hết hạn trong RAM"]
+  BOOT["khi khởi động StoredFileMaintenance.backfill<br/>tạo hồ sơ stored_files cho báo cáo cũ có fileUrl"]
+```
+
+## K5. Giới hạn tần suất
+
+| Nhóm (`bucket`) | Khóa | Giới hạn mặc định | Biến môi trường |
+|---|---|---|---|
+| `login` | IP | 10 / phút | `APP_RATE_LOGIN_PER_MINUTE` |
+| `otp-verify`, `pwd-initial` | IP | 10 / phút | `APP_RATE_OTP_VERIFY_PER_MINUTE` |
+| `otp-resend` | IP | 5 / 10 phút | `APP_RATE_OTP_RESEND_PER_10_MINUTES` |
+| `activate` | IP | 10 / 10 phút | `APP_RATE_ACTIVATE_PER_10_MINUTES` |
+| `pwd-reset-ip` / `pwd-reset-id` | IP / định danh | 10 / 15 phút · 3 / 15 phút | (hằng số) |
+| `refresh` | IP | 300 / phút | `APP_RATE_REFRESH_PER_MINUTE` |
+| `upload` | user id | 30 / 10 phút | `APP_RATE_UPLOAD_PER_10_MINUTES` |
+| Khóa đăng nhập (DB) | SHA-256(username\|IP) | 5 lần sai / 15 phút → khóa 10 phút | `APP_LOGIN_MAX_FAILURES`, `_WINDOW_MINUTES`, `_LOCK_MINUTES` |
+| Gửi lại OTP / kích hoạt | (user, mục đích) | 60 giây giữa 2 mã | (hằng số) |
+
+```mermaid
+flowchart LR
+  R["RateLimiter.check(bucket, key, max, window)"] --> W["ConcurrentHashMap: cửa sổ cố định (endMillis, count)"]
+  W --> C{"count > max?"}
+  C -->|"có"| X["429 TOO_MANY_REQUESTS + Retry-After (giây)"]
+  C -->|"không"| OK["cho qua"]
+  NOTE["Lưu RAM: mất khi restart (chấp nhận được)<br/>Nhiều instance → cần Redis (P4-10)"] -.-> W
+```
+
+## K6. Lỗi chuẩn hiển thị ở giao diện
+
+```mermaid
+flowchart LR
+  BE["Backend: {status, code, message, errors[], requestId}"] --> AX["api.js: Error{status, code, fieldErrors, data}"]
+  AX --> F1["Form: hiện fieldErrors cạnh ô nhập"]
+  AX --> F2["Trang: rẽ nhánh theo code<br/>(TOPIC_FULL, WORKSPACE_PHASE, GRADE_LOCKED, ...)"]
+  AX --> F3["InlineNotice / showToast(message)"]
+  AX --> F4["403 → toast cảnh báo · 5xx → toast lỗi chung · 401 → làm mới phiên"]
+```
+
+## K7. Quan sát & cảnh báo
+
+```mermaid
+flowchart TB
+  REQ["Request"] --> RID["X-Request-Id (nginx $request_id hoặc tự sinh)"]
+  RID --> LOG["log [requestId] · prod: JSON logstash, file xoay vòng"]
+  RID --> ERR["body lỗi.requestId → người dùng báo lỗi kèm mã"]
+  RID --> MAILT["mailExecutor mang MDC → log gửi mail nối với request"]
+  APP["Backend"] --> HC["/actuator/health/readiness (Docker healthcheck)"]
+  APP --> MET["/actuator/prometheus"]
+  MET --> P["Prometheus (30 ngày)"]
+  P --> AL["alerts.yml:<br/>TaskifyBackendDown (up == 0, 1 phút)<br/>TaskifyDatabaseDown (taskify_db_up == 0, 1 phút)<br/>TaskifyHigh5xxRate (5 phút)<br/>TaskifyMailFailures (> 5 lỗi / 15 phút)<br/>TaskifySlowRequests (10 phút)"]
+  P --> G["Grafana: dashboard taskify-overview"]
+```
+
+## K8. CI/CD & kiểm thử
+
+```mermaid
+flowchart LR
+  PUSH["push / PR vào main, master, develop"] --> J1
+  PUSH --> J2
+  PUSH --> J3
+  subgraph J1["Job backend"]
+    B1["JDK 21"] --> B2["mvnw verify<br/>325 test: unit + tích hợp MySQL thật (Testcontainers)<br/>JaCoCo ≥ 75 % (service ≥ 80 %)<br/>LayeringTest · QueryCountIT (chặn N+1)"] --> B3["upload jacoco-report"]
+  end
+  subgraph J2["Job frontend"]
+    F1["Node 22"] --> F2["npm ci → lint (0 cảnh báo) → test (Vitest) → build"]
+  end
+  subgraph J3["Job stack"]
+    S1["tạo .env"] --> S2["docker compose up --build --wait"] --> S3["smoke: health, đăng nhập, trang chủ qua nginx"] --> S4["log khi lỗi · down"]
+  end
+  SCH["CodeQL: push/PR + lịch hằng tuần"] --> CQ["phân tích bảo mật Java + JS"]
+  LOCAL["Cục bộ: scripts/smoke-test.mjs · ui-check*.mjs (Playwright)<br/>ws-check.mjs · pre-demo-check.ps1"] -.-> J3
+```
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  const main = document.getElementById("main");
+  const sources = [...document.querySelectorAll('script[type="text/markdown"]')];
+  const fileToId = Object.fromEntries(sources.map(s => [s.dataset.file, s.dataset.id]));
+  const renderer = new marked.Renderer();
+  const baseCode = renderer.code.bind(renderer);
+  renderer.code = function (token) {
+    if (token.lang === "mermaid") {
+      const div = document.createElement("div");
+      div.textContent = token.text;
+      return '<div class="diagram" data-src="1">' + div.innerHTML + '</div>';
+    }
+    return baseCode(token);
+  };
+  for (const s of sources) {
+    const art = document.createElement("article");
+    art.id = s.dataset.id;
+    art.hidden = true;
+    art.innerHTML = marked.parse(s.textContent, { renderer });
+    art.querySelectorAll("a[href]").forEach(a => {
+      const href = a.getAttribute("href");
+      const name = href.split("#")[0];
+      if (fileToId[name]) a.setAttribute("href", "#" + fileToId[name]);
+    });
+    main.appendChild(art);
+  }
+  const dark = () => document.documentElement.dataset.theme === "dark" ||
+    (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "default", flowchart: { htmlLabels: true } });
+  window.__diagramErrors = [];
+  const rendered = new Set();
+  async function renderIn(art) {
+    if (rendered.has(art.id)) return;
+    rendered.add(art.id);
+    let i = 0;
+    for (const el of art.querySelectorAll(".diagram[data-src]")) {
+      const code = el.textContent;
+      try {
+        const { svg } = await mermaid.render(art.id + "-d" + (i++), code);
+        el.innerHTML = svg;
+      } catch (e) {
+        el.classList.add("error");
+        el.textContent = "Lỗi vẽ sơ đồ: " + (e && e.message ? e.message : e) + "\n\n" + code;
+        window.__diagramErrors.push({ doc: art.id, index: i - 1, message: String(e && e.message || e) });
+      }
+      el.removeAttribute("data-src");
+    }
+  }
+  window.__renderAll = async () => { for (const a of main.querySelectorAll("article")) await renderIn(a); return window.__diagramErrors; };
+  function show() {
+    const id = (location.hash || "").slice(1) || sources[0].dataset.id;
+    const art = document.getElementById(id) || main.querySelector("article");
+    main.querySelectorAll("article").forEach(a => a.hidden = a !== art);
+    document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.target === art.id));
+    renderIn(art);
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", show);
+  document.getElementById("theme").addEventListener("click", () => {
+    document.documentElement.dataset.theme = dark() ? "light" : "dark";
+  });
+  show();
+})();
+</script>
+</body>
+</html>
