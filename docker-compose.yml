@@ -40,6 +40,7 @@ services:
       APP_SEED_OTP_EMAIL: ${APP_SEED_OTP_EMAIL:-}
       APP_BOOTSTRAP_ADMIN_USERNAME: ${APP_BOOTSTRAP_ADMIN_USERNAME:-}
       APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-}
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-doan_ltmmt}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-ktpm}
       DB_PASSWORD: ${MYSQL_PASSWORD:?Thiếu MYSQL_PASSWORD trong .env — chạy .\scripts\init-env.ps1}
@@ -83,6 +84,45 @@ services:
     ports:
       - "${FRONTEND_HOST_PORT:-5175}:80"
 
+  # ---- P4-08: giám sát — chỉ chạy khi bật profile: docker compose --profile monitoring up -d ----
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: taskify-prometheus
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
+    # Ghi token ra file để Prometheus gửi header X-Metrics-Token (prometheus.yml: http_headers.files)
+    entrypoint: ["/bin/sh", "-c", "printf %s \"$$METRICS_TOKEN\" > /tmp/metrics_token && exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=30d"]
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_HOST_PORT:-127.0.0.1:9090}:9090"
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    container_name: taskify-grafana
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/taskify-overview.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_HOST_PORT:-127.0.0.1:3000}:3000"
+
 volumes:
   mysql_data:
   backend_logs:
+  prometheus_data:
+  grafana_data:

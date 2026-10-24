@@ -1,6 +1,7 @@
 package com.doanltmmt.Backend.config;
 
 import com.doanltmmt.Backend.security.JwtAuthenticationFilter;
+import com.doanltmmt.Backend.security.MetricsTokenAuthorization;
 import com.doanltmmt.Backend.security.SecurityErrorHandlers;
 import com.doanltmmt.Backend.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +52,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   @Value("${app.swagger.public:false}") boolean swaggerPublic) throws Exception {
+                                                   @Value("${app.swagger.public:false}") boolean swaggerPublic,
+                                                   @Value("${app.metrics.token:}") String metricsToken) throws Exception {
+        MetricsTokenAuthorization metricsTokenAuthorization = new MetricsTokenAuthorization(metricsToken);
         http
                 // CSRF không áp dụng: xác thực bằng header Authorization (Bearer), không dùng cookie/session.
                 // Riêng cookie refresh token (P3-14) có chống CSRF: SameSite=Strict + kiểm tra Origin (RefreshCookie).
@@ -70,7 +73,9 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                             .requestMatchers("/ws/**").permitAll()
                             // P3-08: healthcheck Docker/giám sát (chi tiết thành phần chỉ hiện cho ADMIN)
-                            .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/info").permitAll();
+                            .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
+                            // P4-08: số liệu Prometheus — chỉ với header X-Metrics-Token đúng METRICS_TOKEN
+                            .requestMatchers(HttpMethod.GET, "/actuator/prometheus").access(metricsTokenAuthorization);
                     // Swagger chỉ mở ở môi trường dev (app.swagger.public=true); production tắt hẳn (springdoc.*.enabled=false)
                     if (swaggerPublic) {
                         auth.requestMatchers(SWAGGER_ENDPOINTS).permitAll();

@@ -153,7 +153,7 @@
 | P4-05 | Nộp bài theo milestone + chấm theo mốc | P2 | 3 ngày | ✅ |
 | P4-06 | Cài đặt thông báo cá nhân + email digest | P3 | 1,5 ngày | ✅ |
 | P4-07 | Học phí — tạm hoãn, phát triển sau v1.0 | P3 | Chưa ước lượng | 🕒 |
-| P4-08 | Observability (metrics, dashboard) | P2 | 1,5 ngày | ⬜ |
+| P4-08 | Observability (metrics, dashboard) | P2 | 1,5 ngày | ✅ |
 | P4-09 | Triển khai production (HTTPS, backup) | P1 | 2 ngày | ⬜ |
 | P4-10 | Mở rộng realtime (broker ngoài) | P3 | 1,5 ngày | ⬜ |
 | P4-11 | Hoàn thiện UI theo mockup `stitch/` + a11y | P2 | 3 ngày | ⬜ |
@@ -1845,14 +1845,16 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 
 ---
 
-### ⬜ P4-08 — Observability
+### ✅ P4-08 — Observability
 
-- [ ] Micrometer + endpoint `/actuator/prometheus` (bảo vệ bằng mạng nội bộ/basic auth).
-- [ ] Prometheus + Grafana (docker-compose profile `monitoring`): dashboard JVM, HTTP latency, lỗi 5xx, số kết nối WebSocket, số email gửi lỗi.
-- [ ] Cảnh báo: tỉ lệ 5xx > 1%, DB down.
-- [ ] (Tùy chọn) Sentry cho frontend + backend để bắt lỗi thực tế.
+- [x] Micrometer + endpoint `/actuator/prometheus` — bảo vệ bằng header `X-Metrics-Token` (= `METRICS_TOKEN`, không đặt = tắt) thay cho basic auth; nginx không chuyển tiếp `/actuator`.
+- [x] Prometheus + Grafana (docker-compose profile `monitoring`): dashboard JVM, HTTP latency, lỗi 5xx, số kết nối WebSocket, số email gửi lỗi, CSDL, Hikari.
+- [x] Cảnh báo (luật Prometheus): tỉ lệ 5xx > 1%, DB down, backend down, email lỗi, p95 chậm. Gửi cảnh báo ra ngoài (Alertmanager): chưa cấu hình.
+- [ ] (Tùy chọn) Sentry cho frontend + backend — ⏭️ chưa làm (cần tài khoản dịch vụ ngoài).
 
-**Theo dõi:** Trạng thái: ✅
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `23/10/2026` · Commit: xem Changelog
+
+**Kết quả:** đã chạy thật: Prometheus thấy target `taskify-backend` *up*, `taskify_db_up = 1`, 5 luật cảnh báo nạp *ok*; Grafana tự nạp datasource + dashboard *Taskify — Tổng quan vận hành*. Số liệu riêng: `taskify_db_up`, `taskify_websocket_sessions`, `taskify_mail_sent_total{result}`; histogram độ trễ HTTP + SLO 100 ms/300 ms/1 s/3 s. Test: `MetricsEndpointIT` (2).
 
 ---
 

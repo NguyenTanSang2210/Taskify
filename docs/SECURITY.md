@@ -97,7 +97,7 @@ Các quy tắc quan trọng của ma trận (IDOR theo id, phạm vi khoa, thàn
 
 - nginx gắn header: `Content-Security-Policy` (chỉ `'self'` + Google Fonts), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`.
 - CORS chỉ chấp nhận origin trong `APP_CORS_ALLOWED_ORIGINS` (có `allowCredentials` cho cookie refresh).
-- Actuator chỉ mở `health` và `info`; chi tiết health không công khai.
+- Actuator chỉ mở `health`, `info` và `prometheus`; chi tiết health không công khai; `/actuator/prometheus` chỉ trả số liệu với header `X-Metrics-Token` đúng `METRICS_TOKEN` (so sánh thời gian hằng; không đặt token = tắt). nginx không chuyển tiếp `/actuator`.
 - Khi triển khai: chỉ mở cổng nginx (HTTPS) ra ngoài, không mở cổng backend/MySQL — xem [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## 6. Quy trình bảo trì

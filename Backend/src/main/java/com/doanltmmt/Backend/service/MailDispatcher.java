@@ -1,6 +1,7 @@
 package com.doanltmmt.Backend.service;
 
 import com.doanltmmt.Backend.config.AsyncConfig;
+import io.micrometer.core.instrument.Metrics;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -26,6 +27,8 @@ public class MailDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(MailDispatcher.class);
     static final int MAX_ATTEMPTS = 3;
+    /** P4-08: taskify_mail_sent_total{result=success|failure} (registry toàn cục của Micrometer). */
+    static final String MAIL_METRIC = "taskify.mail.sent";
 
     private final ObjectProvider<JavaMailSender> mailSender;
     private final String fromEmail;
@@ -57,10 +60,12 @@ public class MailDispatcher {
                 MimeMessage message = build(sender, mail);
                 pace(); // ngay trước khi gửi: thời gian dựng email không làm hai lần gửi dồn vào nhau
                 sender.send(message);
+                Metrics.counter(MAIL_METRIC, "result", "success").increment();
                 log.info("Đã gửi email \"{}\"", mail.subject());
                 return;
             } catch (MailException | MessagingException e) {
                 if (attempt == MAX_ATTEMPTS) {
+                    Metrics.counter(MAIL_METRIC, "result", "failure").increment();
                     log.error("Gửi email \"{}\" thất bại sau {} lần: {}", mail.subject(), MAX_ATTEMPTS, e.getMessage());
                     return;
                 }

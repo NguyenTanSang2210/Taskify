@@ -110,12 +110,29 @@ docker compose logs --tail=100 backend      # tìm "Successfully applied N migra
 |---|---|
 | Trạng thái | `docker compose ps`, `GET /actuator/health/readiness` (`/actuator/health` tổng còn gồm kết nối SMTP: DOWN ở đó mà readiness UP nghĩa là email đang lỗi) |
 | Phiên bản đang chạy | `GET /actuator/info` |
+| Số liệu & cảnh báo | Grafana / Prometheus (mục 7) |
 | Log backend (JSON, có `requestId`) | `docker compose logs -f backend`; file xoay vòng trong volume `backend_logs` |
 | Tra một lỗi người dùng báo | Lấy `requestId` trong body lỗi (hoặc header `X-Request-Id`) rồi `docker compose logs backend \| grep <requestId>` |
 | Mở khóa tài khoản bị khóa do nhập sai mật khẩu | Tự mở sau thời gian khóa; hoặc Admin đặt lại mật khẩu |
 | Lấy OTP khi email lỗi (khẩn cấp) | `.\scripts\get-otp.ps1 <username>` (đọc bảng `otp_tokens`) |
 
-## 7. Checklist trước khi mở cho người dùng
+## 7. Giám sát (Prometheus + Grafana)
+
+```bash
+# .env: METRICS_TOKEN=$(openssl rand -hex 32)   GRAFANA_ADMIN_PASSWORD=<mật khẩu>
+docker compose --profile monitoring up -d
+```
+
+| Thành phần | Địa chỉ (chỉ trên máy chủ) | Ghi chú |
+|---|---|---|
+| Prometheus | http://127.0.0.1:9090 | thu `/actuator/prometheus` của backend mỗi 15 giây, giữ 30 ngày; *Alerts* hiện các cảnh báo |
+| Grafana | http://127.0.0.1:3000 | đăng nhập `admin` / `GRAFANA_ADMIN_PASSWORD`; dashboard *Taskify — Tổng quan vận hành* mở sẵn |
+
+- Dashboard: CSDL / backend lên hay xuống, số kết nối WebSocket, email gửi lỗi, request/giây, độ trễ p95, tỉ lệ 5xx, 5 đường dẫn chậm nhất, heap JVM, kết nối CSDL đang dùng.
+- Cảnh báo (`monitoring/prometheus/alerts.yml`): backend không trả lời, CSDL mất kết nối, 5xx > 1% trong 5 phút, > 5 email lỗi trong 15 phút, p95 > 1 giây trong 10 phút. Muốn nhận cảnh báo qua email/Slack: thêm Alertmanager (chưa cấu hình sẵn).
+- `/actuator/prometheus` chỉ trả số liệu khi có header `X-Metrics-Token` đúng `METRICS_TOKEN`; để trống token là tắt hẳn endpoint. Xem từ xa: dùng SSH tunnel (`ssh -L 3000:127.0.0.1:3000 may-chu`), không mở cổng 9090/3000 ra Internet.
+
+## 8. Checklist trước khi mở cho người dùng
 
 - [ ] Truy cập qua `https://`; `http://` chuyển hướng sang HTTPS.
 - [ ] Cổng 3307/8081 không truy cập được từ bên ngoài (`nmap` từ máy khác).

@@ -70,6 +70,7 @@ docker compose up --build -d --wait   # --wait: chờ tới khi backend "healthy
 | API | http://localhost:8081/api | `BACKEND_HOST_PORT` |
 | Health | http://localhost:8081/actuator/health/readiness | — |
 | MySQL | `localhost:3307` | `MYSQL_HOST_PORT` |
+| Prometheus / Grafana (tùy chọn) | http://127.0.0.1:9090 · http://127.0.0.1:3000 — `docker compose --profile monitoring up -d` | `PROMETHEUS_HOST_PORT`, `GRAFANA_HOST_PORT` |
 
 > **Bắt buộc:** `JWT_SECRET`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` không có giá trị mặc định — thiếu thì `docker compose` từ chối chạy, và profile `prod` không khởi động với secret công khai trong repo. Tự tạo `.env` bằng tay (`Copy-Item .env.docker.example .env`) thì phải điền đủ ba giá trị này.
 

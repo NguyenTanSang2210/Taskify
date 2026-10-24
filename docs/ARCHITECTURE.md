@@ -205,3 +205,4 @@ Sự kiện được phát **sau khi transaction commit** (`EventPublisher` + `T
 - Mỗi request có `X-Request-Id` (nhận từ nginx hoặc tự sinh), có trong log, header phản hồi và body lỗi (`requestId`).
 - Profile `prod`: log JSON (logstash) ra console + file xoay vòng trong volume `backend_logs`.
 - `GET /actuator/health/readiness` (chỉ phụ thuộc DB) dùng cho healthcheck Docker; `GET /actuator/info` trả phiên bản build.
+- `GET /actuator/prometheus` (Micrometer, cần `X-Metrics-Token`): số liệu JVM, HTTP (histogram độ trễ), HikariCP, cộng `taskify_db_up`, `taskify_websocket_sessions`, `taskify_mail_sent_total{result}`. Profile compose `monitoring` chạy Prometheus (luật cảnh báo ở `monitoring/prometheus/alerts.yml`) và Grafana với dashboard dựng sẵn (`monitoring/grafana/`).
