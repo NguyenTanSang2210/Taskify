@@ -14,7 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/** P3-05 — sự kiện WebSocket chỉ được gửi sau khi transaction commit (không gửi khi rollback). */
+/** P3-05 — sự kiện WebSocket chỉ được gửi sau khi transaction commit (không gửi khi rollback); P4-10: kênh riêng theo id. */
 class EventPublisherTest {
 
     private final SimpMessagingTemplate template = mock(SimpMessagingTemplate.class);
@@ -39,16 +39,16 @@ class EventPublisherTest {
     @Test
     void withoutTransaction_sendsImmediately() {
         publisher.notificationCreated(notification());
-        verify(template).convertAndSendToUser(eq("sv1"), eq("/queue/notifications"), any(Object.class));
+        verify(template).convertAndSend(eq("/topic/notifications.1"), any(Object.class));
     }
 
     @Test
     void insideTransaction_sendsOnlyAfterCommit() {
         TransactionSynchronizationManager.initSynchronization();
         publisher.notificationCreated(notification());
-        verify(template, never()).convertAndSendToUser(any(), any(), any(Object.class));
+        verify(template, never()).convertAndSend(any(String.class), any(Object.class));
         TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
-        verify(template).convertAndSendToUser(eq("sv1"), eq("/queue/notifications"), any(Object.class));
+        verify(template).convertAndSend(eq("/topic/notifications.1"), any(Object.class));
     }
 
     @Test
@@ -57,6 +57,6 @@ class EventPublisherTest {
         publisher.notificationCreated(notification());
         TransactionSynchronizationManager.getSynchronizations()
                 .forEach(s -> s.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
-        verify(template, never()).convertAndSendToUser(any(), any(), any(Object.class));
+        verify(template, never()).convertAndSend(any(String.class), any(Object.class));
     }
 }

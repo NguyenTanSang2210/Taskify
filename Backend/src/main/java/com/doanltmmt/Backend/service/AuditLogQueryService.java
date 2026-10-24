@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,7 +82,6 @@ public class AuditLogQueryService {
     }
 
     /** Hằng ngày 03:45: xóa nhật ký cũ hơn {@code app.audit.retention-months} tháng, giữ lâu dài nhật ký điểm số. */
-    @Scheduled(cron = "${app.audit.retention-cron:0 45 3 * * *}")
     @Transactional
     public int purgeExpired() {
         if (retentionMonths <= 0) return 0;

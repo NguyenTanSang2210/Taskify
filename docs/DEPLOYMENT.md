@@ -1,6 +1,6 @@
 # Triển khai Taskify
 
-Hướng dẫn chạy Taskify cho người dùng thật trên một máy chủ Linux bằng Docker Compose. Đây là bản chuẩn bị cho P4-09: tự động sao lưu, giám sát và CD sẽ được bổ sung ở task đó.
+Hướng dẫn chạy Taskify cho người dùng thật trên một máy chủ Linux bằng Docker Compose. Giám sát (mục 7) và chạy nhiều instance (mục 8) đã có; sao lưu tự động theo lịch và CD sẽ bổ sung ở P4-09 khi có máy chủ thật.
 
 ## 1. Yêu cầu
 
@@ -111,6 +111,7 @@ docker compose logs --tail=100 backend      # tìm "Successfully applied N migra
 | Trạng thái | `docker compose ps`, `GET /actuator/health/readiness` (`/actuator/health` tổng còn gồm kết nối SMTP: DOWN ở đó mà readiness UP nghĩa là email đang lỗi) |
 | Phiên bản đang chạy | `GET /actuator/info` |
 | Số liệu & cảnh báo | Grafana / Prometheus (mục 7) |
+| Chạy nhiều instance | mục 8 |
 | Log backend (JSON, có `requestId`) | `docker compose logs -f backend`; file xoay vòng trong volume `backend_logs` |
 | Tra một lỗi người dùng báo | Lấy `requestId` trong body lỗi (hoặc header `X-Request-Id`) rồi `docker compose logs backend \| grep <requestId>` |
 | Mở khóa tài khoản bị khóa do nhập sai mật khẩu | Tự mở sau thời gian khóa; hoặc Admin đặt lại mật khẩu |
@@ -132,7 +133,30 @@ docker compose --profile monitoring up -d
 - Cảnh báo (`monitoring/prometheus/alerts.yml`): backend không trả lời, CSDL mất kết nối, 5xx > 1% trong 5 phút, > 5 email lỗi trong 15 phút, p95 > 1 giây trong 10 phút. Muốn nhận cảnh báo qua email/Slack: thêm Alertmanager (chưa cấu hình sẵn).
 - `/actuator/prometheus` chỉ trả số liệu khi có header `X-Metrics-Token` đúng `METRICS_TOKEN`; để trống token là tắt hẳn endpoint. Xem từ xa: dùng SSH tunnel (`ssh -L 3000:127.0.0.1:3000 may-chu`), không mở cổng 9090/3000 ra Internet.
 
-## 8. Checklist trước khi mở cho người dùng
+## 8. Chạy nhiều instance backend (P4-10)
+
+Một instance đủ cho một khoa/trường cỡ vừa. Cần chịu tải cao hơn hoặc muốn nâng cấp không gián đoạn thì chạy 2 instance sau nginx trên cùng máy chủ ([ADR-0011](adr/0011-chay-nhieu-instance.md)):
+
+```bash
+# .env: APP_REALTIME_RELAY_PASSCODE=$(openssl rand -hex 24)
+docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --build --wait
+# đang chạy 1 instance rồi chuyển sang 2: tạo lại frontend để nginx thấy instance mới
+docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --force-recreate --no-deps frontend
+```
+
+| Thành phần | Vai trò |
+|---|---|
+| `rabbitmq` (plugin STOMP) | Chuyển sự kiện realtime giữa các instance; giao diện quản lý http://127.0.0.1:15672 (`taskify` / `APP_REALTIME_RELAY_PASSCODE`) |
+| `backend-2` | Instance thứ hai, cùng tên mạng `backend` → nginx chia tải round-robin; khởi động sau `backend` (migration, tạo Admin đầu tiên chỉ chạy một lần) |
+| Bảng `shedlock` | Mỗi job định kỳ (nhắc hạn, email tổng hợp, dọn dữ liệu) chỉ chạy trên một instance |
+| Bảng `rate_limit_windows` | Giới hạn tần suất đăng nhập/OTP tính chung cho mọi instance (`APP_RATE_LIMIT_STORE=jdbc`) |
+
+- Prometheus tự thấy mọi instance (tìm qua DNS tên `backend`); cảnh báo `TaskifyRealtimeBrokerDown` khi backend mất kết nối RabbitMQ.
+- Mất RabbitMQ: đăng nhập và mọi thao tác vẫn chạy, chỉ thông báo realtime tạm dừng; backend tự nối lại khi RabbitMQ chạy lại. `/actuator/health` (Admin) có mục `realtimeBroker`.
+- WebSocket đi qua nginx bằng kết nối WebSocket thật; trình duyệt quá cũ phải dùng SockJS dạng XHR thì cần "sticky session" (`ip_hash` ở nginx).
+- Các instance ở **nhiều máy** khác nhau: thư mục `Backend/uploads` phải là ổ dùng chung (NFS…), và đặt RabbitMQ/MySQL ở nơi mọi máy cùng truy cập.
+
+## 9. Checklist trước khi mở cho người dùng
 
 - [ ] Truy cập qua `https://`; `http://` chuyển hướng sang HTTPS.
 - [ ] Cổng 3307/8081 không truy cập được từ bên ngoài (`nmap` từ máy khác).

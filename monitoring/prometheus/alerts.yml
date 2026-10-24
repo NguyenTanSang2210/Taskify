@@ -23,6 +23,13 @@ groups:
         labels: { severity: warning }
         annotations:
           summary: "Tỉ lệ lỗi 5xx trên 1% trong 5 phút"
+      - alert: TaskifyRealtimeBrokerDown
+        # chỉ có khi bật relay RabbitMQ (P4-10)
+        expr: taskify_realtime_broker_up == 0
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Backend mất kết nối tới RabbitMQ — thông báo realtime giữa các instance bị gián đoạn"
       - alert: TaskifyMailFailures
         expr: increase(taskify_mail_sent_total{result="failure"}[15m]) > 5
         labels: { severity: warning }

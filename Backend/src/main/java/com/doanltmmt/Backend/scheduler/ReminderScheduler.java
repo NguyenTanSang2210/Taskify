@@ -1,6 +1,7 @@
 package com.doanltmmt.Backend.scheduler;
 
 import com.doanltmmt.Backend.service.ReminderService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -19,11 +20,13 @@ public class ReminderScheduler {
     }
 
     @Scheduled(cron = "0 0 9 * * *", zone = ZONE)
+    @SchedulerLock(name = "remind-weekly-progress", lockAtLeastFor = "PT1M")
     public void remindWeeklyProgress() {
         reminders.remindMissingProgress(now());
     }
 
     @Scheduled(cron = "0 0 8 * * *", zone = ZONE)
+    @SchedulerLock(name = "remind-milestone-deadlines", lockAtLeastFor = "PT1M")
     public void remindMilestoneDeadlines() {
         reminders.remindMilestoneDeadlines(now());
     }

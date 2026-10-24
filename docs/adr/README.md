@@ -14,3 +14,4 @@ Mỗi file ghi một quyết định: bối cảnh, lựa chọn và hệ quả.
 | [ADR-0008](0008-khoa-diem-va-cham-lai.md) | Khóa điểm khi đợt kết thúc, mở khóa qua yêu cầu chấm lại | D-08 | Đã chấp nhận |
 | [ADR-0009](0009-flyway-quan-ly-schema.md) | Flyway quản lý schema thay cho ddl-auto | P3-01 | Đã chấp nhận |
 | [ADR-0010](0010-dinh-dang-loi-api-chung.md) | Một định dạng lỗi cho toàn bộ API | P3-03 | Đã chấp nhận |
+| [ADR-0011](0011-chay-nhieu-instance.md) | Chạy nhiều instance: RabbitMQ cho realtime, kênh riêng theo id, ShedLock, bộ đếm dùng chung | P4-10 | Đã chấp nhận |

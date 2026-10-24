@@ -9,8 +9,12 @@ rule_files:
 scrape_configs:
   - job_name: taskify-backend
     metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ["backend:8080"]
+    # P4-10: tìm mọi instance qua DNS của tên mạng "backend" (1 instance, hoặc nhiều với docker-compose.scale.yml)
+    dns_sd_configs:
+      - names: ["backend"]
+        type: A
+        port: 8080
+        refresh_interval: 30s
     # Backend chỉ trả số liệu khi có header này (= METRICS_TOKEN); entrypoint ghi token ra file lúc khởi động
     http_headers:
       X-Metrics-Token:

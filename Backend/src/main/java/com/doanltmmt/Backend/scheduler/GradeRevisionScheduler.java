@@ -1,6 +1,7 @@
 package com.doanltmmt.Backend.scheduler;
 
 import com.doanltmmt.Backend.service.GradeService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class GradeRevisionScheduler {
     }
 
     @Scheduled(cron = "0 5 * * * *")
+    @SchedulerLock(name = "expire-grade-revisions", lockAtLeastFor = "PT1M")
     public void expireOverdueRevisions() {
         gradeService.expireOverdue(LocalDateTime.now());
     }

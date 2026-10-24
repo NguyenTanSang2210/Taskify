@@ -635,3 +635,65 @@ Test mới: `UiDataContractIT` (5), `InputErrorHandlerTest` (2); `ui-check-gd2.m
 1. Merge PR `develop` → `main`, tạo tag **`v0.3.0-business`** (GĐ2) và **`v0.4.0-hardening`** (GĐ3).
 2. **Sao lưu DB trước** khi chạy bản mới (Flyway sẽ chạy V4–V6): `docker exec taskify-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -uroot doan_ltmmt' > backup.sql`. Container nay tên `taskify-*` (không còn `ktpm-*`).
 3. Truy cập qua HTTP bằng IP LAN (không phải `localhost`) thì đặt `APP_AUTH_REFRESH_COOKIE_SECURE=false` trong `.env`, nếu không trình duyệt sẽ không giữ phiên đăng nhập. Production: dùng HTTPS (`docs/DEPLOYMENT.md`).
+
+---
+
+## 15. Giai đoạn 4 — Tính năng mới & mở rộng (8/9 task thực hiện được) — 24/10/2026
+
+> Commit trên `develop`: `1f08685` (P4-03) → commit P4-10. Chi tiết từng task: `Plan/plan1.md` mục 8. P4-04 (Team) và P4-07 (Học phí) để sau v1.0 theo D-01, D-05.
+
+### 15.1. Kết quả theo task
+
+| Task | Kết quả chính | Đo được / test |
+|---|---|---|
+| P4-03 Import Excel | File mẫu, kiểm tra từng dòng (không ghi CSDL), tải danh sách lỗi, nhập dòng hợp lệ + mã kích hoạt gửi giãn cách | `UserImportIT`; giao diện: 3 dòng → 2 hợp lệ, 1 lỗi |
+| P4-02 Nhật ký hệ thống | Lọc theo nhóm/hành động/người/thời gian, IP + trình duyệt (V7), xuất CSV chống CSV-injection, tự xóa sau 12 tháng (giữ nhật ký điểm) | `AuditLogIT` |
+| P4-01 Dashboard | Số liệu thật theo vai trò, thời gian phản hồi của GV (V8), biểu đồ HTML/CSS (không thêm thư viện), xuất Excel 3 sheet | `DashboardIT`; số trên trang khớp API |
+| P4-05 Chấm theo mốc | Mốc có trọng số, nộp đúng/trễ hạn, chấm từng mốc, điểm đề xuất có trọng số (V9); lịch gồm mốc | `MilestoneGradeIT` |
+| P4-06 Cài đặt thông báo | Bật/tắt email theo nhóm, thư tổng hợp 07:30 (V10) | `NotificationSettingsIT` |
+| P4-08 Giám sát | Prometheus + Grafana (`--profile monitoring`), `/actuator/prometheus` bảo vệ bằng `X-Metrics-Token`, 6 cảnh báo | `MetricsEndpointIT`; chạy thật: target *up*, dashboard tự nạp |
+| P4-10 Nhiều instance | Relay STOMP → RabbitMQ, kênh riêng theo id người dùng, ShedLock (V11), giới hạn tần suất dùng chung qua CSDL, `docker-compose.scale.yml` ([ADR-0011](../../docs/adr/0011-chay-nhieu-instance.md)) | `RealtimeRelayIT` (2 instance + RabbitMQ), `SchedulerLockIT`, `JdbcRateLimitStoreIT`; thử thật 2 container (mục 15.3) |
+| P4-11 Giao diện + a11y | Lịch học thuật, Kênh thảo luận nhóm, Chi tiết đề tài (`GET /api/topics/{id}`); hộp thoại chuẩn, liên kết bỏ qua, focus khi đổi trang | axe-core: **0 vi phạm WCAG 2.1 A/AA** trên 21 trang × sáng/tối (trước: 70 / 249); `TopicDetailIT`; ui-check-gd4 **44/44** |
+| P4-09 Triển khai production | **Chưa làm** — cần máy chủ, tên miền, HTTPS thật | Đã có `DEPLOYMENT.md`, `AdminBootstrap`, giám sát, chế độ nhiều instance |
+
+### 15.2. Lỗi phát hiện trong GĐ4 và đã xử lý
+
+| # | Vấn đề | Mức độ | Xử lý |
+|---|---|---|---|
+| 1 | Các màu `error`, `secondary-container`, `tertiary` chưa khai báo trong theme → thông báo lỗi và nút Từ chối/Xóa (`bg-error text-white`) **không hiện màu**, gần như vô hình | 🟠 | Khai báo đủ token cho cả sáng/tối (`928fd3a`) |
+| 2 | **Chế độ tối hỏng hẳn**: `App.css` cũ (1321 dòng, không còn class nào dùng) ép màu chữ/nền của `body` → chữ tối trên nền tối (axe: 249 lỗi tương phản) | 🟠 | Xóa `App.css`; nút nền `primary`/`error` dùng `text-on-*`; `bg-white` có biến thể tối |
+| 3 | 70 vi phạm WCAG ở chế độ sáng: chữ làm mờ bằng `opacity`, 11 `<select>` + 2 ô nhập không có nhãn, 13 nút chỉ có icon không có tên, `<main>` lồng nhau | 🟡 | 81 nhãn gắn `htmlFor`, `aria-label`, một vùng `<main>`; `scripts/a11y-check.mjs` để chạy lại |
+| 4 | 7 nút/ô **không có chức năng** (tìm kiếm toàn cục, Trợ giúp, Google/SSO, gọi video, thông tin) và trạng thái "Đang hoạt động"/"Trực tuyến" luôn hiện | 🟡 | Gỡ; CSP `img-src` bỏ `www.gstatic.com` |
+| 5 | RabbitMQ từ chối đích `/topic/progress/5` ("Invalid destination") | 🟠 | Đích dạng chấm `/topic/progress.5` cho cả hai chế độ broker |
+| 6 | Với 2 instance, thông báo riêng (`/user/queue/*`) **bị mất** khi người dùng vừa tải lại trang: instance gửi chỉ biết phiên ở instance kia qua bản đồng bộ 10 giây/lần (tái hiện được sau khi khởi động lại RabbitMQ) | 🔴 khi chạy nhiều instance | Kênh riêng `/topic/notifications.{userId}`, `/topic/messages.{userId}`, chỉ chủ kênh được đăng ký → broker phát tới mọi tab trên mọi instance |
+| 7 | Bộ lọc nhật ký hiện mã thô `GRADE_MILESTONE` | 🟢 | Thêm nhãn "Chấm điểm mốc" |
+| 8 | Trang chi tiết hiện "ThS. ThS. Giảng viên" (họ tên đã có học vị) | 🟢 | Không lặp học vị |
+
+### 15.3. Kiểm thử cuối
+
+| Hạng mục | Kết quả |
+|---|---|
+| `mvnw verify` | **369/369**, JaCoCo đạt ngưỡng |
+| `npm run check` | lint **0 cảnh báo** · Vitest **41/41** · build đạt (bundle ban đầu 341 KB, gzip 111 KB; trang mới tải lười 9–17 KB) |
+| Smoke test | **OK=17 · FIXED=12 · BUG=0 · FAIL=0** |
+| Giao diện (1 instance) | `ui-check` · `gd2` · `gd3` · `gd4` (44) · `ws-check` đều đạt |
+| Accessibility | `a11y-check.mjs`: 0 vi phạm WCAG 2.1 A/AA, 21 trang × chế độ sáng + tối |
+| **2 instance + RabbitMQ** | smoke + ui-check/gd2/gd3/gd4 đạt qua nginx chia tải (586 / 445 request); WebSocket ở `backend-2`, thao tác ở `backend` → thông báo đến đúng người (lặp 3 lần sau khi khởi động lại RabbitMQ); đăng nhập sai luân phiên bị chặn đúng ở lần 121 (ngưỡng 120 chung); mất RabbitMQ: readiness UP, đăng nhập 200, relay tự nối lại; Prometheus thấy cả 2 instance |
+
+### 15.4. Còn lại / chưa đạt
+
+| # | Vấn đề | Đề xuất |
+|---|---|---|
+| 1 | **P4-09** chưa làm: máy chủ, tên miền, HTTPS, sao lưu theo lịch + diễn tập khôi phục, staging, CD | Làm khi có hạ tầng; mọi phần chuẩn bị đã có trong `docs/DEPLOYMENT.md` |
+| 2 | Danh sách đề tài của sinh viên **chưa lọc theo lớp** (thấy 60 đề tài, đúng ra 35) — lệch với `SECURITY.md`; có từ trước GĐ4 | Đã tách thành việc riêng; trang chi tiết mới theo cùng quy tắc với danh sách |
+| 3 | Lịch chưa có dạng Tuần/Ngày; thảo luận chưa có "tài liệu đã chia sẻ"; đề tài chưa có trường Mục tiêu / Sản phẩm bàn giao | Bổ sung khi có yêu cầu (cần thêm cột cho đề tài) |
+| 4 | Không gian làm việc của sinh viên chỉ hiện đề tài được duyệt đầu tiên | Dùng `TopicPicker` như trang Lịch/Thảo luận |
+| 5 | Kịch bản Playwright + `a11y-check` chưa chạy trong CI; Alertmanager chưa cấu hình | Đưa vào job `docker-compose-check`; thêm Alertmanager khi có kênh nhận cảnh báo |
+
+### 15.5. Việc của bạn
+
+1. Merge PR `develop` → `main`; tạo tag **`v0.3.0-business`** (GĐ2), **`v0.4.0-hardening`** (GĐ3). Tag `v1.0.0` sau khi xong P4-09.
+2. **Sao lưu DB trước** khi chạy bản mới — Flyway sẽ chạy V4 → V11.
+3. Production: đặt `METRICS_TOKEN`, `APP_BOOTSTRAP_ADMIN_USERNAME/EMAIL` (lần đầu), dùng HTTPS (hoặc `APP_AUTH_REFRESH_COOKIE_SECURE=false` khi chạy thử qua HTTP bằng IP LAN).
+4. Kênh WebSocket đã đổi tên (P4-10): frontend và backend phải cập nhật cùng lúc (cùng một lần `docker compose up`); tab trình duyệt đang mở cần tải lại.
+5. Muốn chạy 2 instance: đặt `APP_REALTIME_RELAY_PASSCODE` rồi dùng `docker-compose.scale.yml` (`docs/DEPLOYMENT.md` §8).

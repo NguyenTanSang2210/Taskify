@@ -35,7 +35,7 @@ flowchart LR
 
 - **Backend** (`Backend/`): REST API + WebSocket (STOMP), Spring Security (JWT 15 phút + refresh token xoay vòng trong cookie HttpOnly), Bean Validation, Flyway, Actuator.
 - **Frontend** (`frontend/`): React 19 + Vite + Tailwind, route tải lười (lazy), mọi lời gọi API qua `src/api/*`.
-- **Hạ tầng**: Docker Compose (3 container `taskify-db`, `taskify-backend`, `taskify-frontend`) có healthcheck.
+- **Hạ tầng**: Docker Compose (3 container `taskify-db`, `taskify-backend`, `taskify-frontend`) có healthcheck; tùy chọn Prometheus + Grafana (`--profile monitoring`) và chạy 2 instance backend với RabbitMQ (`docker-compose.scale.yml`, xem `docs/DEPLOYMENT.md` §8).
 
 Tài liệu kỹ thuật: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (sơ đồ thành phần, ERD, vòng đời trạng thái) · [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md) · [`docs/error-codes.md`](docs/error-codes.md) (định dạng lỗi API) · [`docs/adr/`](docs/adr/) (các quyết định kiến trúc) · [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
@@ -111,7 +111,7 @@ Schema do **Flyway** quản lý (`Backend/src/main/resources/db/migration`, `ddl
 
 | Lệnh | Làm gì |
 |---|---|
-| `cd Backend; .\mvnw.cmd verify` | 361 test (unit + tích hợp trên MySQL thật qua **Testcontainers** — cần Docker; hoặc dùng MySQL có sẵn qua `DB_URL`) + kiểm tra ngưỡng JaCoCo. Báo cáo: `Backend/target/site/jacoco/index.html` |
+| `cd Backend; .\mvnw.cmd verify` | 369 test (unit + tích hợp trên MySQL thật qua **Testcontainers** — cần Docker; hoặc dùng MySQL có sẵn qua `DB_URL`) + kiểm tra ngưỡng JaCoCo. Báo cáo: `Backend/target/site/jacoco/index.html` |
 | `cd frontend; npm run check` | `lint` (0 cảnh báo) → `test` (Vitest + Testing Library) → `build` |
 | `node scripts/smoke-test.mjs` | Smoke test toàn luồng nghiệp vụ trên stack Docker profile dev |
 | `node scripts/ui-check*.mjs` | Kiểm thử giao diện bằng Playwright (đăng nhập theo vai trò, phân trang, realtime, quét mọi trang/tab) |

@@ -135,7 +135,7 @@ CI (GitHub Actions) chạy trên mỗi push/PR vào `develop` và `main`: backen
 | Khả dụng | Healthcheck Docker trên readiness (chỉ phụ thuộc DB); khởi động theo thứ tự db → backend → frontend |
 | Quan sát | `X-Request-Id` xuyên suốt nginx → log → body lỗi; log JSON ở prod; `/actuator/health`, `/actuator/info` |
 | Bảo trì | Migration có phiên bản; tài liệu kiến trúc, ADR, quy trình đóng góp |
-| Mở rộng | Broker WebSocket trong bộ nhớ (một instance); có thể thay bằng broker ngoài (P4-10) |
+| Mở rộng | Chạy nhiều instance sau nginx (P4-10): realtime qua RabbitMQ, job định kỳ khóa bằng ShedLock, giới hạn tần suất dùng chung qua CSDL — đã thử 2 instance, kể cả khi RabbitMQ khởi động lại |
 
 ## 10. Giới hạn và hướng phát triển
 

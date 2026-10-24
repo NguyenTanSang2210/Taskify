@@ -155,7 +155,7 @@
 | P4-07 | Học phí — tạm hoãn, phát triển sau v1.0 | P3 | Chưa ước lượng | 🕒 |
 | P4-08 | Observability (metrics, dashboard) | P2 | 1,5 ngày | ✅ |
 | P4-09 | Triển khai production (HTTPS, backup) | P1 | 2 ngày | ⬜ |
-| P4-10 | Mở rộng realtime (broker ngoài) | P3 | 1,5 ngày | ⬜ |
+| P4-10 | Mở rộng realtime (broker ngoài) | P3 | 1,5 ngày | ✅ |
 | P4-11 | Hoàn thiện UI theo mockup `stitch/` + a11y | P2 | 3 ngày | ✅ |
 
 ---
@@ -1877,13 +1877,17 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 
 ---
 
-### ⬜ P4-10 — Mở rộng realtime (broker ngoài)
+### ✅ P4-10 — Mở rộng realtime (broker ngoài)
 
-- [ ] Khi chạy > 1 instance backend: chuyển `enableSimpleBroker` → `enableStompBrokerRelay` (RabbitMQ STOMP plugin).
-- [ ] Scheduler chạy 1 instance duy nhất: thêm **ShedLock**.
-- [ ] Rate limit & lockout chuyển sang Redis.
+- [x] Khi chạy > 1 instance backend: `enableSimpleBroker` → `enableStompBrokerRelay` (RabbitMQ STOMP plugin), bật bằng `APP_REALTIME_RELAY_ENABLED`; mặc định vẫn broker trong bộ nhớ. Đích STOMP đổi sang dạng chấm (`/topic/progress.{id}`) vì RabbitMQ không nhận `/` sau tiền tố.
+- [x] Kênh riêng `/topic/notifications.{userId}`, `/topic/messages.{userId}` (chỉ chủ kênh được đăng ký) thay `/user/queue/*` — **phát hiện khi thử thật**: với `/user/...`, instance A chỉ biết phiên ở B qua bản đồng bộ 10 giây/lần nên thông báo bị mất khi người dùng vừa tải lại trang (tái hiện được sau khi khởi động lại RabbitMQ).
+- [x] Scheduler chạy 1 instance duy nhất: **ShedLock** 6.10 (bảng `shedlock`, V11, giờ của CSDL); job dọn dẹp gom vào `MaintenanceScheduler`; test bắt buộc mọi `@Scheduled` có khóa (trừ dọn bộ đếm trong RAM).
+- [x] Rate limit dùng chung: **bảng `rate_limit_windows` (V11) thay cho Redis** — chỉ endpoint xác thực dùng bộ đếm, một câu upsert nguyên tử là đủ, không thêm hệ thống phải vận hành (`APP_RATE_LIMIT_STORE=jdbc`). Khóa tài khoản do nhập sai vốn đã lưu ở CSDL (P1-10).
+- [x] `docker-compose.scale.yml`: RabbitMQ + `backend-2` cùng tên mạng `backend` (nginx chia tải); Prometheus tìm instance qua DNS; health `realtimeBroker`, số liệu `taskify_realtime_broker_up`, cảnh báo `TaskifyRealtimeBrokerDown`. Quyết định: [ADR-0011](../docs/adr/0011-chay-nhieu-instance.md).
 
-**Theo dõi:** Trạng thái: ⬜
+**Theo dõi:** Trạng thái: ✅ · Ngày xong: `24/10/2026` · Commit: xem Changelog
+
+**Kết quả (2 instance thật trên Docker):** WebSocket nối vào `backend-2`, thao tác gọi vào `backend` → thông báo tới đúng người (ws-check 12/12, lặp 3 lần sau khi khởi động lại RabbitMQ); đăng nhập sai luân phiên 2 instance bị chặn ở lần thứ 121 (ngưỡng 120 — mỗi instance xử lý 60); smoke + ui-check/gd2/gd3/gd4 đạt qua nginx chia tải (586 / 445 request); mất RabbitMQ thì readiness vẫn UP, đăng nhập vẫn 200, relay tự nối lại. Test: `RealtimeRelayIT` (2 instance + RabbitMQ trong Testcontainers, hai tab của cùng người dùng ở hai instance), `SchedulerLockIT`, `JdbcRateLimitStoreIT` (40 lượt đồng thời → đúng 10 lượt được phép).
 
 ---
 
@@ -1930,7 +1934,7 @@ team_invitations(id, team_id, student_id, status PENDING/ACCEPTED/DECLINED, crea
 
 - [ ] Hệ thống chạy trên production với HTTPS, có backup đã diễn tập khôi phục.
 - [ ] Ít nhất các tính năng hạng 1–5 của backlog đã hoàn thành.
-- [ ] Có giám sát lỗi và sức khỏe hệ thống.
+- [x] Có giám sát lỗi và sức khỏe hệ thống. — P4-08 (Prometheus + Grafana + 6 cảnh báo)
 - [ ] Tag `v1.0.0`.
 
 ---
@@ -2109,6 +2113,7 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 23/10/2026 | P4-05 | Mốc có trọng số, bảng nộp bài đúng/trễ hạn, chấm theo mốc, điểm đề xuất (V9); lịch gồm mốc | `10b49b7` | `MilestoneGradeIT` |
 | 23/10/2026 | P4-06 | Cài đặt email thông báo theo nhóm + thư tổng hợp 07:30 (V10) | `cd2b437` | `NotificationSettingsIT` |
 | 24/10/2026 | P4-08 | Prometheus + Grafana (profile `monitoring`), `/actuator/prometheus` bảo vệ bằng `X-Metrics-Token`, 5 cảnh báo | `1dd91c6` | `MetricsEndpointIT` · 356 test |
+| 24/10/2026 | P4-10 | Chạy nhiều instance: relay STOMP sang RabbitMQ, đích dạng chấm, kênh riêng theo id người dùng, ShedLock (V11), bộ đếm giới hạn tần suất dùng chung qua CSDL, `docker-compose.scale.yml` | xem `git log` | 369 test · `RealtimeRelayIT`, `SchedulerLockIT`, `JdbcRateLimitStoreIT`; thử thật 2 instance |
 | 24/10/2026 | P4-11 | Lịch học thuật, Kênh thảo luận nhóm, Chi tiết đề tài; a11y WCAG 2.1 AA (axe 0 vi phạm cả sáng/tối); sửa chế độ tối (xóa `App.css` cũ); gỡ 7 nút không có chức năng | xem `git log` | 361 test · `TopicDetailIT`, `a11y-check.mjs` 0 vi phạm, ui-check-gd4 44/44 |
 | | | | | |
 
@@ -2127,4 +2132,4 @@ git tag -a v0.2.0-security -m "Hoàn thành Giai đoạn 1"; git push --tags
 | 1.6 | 22/10/2026 | Hoàn thành 13/13 task GĐ2 trên `develop`; cập nhật trạng thái, commit, tiêu chí hoàn thành GĐ2; báo cáo mục 12 |
 | 1.7 | 23/10/2026 | Rà soát giao diện, đồng bộ giờ Việt Nam, hoàn thành P3-01 (Flyway); báo cáo mục 13 |
 | 1.8 | 23/10/2026 | Hoàn thành 14/14 task GĐ3; cập nhật trạng thái, kết quả đo, tiêu chí hoàn thành GĐ3; báo cáo mục 14 |
-| 1.9 | 24/10/2026 | GĐ4: hoàn thành P4-01, 02, 03, 05, 06, 08, 11 (7 task không cần hạ tầng ngoài); P4-09, P4-10 còn lại; báo cáo mục 15 |
+| 1.9 | 24/10/2026 | GĐ4: hoàn thành P4-01, 02, 03, 05, 06, 08, 10, 11; còn P4-09 (cần máy chủ thật); báo cáo mục 15 |

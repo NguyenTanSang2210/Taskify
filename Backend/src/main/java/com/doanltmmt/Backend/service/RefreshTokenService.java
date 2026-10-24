@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -118,7 +117,6 @@ public class RefreshTokenService {
     }
 
     /** Dọn token hết hạn / đã thu hồi quá 30 ngày (mỗi đêm 03:30). */
-    @Scheduled(cron = "${app.auth.refresh-cleanup-cron:0 30 3 * * *}")
     @Transactional
     public int cleanup() {
         int deleted = repo.deleteStale(LocalDateTime.now().minusDays(30));

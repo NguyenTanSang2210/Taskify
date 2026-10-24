@@ -88,13 +88,13 @@ class FlywayMigrationIT {
     void emptyDatabase_getsFullSchema_andSystemRoles() throws SQLException {
         flyway(null).migrate();
 
-        assertEquals("32", query("select count(*) from information_schema.tables where table_schema = database() "
+        assertEquals("34", query("select count(*) from information_schema.tables where table_schema = database() "
                 + "and table_name <> 'flyway_schema_history'").get(0));
         assertEquals(List.of("ADMIN", "DEPARTMENT_ADMIN", "LECTURER", "STUDENT"), query("select name from roles order by name"));
         assertEquals(List.of("REGISTRATION_MANAGE", "TOPIC_MANAGE"), privilegesOf("LECTURER"));
         assertEquals(6, privilegesOf("ADMIN").size());
         assertTrue(query("select version from flyway_schema_history where success = 1 order by installed_rank")
-                .containsAll(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")));
+                .containsAll(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11")));
         // V5 (P3-07): index cho truy vấn hay dùng
         assertEquals(List.of("idx_notifications_user_created", "idx_notifications_user_read"),
                 query("select distinct index_name from information_schema.statistics where table_schema = database() "

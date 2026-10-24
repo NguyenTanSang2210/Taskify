@@ -20,7 +20,7 @@ flowchart TB
     CTRL["23 controller (< 120 dòng,<br/>không truy cập repository)"]
     SVC["Service @Transactional<br/>SecurityScopeService · TopicAccessService"]
     REPO["Spring Data JPA repository<br/>EntityGraph · truy vấn gom nhóm"]
-    WS["STOMP broker (/ws)<br/>/user/queue/* · /topic/*"]
+    WS["STOMP broker (/ws)<br/>/topic/*"]
     EVT["EventPublisher<br/>(gửi sau khi commit)"]
     JOBS["Scheduler: nhắc hạn, thư tổng hợp, hết hạn chấm lại,<br/>dọn refresh token / file / login throttle / nhật ký"]
     ACT["Actuator health · info"]
@@ -193,12 +193,25 @@ Chi tiết cơ chế bảo vệ: [`SECURITY.md`](SECURITY.md).
 
 | Kênh | Nội dung | Ai nhận |
 |---|---|---|
-| `/user/queue/notifications` | Thông báo cá nhân | chính người dùng |
-| `/user/queue/messages` | Tin nhắn mới | người gửi và người nhận |
-| `/topic/progress/{topicId}` | Báo cáo tiến độ thay đổi | GV hướng dẫn, SV của đề tài, khoa |
-| `/topic/registration/{topicId}` | Đăng ký thay đổi | GV hướng dẫn, khoa |
+| `/topic/notifications.{userId}` | Thông báo cá nhân | chính người dùng (mọi tab) |
+| `/topic/messages.{userId}` | Tin nhắn mới | người gửi và người nhận |
+| `/topic/progress.{topicId}` | Báo cáo tiến độ thay đổi | GV hướng dẫn, SV của đề tài, khoa |
+| `/topic/registration.{topicId}` | Đăng ký thay đổi | GV hướng dẫn, khoa |
 
-Sự kiện được phát **sau khi transaction commit** (`EventPublisher` + `TransactionSynchronization`), nên client không nhận sự kiện của thao tác bị rollback. Quyền đăng ký kênh được kiểm tra khi `SUBSCRIBE` (cùng quy tắc với REST). Broker hiện là broker trong bộ nhớ (một instance backend); mở rộng nhiều instance: P4-10.
+Sự kiện được phát **sau khi transaction commit** (`EventPublisher` + `TransactionSynchronization`), nên client không nhận sự kiện của thao tác bị rollback. Quyền đăng ký kênh được kiểm tra khi `SUBSCRIBE` (cùng quy tắc với REST; kênh riêng chỉ cho đúng `userId` của người đăng nhập).
+
+**Một hay nhiều instance (P4-10, [ADR-0011](adr/0011-chay-nhieu-instance.md)):** mặc định broker nằm trong bộ nhớ của backend. Chạy nhiều instance (`docker-compose.scale.yml`) thì bật relay sang **RabbitMQ** (plugin STOMP) — sự kiện phát ở instance nào cũng tới client nối vào instance khác; job định kỳ khóa bằng **ShedLock** (bảng `shedlock`); bộ đếm giới hạn tần suất dùng bảng `rate_limit_windows`.
+
+```mermaid
+flowchart LR
+  B1[Trình duyệt] --> N[nginx]
+  N -- round-robin --> S1[backend]
+  N -- round-robin --> S2[backend-2]
+  S1 <-- STOMP relay --> R[(RabbitMQ)]
+  S2 <-- STOMP relay --> R
+  S1 --> D[(MySQL<br/>shedlock · rate_limit_windows)]
+  S2 --> D
+```
 
 ## 6. Quan sát hệ thống
 

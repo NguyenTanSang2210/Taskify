@@ -96,7 +96,7 @@ export default function ProjectSpacePage() {
   useEffect(() => {
     if (!topicId) return;
     const client = connectAndSubscribe({
-      destination: `/topic/progress/${topicId}`,
+      destination: `/topic/progress.${topicId}`,
       onMessage: (payload) => {
         const type = payload?.type;
         const pr = payload?.progress;

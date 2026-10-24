@@ -81,9 +81,9 @@ Response là DTO (không trả entity), nên không lộ hash mật khẩu hay t
 | **Xuất Excel** | Xuất đăng ký/điểm | ✅ | 🔸 Dept | 🔸 Own | ❌ |
 | **Audit log** | Xem | ✅ | ❌ | ❌ | ❌ |
 | **Dashboard** | Xem | ✅ (toàn hệ thống) | 🔸 Dept | 🔸 Own | 🔸 Self |
-| **WebSocket** | Kênh cá nhân (`/user/queue/*`) | 🔸 Self | 🔸 Self | 🔸 Self | 🔸 Self |
-| | `/topic/progress/{id}` | ✅ | 🔸 Dept | 🔸 Own | 🔸 Mem |
-| | `/topic/registration/{id}` | ✅ | 🔸 Dept | 🔸 Own | ❌ |
+| **WebSocket** | Kênh cá nhân (`/topic/notifications.{id}`, `/topic/messages.{id}`) — kể cả Admin cũng không đăng ký được kênh của người khác | 🔸 Self | 🔸 Self | 🔸 Self | 🔸 Self |
+| | `/topic/progress.{id}` | ✅ | 🔸 Dept | 🔸 Own | 🔸 Mem |
+| | `/topic/registration.{id}` | ✅ | 🔸 Dept | 🔸 Own | ❌ |
 
 Các quy tắc quan trọng của ma trận (IDOR theo id, phạm vi khoa, thành viên đề tài, kênh WebSocket, endpoint công khai) có test tích hợp ở `Backend/src/test/java/.../security/` (`*AccessIT`, `SecurityEndpointsIT`…), kiểm tra cả chiều "được phép" lẫn "bị chặn".
 
@@ -93,6 +93,7 @@ Các quy tắc quan trọng của ma trận (IDOR theo id, phạm vi khoa, thàn
 - **Lỗi API** không chứa stacktrace, câu SQL hay thông điệp nội bộ — chỉ `code` + thông báo tiếng Việt + `requestId` để tra log ([`error-codes.md`](error-codes.md)).
 - **Log** không ghi mật khẩu, OTP, token; mọi thao tác quan trọng được ghi `audit_logs` kèm IP + trình duyệt (chỉ Admin xem, trang *Nhật ký hệ thống*). Bản ghi cũ hơn 12 tháng bị xóa tự động, trừ nhật ký điểm số (`GRADE_*`). File CSV xuất ra vô hiệu hóa công thức Excel (CSV injection).
 - **Secret** (DB, JWT, mail) chỉ đọc từ biến môi trường; `.env` không được commit (đã có trong `.gitignore`). Lịch sử git đã được làm sạch file cá nhân ([ADR-0004](adr/0004-viet-lai-lich-su-git.md)).
+- **RabbitMQ** (chỉ khi chạy nhiều instance, P4-10): mật khẩu `APP_REALTIME_RELAY_PASSCODE` bắt buộc (backend từ chối khởi động nếu bật relay mà để trống); cổng STOMP 61613 chỉ trong mạng Docker, giao diện quản lý chỉ mở trên `127.0.0.1`. Client trình duyệt không nối thẳng RabbitMQ — mọi `SUBSCRIBE` vẫn qua bộ kiểm soát quyền của backend.
 
 ## 5. Lớp web
 

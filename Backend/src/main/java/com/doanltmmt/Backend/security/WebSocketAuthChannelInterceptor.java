@@ -24,8 +24,9 @@ import java.util.regex.Pattern;
  * Bảo vệ kênh STOMP (clientInboundChannel):
  * <ul>
  *   <li>{@code CONNECT}: bắt buộc {@code Authorization: Bearer} hợp lệ (scope ACCESS, tài khoản còn bật, tokenVersion khớp).</li>
- *   <li>{@code SUBSCRIBE}: chỉ các đích được liệt kê — kênh riêng {@code /user/queue/*} cho chính người dùng;
- *       {@code /topic/progress/{id}} cho thành viên đề tài; {@code /topic/registration/{id}} cho người quản lý đề tài.
+ *   <li>{@code SUBSCRIBE}: chỉ các đích được liệt kê — kênh riêng {@code /topic/notifications.{id}},
+ *       {@code /topic/messages.{id}} chỉ cho người dùng có đúng id đó;
+ *       {@code /topic/progress.{id}} cho thành viên đề tài; {@code /topic/registration.{id}} cho người quản lý đề tài.
  *       Mọi đích khác bị từ chối.</li>
  *   <li>{@code SEND}: bị từ chối hoàn toàn — client không được tự phát sự kiện (không có {@code @MessageMapping} nào).</li>
  * </ul>
@@ -34,8 +35,11 @@ import java.util.regex.Pattern;
 @SuppressWarnings("null")
 public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 
-    private static final Pattern PROGRESS = Pattern.compile("^/topic/progress/(\\d+)$");
-    private static final Pattern REGISTRATION = Pattern.compile("^/topic/registration/(\\d+)$");
+    private static final Pattern PROGRESS = Pattern.compile("^/topic/progress\\.(\\d+)$");
+    private static final Pattern REGISTRATION = Pattern.compile("^/topic/registration\\.(\\d+)$");
+    // P4-10: kênh riêng theo id người dùng (thay /user/queue/*) — broker phát tới mọi tab trên mọi instance,
+    // không phụ thuộc danh sách phiên của từng instance
+    private static final Pattern PERSONAL = Pattern.compile("^/topic/(?:notifications|messages)\\.(\\d+)$");
 
     private final TokenAuthenticator tokenAuthenticator;
     private final TopicAccessService topicAccess;
@@ -89,11 +93,14 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         if (dest == null) {
             throw new MessagingException("Thiếu đích đăng ký.");
         }
-        // Kênh riêng: Spring tự định tuyến /user/queue/* theo Principal nên chỉ người đó nhận được.
-        if (dest.equals("/user/queue/notifications") || dest.equals("/user/queue/messages")) {
+        Matcher m = PERSONAL.matcher(dest);
+        if (m.matches()) {
+            if (!m.group(1).equals(String.valueOf(principal.getId()))) {
+                throw new MessagingException("Không được theo dõi kênh riêng của người khác.");
+            }
             return;
         }
-        Matcher m = PROGRESS.matcher(dest);
+        m = PROGRESS.matcher(dest);
         if (m.matches()) {
             Topic topic = loadTopic(m.group(1));
             if (!topicAccess.isMember(topic, loadUser(principal))) {

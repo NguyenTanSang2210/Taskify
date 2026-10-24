@@ -32,7 +32,7 @@ public class EventPublisher {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROGRESS_CREATED");
         payload.put("progress", ProgressReportDTO.from(pr));
-        String dest = "/topic/progress/" + pr.getTopic().getId();
+        String dest = "/topic/progress." + pr.getTopic().getId();
         send(dest, payload);
     }
 
@@ -40,7 +40,7 @@ public class EventPublisher {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "PROGRESS_UPDATED");
         payload.put("progress", ProgressReportDTO.from(pr));
-        String dest = "/topic/progress/" + pr.getTopic().getId();
+        String dest = "/topic/progress." + pr.getTopic().getId();
         send(dest, payload);
     }
 
@@ -48,7 +48,7 @@ public class EventPublisher {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", action);
         payload.put("registration", new TopicRegistrationDTO(reg));
-        String dest = "/topic/registration/" + reg.getTopic().getId();
+        String dest = "/topic/registration." + reg.getTopic().getId();
         send(dest, payload);
     }
 
@@ -56,9 +56,8 @@ public class EventPublisher {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "NOTIFICATION_CREATED");
         payload.put("notification", NotificationDTO.from(n));
-        // Kênh riêng theo Principal: chỉ chính người dùng đó nhận được (/user/queue/notifications)
-        String username = n.getUser().getUsername();
-        afterCommit(() -> template.convertAndSendToUser(username, "/queue/notifications", payload));
+        // Kênh riêng của người nhận: chỉ chính người đó được đăng ký (WebSocketAuthChannelInterceptor)
+        send("/topic/notifications." + n.getUser().getId(), payload);
     }
 
     public void messageCreated(Message m) {
@@ -66,11 +65,11 @@ public class EventPublisher {
         payload.put("type", "MESSAGE_CREATED");
         payload.put("message", MessageDTO.from(m));
 
-        String sender = m.getSender().getUsername();
-        String recipient = m.getSender().getId().equals(m.getRecipient().getId()) ? null : m.getRecipient().getUsername();
+        Long sender = m.getSender().getId();
+        Long recipient = sender.equals(m.getRecipient().getId()) ? null : m.getRecipient().getId();
         afterCommit(() -> {
-            template.convertAndSendToUser(sender, "/queue/messages", payload);
-            if (recipient != null) template.convertAndSendToUser(recipient, "/queue/messages", payload);
+            template.convertAndSend("/topic/messages." + sender, payload);
+            if (recipient != null) template.convertAndSend("/topic/messages." + recipient, payload);
         });
     }
 

@@ -162,7 +162,7 @@ export default function ProjectChatPage() {
   useEffect(() => {
     if (!userId) return;
     const client = connectAndSubscribe({
-      destination: "/user/queue/messages",
+      destination: `/topic/messages.${userId}`,
       onMessage: (payload) => {
         if (payload?.type !== "MESSAGE_CREATED") return;
         const msg = payload?.message;

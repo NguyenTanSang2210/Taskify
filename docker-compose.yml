@@ -41,6 +41,11 @@ services:
       APP_BOOTSTRAP_ADMIN_USERNAME: ${APP_BOOTSTRAP_ADMIN_USERNAME:-}
       APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-}
       METRICS_TOKEN: ${METRICS_TOKEN:-}
+      # P4-10: chạy nhiều instance — bật bằng docker-compose.scale.yml (xem docs/DEPLOYMENT.md §8)
+      APP_REALTIME_RELAY_ENABLED: ${APP_REALTIME_RELAY_ENABLED:-false}
+      APP_REALTIME_RELAY_HOST: ${APP_REALTIME_RELAY_HOST:-rabbitmq}
+      APP_REALTIME_RELAY_PASSCODE: ${APP_REALTIME_RELAY_PASSCODE:-}
+      APP_RATE_LIMIT_STORE: ${APP_RATE_LIMIT_STORE:-memory}
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-doan_ltmmt}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${MYSQL_USER:-ktpm}
       DB_PASSWORD: ${MYSQL_PASSWORD:?Thiếu MYSQL_PASSWORD trong .env — chạy .\scripts\init-env.ps1}

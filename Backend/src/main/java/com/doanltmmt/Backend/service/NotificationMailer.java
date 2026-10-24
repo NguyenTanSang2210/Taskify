@@ -8,7 +8,6 @@ import com.doanltmmt.Backend.repository.EmailDigestItemRepository;
 import com.doanltmmt.Backend.repository.NotificationSettingsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -24,7 +23,6 @@ import java.util.List;
 public class NotificationMailer {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationMailer.class);
-    private static final String ZONE = "Asia/Ho_Chi_Minh";
 
     private final EmailService emailService;
     private final NotificationSettingsRepository settingsRepo;
@@ -57,7 +55,6 @@ public class NotificationMailer {
     }
 
     /** 07:30 hằng ngày (giờ Việt Nam): mỗi người có thông báo đang chờ nhận MỘT thư tổng hợp. Trả về số thư đã gửi. */
-    @Scheduled(cron = "${app.mail.digest-cron:0 30 7 * * *}", zone = ZONE)
     public int sendDigests() {
         int sent = 0;
         for (Long userId : digestRepo.findPendingUserIds()) {

@@ -42,7 +42,7 @@ export default function NotificationsBell() {
   useEffect(() => {
     if (!userId) return;
     const client = connectAndSubscribe({
-      destination: "/user/queue/notifications",
+      destination: `/topic/notifications.${userId}`,
       onMessage: (payload) => {
         const n = payload?.notification;
         if (n) {

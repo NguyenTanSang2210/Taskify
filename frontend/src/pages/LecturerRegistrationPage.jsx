@@ -67,7 +67,7 @@ export default function LecturerRegistrationPage() {
   useEffect(() => {
     if (!topicId) return;
     const client = connectAndSubscribe({
-      destination: `/topic/registration/${topicId}`,
+      destination: `/topic/registration.${topicId}`,
       onMessage: async (payload) => {
         const type = payload?.type;
         const reg = payload?.registration;

@@ -7,7 +7,6 @@ import com.doanltmmt.Backend.repository.LoginThrottleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -106,7 +105,6 @@ public class LoginThrottleService {
     }
 
     /** Dọn các bộ đếm đã hết ý nghĩa (hằng ngày, 03:15). */
-    @Scheduled(cron = "0 15 3 * * *")
     public void cleanUp() {
         LocalDateTime now = LocalDateTime.now();
         int removed = tx.execute(status ->
