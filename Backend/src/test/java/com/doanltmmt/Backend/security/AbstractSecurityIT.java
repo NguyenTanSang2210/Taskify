@@ -10,6 +10,7 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
+import com.doanltmmt.Backend.entity.WorkspaceClass;
 import com.doanltmmt.Backend.repository.AcademicClassRepository;
 import com.doanltmmt.Backend.repository.DepartmentRepository;
 import com.doanltmmt.Backend.repository.LecturerRepository;
@@ -18,6 +19,7 @@ import com.doanltmmt.Backend.repository.StudentRepository;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
 import com.doanltmmt.Backend.repository.TopicRepository;
 import com.doanltmmt.Backend.repository.UserRepository;
+import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.doanltmmt.Backend.repository.WorkspaceRepository;
 import com.doanltmmt.Backend.service.EmailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -84,6 +86,7 @@ public abstract class AbstractSecurityIT {
     @Autowired protected StudentRepository studentRepo;
     @Autowired protected LecturerRepository lecturerRepo;
     @Autowired protected WorkspaceRepository workspaceRepo;
+    @Autowired protected WorkspaceClassRepository workspaceClassRepo;
     @Autowired protected TopicRepository topicRepo;
     @Autowired protected TopicRegistrationRepository regRepo;
     @Autowired protected PasswordEncoder encoder;
@@ -166,6 +169,15 @@ public abstract class AbstractSecurityIT {
         w.setStatus(WorkspaceStatus.valueOf(status));
         w.setActive(true);
         return workspaceRepo.save(w);
+    }
+
+    /** Gắn lớp vào đợt (đang hiệu lực) — sinh viên của lớp mới thấy đề tài của đợt. */
+    protected WorkspaceClass linkClass(Workspace ws, AcademicClass cls) {
+        WorkspaceClass link = new WorkspaceClass();
+        link.setWorkspace(ws);
+        link.setAcademicClass(cls);
+        link.setActive(true);
+        return workspaceClassRepo.save(link);
     }
 
     protected Topic newTopic(Lecturer lecturer, Workspace ws, int capacity) {

@@ -8,6 +8,8 @@ import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
 import com.doanltmmt.Backend.repository.TopicRegistrationRepository;
+import com.doanltmmt.Backend.repository.TopicRepository;
+import com.doanltmmt.Backend.repository.TopicSpecifications;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,17 +19,23 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-/** P4-11 — chi tiết một đề tài. Ai xem được danh sách đề tài thì xem được chi tiết (Quản trị khoa: chỉ khoa mình). */
+/**
+ * P4-11 — chi tiết một đề tài. Ai thấy đề tài trong danh sách thì xem được chi tiết: Quản trị khoa chỉ khoa mình,
+ * sinh viên chỉ đợt của lớp mình hoặc đề tài đã đăng ký; ngoài phạm vi → 404 như không tồn tại.
+ */
 @Service
 public class TopicDetailService {
 
     private final TopicAccessService topicAccess;
     private final TopicRegistrationRepository regRepo;
+    private final TopicRepository topicRepo;
     private final SecurityScopeService scope;
 
-    public TopicDetailService(TopicAccessService topicAccess, TopicRegistrationRepository regRepo, SecurityScopeService scope) {
+    public TopicDetailService(TopicAccessService topicAccess, TopicRegistrationRepository regRepo,
+                              TopicRepository topicRepo, SecurityScopeService scope) {
         this.topicAccess = topicAccess;
         this.regRepo = regRepo;
+        this.topicRepo = topicRepo;
         this.scope = scope;
     }
 
@@ -37,6 +45,11 @@ public class TopicDetailService {
         User me = scope.requireCurrentUser();
         if (scope.hasRole("DEPARTMENT_ADMIN") && !scope.hasRole("ADMIN") && !topicAccess.isOwner(topic, me)) {
             // giống danh sách: quản trị khoa không thấy đề tài khoa khác
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài");
+        }
+        if (scope.hasRole("STUDENT") && !scope.hasRole("ADMIN")
+                && !topicRepo.exists(TopicSpecifications.visibleToStudent(me.getId()).and(TopicSpecifications.hasId(topic.getId())))) {
+            // giống danh sách: sinh viên không thấy đề tài của đợt không gắn với lớp mình
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đề tài");
         }
 

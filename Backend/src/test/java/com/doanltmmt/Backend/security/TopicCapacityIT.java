@@ -10,12 +10,9 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
-import com.doanltmmt.Backend.entity.WorkspaceClass;
-import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -33,8 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SuppressWarnings("null")
 class TopicCapacityIT extends AbstractSecurityIT {
 
-    @Autowired private WorkspaceClassRepository workspaceClassRepo;
-
     private Lecturer lecturer;
     private Workspace ws;
     private Topic topic;
@@ -46,11 +41,7 @@ class TopicCapacityIT extends AbstractSecurityIT {
         AcademicClass cls = newClass(dept);
         lecturer = newLecturer("lcap", dept);
         ws = newWorkspace(dept, "OPEN_REGISTRATION");
-        WorkspaceClass link = new WorkspaceClass();
-        link.setWorkspace(ws);
-        link.setAcademicClass(cls);
-        link.setActive(true);
-        workspaceClassRepo.save(link);
+        linkClass(ws, cls);
         topic = newTopic(lecturer, ws, 3);
         for (int i = 0; i < 5; i++) students.add(newStudent("scap" + i, dept, cls));
     }

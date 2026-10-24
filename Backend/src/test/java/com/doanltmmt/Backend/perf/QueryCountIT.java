@@ -70,6 +70,7 @@ class QueryCountIT extends AbstractSecurityIT {
         AcademicClass cls = newClass(dept);
         Workspace ws = newWorkspace(dept, "IN_PROGRESS");
         workspace = ws;
+        linkClass(ws, cls);
         lecturer = newLecturer("lqc", dept);
         for (int i = 0; i < 6; i++) {
             Lecturer owner = i == 0 ? lecturer : newLecturer("lqc" + i, dept);

@@ -31,6 +31,7 @@ class TopicDetailIT extends AbstractSecurityIT {
         dept = newDepartment("TD");
         AcademicClass cls = newClass(dept);
         Workspace ws = newWorkspace(dept, "OPEN_REGISTRATION");
+        linkClass(ws, cls);
         lecturer = newLecturer("gvtd", dept);
         topic = newTopic(lecturer, ws, 3);
         approved = newStudent("svok", dept, cls);

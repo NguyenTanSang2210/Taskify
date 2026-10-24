@@ -10,11 +10,9 @@ import com.doanltmmt.Backend.entity.Topic;
 import com.doanltmmt.Backend.entity.TopicRegistration;
 import com.doanltmmt.Backend.entity.User;
 import com.doanltmmt.Backend.entity.Workspace;
-import com.doanltmmt.Backend.entity.WorkspaceClass;
 import com.doanltmmt.Backend.entity.enums.ProgressStatus;
 import com.doanltmmt.Backend.repository.MilestoneRepository;
 import com.doanltmmt.Backend.repository.ProgressReportRepository;
-import com.doanltmmt.Backend.repository.WorkspaceClassRepository;
 import com.doanltmmt.Backend.security.AbstractSecurityIT;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +42,6 @@ class DashboardIT extends AbstractSecurityIT {
 
     @Autowired private ProgressReportRepository progressRepo;
     @Autowired private MilestoneRepository milestoneRepo;
-    @Autowired private WorkspaceClassRepository workspaceClassRepo;
 
     private Department dept;
     private Workspace ws;
@@ -59,10 +56,7 @@ class DashboardIT extends AbstractSecurityIT {
         dept = newDepartment("DB");
         AcademicClass cls = newClass(dept);
         ws = newWorkspace(dept, "IN_PROGRESS");
-        WorkspaceClass wc = new WorkspaceClass();
-        wc.setWorkspace(ws);
-        wc.setAcademicClass(cls);
-        workspaceClassRepo.save(wc);
+        linkClass(ws, cls);
         lecturer = newLecturer("gvdb", dept);
         topic = newTopic(lecturer, ws, 3);
         deptAdmin = newUser("qtk", "DEPARTMENT_ADMIN", dept);

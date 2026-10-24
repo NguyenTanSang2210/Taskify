@@ -53,8 +53,8 @@ Response là DTO (không trả entity), nên không lộ hash mật khẩu hay t
 | **Vai trò & quyền** | Quản lý | ✅ | ❌ | ❌ | ❌ |
 | **Khoa** | CRUD | ✅ | ❌ (xem 🔸 Dept) | ❌ | ❌ |
 | **Lớp, Workspace, Phân công GV** | CRUD, chuyển trạng thái | ✅ | 🔸 Dept | ❌ | ❌ |
-| **Đề tài** | Xem danh sách | ✅ | 🔸 Dept | ✅ | ✅ (workspace của lớp mình) ⚠️ *code hiện chưa lọc theo lớp — đang xử lý riêng* |
-| | Xem chi tiết `GET /api/topics/{id}` (P4-11) — như danh sách; email công việc của GV hiện để liên hệ; **danh sách SV thực hiện chỉ trả cho thành viên** | ✅ | 🔸 Dept (khoa khác → 404) | ✅ | ✅ |
+| **Đề tài** | Xem danh sách | ✅ | 🔸 Dept | ✅ | 🔸 đợt đang gắn với lớp mình (`workspace_classes.active`) + đề tài mình đã đăng ký (kể cả sau khi đổi lớp) |
+| | Xem chi tiết `GET /api/topics/{id}` (P4-11) — như danh sách; email công việc của GV hiện để liên hệ; **danh sách SV thực hiện chỉ trả cho thành viên** | ✅ | 🔸 Dept (khoa khác → 404) | ✅ | 🔸 như danh sách (ngoài phạm vi → 404) |
 | | Tạo / sửa / xóa / mở / đóng | ✅ | 🔸 Dept | 🔸 Own | ❌ |
 | **Đăng ký đề tài** | Đăng ký / hủy | ❌ | ❌ | ❌ | 🔸 Self |
 | | Xem danh sách đăng ký của đề tài | ✅ | 🔸 Dept | 🔸 Own | ❌ |
@@ -85,7 +85,7 @@ Response là DTO (không trả entity), nên không lộ hash mật khẩu hay t
 | | `/topic/progress/{id}` | ✅ | 🔸 Dept | 🔸 Own | 🔸 Mem |
 | | `/topic/registration/{id}` | ✅ | 🔸 Dept | 🔸 Own | ❌ |
 
-Các quy tắc quan trọng của ma trận (IDOR theo id, phạm vi khoa, thành viên đề tài, kênh WebSocket, endpoint công khai) có test tích hợp ở `Backend/src/test/java/.../security/` (`*AccessIT`, `SecurityEndpointsIT`…), kiểm tra cả chiều "được phép" lẫn "bị chặn".
+Các quy tắc quan trọng của ma trận (IDOR theo id, phạm vi khoa, thành viên đề tài, kênh WebSocket, endpoint công khai) có test tích hợp ở `Backend/src/test/java/.../security/` (`*AccessIT`, `SecurityEndpointsIT`…) và `.../topic/TopicStudentScopeIT` (phạm vi đề tài theo lớp của sinh viên), kiểm tra cả chiều "được phép" lẫn "bị chặn".
 
 ## 4. Dữ liệu và file
 

@@ -216,6 +216,10 @@ public class TopicService {
                 return PageResponse.empty(page, size);
             }
         }
+        if (scope.hasRole("STUDENT") && !scope.hasRole("ADMIN")) {
+            // sinh viên: chỉ đề tài trong các đợt của lớp mình (+ đề tài đã đăng ký)
+            spec = spec.and(TopicSpecifications.visibleToStudent(scope.requireCurrentUser().getId()));
+        }
 
         Pageable pageable = Pages.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         Page<Topic> pageRes = topicRepo.findAll(spec, pageable);

@@ -87,7 +87,7 @@ Khác: *Danh mục Lớp* (tạo lớp của khoa), *Duyệt Đề tài* (xem/đ
 
 ## 5. Sinh viên
 
-- **Danh sách đề tài**: xem đề tài của các đợt mà lớp mình tham gia; lọc theo trạng thái, tìm theo tên/giảng viên; xem số chỗ còn lại.
+- **Danh sách đề tài**: xem đề tài của các đợt mà lớp mình tham gia (đề tài mình đã đăng ký vẫn hiện, kể cả khi đổi lớp); đề tài của đợt khác không hiện và không mở được chi tiết; lọc theo trạng thái, tìm theo tên/giảng viên; xem số chỗ còn lại.
 - **Chi tiết đề tài**: bấm tên đề tài để xem mô tả đầy đủ, giảng viên (học vị, khoa, email liên hệ), thông tin đợt, số chỗ; đăng ký ngay trên trang này. Khi đã được duyệt, trang hiện thêm các bạn cùng thực hiện.
 - **Đăng ký**: chỉ khi đợt *Mở đăng ký* và đề tài còn chỗ. Mỗi đợt chỉ có **một** đăng ký đang chờ hoặc đã duyệt; muốn đổi đề tài thì hủy đăng ký đang chờ trước (*Đăng ký của tôi*).
 - **Mốc**: ở *Không gian làm việc*, khối *Mốc tiến độ* liệt kê hạn chót, trọng số, trạng thái (chưa nộp / đúng hạn / nộp trễ), điểm và nhận xét của từng mốc; nút *Nộp bài* mở trang nộp cho mốc đó.
